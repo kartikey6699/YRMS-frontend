@@ -2,6 +2,7 @@ import './App.css'
 import { BrowserRouter as Router, Routes, Route } from 'react-router'
 import LandingPage from './component/landingPage/LandingPage'
 import HeaderLayout from './component/header/headerlayout'
+import Dashboard from './component/Dashboard/Dashboard'
 import Login from './component/auth/Login'
 
 function App() {
@@ -11,6 +12,7 @@ function App() {
       <Routes>
         <Route element={<HeaderLayout />}>
           <Route path='/' element={<LandingPage />} />
+          <Route path='/dashboard' element={<Dashboard />} />
         </Route>
         <Route path='/login' element={<Login />} />
       </Routes>
