@@ -1,10 +1,35 @@
 import { useState, useEffect } from "react";
 import { NavLink } from "react-router-dom";
 import landingPageImage from "../../assets/images/landing_page_img.jpg"
+import landingPageImage3 from "../../assets/images/landingpage4.webp"
+import landingPageImage4 from "../../assets/images/landingpage3.webp"
 
 const LandingPage = () => {
     // Carousel state
     const [currentSlide, setCurrentSlide] = useState(0);
+    // const slides = [
+    //     {
+    //         title: "Resource Allocation",
+    //         description: "Easily assign and manage resources across projects with real-time tracking.",
+    //         icon: "M3 12h18M3 6h18M3 18h18",
+    //     },
+    //     {
+    //         title: "Team Collaboration",
+    //         description: "Streamline communication and task assignment for your teams.",
+    //         icon: "M12 4.5v15m7.5-7.5h-15",
+    //     },
+    //     {
+    //         title: "Analytics & Reporting",
+    //         description: "Gain insights with detailed reports and resource utilization metrics.",
+    //         icon: "M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z",
+    //     },
+    // ];
+
+    const images = [
+        landingPageImage,
+        landingPageImage4,
+        landingPageImage3
+    ];
     const slides = [
         {
             title: "Resource Allocation",
@@ -40,29 +65,49 @@ const LandingPage = () => {
         return () => clearInterval(interval); // Cleanup on unmount
     }, [slides.length]);
 
+    const [currentIndex, setCurrentIndex] = useState(0);
+
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setCurrentIndex((prevIndex) => (prevIndex === images.length - 1 ? 0 : prevIndex + 1));
+        }, 5000); // Change image every 5 seconds
+        return () => clearInterval(interval);
+    }, []);
+
     return (
         <div className="bg-[#F9FAFB] min-h-screen">
             {/* Hero Section */}
-            <section className="bg-gradient-to-r from-[#D1D5DB] to-[#F9FAFB] py-20 relative"
-                style={{
-                    backgroundImage: `url(${landingPageImage})`,
-                    backgroundSize: "cover",
-                    backgroundPosition: "center",
-                }}
+            <section className="bg-gradient-to-r from-[#D1D5DB] to-[#F9FAFB] mb-5 relative"
             >
-                <div className="container mx-auto px-6 text-center">
-                    <h1 className="text-5xl md:text-6xl font-extrabold mb-6 leading-tight">
-                        Yash RMS
-                    </h1>
-                    <p className="text-lg md:text-2xl font-extrabold mb-8 max-w-2xl mx-auto">
-                        Optimize your resources, streamline operations, and boost productivity with our all-in-one management system.
-                    </p>
-                    <NavLink
-                        to="/login"
-                        className="inline-block bg-[#3B82F6] text-white px-8 py-4 rounded-lg hover:bg-[#1F2937] focus:ring-4 focus:ring-[#D1D5DB] focus:outline-none transition duration-200 font-medium text-lg shadow-md hover:shadow-lg"
-                    >
-                        Get Started
-                    </NavLink>
+                <div className="relative w-full h-screen">
+                    {images.map((image, index) => (
+                        <div
+                            key={index}
+                            className={`absolute inset-0 flex flex-col items-center text-center transition-all duration-500 ease-in-out ${index === currentIndex ? 'opacity-85 z-10' : 'opacity-0 z-0'}`}
+                            style={{ backgroundImage: `url(${image})`, backgroundSize: 'cover', backgroundPosition: 'center' }}
+                        >
+                            
+                            <div className="container mx-auto my-20 px-6 text-center z-20 transition-opacity duration-1000">
+                            <div className="absolute top-5 right-1 m-4 h-20 w-20">
+                                <img src="https://www.yash.com/wp-content/themes/html5blank-stable/images/yash-logo-new.svg" alt="" />
+                            </div>
+                                <h1 className="text-5xl md:text-6xl font-extrabold mb-10 leading-tight">
+                                    Yash RMS
+                                </h1>
+                                <p className="text-lg md:text-2xl font-extrabold my-10 max-w-2xl mx-auto">
+                                    Optimize your resources, streamline operations, and boost productivity with our all-in-one management system.
+                                </p>
+                                <div className="my-20 z-1">
+                                    <NavLink
+                                        to="/login"
+                                        className="inline-block bg-black text-white px-10 py-4 rounded-lg hover:bg-[#1F2937] hover:text-white focus:ring-4 focus:ring-[#D1D5DB] focus:outline-none transition-colors duration-300 font-medium text-lg shadow-md hover:shadow-lg"
+                                    >
+                                        Get Started
+                                    </NavLink>
+                                </div>
+                            </div>
+                        </div>
+                    ))}
                 </div>
             </section>
 
