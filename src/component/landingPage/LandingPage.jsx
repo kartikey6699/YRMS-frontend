@@ -50,8 +50,6 @@ const LandingPage = () => {
                     backgroundPosition: "center",
                 }}
             >
-                {/* Overlay */}
-                <div className="absolute inset-0 bg-black opacity-20"></div>
                 <div className="container mx-auto px-6 text-center">
                     <h1 className="text-5xl md:text-6xl font-extrabold mb-6 leading-tight">
                         Yash RMS
@@ -60,7 +58,7 @@ const LandingPage = () => {
                         Optimize your resources, streamline operations, and boost productivity with our all-in-one management system.
                     </p>
                     <NavLink
-                        to="/get-started"
+                        to="/login"
                         className="inline-block bg-[#3B82F6] text-white px-8 py-4 rounded-lg hover:bg-[#1F2937] focus:ring-4 focus:ring-[#D1D5DB] focus:outline-none transition duration-200 font-medium text-lg shadow-md hover:shadow-lg"
                     >
                         Get Started
