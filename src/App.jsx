@@ -7,6 +7,11 @@ import Login from './component/auth/Login'
 import ForgotPasswordOtp from './component/auth/ForgotPasswordOtp'
 import ForgotPassword from './component/auth/ForgotPassword'
 import VerifyOtp from './component/auth/VerifyOtp'
+import ManageResource from './component/Dashboard/Admin/ManageResource'
+import Analytics from './component/Dashboard/Admin/Analytics'
+import ManageBaseline from './component/Dashboard/Admin/ManageBaseline'
+import ManageTrainer from './component/Dashboard/Admin/ManageTrainer'
+import AssignTraining from './component/Dashboard/Admin/AssignTraining'
 
 function App() {
 
@@ -16,6 +21,11 @@ function App() {
         <Route element={<HeaderLayout />}>
           <Route path='/' element={<LandingPage />} />
           <Route path='/dashboard' element={<Dashboard />} />
+          <Route path="/manage-resources" element={<ManageResource />} />
+          <Route path="/manage-trainers" element={<ManageTrainer />} />
+          <Route path="/manage-baseline" element={<ManageBaseline />} />
+          <Route path="/manage-training" element={<AssignTraining />} />
+          <Route path="/analytics" element={<Analytics />} />
         </Route>
         <Route path='/login' element={<Login />} />
         <Route path='/forgotpasswordotp' element={<ForgotPasswordOtp />} />
