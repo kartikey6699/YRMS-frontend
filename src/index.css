@@ -26,3 +26,15 @@ html {
 .transition-all {
   transition: all 0.3s ease-in-out;
 }
+
+
+.scrollbar-thin::-webkit-scrollbar {
+  width: 8px;
+}
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background-color: #d1d5db; /* gray-300 */
+  border-radius: 4px;
+}
+.scrollbar-thin::-webkit-scrollbar-track {
+  background-color: #f3f4f6; /* gray-100 */
+}

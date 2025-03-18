@@ -1,80 +1,197 @@
-import React, { useState } from 'react';
+// ManageBaseline.jsx
+import React, { useState, useEffect, useRef } from 'react';
+import AddOptionModal from '../../helper/OptionalModal';
+import DropdownWithSearchAndCheckbox from '../../helper/Dropdown';
 
 const ManageBaseline = () => {
   const [activeSection, setActiveSection] = useState('view');
+  const [modalField, setModalField] = useState(null);
+  const [selectedEmployee, setSelectedEmployee] = useState(null);
+  const [isOpportunitiesOpen, setIsOpportunitiesOpen] = useState(false);
+  const [openDropdown, setOpenDropdown] = useState(null); // Track open dropdown
+
+  const employees = [
+    { name: 'John Doe', competency: 'Python' },
+    { name: 'Jane Smith', competency: 'JavaScript' },
+    { name: 'Mike Johnson', competency: 'Java' }
+  ];
+
   const [formData, setFormData] = useState({
-    employeeName: '',
-    competency: '',
-    tExp: [{ technology: '', years: '' }], // Array to store multiple tech/exp pairs
+    employeeName: employees[0].name,
+    competency: employees[0].competency,
+    experience: [{ technology: '', years: '' }],
+    totalExperience: '',
+    communication: '',
     status: '',
-    webFramework: '',
-    dataLibrary: '',
-    database: '',
-    frontend: '',
-    other: '',
-    cloud: '',
-    certification: '',
+    'Web Framework': [],
+    'Data Library': [],
+    'Database': [],
+    'Frontend': [],
+    'Other': [],
+    'Cloud': [],
+    certification: [{ title: '', technology: '' }],
     currentStatus: '',
     feedback: '',
-    totalChance: '',
-    unnamed17: ''
+    opportunities: []
   });
+
+  const [dropdownOptions, setDropdownOptions] = useState({
+    'Web Framework': ['Django', 'Flask', 'Spring', 'Express'],
+    'Data Library': ['Numpy', 'Pandas', 'TensorFlow', 'PyTorch'],
+    'Database': ['MySQL', 'PostgreSQL', 'MongoDB', 'Oracle'],
+    'Frontend': ['React', 'Angular', 'Vue', 'Svelte'],
+    'Other': ['CI/CD', 'GIT', 'Docker', 'Kubernetes'],
+    'Cloud': ['AWS', 'Azure', 'GCP', 'Heroku']
+  });
+
+  const formRef = useRef(null);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   const handleExpChange = (index, field, value) => {
-    const updatedExp = [...formData.tExp];
+    const updatedExp = [...formData.experience];
     updatedExp[index][field] = value;
-    setFormData(prev => ({
-      ...prev,
-      tExp: updatedExp
-    }));
+    setFormData(prev => ({ ...prev, experience: updatedExp }));
   };
 
   const addExperience = () => {
     setFormData(prev => ({
       ...prev,
-      tExp: [...prev.tExp, { technology: '', years: '' }]
+      experience: [...prev.experience, { technology: '', years: '' }]
     }));
   };
 
   const removeExperience = (index) => {
     setFormData(prev => ({
       ...prev,
-      tExp: prev.tExp.filter((_, i) => i !== index)
+      experience: prev.experience.filter((_, i) => i !== index)
+    }));
+  };
+
+  const handleCertChange = (index, field, value) => {
+    const updatedCert = [...formData.certification];
+    updatedCert[index][field] = value;
+    setFormData(prev => ({ ...prev, certification: updatedCert }));
+  };
+
+  const addCertification = () => {
+    setFormData(prev => ({
+      ...prev,
+      certification: [...prev.certification, { title: '', technology: '' }]
+    }));
+  };
+
+  const removeCertification = (index) => {
+    setFormData(prev => ({
+      ...prev,
+      certification: prev.certification.filter((_, i) => i !== index)
+    }));
+  };
+
+  const handleOpportunityChange = (index, field, value) => {
+    const updatedOpps = [...formData.opportunities];
+    updatedOpps[index][field] = value;
+    setFormData(prev => ({ ...prev, opportunities: updatedOpps }));
+  };
+
+  const addOpportunity = () => {
+    setFormData(prev => ({
+      ...prev,
+      opportunities: [...prev.opportunities, {
+        clientName: '',
+        dateOfInterview: '',
+        jd: '',
+        totalRound: '',
+        roundClear: '',
+        result: '',
+        clientFeedback: ''
+      }]
+    }));
+  };
+
+  const removeOpportunity = (index) => {
+    setFormData(prev => ({
+      ...prev,
+      opportunities: prev.opportunities.filter((_, i) => i !== index)
+    }));
+  };
+
+  const handleDropdownChange = (field, values) => {
+    setFormData(prev => ({ ...prev, [field]: values }));
+  };
+
+  const addNewOption = (field, value) => {
+    setDropdownOptions(prev => ({
+      ...prev,
+      [field]: [...prev[field], value]
+    }));
+  };
+
+  const deleteOption = (field, option) => {
+    setDropdownOptions(prev => ({
+      ...prev,
+      [field]: prev[field].filter(opt => opt !== option)
+    }));
+    setFormData(prev => ({
+      ...prev,
+      [field]: prev[field].filter(opt => opt !== option)
     }));
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    console.log('Form submitted:', formData);
+    if (!formData.employeeName || !formData.competency) {
+      alert('Employee information is missing');
+      return;
+    }
+    const submittedData = {
+      ...formData,
+      opportunity: formData.opportunities
+    };
+    console.log('Submitted Data:', JSON.stringify(submittedData, null, 2));
     setFormData({
-      employeeName: '',
-      competency: '',
-      tExp: [{ technology: '', years: '' }],
+      employeeName: employees[0].name,
+      competency: employees[0].competency,
+      experience: [{ technology: '', years: '' }],
+      totalExperience: '',
+      communication: '',
       status: '',
-      webFramework: '',
-      dataLibrary: '',
-      database: '',
-      frontend: '',
-      other: '',
-      cloud: '',
-      certification: '',
+      'Web Framework': [],
+      'Data Library': [],
+      'Database': [],
+      'Frontend': [],
+      'Other': [],
+      'Cloud': [],
+      certification: [{ title: '', technology: '' }],
       currentStatus: '',
       feedback: '',
-      totalChance: '',
-      unnamed17: ''
+      opportunities: []
     });
+    setSelectedEmployee(null);
+    setIsOpportunitiesOpen(false);
   };
 
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (formRef.current && !formRef.current.contains(event.target)) {
+        setOpenDropdown(null);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  const fieldStyle = "w-64 p-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-red-500 bg-white text-gray-700";
+  const disabledFieldStyle = "w-64 p-2 border border-gray-300 rounded-md shadow-sm bg-gray-200 text-gray-700";
+
   return (
-    <div className="p-6 bg-white rounded-xl shadow-md">
+    <div className="p-6 bg-white rounded-xl shadow-md max-w-4xl mx-auto">
       <div className="flex justify-between mb-6">
         <button
           className={`px-4 py-2 rounded-lg font-semibold ${activeSection === 'view' ? 'bg-red-500 text-white' : 'bg-gray-200 text-gray-800'} hover:bg-red-600 hover:text-white transition-colors`}
@@ -92,217 +209,367 @@ const ManageBaseline = () => {
 
       {activeSection === 'add' ? (
         <div>
-          <h2 className="text-2xl font-semibold text-red-600 mb-6">Add New Member</h2>
-          <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-gray-700 font-medium mb-1">Employee Name</label>
-              <input
-                type="text"
-                name="employeeName"
-                value={formData.employeeName}
-                onChange={handleInputChange}
-                className="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
-                placeholder="Enter employee name"
-              />
+          <h2 className="text-2xl font-semibold text-red-600 mb-6 text-center">Baselining Details</h2>
+          <form ref={formRef} onSubmit={handleSubmit} className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-gray-700 font-medium mb-1">Employee Name</label>
+                <input
+                  type="text"
+                  name="employeeName"
+                  value={formData.employeeName}
+                  className={disabledFieldStyle}
+                  disabled
+                />
+              </div>
+              <div>
+                <label className="block text-gray-700 font-medium mb-1">Competency</label>
+                <input
+                  type="text"
+                  name="competency"
+                  value={formData.competency}
+                  className={disabledFieldStyle}
+                  disabled
+                />
+              </div>
             </div>
-            <div>
-              <label className="block text-gray-700 font-medium mb-1">Competency</label>
-              <input
-                type="text"
-                name="competency"
-                value={formData.competency}
-                onChange={handleInputChange}
-                className="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
-                placeholder="e.g., Python"
-              />
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-gray-700 font-medium mb-1">Experience</label>
+                {formData.experience.map((exp, index) => (
+                  <div key={index} className="flex items-center space-x-2 mb-2">
+                    <input
+                      type="text"
+                      value={exp.technology}
+                      onChange={(e) => handleExpChange(index, 'technology', e.target.value)}
+                      className={`${fieldStyle} w-32`}
+                      placeholder="Technology"
+                    />
+                    <input
+                      type="text"
+                      value={exp.years}
+                      onChange={(e) => handleExpChange(index, 'years', e.target.value)}
+                      className={`${fieldStyle} w-12`}
+                      placeholder="Years"
+                    />
+                    {formData.experience.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => removeExperience(index)}
+                        className="text-red-500 hover:text-red-700"
+                      >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5-4h4M4 7h16" />
+                        </svg>
+                      </button>
+                    )}
+                  </div>
+                ))}
+                <button
+                  type="button"
+                  onClick={addExperience}
+                  className="mt-2 px-3 py-1 bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors text-sm shadow-sm"
+                >
+                  Add New
+                </button>
+              </div>
+              <div>
+                <label className="block text-gray-700 font-medium mb-1">Certification</label>
+                {formData.certification.map((cert, index) => (
+                  <div key={index} className="flex items-center space-x-2 mb-2">
+                    <input
+                      type="text"
+                      value={cert.title}
+                      onChange={(e) => handleCertChange(index, 'title', e.target.value)}
+                      className={`${fieldStyle} w-32`}
+                      placeholder="Certificate Title"
+                    />
+                    <input
+                      type="text"
+                      value={cert.technology}
+                      onChange={(e) => handleCertChange(index, 'technology', e.target.value)}
+                      className={`${fieldStyle} w-12`}
+                      placeholder="Tech"
+                    />
+                    {formData.certification.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => removeCertification(index)}
+                        className="text-red-500 hover:text-red-700"
+                      >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5-4h4M4 7h16" />
+                        </svg>
+                      </button>
+                    )}
+                  </div>
+                ))}
+                <button
+                  type="button"
+                  onClick={addCertification}
+                  className="mt-2 px-3 py-1 bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors text-sm shadow-sm"
+                >
+                  Add New
+                </button>
+              </div>
             </div>
-            <div className="md:col-span-2">
-              <label className="block text-gray-700 font-medium mb-1">Total Experience</label>
-              {formData.tExp.map((exp, index) => (
-                <div key={index} className="flex items-center space-x-4 mb-2">
-                  <input
-                    type="text"
-                    value={exp.technology}
-                    onChange={(e) => handleExpChange(index, 'technology', e.target.value)}
-                    className="w-1/2 p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
-                    placeholder="Technology (e.g., Python)"
-                  />
-                  <input
-                    type="text"
-                    value={exp.years}
-                    onChange={(e) => handleExpChange(index, 'years', e.target.value)}
-                    className="w-1/4 p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
-                    placeholder="Years (e.g., 2)"
-                  />
-                  {formData.tExp.length > 1 && (
+
+            <div className="grid grid-cols-2 gap-6">
+              <div>
+                <label className="block text-gray-700 font-medium mb-1">Total Experience (Years)</label>
+                <input
+                  type="number"
+                  name="totalExperience"
+                  value={formData.totalExperience}
+                  onChange={handleInputChange}
+                  className={fieldStyle}
+                  placeholder="e.g., 5"
+                />
+              </div>
+              <div>
+                <label className="block text-gray-700 font-medium mb-1">Communication</label>
+                <select
+                  name="communication"
+                  value={formData.communication}
+                  onChange={handleInputChange}
+                  className={fieldStyle}
+                >
+                  <option value="">Select Communication Level</option>
+                  <option value="fluent">Fluent</option>
+                  <option value="medium">Medium</option>
+                  <option value="average">Average</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-gray-700 font-medium mb-1">Status</label>
+                <select
+                  name="status"
+                  value={formData.status}
+                  onChange={handleInputChange}
+                  className={fieldStyle}
+                >
+                  <option value="">Select Status</option>
+                  <option value="Pool">Pool</option>
+                  <option value="Deployed">Deployed</option>
+                  <option value="PIP">PIP</option>
+                  <option value="Hold">Hold</option>
+                </select>
+              </div>
+              <div>
+                <DropdownWithSearchAndCheckbox
+                  field="Web Framework"
+                  selectedValues={formData['Web Framework']}
+                  options={dropdownOptions['Web Framework']}
+                  onChange={handleDropdownChange}
+                  onAddNew={setModalField}
+                  isOpen={openDropdown === 'Web Framework'}
+                  setIsOpen={(isOpen) => setOpenDropdown(isOpen ? 'Web Framework' : null)}
+                />
+              </div>
+              <div>
+                <DropdownWithSearchAndCheckbox
+                  field="Data Library"
+                  selectedValues={formData['Data Library']}
+                  options={dropdownOptions['Data Library']}
+                  onChange={handleDropdownChange}
+                  onAddNew={setModalField}
+                  isOpen={openDropdown === 'Data Library'}
+                  setIsOpen={(isOpen) => setOpenDropdown(isOpen ? 'Data Library' : null)}
+                />
+              </div>
+              <div>
+                <DropdownWithSearchAndCheckbox
+                  field="Database"
+                  selectedValues={formData['Database']}
+                  options={dropdownOptions['Database']}
+                  onChange={handleDropdownChange}
+                  onAddNew={setModalField}
+                  isOpen={openDropdown === 'Database'}
+                  setIsOpen={(isOpen) => setOpenDropdown(isOpen ? 'Database' : null)}
+                />
+              </div>
+              <div>
+                <DropdownWithSearchAndCheckbox
+                  field="Frontend"
+                  selectedValues={formData['Frontend']}
+                  options={dropdownOptions['Frontend']}
+                  onChange={handleDropdownChange}
+                  onAddNew={setModalField}
+                  isOpen={openDropdown === 'Frontend'}
+                  setIsOpen={(isOpen) => setOpenDropdown(isOpen ? 'Frontend' : null)}
+                />
+              </div>
+              <div>
+                <DropdownWithSearchAndCheckbox
+                  field="Other"
+                  selectedValues={formData['Other']}
+                  options={dropdownOptions['Other']}
+                  onChange={handleDropdownChange}
+                  onAddNew={setModalField}
+                  isOpen={openDropdown === 'Other'}
+                  setIsOpen={(isOpen) => setOpenDropdown(isOpen ? 'Other' : null)}
+                />
+              </div>
+              <div>
+                <DropdownWithSearchAndCheckbox
+                  field="Cloud"
+                  selectedValues={formData['Cloud']}
+                  options={dropdownOptions['Cloud']}
+                  onChange={handleDropdownChange}
+                  onAddNew={setModalField}
+                  isOpen={openDropdown === 'Cloud'}
+                  setIsOpen={(isOpen) => setOpenDropdown(isOpen ? 'Cloud' : null)}
+                />
+              </div>
+              <div>
+                <label className="block text-gray-700 font-medium mb-1">Current Status</label>
+                <input
+                  type="text"
+                  name="currentStatus"
+                  value={formData.currentStatus}
+                  onChange={handleInputChange}
+                  className={fieldStyle}
+                  placeholder="e.g., Upskill suggestion"
+                />
+              </div>
+              <div>
+                <label className="block text-gray-700 font-medium mb-1">Feedback</label>
+                <input
+                  type="text"
+                  name="feedback"
+                  value={formData.feedback}
+                  onChange={handleInputChange}
+                  className={fieldStyle}
+                  placeholder="e.g., Comment"
+                />
+              </div>
+              <div>
+                <label className="block text-gray-700 font-medium mb-1">Opportunities</label>
+                <button
+                  type="button"
+                  onClick={() => setIsOpportunitiesOpen(!isOpportunitiesOpen)}
+                  className={`${fieldStyle} flex justify-between items-center hover:bg-gray-100`}
+                >
+                  <span>Manage Opportunities</span>
+                  <svg
+                    className={`w-4 h-4 transition-transform ${isOpportunitiesOpen ? 'rotate-180' : ''}`}
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+                {isOpportunitiesOpen && (
+                  <div className="mt-2">
+                    {formData.opportunities.map((opp, index) => (
+                      <div key={index} className="border p-3 rounded-md mb-2 shadow-sm">
+                        <div className="flex items-center justify-between">
+                          <h4 className="text-sm font-medium">Opportunity {index + 1}</h4>
+                          {formData.opportunities.length > 1 && (
+                            <button
+                              type="button"
+                              onClick={() => removeOpportunity(index)}
+                              className="text-red-500 hover:text-red-700"
+                            >
+                              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5-4h4M4 7h16" />
+                              </svg>
+                            </button>
+                          )}
+                        </div>
+                        <div className="grid grid-cols-2 gap-4 mt-2">
+                          <input
+                            type="text"
+                            value={opp.clientName}
+                            onChange={(e) => handleOpportunityChange(index, 'clientName', e.target.value)}
+                            className={`${fieldStyle} w-full`}
+                            placeholder="Client Name"
+                          />
+                          <input
+                            type="date"
+                            value={opp.dateOfInterview}
+                            onChange={(e) => handleOpportunityChange(index, 'dateOfInterview', e.target.value)}
+                            className={`${fieldStyle} w-full`}
+                          />
+                          <input
+                            type="text"
+                            value={opp.jd}
+                            onChange={(e) => handleOpportunityChange(index, 'jd', e.target.value)}
+                            className={`${fieldStyle} w-full`}
+                            placeholder="JD"
+                          />
+                          <input
+                            type="number"
+                            value={opp.totalRound}
+                            onChange={(e) => handleOpportunityChange(index, 'totalRound', e.target.value)}
+                            className={`${fieldStyle} w-full`}
+                            placeholder="Total Rounds"
+                          />
+                          <input
+                            type="number"
+                            value={opp.roundClear}
+                            onChange={(e) => handleOpportunityChange(index, 'roundClear', e.target.value)}
+                            className={`${fieldStyle} w-full`}
+                            placeholder="Rounds Cleared"
+                          />
+                          <input
+                            type="text"
+                            value={opp.result}
+                            onChange={(e) => handleOpportunityChange(index, 'result', e.target.value)}
+                            className={`${fieldStyle} w-full`}
+                            placeholder="Result"
+                          />
+                          <input
+                            type="text"
+                            value={opp.clientFeedback}
+                            onChange={(e) => handleOpportunityChange(index, 'clientFeedback', e.target.value)}
+                            className={`${fieldStyle} w-full col-span-2`}
+                            placeholder="Client Feedback"
+                          />
+                        </div>
+                      </div>
+                    ))}
                     <button
                       type="button"
-                      onClick={() => removeExperience(index)}
-                      className="text-red-500 hover:text-red-700"
+                      onClick={addOpportunity}
+                      className="mt-2 px-3 py-1 bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors text-sm shadow-sm"
                     >
-                      Remove
+                      Add Opportunity
                     </button>
-                  )}
-                </div>
-              ))}
-              <button
-                type="button"
-                onClick={addExperience}
-                className="mt-2 px-4 py-1 bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors"
-              >
-                Add New
-              </button>
+                  </div>
+                )}
+              </div>
             </div>
-            <div>
-              <label className="block text-gray-700 font-medium mb-1">Status</label>
-              <select
-                name="status"
-                value={formData.status}
-                onChange={handleInputChange}
-                className="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
-              >
-                <option value="">Select Status</option>
-                <option value="Pool">Pool</option>
-                <option value="Deployed">Deployed</option>
-                <option value="PIP">PIP</option>
-                <option value="Hold">Hold</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-gray-700 font-medium mb-1">Web Framework</label>
-              <input
-                type="text"
-                name="webFramework"
-                value={formData.webFramework}
-                onChange={handleInputChange}
-                className="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
-                placeholder="e.g., Django, DRF"
-              />
-            </div>
-            <div>
-              <label className="block text-gray-700 font-medium mb-1">Data Library</label>
-              <input
-                type="text"
-                name="dataLibrary"
-                value={formData.dataLibrary}
-                onChange={handleInputChange}
-                className="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
-                placeholder="e.g., Numpy"
-              />
-            </div>
-            <div>
-              <label className="block text-gray-700 font-medium mb-1">Database</label>
-              <input
-                type="text"
-                name="database"
-                value={formData.database}
-                onChange={handleInputChange}
-                className="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
-                placeholder="e.g., Mysql"
-              />
-            </div>
-            <div>
-              <label className="block text-gray-700 font-medium mb-1">Frontend</label>
-              <input
-                type="text"
-                name="frontend"
-                value={formData.frontend}
-                onChange={handleInputChange}
-                className="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
-                placeholder="e.g., React, Angular"
-              />
-            </div>
-            <div>
-              <label className="block text-gray-700 font-medium mb-1">Other</label>
-              <input
-                type="text"
-                name="other"
-                value={formData.other}
-                onChange={handleInputChange}
-                className="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
-                placeholder="e.g., CI/CD, GIT"
-              />
-            </div>
-            <div>
-              <label className="block text-gray-700 font-medium mb-1">Cloud</label>
-              <input
-                type="text"
-                name="cloud"
-                value={formData.cloud}
-                onChange={handleInputChange}
-                className="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
-                placeholder="e.g., AWS/Azure"
-              />
-            </div>
-            <div>
-              <label className="block text-gray-700 font-medium mb-1">Certification</label>
-              <input
-                type="text"
-                name="certification"
-                value={formData.certification}
-                onChange={handleInputChange}
-                className="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
-                placeholder="e.g., JSON"
-              />
-            </div>
-            <div>
-              <label className="block text-gray-700 font-medium mb-1">Current Status</label>
-              <input
-                type="text"
-                name="currentStatus"
-                value={formData.currentStatus}
-                onChange={handleInputChange}
-                className="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
-                placeholder="e.g., Upskill suggestion"
-              />
-            </div>
-            <div>
-              <label className="block text-gray-700 font-medium mb-1">Feedback</label>
-              <input
-                type="text"
-                name="feedback"
-                value={formData.feedback}
-                onChange={handleInputChange}
-                className="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
-                placeholder="e.g., Comment"
-              />
-            </div>
-            <div>
-              <label className="block text-gray-700 font-medium mb-1">Total Chance</label>
-              <input
-                type="text"
-                name="totalChance"
-                value={formData.totalChance}
-                onChange={handleInputChange}
-                className="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
-                placeholder="e.g., Opportunities"
-              />
-            </div>
-            <div>
-              <label className="block text-gray-700 font-medium mb-1">Additional Details</label>
-              <textarea
-                name="unnamed17"
-                value={formData.unnamed17}
-                onChange={handleInputChange}
-                className="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
-                placeholder="e.g., 1- Client, 2- Date..."
-                rows="3"
-              />
-            </div>
-            <div className="md:col-span-2">
+
+            <div className="flex justify-center">
               <button
                 type="submit"
-                className="w-full bg-red-500 text-white py-2 rounded-md hover:bg-red-600 transition-colors"
+                className="w-32 bg-red-500 text-white py-2 px-4 rounded-md hover:bg-red-600 transition-colors shadow-sm"
               >
                 Submit
               </button>
             </div>
           </form>
+
+          {modalField && (
+            <AddOptionModal
+              field={modalField}
+              options={dropdownOptions[modalField]}
+              onAddOption={addNewOption}
+              onDeleteOption={deleteOption}
+              onClose={() => setModalField(null)}
+            />
+          )}
         </div>
       ) : (
         <div>
-          <h2 className="text-2xl font-semibold text-red-600 mb-6">Baselining Details</h2>
-          <p className="text-gray-600">No baseline details available yet. Add members to see details here.</p>
+          <h2 className="text-2xl font-semibold text-red-600 mb-6 text-center">Baselining Details</h2>
+          <p className="text-gray-600 text-center">No baseline details available yet. Add members to see details here.</p>
         </div>
       )}
     </div>
