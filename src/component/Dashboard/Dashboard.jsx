@@ -59,13 +59,7 @@ const Dashboard = () => {
           <ResourcePreview />
         </div>
         
-        <div 
-          className="bg-gradient-to-br from-green-100 to-green-200 hover:from-green-200 hover:to-green-300 p-6 rounded-xl shadow-md transition-all duration-300 flex items-center cursor-pointer transform hover:-translate-y-1"
-          onClick={() => handleCardClick('/manage-trainers')}
-        >
-          <FaChalkboardTeacher className="text-4xl text-green-600 mr-4" />
-          <TrainerPreview />
-        </div>
+       
         
         <div 
           className="bg-gradient-to-br from-red-100 to-red-200 hover:from-red-200 hover:to-red-300 p-6 rounded-xl shadow-md transition-all duration-300 flex items-center cursor-pointer transform hover:-translate-y-1"
@@ -75,13 +69,7 @@ const Dashboard = () => {
           <BaselinePreview />
         </div>
         
-        <div 
-          className="bg-gradient-to-br from-purple-100 to-purple-200 hover:from-purple-200 hover:to-purple-300 p-6 rounded-xl shadow-md transition-all duration-300 flex items-center cursor-pointer transform hover:-translate-y-1"
-          onClick={() => handleCardClick('/manage-training')}
-        >
-          <FaTasks className="text-4xl text-purple-600 mr-4" />
-          <TrainingPreview />
-        </div>
+       
 
         <div 
           className="bg-gradient-to-br from-yellow-100 to-yellow-200 hover:from-yellow-200 hover:to-yellow-300 p-6 rounded-xl shadow-md transition-all duration-300 flex items-center cursor-pointer transform hover:-translate-y-1"
@@ -89,6 +77,22 @@ const Dashboard = () => {
         >
           <FaChartBar className="text-4xl text-yellow-600 mr-4" />
           <AnalyticsPreview />
+        </div>
+
+        <div 
+          className="bg-gradient-to-br from-green-100 to-green-200 hover:from-green-200 hover:to-green-300 p-6 rounded-xl shadow-md transition-all duration-300 flex items-center cursor-pointer transform hover:-translate-y-1"
+          onClick={() => handleCardClick('/manage-trainers')}
+        >
+          <FaChalkboardTeacher className="text-4xl text-green-600 mr-4" />
+          <TrainerPreview />
+        </div>
+
+        <div 
+          className="bg-gradient-to-br from-purple-100 to-purple-200 hover:from-purple-200 hover:to-purple-300 p-6 rounded-xl shadow-md transition-all duration-300 flex items-center cursor-pointer transform hover:-translate-y-1"
+          onClick={() => handleCardClick('/manage-training')}
+        >
+          <FaTasks className="text-4xl text-purple-600 mr-4" />
+          <TrainingPreview />
         </div>
       </div>
     </div>

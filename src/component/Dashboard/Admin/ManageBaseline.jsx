@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import AddOptionModal from '../../helper/OptionalModal';
 import DropdownWithSearchAndCheckbox from '../../helper/Dropdown';
+import ProfileCard from '../../helper/ProfileCard';
 
 const ManageBaseline = () => {
   const [activeSection, setActiveSection] = useState('view');
@@ -187,7 +188,7 @@ const ManageBaseline = () => {
     };
   }, []);
 
-  const fieldStyle = "w-64 p-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-red-500 bg-white text-gray-700";
+  const fieldStyle = "p-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-red-500 bg-white text-gray-700"; // Removed w-64
   const disabledFieldStyle = "w-64 p-2 border border-gray-300 rounded-md shadow-sm bg-gray-200 text-gray-700";
 
   return (
@@ -209,31 +210,15 @@ const ManageBaseline = () => {
 
       {activeSection === 'add' ? (
         <div>
-          <h2 className="text-2xl font-semibold text-red-600 mb-6 text-center">Baselining Details</h2>
-          <form ref={formRef} onSubmit={handleSubmit} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-gray-700 font-medium mb-1">Employee Name</label>
-                <input
-                  type="text"
-                  name="employeeName"
-                  value={formData.employeeName}
-                  className={disabledFieldStyle}
-                  disabled
-                />
-              </div>
-              <div>
-                <label className="block text-gray-700 font-medium mb-1">Competency</label>
-                <input
-                  type="text"
-                  name="competency"
-                  value={formData.competency}
-                  className={disabledFieldStyle}
-                  disabled
-                />
-              </div>
-            </div>
+          {/* Add ProfileCard here */}
+          <ProfileCard
+            employeeName={formData.employeeName}
+            competency={formData.competency}
+          />
 
+          {/* <h2 className="text-2xl font-semibold text-red-600 mb-6 text-center">Baselining Details</h2> */}
+          <form ref={formRef} onSubmit={handleSubmit} className="space-y-6">
+            {/* Removed Employee Name and Competency fields */}
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-gray-700 font-medium mb-1">Experience</label>
@@ -243,14 +228,14 @@ const ManageBaseline = () => {
                       type="text"
                       value={exp.technology}
                       onChange={(e) => handleExpChange(index, 'technology', e.target.value)}
-                      className={`${fieldStyle} w-32`}
+                      className={`${fieldStyle} w-64`}
                       placeholder="Technology"
                     />
                     <input
                       type="text"
                       value={exp.years}
                       onChange={(e) => handleExpChange(index, 'years', e.target.value)}
-                      className={`${fieldStyle} w-12`}
+                      className={`${fieldStyle} w-18`}
                       placeholder="Years"
                     />
                     {formData.experience.length > 1 && (
@@ -282,15 +267,15 @@ const ManageBaseline = () => {
                       type="text"
                       value={cert.title}
                       onChange={(e) => handleCertChange(index, 'title', e.target.value)}
-                      className={`${fieldStyle} w-32`}
+                      className={`${fieldStyle} w-64`}
                       placeholder="Certificate Title"
                     />
                     <input
                       type="text"
                       value={cert.technology}
                       onChange={(e) => handleCertChange(index, 'technology', e.target.value)}
-                      className={`${fieldStyle} w-12`}
-                      placeholder="Tech"
+                      className={`${fieldStyle} w-18`}
+                      placeholder="Tag"
                     />
                     {formData.certification.length > 1 && (
                       <button
@@ -323,7 +308,7 @@ const ManageBaseline = () => {
                   name="totalExperience"
                   value={formData.totalExperience}
                   onChange={handleInputChange}
-                  className={fieldStyle}
+                  className={`${fieldStyle} w-64`}
                   placeholder="e.g., 5"
                 />
               </div>
@@ -333,12 +318,12 @@ const ManageBaseline = () => {
                   name="communication"
                   value={formData.communication}
                   onChange={handleInputChange}
-                  className={fieldStyle}
+                  className={`${fieldStyle} w-64`}
                 >
                   <option value="">Select Communication Level</option>
-                  <option value="fluent">Fluent</option>
+                  <option value="fluent">Average</option>
                   <option value="medium">Medium</option>
-                  <option value="average">Average</option>
+                  <option value="average">Fluent</option>
                 </select>
               </div>
             </div>
@@ -350,7 +335,7 @@ const ManageBaseline = () => {
                   name="status"
                   value={formData.status}
                   onChange={handleInputChange}
-                  className={fieldStyle}
+                  className={`${fieldStyle} w-64`}
                 >
                   <option value="">Select Status</option>
                   <option value="Pool">Pool</option>
@@ -432,19 +417,19 @@ const ManageBaseline = () => {
                   name="currentStatus"
                   value={formData.currentStatus}
                   onChange={handleInputChange}
-                  className={fieldStyle}
+                  className={`${fieldStyle} w-64`}
                   placeholder="e.g., Upskill suggestion"
                 />
               </div>
               <div>
                 <label className="block text-gray-700 font-medium mb-1">Feedback</label>
-                <input
-                  type="text"
+                <textarea
                   name="feedback"
                   value={formData.feedback}
                   onChange={handleInputChange}
-                  className={fieldStyle}
-                  placeholder="e.g., Comment"
+                  className={`${fieldStyle} w-64`}
+                  placeholder="Add Feedback"
+                  rows="3"
                 />
               </div>
               <div>
@@ -452,7 +437,7 @@ const ManageBaseline = () => {
                 <button
                   type="button"
                   onClick={() => setIsOpportunitiesOpen(!isOpportunitiesOpen)}
-                  className={`${fieldStyle} flex justify-between items-center hover:bg-gray-100`}
+                  className={`${fieldStyle} w-64 flex justify-between items-center hover:bg-gray-100`}
                 >
                   <span>Manage Opportunities</span>
                   <svg
@@ -524,12 +509,12 @@ const ManageBaseline = () => {
                             className={`${fieldStyle} w-full`}
                             placeholder="Result"
                           />
-                          <input
-                            type="text"
+                          <textarea
                             value={opp.clientFeedback}
                             onChange={(e) => handleOpportunityChange(index, 'clientFeedback', e.target.value)}
                             className={`${fieldStyle} w-full col-span-2`}
                             placeholder="Client Feedback"
+                            rows="2"
                           />
                         </div>
                       </div>
