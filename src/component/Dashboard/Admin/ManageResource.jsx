@@ -3,9 +3,8 @@ import React, { useEffect, useState } from 'react';
 const ManageResource = () => {
 
   const [activeSection, setActiveSection] = useState('view');
-  const [roles, setRoles] = useState([]); // State for roles
-  const [competencies, setCompetencies] = useState([]); // State for competencies
-  const [statuses, setStatuses] = useState([]); // State for statuses
+  const [roles, setRoles] = useState([]);
+  const [competencies, setCompetencies] = useState([]);
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -13,14 +12,56 @@ const ManageResource = () => {
     phoneNumber: '',
     address: '',
     joiningDate: '',
+    employeeId: '',
     jobTitle: '',
     businessGroup: '',
     businessUnit: '',
     role: '',
     competency: '',
-    status: '',
   });
-  const [resources, setResources] = useState([]);
+  const [resources, setResources] = useState([{
+    firstName: 'John',
+    lastName: 'Doe',
+    email: 'john.doe@example.com',
+    phoneNumber: '+91-9876543210',
+    address: '123 Main Street, Springfield',
+    joiningDate: '2025-03-20',
+    employeeId: 'EMP123456',
+    jobTitle: 'Software Engineer',
+    businessGroup: 'Technology Solutions',
+    businessUnit: 'Development Team',
+    role: 'Frontend Developer',
+    competency: 'Advanced',
+  },
+  {
+    firstName: 'John',
+    lastName: 'Doe',
+    email: 'john.doe@example.com',
+    phoneNumber: '+91-9876543210',
+    address: '123 Main Street, Springfield',
+    joiningDate: '2025-03-20',
+    employeeId: 'EMP123456',
+    jobTitle: 'Software Engineer',
+    businessGroup: 'Technology Solutions',
+    businessUnit: 'Development Team',
+    role: 'Frontend Developer',
+    competency: 'Advanced',
+  },
+  {
+    firstName: 'John',
+    lastName: 'Doe',
+    email: 'john.doe@example.com',
+    phoneNumber: '+91-9876543210',
+    address: '123 Main Street, Springfield',
+    joiningDate: '2025-03-20',
+    employeeId: 'EMP123456',
+    jobTitle: 'Software Engineer',
+    businessGroup: 'Technology Solutions',
+    businessUnit: 'Development Team',
+    role: 'Frontend Developer',
+    competency: 'Advanced',
+  }]);
+
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -35,7 +76,7 @@ const ManageResource = () => {
   // Fetch roles, competencies, and statuses from APIs
   useEffect(() => {
     const fetchResources = async () => {
-      console.log('Fetching resources');
+      console.log('Fetching resources', resources);
       // try {
       //   const response = await fetch("API_ENDPOINT_URL"); // Replace with your API endpoint
       //   if (!response.ok) {
@@ -188,6 +229,18 @@ const ManageResource = () => {
               />
             </div>
             <div>
+              <label className="block text-gray-700 font-medium mb-1">Employee ID</label>
+              <input
+                type="text"
+                name="employeeId"
+                value={formData.employeeId}
+                onChange={handleInputChange}
+                className="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-600"
+                placeholder="Enter employee ID"
+                required
+              />
+            </div>
+            <div>
               <label className="block text-gray-700 font-medium mb-1">Job Title</label>
               <input
                 type="text"
@@ -222,10 +275,6 @@ const ManageResource = () => {
               />
             </div>
 
-            {/* Role and Skills Section */}
-            <div className="md:col-span-2">
-              <h3 className="text-lg font-medium text-gray-700 mb-2 mt-4">Role and Skills</h3>
-            </div>
             <div>
               <label className="block text-gray-700 font-medium mb-1">Role</label>
               <select
@@ -259,23 +308,6 @@ const ManageResource = () => {
                 ))}
               </select>
             </div>
-            <div>
-              <label className="block text-gray-700 font-medium mb-1">Status</label>
-              <select
-                name="status"
-                value={formData.status}
-                onChange={handleInputChange}
-                className="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-600"
-                required
-              >
-                <option value="" disabled>Select a status</option>
-                {statuses.map((status) => (
-                  <option key={status.id} value={status.id}>
-                    {status.name}
-                  </option>
-                ))}
-              </select>
-            </div>
 
             {/* Submit Button */}
             <div className="md:col-span-2 flex justify-center mt-6">
@@ -290,38 +322,46 @@ const ManageResource = () => {
         </div>
       ) : (
         <div>
-          <h2 className="text-2xl font-semibold text-blue-700 mb-6">
-            Resource Details
-          </h2>
+          <h2 className="text-2xl font-semibold text-blue-700 mb-6">Resource Details</h2>
           {resources.length > 0 ? (
-            <table className="min-w-full bg-white border">
-              <thead>
-                <tr>
-                  <th className="py-2 px-4 border-b">First Name</th>
-                  <th className="py-2 px-4 border-b">Last Name</th>
-                  <th className="py-2 px-4 border-b">Email</th>
-                  <th className="py-2 px-4 border-b">Phone Number</th>
-                  <th className="py-2 px-4 border-b">Job Title</th>
-                </tr>
-              </thead>
-              <tbody>
-                {resources.map((resource, index) => (
-                  <tr key={index} className="text-center">
-                    <td className="py-2 px-4 border-b">{resource.firstName}</td>
-                    <td className="py-2 px-4 border-b">{resource.lastName}</td>
-                    <td className="py-2 px-4 border-b">{resource.email}</td>
-                    <td className="py-2 px-4 border-b">
-                      {resource.phoneNumber}
-                    </td>
-                    <td className="py-2 px-4 border-b">{resource.jobTitle}</td>
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse">
+                <thead>
+                  <tr className="bg-blue-600 text-white">
+                    <th className="p-3 text-left font-semibold">First Name</th>
+                    <th className="p-3 text-left font-semibold">Last Name</th>
+                    <th className="p-3 text-left font-semibold">Email</th>
+                    <th className="p-3 text-left font-semibold">Phone Number</th>
+                    <th className="p-3 text-left font-semibold">Job Title</th>
+                    <th className="p-3 text-left font-semibold">Joining Date</th>
+                    <th className="p-3 text-left font-semibold">Employee ID</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {resources.map((resource, index) => (
+                    <tr
+                      key={index}
+                      className={`${index % 2 === 0 ? 'bg-gray-50' : 'bg-white'} hover:bg-gray-100 transition-colors`}
+                    >
+                      <td className="p-3 text-gray-700">{resource.firstName}</td>
+                      <td className="p-3 text-gray-700">{resource.lastName}</td>
+                      <td className="p-3 text-gray-700">{resource.email}</td>
+                      <td className="p-3 text-gray-700">{resource.phoneNumber}</td>
+                      <td className="p-3 text-gray-700">{resource.jobTitle}</td>
+                      <td className="p-3 text-gray-700">
+                        {new Date(resource.joiningDate).toLocaleDateString()}
+                      </td>
+                      <td className="p-3 text-gray-700">{resource.employeeId}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           ) : (
-            <p className="text-center text-gray-600">
-              No resource details available.
-            </p>
+            <div className="text-center text-gray-600">
+              <p>No resource details available yet.</p>
+              <p className="mt-2">Click "Add Resource" to create a new resource entry.</p>
+            </div>
           )}
         </div>
       )}
