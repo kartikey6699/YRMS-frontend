@@ -7,7 +7,20 @@ const Login = () => {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [showPassword, setShowPassword] = useState(false);
+    const [emailError, setEmailError] = useState("");
     const navigate = useNavigate();
+
+    const handleEmailChange = (e) => {
+        const inputEmail = e.target.value;
+        const yashRegex = /^[a-zA-Z0-9._%+-]+@yash\.com$/;
+
+        if (!yashRegex.test(inputEmail)) {
+            setEmailError('Please enter a valid Yash email address.');
+        } else {
+            setEmailError('');
+        }
+        setEmail(inputEmail);
+    };
 
     const handleLoginSubmit = (e) => {
         e.preventDefault();
@@ -38,11 +51,14 @@ const Login = () => {
                             type="email"
                             id="email"
                             value={email}
-                            onChange={(e) => setEmail(e.target.value)}
+                            onChange={handleEmailChange}
                             className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                             placeholder="Enter your email"
                             required
                         />
+                        {emailError && (
+                            <p className="text-red-500 text-sm mt-1">{emailError}</p>
+                        )}
                     </div>
                     <div className="mb-6 relative">
                         <label
@@ -81,7 +97,11 @@ const Login = () => {
                     </div>
                     <button
                         type="submit"
-                        className="w-full bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition duration-300"
+                        disabled={emailError || !email} // Disable if there's an error or if email is empty
+                        className={`w-full py-2 px-4 rounded-lg transition duration-300 ${emailError || !email
+                                ? 'bg-blue-500 cursor-not-allowed'
+                                : 'bg-blue-600 text-white hover:bg-blue-600 cursor-pointer'
+                            }`}
                     >
                         Login
                     </button>
@@ -89,7 +109,7 @@ const Login = () => {
                         <Link
                             to="/forgotpasswordotp"
                             className="text-black hover:underline"
-                            // className="text-black hover:underline hover:decoration-white text-sm"
+                        // className="text-black hover:underline hover:decoration-white text-sm"
                         >
                             Forgot Password?
                         </Link>
