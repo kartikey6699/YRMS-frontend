@@ -18,7 +18,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
   const menuItems = [
     { name: 'Dashboard', icon: <FaTachometerAlt />, path: '/dashboard' },
     { name: 'Resources', icon: <FaCogs />, path: '/manage-resources' },
-    { name: 'Baseline', icon: <FaChartLine />, path: '/manage-baseline' },
+    // { name: 'Baseline', icon: <FaChartLine />, path: '/manage-baseline' },
     { name: 'Analytics', icon: <FaChartBar />, path: '/analytics' },
     { name: 'Trainers', icon: <FaChalkboardTeacher />, path: '/manage-trainers' },
     { name: 'Training', icon: <FaTasks />, path: '/manage-training' },

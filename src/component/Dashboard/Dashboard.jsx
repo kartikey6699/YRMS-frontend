@@ -1,5 +1,5 @@
 import React from 'react';
-import { FaCogs, FaChalkboardTeacher, FaChartLine, FaTasks, FaChartBar } from 'react-icons/fa';
+import { FaCogs, FaChalkboardTeacher, FaTasks, FaChartBar } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 
 const Dashboard = () => {
@@ -31,7 +31,6 @@ const Dashboard = () => {
 
   const ResourcePreview = () => <span className="text-lg font-medium text-gray-800">Manage Resources</span>;
   const TrainerPreview = () => <span className="text-lg font-medium text-gray-800">Manage Trainers</span>;
-  const BaselinePreview = () => <span className="text-lg font-medium text-gray-800">Manage Baseline</span>;
   const TrainingPreview = () => <span className="text-lg font-medium text-gray-800">Assign Training</span>;
   const AnalyticsPreview = () => <span className="text-lg font-medium text-gray-800">Analytics</span>;
 
@@ -50,7 +49,7 @@ const Dashboard = () => {
       
       <div className="text-center text-3xl font-semibold mb-10 text-gray-800">Quick Actions</div>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <div 
           className="bg-gradient-to-br from-blue-100 to-blue-200 hover:from-blue-200 hover:to-blue-300 p-6 rounded-xl shadow-md transition-all duration-300 flex items-center cursor-pointer transform hover:-translate-y-1"
           onClick={() => handleCardClick('/manage-resources')}
@@ -58,18 +57,6 @@ const Dashboard = () => {
           <FaCogs className="text-4xl text-blue-600 mr-4" />
           <ResourcePreview />
         </div>
-        
-       
-        
-        <div 
-          className="bg-gradient-to-br from-red-100 to-red-200 hover:from-red-200 hover:to-red-300 p-6 rounded-xl shadow-md transition-all duration-300 flex items-center cursor-pointer transform hover:-translate-y-1"
-          onClick={() => handleCardClick('/manage-baseline')}
-        >
-          <FaChartLine className="text-4xl text-red-600 mr-4" />
-          <BaselinePreview />
-        </div>
-        
-       
 
         <div 
           className="bg-gradient-to-br from-yellow-100 to-yellow-200 hover:from-yellow-200 hover:to-yellow-300 p-6 rounded-xl shadow-md transition-all duration-300 flex items-center cursor-pointer transform hover:-translate-y-1"
