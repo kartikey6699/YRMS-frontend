@@ -18,10 +18,10 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
   const menuItems = [
     { name: 'Dashboard', icon: <FaTachometerAlt />, path: '/dashboard' },
     { name: 'Resources', icon: <FaCogs />, path: '/manage-resources' },
-    { name: 'Trainers', icon: <FaChalkboardTeacher />, path: '/manage-trainers' },
     { name: 'Baseline', icon: <FaChartLine />, path: '/manage-baseline' },
-    { name: 'Training', icon: <FaTasks />, path: '/manage-training' },
     { name: 'Analytics', icon: <FaChartBar />, path: '/analytics' },
+    { name: 'Trainers', icon: <FaChalkboardTeacher />, path: '/manage-trainers' },
+    { name: 'Training', icon: <FaTasks />, path: '/manage-training' },
   ];
 
   return (
@@ -51,7 +51,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
             className={`w-full flex items-center py-3 px-3 my-1.5 rounded-lg relative overflow-hidden
               transition-all duration-300 group
               ${location.pathname === item.path 
-                ? 'bg-gray-300 text-gray-900' 
+                ? 'bg-gray-300 text-gray-900 border-2 border-gray-500' 
                 : 'text-gray-600 hover:text-gray-900 hover:bg-gray-300'}`}
             style={{ transitionDelay: `${index * 50}ms` }}
           >
