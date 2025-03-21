@@ -1,13 +1,15 @@
 import React, { useEffect, useState } from 'react';
+import { FaChartLine, FaLightbulb } from 'react-icons/fa';
+import { useNavigate } from 'react-router-dom';
 
 const ManageResource = () => {
+  const navigate = useNavigate();
 
   const [activeSection, setActiveSection] = useState('view');
   const [roles, setRoles] = useState([]);
   const [competencies, setCompetencies] = useState([]);
   const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
+    employeeName: '',
     email: '',
     phoneNumber: '',
     address: '',
@@ -20,8 +22,7 @@ const ManageResource = () => {
     competency: '',
   });
   const [resources, setResources] = useState([{
-    firstName: 'John',
-    lastName: 'Doe',
+    employeeName: 'John Doe',
     email: 'john.doe@example.com',
     phoneNumber: '+91-9876543210',
     address: '123 Main Street, Springfield',
@@ -34,32 +35,30 @@ const ManageResource = () => {
     competency: 'Advanced',
   },
   {
-    firstName: 'John',
-    lastName: 'Doe',
-    email: 'john.doe@example.com',
-    phoneNumber: '+91-9876543210',
-    address: '123 Main Street, Springfield',
-    joiningDate: '2025-03-20',
-    employeeId: 'EMP123456',
-    jobTitle: 'Software Engineer',
+    employeeName: 'Jane Smith',
+    email: 'jane.smith@example.com',
+    phoneNumber: '+91-9876543211',
+    address: '456 Elm Street, Springfield',
+    joiningDate: '2025-04-15',
+    employeeId: 'EMP123457',
+    jobTitle: 'Backend Developer',
     businessGroup: 'Technology Solutions',
     businessUnit: 'Development Team',
-    role: 'Frontend Developer',
-    competency: 'Advanced',
+    role: 'Backend Developer',
+    competency: 'Intermediate',
   },
   {
-    firstName: 'John',
-    lastName: 'Doe',
-    email: 'john.doe@example.com',
-    phoneNumber: '+91-9876543210',
-    address: '123 Main Street, Springfield',
-    joiningDate: '2025-03-20',
-    employeeId: 'EMP123456',
-    jobTitle: 'Software Engineer',
+    employeeName: 'Alice Johnson',
+    email: 'alice.johnson@example.com',
+    phoneNumber: '+91-9876543212',
+    address: '789 Oak Street, Springfield',
+    joiningDate: '2025-05-10',
+    employeeId: 'EMP123458',
+    jobTitle: 'Project Manager',
     businessGroup: 'Technology Solutions',
-    businessUnit: 'Development Team',
-    role: 'Frontend Developer',
-    competency: 'Advanced',
+    businessUnit: 'Management Team',
+    role: 'Project Manager',
+    competency: 'Expert',
   }]);
 
 
@@ -128,6 +127,10 @@ const ManageResource = () => {
     fetchStatuses();
   }, [activeSection]);
 
+  const handleBaselineClick = (resource) => {
+    navigate('/manage-baseline', { state: { resource } });
+  };
+
   return (
     <div className="p-6 bg-white rounded-xl shadow-md">
       <div className="flex justify-between mb-6">
@@ -153,27 +156,15 @@ const ManageResource = () => {
             <div className="md:col-span-2">
               <h3 className="text-lg font-medium text-gray-700 mb-2">Personal Information</h3>
             </div>
-            <div>
-              <label className="block text-gray-700 font-medium mb-1">First Name</label>
+            <div className="md:col-span-2">
+              <label className="block text-gray-700 font-medium mb-1">Employee Name</label>
               <input
                 type="text"
-                name="firstName"
-                value={formData.firstName}
+                name="employeeName"
+                value={formData.employeeName}
                 onChange={handleInputChange}
                 className="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-600"
-                placeholder="Enter first name"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-gray-700 font-medium mb-1">Last Name</label>
-              <input
-                type="text"
-                name="lastName"
-                value={formData.lastName}
-                onChange={handleInputChange}
-                className="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-600"
-                placeholder="Enter last name"
+                placeholder="Enter employee name"
                 required
               />
             </div>
@@ -328,13 +319,13 @@ const ManageResource = () => {
               <table className="w-full border-collapse">
                 <thead>
                   <tr className="bg-blue-600 text-white">
-                    <th className="p-3 text-left font-semibold">First Name</th>
-                    <th className="p-3 text-left font-semibold">Last Name</th>
+                    <th className="p-3 text-left font-semibold">Employee ID</th>
+                    <th className="p-3 text-left font-semibold">Employee Name</th>
+                    <th className="p-3 text-left font-semibold">Joining Date</th>
+                    <th className="p-3 text-left font-semibold">Job Title</th>
                     <th className="p-3 text-left font-semibold">Email</th>
                     <th className="p-3 text-left font-semibold">Phone Number</th>
-                    <th className="p-3 text-left font-semibold">Job Title</th>
-                    <th className="p-3 text-left font-semibold">Joining Date</th>
-                    <th className="p-3 text-left font-semibold">Employee ID</th>
+                    <th className="p-3 text-left font-semibold">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -343,15 +334,33 @@ const ManageResource = () => {
                       key={index}
                       className={`${index % 2 === 0 ? 'bg-gray-50' : 'bg-white'} hover:bg-gray-100 transition-colors`}
                     >
-                      <td className="p-3 text-gray-700">{resource.firstName}</td>
-                      <td className="p-3 text-gray-700">{resource.lastName}</td>
-                      <td className="p-3 text-gray-700">{resource.email}</td>
-                      <td className="p-3 text-gray-700">{resource.phoneNumber}</td>
-                      <td className="p-3 text-gray-700">{resource.jobTitle}</td>
+                      <td className="p-3 text-gray-700">{resource.employeeId}</td>
+                      <td className="p-3 text-gray-700">{resource.employeeName}</td>
                       <td className="p-3 text-gray-700">
                         {new Date(resource.joiningDate).toLocaleDateString()}
                       </td>
-                      <td className="p-3 text-gray-700">{resource.employeeId}</td>
+                      <td className="p-3 text-gray-700">{resource.jobTitle}</td>
+                      <td className="p-3 text-gray-700">{resource.email}</td>
+                      <td className="p-3 text-gray-700">{resource.phoneNumber}</td>
+                      <td className="p-3 text-gray-700">
+                        <div className="flex space-x-2">
+                          <button 
+                            className="flex items-center justify-center w-10 h-10 bg-teal-500 text-white rounded-md hover:bg-teal-600 transition-colors relative group"
+                            onClick={() => handleBaselineClick(resource)}
+                          >
+                            <FaChartLine />
+                            <span className="absolute bottom-full mb-1 w-max px-2 py-1 bg-gray-800 text-white text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity">
+                              Baseline
+                            </span>
+                          </button>
+                          <button className="flex items-center justify-center w-10 h-10 bg-orange-500 text-white rounded-md hover:bg-orange-600 transition-colors relative group">
+                            <FaLightbulb />
+                            <span className="absolute bottom-full mb-1 w-max px-2 py-1 bg-gray-800 text-white text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity">
+                              Opportunities
+                            </span>
+                          </button>
+                        </div>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
