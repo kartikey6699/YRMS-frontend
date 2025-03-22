@@ -69,6 +69,7 @@ const ManageResource = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    console.log(formData);
     // Handle form submission
   };
 
@@ -266,7 +267,7 @@ const ManageResource = () => {
               />
             </div>
 
-            <div>
+            {/* <div>
               <label className="block text-gray-700 font-medium mb-1">Role</label>
               <select
                 name="role"
@@ -282,7 +283,7 @@ const ManageResource = () => {
                   </option>
                 ))}
               </select>
-            </div>
+            </div> */}
             <div>
               <label className="block text-gray-700 font-medium mb-1">Competency</label>
               <select
