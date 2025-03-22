@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
-// import backgroundImage from '../../assets/images/dashboard/noon.jpg';
 import backgroundImage from '../../assets/images/Profile/ProfileBg.jpg';
-import boyImage from '../../assets/images/Profile/boy.png'
+import boyImage from '../../assets/images/Profile/boy.png';
 
 const ProfileCard = ({ employeeName, competency }) => {
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -21,6 +20,9 @@ const ProfileCard = ({ employeeName, competency }) => {
     hour12: true,
   });
 
+  // Safeguard employeeName
+  const safeEmployeeName = employeeName || 'Unknown Employee';
+
   return (
     <div className="relative w-full h-48 rounded-t-xl mb-10">
       {/* Background Image */}
@@ -31,9 +33,7 @@ const ProfileCard = ({ employeeName, competency }) => {
       />
 
       {/* Content */}
-      <div
-        className="absolute top-0 left-0 w-full h-full flex items-center p-6"
-      >
+      <div className="absolute top-0 left-0 w-full h-full flex items-center p-6">
         {/* Avatar */}
         <div className="relative">
           <img
@@ -46,14 +46,14 @@ const ProfileCard = ({ employeeName, competency }) => {
         {/* Employee Details */}
         <div className="ml-6 text-white">
           <h2 className="text-2xl font-semibold flex items-center">
-            {employeeName}
+            {safeEmployeeName}
           </h2>
           <p className="text-sm">Software Engineer</p>
           <p className="text-sm">Business Unit 5 (BG4-BU5)</p>
           <p className="text-sm">INDORE-YASH IT PARK-SC-DC (104)</p>
           <p className="text-sm">Local time: {formattedTime}</p>
           <p className="text-sm">Cell Phone: (91) 9999988888</p>
-          <p className="text-sm">{`${employeeName.toLowerCase().replace(' ', '.')}@yash.com`}</p>
+          <p className="text-sm">{`${safeEmployeeName.toLowerCase().replace(' ', '.')}@yash.com`}</p>
         </div>
       </div>
     </div>
