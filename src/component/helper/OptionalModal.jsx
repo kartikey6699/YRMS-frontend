@@ -6,16 +6,16 @@ const AddOptionModal = ({ field, options, onAddOption, onDeleteOption, onClose }
   const handleAdd = () => {
     if (newOption.trim() && !options.includes(newOption)) {
       if (field === 'skillCategories') {
-        onAddOption(newOption); // Pass only the new category name
+        onAddOption(newOption);
       } else {
-        onAddOption(field, newOption); // Pass field and new tech for technologies
+        onAddOption(field, newOption);
       }
       setNewOption('');
     }
   };
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center z-20">
+    <div className="fixed inset-0 flex items-center justify-center z-60"> {/* Increased z-index */}
       <div className="bg-white p-4 rounded-lg shadow-lg w-80 max-h-[80vh] flex flex-col">
         <h3 className="text-lg font-semibold text-gray-800 mb-3">
           {field === 'skillCategories' ? 'Add New Skill Category' : `Add New ${field}`}
