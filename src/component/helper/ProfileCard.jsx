@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import backgroundImage from '../../assets/images/Profile/ProfileBg.jpg';
+import backgroundImage from '../../assets/images/Profile/ProfileBg2.jpg';
 import boyImage from '../../assets/images/Profile/boy.png';
 
 const ProfileCard = ({ employeeName, competency }) => {
