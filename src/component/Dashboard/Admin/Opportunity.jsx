@@ -20,7 +20,7 @@ const Opportunities = () => {
       jd: 'Senior Frontend Developer with 5+ years of React experience',
       total_rounds: 3,
       cleared_rounds: 3,
-      final_result: 'Passed',
+      final_result: 'Cleared',
       client_feedback: 'Excellent technical skills and communication'
     },
     {
@@ -30,7 +30,7 @@ const Opportunities = () => {
       jd: 'Full Stack Developer with Node.js and React',
       total_rounds: 4,
       cleared_rounds: 2,
-      final_result: 'Failed',
+      final_result: 'Rejected',
       client_feedback: 'Strong frontend skills but needs more backend experience'
     },
     {
@@ -40,7 +40,7 @@ const Opportunities = () => {
       jd: 'React Native Mobile Developer',
       total_rounds: 2,
       cleared_rounds: 2,
-      final_result: 'Passed',
+      final_result: 'Cleared',
       client_feedback: 'Perfect fit for our mobile team'
     },
     {
@@ -50,7 +50,7 @@ const Opportunities = () => {
       jd: 'Data Visualization Specialist',
       total_rounds: 3,
       cleared_rounds: 1,
-      final_result: 'Failed',
+      final_result: 'Rejected',
       client_feedback: 'Good technical skills but lacking in data visualization experience'
     },
     {
@@ -78,6 +78,7 @@ const Opportunities = () => {
   const [showForm, setShowForm] = useState(false);
   const [selectedOpportunity, setSelectedOpportunity] = useState(null);
   const [isPopupOpen, setIsPopupOpen] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
   
   // New state for search and filter
   const [searchTerm, setSearchTerm] = useState('');
@@ -98,6 +99,18 @@ const Opportunities = () => {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
+
+    if (name === 'cleared_rounds') {
+      if (!newOpportunity.total_rounds) {
+        setErrorMessage('Please enter total rounds first.');
+        return;
+      } else if (parseInt(value) > parseInt(newOpportunity.total_rounds)) {
+        setErrorMessage('Cleared rounds cannot be greater than total rounds.');
+        return;
+      }
+    }
+
+    setErrorMessage('');
     setNewOpportunity((prev) => ({ ...prev, [name]: value }));
   };
 
@@ -142,14 +155,14 @@ const Opportunities = () => {
 
   const getStatusStyles = (status) => {
     switch(status) {
-      case 'Passed':
+      case 'Cleared':
         return {
           bg: 'bg-green-100',
           text: 'text-green-800',
           border: 'border-green-700',
           icon: <FaCheck className="mr-1" />
         };
-      case 'Failed':
+      case 'Rejected':
         return {
           bg: 'bg-red-100',
           text: 'text-red-800',
@@ -215,24 +228,24 @@ const Opportunities = () => {
               All
             </button>
             <button
-              onClick={() => setStatusFilter('Passed')}
+              onClick={() => setStatusFilter('Cleared')}
               className={`px-3 py-1 text-xs font-medium rounded-full transition-colors duration-200 flex items-center ${
-                statusFilter === 'Passed' 
+                statusFilter === 'Cleared' 
                   ? 'bg-green-600 text-white' 
                   : 'bg-green-100 text-green-800 hover:bg-green-200'
               }`}
             >
-              <FaCheck className="mr-1" /> Passed
+              <FaCheck className="mr-1" /> Cleared
             </button>
             <button
-              onClick={() => setStatusFilter('Failed')}
+              onClick={() => setStatusFilter('Rejected')}
               className={`px-3 py-1 text-xs font-medium rounded-full transition-colors duration-200 flex items-center ${
-                statusFilter === 'Failed' 
+                statusFilter === 'Rejected' 
                   ? 'bg-red-600 text-white' 
                   : 'bg-red-100 text-red-800 hover:bg-red-200'
               }`}
             >
-              <FaTimes className="mr-1" /> Failed
+              <FaTimes className="mr-1" /> Rejected
             </button>
             <button
               onClick={() => setStatusFilter('Pending')}
@@ -388,123 +401,237 @@ const Opportunities = () => {
       {/* Add Opportunity Form Popup */}
       {showForm && (
         <div className={`fixed inset-0 bg-gray-900/30 backdrop-blur-sm flex items-center justify-center p-4 z-50 transition-opacity duration-300 ${showForm ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
-          <div className={`bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto transform transition-all duration-300 ${showForm ? 'scale-100' : 'scale-95'}`}>
-            <div className="bg-gradient-to-r from-blue-500 to-purple-600 p-6 rounded-t-xl">
-              <div className="flex justify-between items-center">
-                <h3 className="text-xl font-bold text-white">Add New Opportunity</h3>
-                <button 
-                  onClick={closeAddForm}
-                  className="text-white hover:text-gray-200 text-xl cursor-pointer transition-colors duration-200"
-                >
-                  ✕
-                </button>
+          <div className={`bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto transform transition-all duration-300 ${showForm ? 'scale-100' : 'scale-95'} overflow-hidden`}>
+            {/* Form Header with Gradient */}
+            <div className="bg-gradient-to-r from-indigo-600 to-purple-600 p-6 relative">
+              <div className="absolute top-0 left-0 w-full h-full opacity-10">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-white rounded-full transform translate-x-16 -translate-y-16"></div>
+                <div className="absolute bottom-0 left-0 w-40 h-40 bg-white rounded-full transform -translate-x-20 translate-y-20"></div>
+              </div>
+              <div className="relative z-10">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <h3 className="text-2xl font-bold text-white">Add New Opportunity for {resource.employeeName}</h3>
+                    <p className="text-indigo-100 mt-1">Add details about the interview process</p>
+                  </div>
+                  <button 
+                    onClick={closeAddForm}
+                    className="text-white hover:text-indigo-200 text-xl cursor-pointer transition-colors duration-200 p-1 rounded-full hover:bg-white/10"
+                  >
+                    <FaTimes className="w-5 h-5" />
+                  </button>
+                </div>
+                {/* <div className="flex mt-6 space-x-2">
+                  <div className="h-1 w-8 bg-white rounded-full"></div>
+                  <div className="h-1 w-8 bg-white/30 rounded-full"></div>
+                  <div className="h-1 w-8 bg-white/30 rounded-full"></div>
+                </div> */}
               </div>
             </div>
             
-            <form onSubmit={handleAddOpportunity} className="p-6 space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Client Name*</label>
-                  <input
-                    type="text"
-                    name="client_name"
-                    value={newOpportunity.client_name}
-                    onChange={handleInputChange}
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                    placeholder="e.g. Tech Solutions Inc."
-                    required
-                  />
+            {/* Form Content */}
+            <form onSubmit={handleAddOpportunity} className="p-6 space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Client Name Field */}
+                <div className="relative group">
+                  <label className="block text-sm font-medium text-gray-700 mb-1 ml-1">Client Name</label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      name="client_name"
+                      value={newOpportunity.client_name}
+                      onChange={handleInputChange}
+                      className="w-full p-4 pl-12 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200 bg-gray-50 group-hover:bg-white"
+                      placeholder="Tech Solutions Inc."
+                      required
+                    />
+                    <div className="absolute left-4 top-1/2 transform -translate-y-1/2 text-indigo-500">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                      </svg>
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Interview Date*</label>
-                  <input
-                    type="date"
-                    name="date_of_interview"
-                    value={newOpportunity.date_of_interview}
-                    onChange={handleInputChange}
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                    required
-                  />
+                
+                {/* Interview Date Field */}
+                <div className="relative group">
+                  <label className="block text-sm font-medium text-gray-700 mb-1 ml-1">Interview Date</label>
+                  <div className="relative">
+                    <input
+                      type="date"
+                      name="date_of_interview"
+                      value={newOpportunity.date_of_interview}
+                      onChange={handleInputChange}
+                      className="w-full p-4 pl-12 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200 bg-gray-50 group-hover:bg-white appearance-none"
+                      required
+                    />
+                    <div className="absolute left-4 top-1/2 transform -translate-y-1/2 text-indigo-500">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                    </div>
+                  </div>
                 </div>
+                
+                {/* Job Description Field */}
+                <div className="md:col-span-2 relative group">
+                  <label className="block text-sm font-medium text-gray-700 mb-1 ml-1">Job Description</label>
+                  <div className="relative">
+                    <textarea
+                      name="jd"
+                      value={newOpportunity.jd}
+                      onChange={handleInputChange}
+                      className="w-full p-4 pl-12 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200 bg-gray-50 group-hover:bg-white min-h-[120px]"
+                      placeholder="Describe the position requirements and responsibilities..."
+                      required
+                    />
+                    <div className="absolute left-4 top-4 text-indigo-500">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Interview Rounds Section */}
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Job Description*</label>
-                  <textarea
-                    name="jd"
-                    value={newOpportunity.jd}
-                    onChange={handleInputChange}
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                    placeholder="Describe the position requirements"
-                    rows="3"
-                    required
-                  />
+                  <h4 className="text-sm font-medium text-gray-700 mb-3 ml-1">Interview Process</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Total Rounds */}
+                    <div className="bg-indigo-50 p-4 rounded-xl border border-indigo-100">
+                      <label className="block text-sm font-medium text-indigo-800 mb-2">Total Rounds</label>
+                      <div className="flex items-center">
+                        <input
+                          type="number"
+                          name="total_rounds"
+                          value={newOpportunity.total_rounds}
+                          onChange={handleInputChange}
+                          className="w-20 p-3 border border-indigo-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white text-center text-indigo-800 font-bold"
+                          placeholder="0"
+                          required
+                          min="1"
+                        />
+                        <span className="ml-3 text-indigo-600">interview rounds</span>
+                      </div>
+                    </div>
+                    
+                    {/* Cleared Rounds */}
+                    <div className="bg-indigo-50 p-4 rounded-xl border border-indigo-100">
+                      <label className="block text-sm font-medium text-indigo-800 mb-2">Cleared Rounds</label>
+                      <div className="flex items-center">
+                        <input
+                          type="number"
+                          name="cleared_rounds"
+                          value={newOpportunity.cleared_rounds}
+                          onChange={handleInputChange}
+                          className="w-20 p-3 border border-indigo-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white text-center text-indigo-800 font-bold"
+                          placeholder="0"
+                          required
+                          min="0"
+                          max={newOpportunity.total_rounds || 10}
+                        />
+                        <span className="ml-3 text-indigo-600">rounds passed</span>
+                      </div>
+                      {errorMessage && name === 'cleared_rounds' && (
+                        <p className="text-red-500 text-sm mt-2">{errorMessage}</p>
+                      )}
+                    </div>
+                  </div>
+                  
+                  {/* Visual Progress Indicator */}
+                  {newOpportunity.total_rounds > 0 && (
+                    <div className="mt-4">
+                      <div className="flex justify-between mb-1">
+                        <span className="text-xs font-medium text-indigo-700">Progress</span>
+                        <span className="text-xs font-medium text-indigo-700">
+                          {Math.round((newOpportunity.cleared_rounds / newOpportunity.total_rounds) * 100)}%
+                        </span>
+                      </div>
+                      <div className="w-full bg-indigo-100 rounded-full h-2.5">
+                        <div 
+                          className="bg-gradient-to-r from-indigo-400 to-purple-500 h-2.5 rounded-full" 
+                          style={{ 
+                            width: `${Math.min(100, (newOpportunity.cleared_rounds / newOpportunity.total_rounds) * 100)}%`,
+                            transition: 'width 0.3s ease'
+                          }}
+                        ></div>
+                      </div>
+                    </div>
+                  )}
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Total Rounds*</label>
-                  <input
-                    type="number"
-                    name="total_rounds"
-                    value={newOpportunity.total_rounds}
-                    onChange={handleInputChange}
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                    placeholder="e.g. 3"
-                    required
-                    min="1"
-                  />
+                
+                {/* Final Result Field */}
+                <div className="relative group">
+                  <label className="block text-sm font-medium text-gray-700 mb-1 ml-1">Final Result</label>
+                  <div className="relative">
+                    <select
+                      name="final_result"
+                      value={newOpportunity.final_result}
+                      onChange={handleInputChange}
+                      className="w-full p-4 pl-12 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200 bg-gray-50 group-hover:bg-white appearance-none"
+                      required
+                    >
+                      <option value="Pending">Pending</option>
+                      <option value="Cleared">Cleared</option>
+                      <option value="Rejected">Rejected</option>
+                    </select>
+                    <div className="absolute left-4 top-1/2 transform -translate-y-1/2 text-indigo-500">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Cleared Rounds*</label>
-                  <input
-                    type="number"
-                    name="cleared_rounds"
-                    value={newOpportunity.cleared_rounds}
-                    onChange={handleInputChange}
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                    placeholder="e.g. 2"
-                    required
-                    min="0"
-                    max={newOpportunity.total_rounds || 10}
-                  />
+                
+                {/* Status Badge Preview */}
+                <div className="flex items-end">
+                  <div className="w-full">
+                    <label className="block text-sm font-medium text-gray-700 mb-1 ml-1">Status Preview</label>
+                    <div className={`inline-flex items-center px-4 py-2 rounded-full text-sm font-medium border-2
+                      ${getStatusStyles(newOpportunity.final_result).bg} 
+                      ${getStatusStyles(newOpportunity.final_result).text} 
+                      ${getStatusStyles(newOpportunity.final_result).border}`}
+                    >
+                      {getStatusStyles(newOpportunity.final_result).icon}
+                      {newOpportunity.final_result}
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Final Result*</label>
-                  <select
-                    name="final_result"
-                    value={newOpportunity.final_result}
-                    onChange={handleInputChange}
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                    required
-                  >
-                    <option value="Pending">Pending</option>
-                    <option value="Passed">Passed</option>
-                    <option value="Failed">Failed</option>
-                  </select>
-                </div>
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Client Feedback</label>
-                  <textarea
-                    name="client_feedback"
-                    value={newOpportunity.client_feedback}
-                    onChange={handleInputChange}
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                    placeholder="Any specific feedback from client"
-                    rows="2"
-                  />
+                
+                {/* Client Feedback Field */}
+                <div className="md:col-span-2 relative group">
+                  <label className="block text-sm font-medium text-gray-700 mb-1 ml-1">Client Feedback</label>
+                  <div className="relative">
+                    <textarea
+                      name="client_feedback"
+                      value={newOpportunity.client_feedback}
+                      onChange={handleInputChange}
+                      className="w-full p-4 pl-12 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200 bg-gray-50 group-hover:bg-white min-h-[100px]"
+                      placeholder="Any specific feedback from the client..."
+                    />
+                    <div className="absolute left-4 top-4 text-indigo-500">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+                      </svg>
+                    </div>
+                  </div>
                 </div>
               </div>
               
-              <div className="flex justify-end space-x-4 pt-6">
+              {/* Form Actions */}
+              <div className="flex justify-end space-x-4 pt-6 border-t border-gray-100">
                 <button
                   type="button"
                   onClick={closeAddForm}
-                  className="px-6 py-3 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-all duration-200 font-medium cursor-pointer"
+                  className="px-6 py-3 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-all duration-200 font-medium cursor-pointer flex items-center shadow-sm hover:shadow-md"
                 >
-                  Cancel
+                  <FaTimes className="mr-2" /> Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-200 font-medium flex items-center cursor-pointer hover:shadow-md"
+                  className="px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl hover:from-indigo-700 hover:to-purple-700 transition-all duration-200 font-medium flex items-center cursor-pointer shadow-lg hover:shadow-xl"
                 >
-                  <FaPlus className="mr-2" /> Add Opportunity
+                  Save Opportunity
                 </button>
               </div>
             </form>
