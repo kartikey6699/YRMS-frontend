@@ -281,7 +281,9 @@ const ManageResource = () => {
         </div>
       ) : (
         <div>
-          <h2 className="text-3xl font-bold text-blue-800 mb-6">Resource Details</h2>
+          <h2 className="text-3xl font-bold text-indigo-800 mb-6">
+            Resource Details
+          </h2>
           {resources.length > 0 ? (
             <div className="overflow-x-auto rounded-lg shadow-lg">
               <table className="w-full border-collapse">
