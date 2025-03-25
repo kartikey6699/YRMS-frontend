@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import ProfileCard from "../../helper/ProfileCard";
-import { PlusIcon } from "@heroicons/react/24/solid";
+import { FaArrowLeft, FaInfoCircle, FaTrash } from "react-icons/fa";
 import { BaselineHistories } from "./BaselineHistory";
 import AddOptionModal from "../../helper/OptionalModal";
 
@@ -13,6 +13,8 @@ const ManageBaseline = () => {
   const [activeSection, setActiveSection] = useState("view");
   const [modalField, setModalField] = useState(null);
   const [baselineHistories, setBaselineHistories] = useState([]);
+  const [showForm, setShowForm] = useState(false);
+  const [formStep, setFormStep] = useState(1);
 
   const [formData, setFormData] = useState({
     employeeName: resource.employeeName || "",
@@ -20,7 +22,7 @@ const ManageBaseline = () => {
     position: resource.jobTitle || "",
     phone: resource.phoneNumber || "",
     competency: resource.competency || "",
-    gender: "",
+    gender: resource.gender || "",
     experience: [{ technology: "", years: "" }],
     totalExperience: "",
     communication: "",
@@ -29,7 +31,7 @@ const ManageBaseline = () => {
     certification: [{ title: "", technology: "" }],
     currentStatus: "",
     feedback: "",
-    opportunities: [],
+    totalRating: "",
   });
 
   const [dropdownOptions, setDropdownOptions] = useState({
@@ -135,26 +137,10 @@ const ManageBaseline = () => {
     setModalField(null);
   };
 
-  const deleteTechnology = (category, option) => {
-    setDropdownOptions((prev) => ({
-      ...prev,
-      technologies: {
-        ...prev.technologies,
-        [category]: prev.technologies[category].filter((opt) => opt !== option),
-      },
-    }));
-    setFormData((prev) => ({
-      ...prev,
-      techSkills: prev.techSkills.map((skill) =>
-        skill.category === category && skill.technology === option ? { ...skill, technology: "" } : skill
-      ),
-    }));
-  };
-
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!formData.employeeName || !formData.competency) {
-      alert("Employee information is missing");
+    if (!formData.employeeName || !formData.communication || !formData.feedback) {
+      alert("Required fields are missing");
       return;
     }
     const newHistory = {
@@ -165,10 +151,10 @@ const ManageBaseline = () => {
         technology: skill.technology,
         rating: parseInt(skill.rating) || 0,
       })),
+      totalRating: parseInt(formData.totalRating) || 0,
       timestamp: new Date().toISOString(),
     };
     setBaselineHistories((prev) => [...prev, newHistory]);
-    console.log("Submitted Data:", JSON.stringify(formData, null, 2));
     setFormData({
       ...formData,
       experience: [{ technology: "", years: "" }],
@@ -179,16 +165,24 @@ const ManageBaseline = () => {
       certification: [{ title: "", technology: "" }],
       currentStatus: "",
       feedback: "",
+      totalRating: "",
     });
+    setShowForm(false);
+    setFormStep(1);
     setActiveSection("view");
   };
 
-  const handleBackToResource = () => {
-    navigate("/manage-resources");
+  const openAddForm = () => {
+    setShowForm(true);
   };
 
-  const fieldStyle =
-    "p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 transition-colors w-full";
+  const closeAddForm = () => {
+    setShowForm(false);
+    setFormStep(1);
+  };
+
+  const nextStep = () => setFormStep(2);
+  const prevStep = () => setFormStep(1);
 
   const CategoryDropdown = ({ index, selectedCategory, onChange, field, categoryForTech }) => {
     const [isOpen, setIsOpen] = useState(false);
@@ -234,7 +228,7 @@ const ManageBaseline = () => {
         <button
           type="button"
           onClick={() => setIsOpen(!isOpen)}
-          className={`${fieldStyle} w-full text-left flex justify-between items-center bg-white text-gray-700`}
+          className="p-3 border border-gray-300 rounded-lg w-full text-left flex justify-between items-center bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
           <span>{selectedCategory || `Select ${field === "category" ? "Category" : "Technology"}`}</span>
           <svg
@@ -284,286 +278,356 @@ const ManageBaseline = () => {
   };
 
   return (
-    <div className="p-6 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl shadow-lg relative">
-      <div className="flex justify-between mb-6">
-        <button
-          className="px-6 py-3 rounded-lg font-semibold text-lg bg-gradient-to-r from-gray-600 to-gray-800 text-white hover:from-gray-700 hover:to-gray-900 transition-all transform hover:scale-105"
-          onClick={handleBackToResource}
-        >
-          Back to Resource
-        </button>
-        <div className="flex space-x-4">
-          {activeSection !== "view" && (
-            <button
-              className="px-6 py-3 rounded-lg font-semibold text-lg bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 transition-all transform hover:scale-105"
-              onClick={() => setActiveSection("view")}
-            >
-              View Baseline Histories
-            </button>
-          )}
-        </div>
-      </div>
+    <div className="p-6 bg-gradient-to-b from-blue-50 to-purple-50 min-h-screen">
+      <button
+        onClick={() => navigate("/manage-resources")}
+        className="flex items-center mb-6 text-blue-600 hover:text-blue-800 transition-colors duration-200 cursor-pointer"
+      >
+        <FaArrowLeft className="mr-2" /> Back to Resources
+      </button>
 
-      {/* Floating Plus Icon for Adding Baseline */}
+      <ProfileCard
+        employeeName={formData.employeeName}
+        competency={formData.competency}
+        gender={formData.gender}
+      />
+
+      <h2 className="text-3xl font-bold text-blue-800 mb-6">
+        Baseline Management for {formData.employeeName}
+      </h2>
+
       {activeSection === "view" && (
-        <button
-          onClick={() => setActiveSection("add")}
-          className="fixed bottom-8 right-8 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-full p-4 shadow-lg hover:from-blue-700 hover:to-purple-700 transition-all transform hover:scale-110 z-50"
-          title="Add New Baseline"
-        >
-          <PlusIcon className="w-8 h-8" />
-        </button>
-      )}
-
-      {activeSection === "add" ? (
-        <div>
-          <ProfileCard
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-10">
+          <BaselineHistories
+            histories={baselineHistories}
             employeeName={formData.employeeName}
             competency={formData.competency}
             gender={formData.gender}
           />
-          <form ref={formRef} onSubmit={handleSubmit} className="space-y-6">
-            <div className="grid grid-cols-2 gap-6">
-              <div>
-                <label className="block text-gray-700 font-medium mb-2">Experience</label>
-                {formData.experience.map((exp, index) => (
-                  <div key={index} className="flex items-center space-x-2 mb-2">
-                    <input
-                      type="text"
-                      value={exp.technology}
-                      onChange={(e) => handleExpChange(index, "technology", e.target.value)}
-                      className={fieldStyle}
-                      placeholder="Technology"
-                    />
-                    <input
-                      type="text"
-                      value={exp.years}
-                      onChange={(e) => handleExpChange(index, "years", e.target.value)}
-                      className={`${fieldStyle} w-1/4`}
-                      placeholder="Years"
-                    />
-                    {formData.experience.length > 1 && (
-                      <button
-                        type="button"
-                        onClick={() => removeExperience(index)}
-                        className="text-blue-500 hover:text-blue-700"
-                      >
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5-4h4M4 7h16" />
-                        </svg>
-                      </button>
-                    )}
-                  </div>
-                ))}
-                <button
-                  type="button"
-                  onClick={addExperience}
-                  className="mt-2 px-3 py-1 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-md hover:from-blue-700 hover:to-purple-700 transition-colors text-sm shadow-sm"
-                >
-                  Add New
-                </button>
+          <div
+            onClick={openAddForm}
+            className="rounded-xl shadow-lg border-2 border-dashed border-gray-300 bg-gradient-to-br from-blue-50 to-purple-50 hover:from-blue-100 hover:to-purple-100 flex items-center justify-center cursor-pointer transition-all duration-300 h-48 hover:shadow-xl hover:translate-y-[-4px]"
+          >
+            <div className="text-center p-4">
+              <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center shadow-md mx-auto mb-3 transition-transform duration-200 hover:scale-110">
+                <FaInfoCircle className="text-blue-500 text-xl" />
               </div>
-              <div>
-                <label className="block text-gray-700 font-medium mb-2">Certification</label>
-                {formData.certification.map((cert, index) => (
-                  <div key={index} className="flex items-center space-x-2 mb-2">
-                    <input
-                      type="text"
-                      value={cert.title}
-                      onChange={(e) => handleCertChange(index, "title", e.target.value)}
-                      className={fieldStyle}
-                      placeholder="Certificate Title"
-                    />
-                    <input
-                      type="text"
-                      value={cert.technology}
-                      onChange={(e) => handleCertChange(index, "technology", e.target.value)}
-                      className={`${fieldStyle} w-1/4`}
-                      placeholder="Tag"
-                    />
-                    {formData.certification.length > 1 && (
-                      <button
-                        type="button"
-                        onClick={() => removeCertification(index)}
-                        className="text-blue-500 hover:text-blue-700"
-                      >
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5-4h4M4 7h16" />
-                        </svg>
-                      </button>
-                    )}
-                  </div>
-                ))}
+              <p className="text-blue-600 font-medium">Create New Baseline</p>
+              <p className="text-gray-500 text-sm mt-1">Click to add a new baseline</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showForm && (
+        <div
+          className={`fixed inset-0 bg-gray-900/30 backdrop-blur-sm flex items-center justify-center p-4 z-50 transition-opacity duration-300 ${
+            showForm ? "opacity-100" : "opacity-0 pointer-events-none"
+          }`}
+        >
+          <div
+            className={`bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto transform transition-all duration-300 ${
+              showForm ? "scale-100" : "scale-95"
+            }`}
+          >
+            <div className="bg-gradient-to-r from-blue-500 to-purple-600 p-6 rounded-t-xl">
+              <div className="flex justify-between items-center">
+                <h3 className="text-xl font-bold text-white">Create New Baseline (Step {formStep} of 2)</h3>
                 <button
-                  type="button"
-                  onClick={addCertification}
-                  className="mt-2 px-3 py-1 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-md hover:from-blue-700 hover:to-purple-700 transition-colors text-sm shadow-sm"
+                  onClick={closeAddForm}
+                  className="text-white hover:text-gray-200 text-xl cursor-pointer transition-colors duration-200"
                 >
-                  Add New
+                  ✕
                 </button>
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-6">
-              <div>
-                <label className="block text-gray-700 font-medium mb-2">Total Experience (Years)</label>
-                <input
-                  type="number"
-                  name="totalExperience"
-                  value={formData.totalExperience}
-                  onChange={handleInputChange}
-                  className={fieldStyle}
-                  placeholder="e.g., 5"
-                />
-              </div>
-              <div>
-                <label className="block text-gray-700 font-medium mb-2">Communication</label>
-                <select
-                  name="communication"
-                  value={formData.communication}
-                  onChange={handleInputChange}
-                  className={fieldStyle}
-                >
-                  <option value="">Select Communication Level</option>
-                  <option value="Average">Average</option>
-                  <option value="Medium">Medium</option>
-                  <option value="Fluent">Fluent</option>
-                </select>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-6">
-              <div>
-                <label className="block text-gray-700 font-medium mb-2">Status</label>
-                <select
-                  name="status"
-                  value={formData.status}
-                  onChange={handleInputChange}
-                  className={fieldStyle}
-                >
-                  <option value="">Select Status</option>
-                  <option value="Pool">Pool</option>
-                  <option value="Deployed">Deployed</option>
-                  <option value="PIP">PIP</option>
-                  <option value="Hold">Hold</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-gray-700 font-medium mb-2">Current Status</label>
-                <input
-                  type="text"
-                  name="currentStatus"
-                  value={formData.currentStatus}
-                  onChange={handleInputChange}
-                  className={fieldStyle}
-                  placeholder="e.g., Upskill suggestion"
-                />
-              </div>
-
-              <div className="col-span-2">
-                <label className="block text-gray-700 font-medium mb-2">Tech Skills</label>
-                <div className="space-y-3">
-                  {formData.techSkills.map((skill, index) => (
-                    <div
-                      key={index}
-                      className="flex items-center space-x-3 bg-white p-3 rounded-lg shadow-sm border border-gray-200"
-                    >
-                      <CategoryDropdown
-                        index={index}
-                        selectedCategory={skill.category}
-                        onChange={handleTechSkillChange}
-                        field="category"
-                        categoryForTech={skill.category}
-                      />
-                      {skill.category && (
-                        <CategoryDropdown
-                          index={index}
-                          selectedCategory={skill.technology}
-                          onChange={handleTechSkillChange}
-                          field="technology"
-                          categoryForTech={skill.category}
+            <form onSubmit={handleSubmit} className="p-6 space-y-4">
+              {formStep === 1 && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Experience</label>
+                    {formData.experience.map((exp, index) => (
+                      <div key={index} className="flex items-center space-x-2 mb-2">
+                        <input
+                          type="text"
+                          value={exp.technology}
+                          onChange={(e) => handleExpChange(index, "technology", e.target.value)}
+                          className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                          placeholder="Technology"
                         />
-                      )}
-                      {skill.technology && skill.technology !== "add-tech" && (
-                        <div className="flex items-center space-x-2">
-                          <input
-                            type="number"
-                            value={skill.rating}
-                            onChange={(e) => handleTechSkillChange(index, "rating", e.target.value)}
-                            className="w-16 p-2 text-center bg-blue-50 border border-blue-200 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm font-medium text-blue-800 appearance-none"
-                            placeholder="0-5"
-                            min="0"
-                            max="5"
+                        <input
+                          type="text"
+                          value={exp.years}
+                          onChange={(e) => handleExpChange(index, "years", e.target.value)}
+                          className="w-1/4 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                          placeholder="Years"
+                        />
+                        {formData.experience.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() => removeExperience(index)}
+                            className="text-red-500 hover:text-red-700"
+                          >
+                            <FaTrash className="w-4 h-4" />
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                    <button
+                      type="button"
+                      onClick={addExperience}
+                      className="mt-2 px-3 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors duration-200 text-sm"
+                    >
+                      Add Experience
+                    </button>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Certification</label>
+                    {formData.certification.map((cert, index) => (
+                      <div key={index} className="flex items-center space-x-2 mb-2">
+                        <input
+                          type="text"
+                          value={cert.title}
+                          onChange={(e) => handleCertChange(index, "title", e.target.value)}
+                          className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                          placeholder="Certificate Title"
+                        />
+                        <input
+                          type="text"
+                          value={cert.technology}
+                          onChange={(e) => handleCertChange(index, "technology", e.target.value)}
+                          className="w-1/4 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                          placeholder="Tag"
+                        />
+                        {formData.certification.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() => removeCertification(index)}
+                            className="text-red-500 hover:text-red-700"
+                          >
+                            <FaTrash className="w-4 h-4" />
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                    <button
+                      type="button"
+                      onClick={addCertification}
+                      className="mt-2 px-3 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors duration-200 text-sm"
+                    >
+                      Add Certification
+                    </button>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Total Experience (Years)</label>
+                    <input
+                      type="number"
+                      name="totalExperience"
+                      value={formData.totalExperience}
+                      onChange={handleInputChange}
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                      placeholder="e.g., 5"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Communication*</label>
+                    <select
+                      name="communication"
+                      value={formData.communication}
+                      onChange={handleInputChange}
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                      required
+                    >
+                      <option value="">Select Communication Level</option>
+                      <option value="Average">Average</option>
+                      <option value="Medium">Medium</option>
+                      <option value="Fluent">Fluent</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                    <select
+                      name="status"
+                      value={formData.status}
+                      onChange={handleInputChange}
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                    >
+                      <option value="">Select Status</option>
+                      <option value="Pool">Pool</option>
+                      <option value="Deployed">Deployed</option>
+                      <option value="PIP">PIP</option>
+                      <option value="Hold">Hold</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Current Status</label>
+                    <input
+                      type="text"
+                      name="currentStatus"
+                      value={formData.currentStatus}
+                      onChange={handleInputChange}
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                      placeholder="e.g., Upskill suggestion"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {formStep === 2 && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Tech Skills</label>
+                    <div className="space-y-3">
+                      {formData.techSkills.map((skill, index) => (
+                        <div
+                          key={index}
+                          className="flex items-center space-x-3 bg-gray-50 p-3 rounded-lg shadow-sm border border-gray-200"
+                        >
+                          <CategoryDropdown
+                            index={index}
+                            selectedCategory={skill.category}
+                            onChange={handleTechSkillChange}
+                            field="category"
+                            categoryForTech={skill.category}
                           />
-                          <span className="bg-blue-600 text-white text-xs font-semibold px-2 py-1 rounded-r-lg h-9 flex items-center justify-center">
-                            /5
-                          </span>
+                          {skill.category && (
+                            <CategoryDropdown
+                              index={index}
+                              selectedCategory={skill.technology}
+                              onChange={handleTechSkillChange}
+                              field="technology"
+                              categoryForTech={skill.category}
+                            />
+                          )}
+                          {skill.technology && skill.technology !== "add-tech" && (
+                            <div className="flex items-center">
+                              <input
+                                type="number"
+                                value={skill.rating}
+                                onChange={(e) => handleTechSkillChange(index, "rating", e.target.value)}
+                                className="w-16 p-2 border border-gray-300 rounded-l-lg border-r-0 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                                placeholder="0-5"
+                                min="0"
+                                max="5"
+                              />
+                              <span className="px-2 py-2 bg-gray-200 text-gray-700 text-sm font-medium rounded-r-lg border border-l-0 border-gray-300">
+                                /5
+                              </span>
+                            </div>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => removeTechSkill(index)}
+                            className="text-red-500 hover:text-red-700"
+                          >
+                            <FaTrash className="w-4 h-4" />
+                          </button>
                         </div>
-                      )}
+                      ))}
                       <button
                         type="button"
-                        onClick={() => removeTechSkill(index)}
-                        className="text-blue-500 hover:text-blue-700"
+                        onClick={addTechSkill}
+                        className="mt-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200"
                       >
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5-4h4M4 7h16" />
-                        </svg>
+                        Add Tech Skill
                       </button>
                     </div>
-                  ))}
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Total Rating</label>
+                    <input
+                      type="number"
+                      name="totalRating"
+                      value={formData.totalRating}
+                      onChange={handleInputChange}
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                      placeholder="0-5"
+                      min="0"
+                      max="5"
+                    />
+                  </div>
+
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Feedback*</label>
+                    <textarea
+                      name="feedback"
+                      value={formData.feedback}
+                      onChange={handleInputChange}
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                      placeholder="Add feedback here"
+                      rows="3"
+                      required
+                    />
+                  </div>
+                </div>
+              )}
+
+              <div className="flex justify-between space-x-4 pt-6">
+                {formStep === 1 ? (
                   <button
                     type="button"
-                    onClick={addTechSkill}
-                    className="mt-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition-colors text-sm font-semibold shadow-sm"
+                    onClick={closeAddForm}
+                    className="px-6 py-3 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-all duration-200 font-medium cursor-pointer"
                   >
-                    Add Tech Skill
+                    Cancel
                   </button>
-                </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={prevStep}
+                    className="px-6 py-3 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-all duration-200 font-medium cursor-pointer"
+                  >
+                    Previous
+                  </button>
+                )}
+                {formStep === 1 ? (
+                  <button
+                    type="button"
+                    onClick={nextStep}
+                    className="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-200 font-medium cursor-pointer hover:shadow-md"
+                  >
+                    Next
+                  </button>
+                ) : (
+                  <button
+                    type="submit"
+                    className="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-200 font-medium cursor-pointer hover:shadow-md"
+                  >
+                    Create Baseline
+                  </button>
+                )}
               </div>
-
-              <div className="col-span-2">
-                <label className="block text-gray-700 font-medium mb-2">Feedback</label>
-                <textarea
-                  name="feedback"
-                  value={formData.feedback}
-                  onChange={handleInputChange}
-                  className={fieldStyle}
-                  placeholder="Add Feedback"
-                  rows="3"
-                />
-              </div>
-            </div>
-
-            <div className="flex justify-center">
-              <button
-                type="submit"
-                className="px-8 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg font-semibold hover:from-blue-700 hover:to-purple-700 transition-all transform hover:scale-105"
-              >
-                Submit
-              </button>
-            </div>
-          </form>
-
-          {modalField && (
-            <AddOptionModal
-              field={modalField}
-              options={
-                modalField === "skillCategories"
-                  ? dropdownOptions.skillCategories
-                  : dropdownOptions.technologies[modalField] || []
-              }
-              onAddOption={modalField === "skillCategories" ? addNewSkillCategory : addNewTechnology}
-              onDeleteOption={deleteTechnology}
-              onClose={() => setModalField(null)}
-            />
-          )}
+            </form>
+          </div>
         </div>
-      ) : (
-        <BaselineHistories
-          histories={baselineHistories}
-          employeeName={formData.employeeName}
-          competency={formData.competency}
-          gender={formData.gender}
+      )}
+
+      {modalField && (
+        <AddOptionModal
+          field={modalField}
+          options={
+            modalField === "skillCategories"
+              ? dropdownOptions.skillCategories
+              : dropdownOptions.technologies[modalField] || []
+          }
+          onAddOption={modalField === "skillCategories" ? addNewSkillCategory : addNewTechnology}
+          onDeleteOption={(category, option) => {
+            setDropdownOptions((prev) => ({
+              ...prev,
+              technologies: {
+                ...prev.technologies,
+                [category]: prev.technologies[category].filter((opt) => opt !== option),
+              },
+            }));
+          }}
+          onClose={() => setModalField(null)}
         />
       )}
     </div>

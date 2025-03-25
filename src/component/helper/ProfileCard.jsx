@@ -48,6 +48,7 @@ const ProfileCard = ({ employeeName, competency }) => {
           <h2 className="text-2xl font-semibold flex items-center">
             {safeEmployeeName}
           </h2>
+          <p className="text-sm">201380110</p>
           <p className="text-sm">Software Engineer</p>
           <p className="text-sm">Business Unit 5 (BG4-BU5)</p>
           <p className="text-sm">INDORE-YASH IT PARK-SC-DC (104)</p>

@@ -13,6 +13,7 @@ import ManageBaseline from './component/Dashboard/Admin/ManageBaseline'
 import ManageTrainer from './component/Dashboard/Admin/ManageTrainer'
 import AssignTraining from './component/Dashboard/Admin/AssignTraining'
 import Opportunities from './component/Dashboard/Admin/Opportunity' // Import Opportunities component
+import ResourceList from './component/Dashboard/Admin/ResourceList'
 
 function App() {
 
@@ -27,7 +28,7 @@ function App() {
           <Route path="/manage-baseline" element={<ManageBaseline />} />
           <Route path="/manage-training" element={<AssignTraining />} />
           <Route path="/analytics" element={<Analytics />} />
-          <Route path="/opportunities" element={<Opportunities />} /> {/* Add Opportunities route */}
+          <Route path="/opportunities" element={<Opportunities />} />
         </Route>
         <Route path='/login' element={<Login />} />
         <Route path='/forgotpasswordotp' element={<ForgotPasswordOtp />} />
