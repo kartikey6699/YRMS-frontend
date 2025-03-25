@@ -1,6 +1,6 @@
 // Header.jsx
 import React, { useState } from 'react'
-import logo from '/YRMS_logo-removebg-preview.png'
+import logo from '/YRMS_logo-removebg-preview (1).png'
 import userManual from '../../assets/user-solid.svg'
 
 const Header = ({ isLoggedIn }) => {
@@ -16,7 +16,7 @@ const Header = ({ isLoggedIn }) => {
         <div className="relative flex h-16 items-center justify-between">
           <div className="flex items-center justify-left sm:items-stretch sm:justify-start">
             <div className="flex shrink-0 items-center">
-              <img className="h-50 w-80" src={logo} alt="Your Company" />
+              <img className="h-[40px] w-[230px] ml-[20px]" src={logo} alt="Your Company" />
             </div>
           </div>
           <div className="absolute inset-y-0 right-0 flex items-center pr-2 sm:static sm:inset-auto sm:ml-6 sm:pr-0">

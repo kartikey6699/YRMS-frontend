@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { FaChartLine, FaLightbulb } from 'react-icons/fa';
+import { FaChartLine, FaLightbulb, FaPlus, FaArrowLeft } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 
 const ManageResource = () => {
@@ -96,33 +96,39 @@ const ManageResource = () => {
     navigate('/manage-baseline', { state: { resource } });
   };
 
+  const handleOpportunitiesClick = (resource) => {
+    navigate('/opportunities', { state: { resource } });
+  };
+
   return (
     <div className="p-6 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl shadow-lg">
-      <div className="flex justify-between mb-6">
-        <button
-          className={`px-6 py-3 rounded-lg font-semibold text-lg ${
-            activeSection === 'view'
-              ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white'
-              : 'bg-gray-200 text-gray-800'
-          } hover:from-blue-700 hover:to-purple-700 transition-all transform hover:scale-105`}
-          onClick={() => setActiveSection('view')}
-        >
-          View Resource Details
-        </button>
-        <button
-          className={`px-6 py-3 rounded-lg font-semibold text-lg ${
-            activeSection === 'add'
-              ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white'
-              : 'bg-gray-200 text-gray-800'
-          } hover:from-blue-700 hover:to-purple-700 transition-all transform hover:scale-105`}
-          onClick={() => setActiveSection('add')}
-        >
-          Add Resource
-        </button>
-      </div>
+      {activeSection !== 'add' && (
+        <div className="flex justify-between mb-6">
+          <button
+            className={`px-6 py-3 rounded-lg font-semibold text-lg flex items-center bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 transition-all transform hover:scale-105 ml-auto ${
+              activeSection === 'add'
+                ? ''
+                : 'bg-gray-200 text-gray-800'
+            }`}
+            onClick={() => setActiveSection('add')}
+          >
+            <FaPlus className="mr-2" />
+            Add Resource
+          </button>
+        </div>
+      )}
 
       {activeSection === 'add' ? (
         <div>
+          <div className="flex justify-between items-center mb-6">
+            <button
+              className="flex items-center text-blue-600 hover:text-blue-800 transition-colors"
+              onClick={() => setActiveSection('view')}
+            >
+              <FaArrowLeft className="mr-2" />
+              Back to Resources
+            </button>
+          </div>
           <h2 className="text-3xl font-bold text-blue-800 mb-6">Add New Resource</h2>
           <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Personal Information Section */}
@@ -163,17 +169,6 @@ const ManageResource = () => {
                 className="w-full p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 transition-colors"
                 placeholder="Enter phone number"
                 required
-              />
-            </div>
-            <div className="md:col-span-2">
-              <label className="block text-gray-700 font-medium mb-2">Address</label>
-              <textarea
-                name="address"
-                value={formData.address}
-                onChange={handleInputChange}
-                className="w-full p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 transition-colors"
-                placeholder="Enter full address"
-                rows="3"
               />
             </div>
 
@@ -328,7 +323,10 @@ const ManageResource = () => {
                               Baseline
                             </span>
                           </button>
-                          <button className="flex items-center justify-center w-10 h-10 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors relative group">
+                          <button
+                            className="flex items-center justify-center w-10 h-10 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors relative group"
+                            onClick={() => handleOpportunitiesClick(resource)}
+                          >
                             <FaLightbulb />
                             <span className="absolute bottom-full mb-2 w-max px-2 py-1 bg-gray-800 text-white text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity">
                               Opportunities
