@@ -7,24 +7,7 @@ import landingPageImage4 from "../../assets/images/landingpage3.webp"
 const LandingPage = () => {
     // Carousel state
     const [currentSlide, setCurrentSlide] = useState(0);
-    // const slides = [
-    //     {
-    //         title: "Resource Allocation",
-    //         description: "Easily assign and manage resources across projects with real-time tracking.",
-    //         icon: "M3 12h18M3 6h18M3 18h18",
-    //     },
-    //     {
-    //         title: "Team Collaboration",
-    //         description: "Streamline communication and task assignment for your teams.",
-    //         icon: "M12 4.5v15m7.5-7.5h-15",
-    //     },
-    //     {
-    //         title: "Analytics & Reporting",
-    //         description: "Gain insights with detailed reports and resource utilization metrics.",
-    //         icon: "M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z",
-    //     },
-    // ];
-
+    
     const images = [
         landingPageImage,
         landingPageImage4,
@@ -57,28 +40,15 @@ const LandingPage = () => {
         setCurrentSlide((prev) => (prev === slides.length - 1 ? 0 : prev + 1));
     };
 
-    // Auto-slide effect
-    useEffect(() => {
-        const interval = setInterval(() => {
-            setCurrentSlide((prev) => (prev === slides.length - 1 ? 0 : prev + 1));
-        }, 5000); // Change slide every 5 seconds
-        return () => clearInterval(interval); // Cleanup on unmount
-    }, [slides.length]);
-
     const [currentIndex, setCurrentIndex] = useState(0);
 
-    useEffect(() => {
-        const interval = setInterval(() => {
-            setCurrentIndex((prevIndex) => (prevIndex === images.length - 1 ? 0 : prevIndex + 1));
-        }, 5000); // Change image every 5 seconds
-        return () => clearInterval(interval);
-    }, []);
+    // Disabled auto-slide functionality
 
     return (
-        <div className="bg-[#F9FAFB] min-h-screen">
-            {/* Hero Section */}
-            <section className="bg-gradient-to-r from-[#D1D5DB] to-[#F9FAFB] mb-5 relative"
-            >
+        // Remove all margins/padding that could create gaps
+        <div className="bg-[#F9FAFB] -mt-[1px]">
+            {/* Hero Section - absolutely no margins/padding at the top */}
+            <section className="bg-gradient-to-r from-[#D1D5DB] to-[#F9FAFB] relative -mt-[1px]">
                 <div className="relative w-full h-screen">
                     {images.map((image, index) => (
                         <div
@@ -86,11 +56,10 @@ const LandingPage = () => {
                             className={`absolute inset-0 flex flex-col items-center text-center transition-all duration-500 ease-in-out ${index === currentIndex ? 'opacity-85 z-10' : 'opacity-0 z-0'}`}
                             style={{ backgroundImage: `url(${image})`, backgroundSize: 'cover', backgroundPosition: 'center' }}
                         >
-                            
                             <div className="container mx-auto my-20 px-6 text-center z-20 transition-opacity duration-1000">
-                            <div className="absolute top-5 right-1 m-4 h-20 w-20">
-                                <img src="https://www.yash.com/wp-content/themes/html5blank-stable/images/yash-logo-new.svg" alt="" />
-                            </div>
+                                <div className="absolute top-5 right-1 m-4 h-20 w-20">
+                                    <img src="https://www.yash.com/wp-content/themes/html5blank-stable/images/yash-logo-new.svg" alt="" />
+                                </div>
                                 <h1 className="text-5xl md:text-6xl font-extrabold mb-10 leading-tight">
                                     Yash RMS
                                 </h1>
@@ -108,9 +77,38 @@ const LandingPage = () => {
                             </div>
                         </div>
                     ))}
+                    {/* Navigation Arrows */}
+                    <button
+                        onClick={() => setCurrentIndex((prevIndex) => (prevIndex === 0 ? images.length - 1 : prevIndex - 1))}
+                        className="absolute left-5 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-40 text-white p-3 rounded-full shadow-md hover:bg-opacity-60 transition-all duration-200 focus:outline-none z-20"
+                    >
+                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
+                        </svg>
+                    </button>
+                    <button
+                        onClick={() => setCurrentIndex((prevIndex) => (prevIndex === images.length - 1 ? 0 : prevIndex + 1))}
+                        className="absolute right-5 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-40 text-white p-3 rounded-full shadow-md hover:bg-opacity-60 transition-all duration-200 focus:outline-none z-20"
+                    >
+                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+                        </svg>
+                    </button>
+                    {/* Dots Navigation */}
+                    <div className="absolute bottom-5 left-1/2 transform -translate-x-1/2 flex space-x-3 z-20">
+                        {images.map((_, index) => (
+                            <button
+                                key={index}
+                                onClick={() => setCurrentIndex(index)}
+                                className={`w-4 h-4 rounded-full border border-white ${index === currentIndex ? 'bg-white' : 'bg-transparent'} focus:outline-none transition-all duration-300`}
+                                aria-label={`Go to slide ${index + 1}`}
+                            />
+                        ))}
+                    </div>
                 </div>
             </section>
 
+            {/* Rest of the component remains the same */}
             {/* Features Carousel */}
             <section className="py-16">
                 <div className="container mx-auto px-6">
