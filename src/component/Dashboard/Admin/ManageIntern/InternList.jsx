@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { FaChartLine, FaLightbulb } from 'react-icons/fa';
+import { FaPlus } from 'react-icons/fa';
+import { Link, useNavigate } from 'react-router';
 
-const ManageIntern = () => {
+const InternList = () => {
     const [interns, setInterns] = useState([
         {
             "id": 1,
@@ -349,7 +350,7 @@ const ManageIntern = () => {
         name: '',
         email: '',
         mentor: '',
-        contact: ''
+        status: ''
     });
     const [sortConfig, setSortConfig] = useState({
         key: null,
@@ -373,8 +374,8 @@ const ManageIntern = () => {
         .filter(interns =>
             interns.name.toLowerCase().includes(searchTerms.name.toLowerCase()) &&
             interns.email.toLowerCase().includes(searchTerms.email.toLowerCase()) &&
-            interns.contact.toLowerCase().includes(searchTerms.contact.toLowerCase()) &&
-            (!searchTerms.mentor || interns.mentor === searchTerms.mentor)
+            interns.mentor.toLowerCase().includes(searchTerms.mentor.toLowerCase()) &&
+            (!searchTerms.status.toLowerCase() || interns.mentor === searchTerms.status.toLowerCase())
         )
         .sort((a, b) => {
             if (!sortConfig.key) return 0;
@@ -387,6 +388,7 @@ const ManageIntern = () => {
         { key: 'id', label: 'S.No' },
         { key: 'name', label: 'Name' },
         { key: 'email', label: 'Email' },
+        { key: 'mentor', label: 'Mentored By' },
         { key: 'startDate', label: 'Start Date' },
         { key: 'endDate', label: 'End Date' },
         { key: 'status', label: 'Status' }
@@ -394,6 +396,18 @@ const ManageIntern = () => {
 
     return (
         <div className="p-6 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl shadow-lg">
+            <div className="mb-6">
+                <div className="flex items-center justify-between mb-2">
+                    <h2 className="text-3xl font-bold text-blue-800">Interns Details</h2>
+                    <Link
+                        className="btn px-6 py-3 rounded-lg font-semibold text-lg flex items-center bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 transition-all transform hover:scale-105"
+                        to='/interns/add'
+                        >
+                            <FaPlus className="mr-2" />
+                            Add Intern
+                    </Link>
+                </div>
+            </div>
             <table className="w-full border-collapse">
                 <thead>
                     <tr className="bg-gray-100 text-gray-800">
@@ -421,6 +435,9 @@ const ManageIntern = () => {
                             <td className="p-3 text-gray-700 text-sm border-r border-gray-200">
                                 {intern.email}
                             </td>
+                            <td className="p-3 text-gray-700 text-sm border-r border-gray-200">
+                                {intern.mentor}
+                            </td>
                             <td className="p-3 text-gray-700 text-sm border-r border-gray-200">{new Date(intern.startDate).toLocaleDateString()}</td>
                             <td className="p-3 text-gray-700 text-sm border-r border-gray-200">{new Date(intern.endDate).toLocaleDateString()}</td>
                             <td className="p-3 text-gray-700 text-sm border-r border-gray-200">
@@ -439,4 +456,4 @@ const ManageIntern = () => {
     );
 };
 
-export default ManageIntern;
+export default InternList;
