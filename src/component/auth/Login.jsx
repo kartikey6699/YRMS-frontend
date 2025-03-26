@@ -3,12 +3,15 @@ import { useDispatch, useSelector } from "react-redux";
 import bgImage from "../../assets/images/yash_bg.jpg";
 import { Link, useNavigate } from "react-router-dom";
 import { adminLogin } from "../../features/auth/authAction";
+import { SuccessToast, ErrorToast } from "../../component/helper/ResourceToast"; // Import the custom toast
+import YRMSLoader from "../../component/helper/loader";
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [emailError, setEmailError] = useState("");
+  const [toast, setToast] = useState(null); // State to manage toast
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -47,9 +50,11 @@ const Login = () => {
     try {
       const result = await dispatch(adminLogin(loginData)).unwrap();
       if (result) {
+        setToast(<SuccessToast message="Login successful!" onClose={() => setToast(null)} />);
         navigate("/dashboard");
       }
     } catch (err) {
+      setToast(<ErrorToast message="Login failed. Please try again." onClose={() => setToast(null)} />);
       console.error("Login failed:", err);
     }
   };
@@ -59,6 +64,8 @@ const Login = () => {
       className="min-h-screen flex items-center justify-center bg-cover bg-center bg-no-repeat"
       style={{ backgroundImage: `url(${bgImage})` }}
     >
+      {loading && <YRMSLoader loadingMessage="Logging in, please wait..." />} {/* Show loader when loading */}
+      {toast}
       <div className="bg-white/30 backdrop-blur-sm p-8 rounded-lg shadow-md w-full max-w-md">
         <h2 className="text-2xl font-bold mb-6 text-center text-gray-800">
           Login

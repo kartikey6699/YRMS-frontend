@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-const YRMSLoader = () => {
+const YRMSLoader = ({ loadingMessage = "Loading ..." }) => {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-white/30">
       <div className="relative w-full max-w-md px-4 py-8 rounded-xl bg-white/80 shadow-xl">
@@ -32,7 +32,7 @@ const YRMSLoader = () => {
         </div> */}
 
         {/* Optional status text */}
-        <p className="mt-6 text-center text-gray-700">Loading resources...</p>
+        <p className="mt-6 text-center text-gray-700">{loadingMessage}</p>
       </div>
     </div>
   );
