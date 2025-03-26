@@ -155,6 +155,9 @@ const ManageBaseline = () => {
       timestamp: new Date().toISOString(),
     };
     setBaselineHistories((prev) => [...prev, newHistory]);
+
+    console.log('Base Line Payload ' , formData);
+
     setFormData({
       ...formData,
       experience: [{ technology: "", years: "" }],

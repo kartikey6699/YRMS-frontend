@@ -102,12 +102,10 @@ const ManageResource = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    setResources(prev => [...prev, { 
-      ...formData, 
-      technologies: formData.competency ? [formData.competency] : [], 
-      totalExperience: 0 
-    }]);
+
+    console.log('resouce data' ,formData)
     setActiveSection('view');
+
     setFormData({
       employeeName: '',
       address: '',
