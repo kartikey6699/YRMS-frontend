@@ -2,13 +2,13 @@ import React, { useEffect, useState } from 'react';
 import { FaPlus, FaArrowLeft, FaFilter, FaTimes, FaCogs, FaCalendar } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 import ResourceList from './ResourceList';
+import YRMSLoader from '../../helper/loader';
 
 const ManageResource = () => {
   const navigate = useNavigate();
   const [activeSection, setActiveSection] = useState('view');
-  const [roles, setRoles] = useState([]);
-  const [competencies, setCompetencies] = useState([]);
-  const [showFilterForm, setShowFilterForm] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
+  const [showLoader, setShowLoader] = useState(false); // State to manage loader visibility
   const [formData, setFormData] = useState({
     employeeName: '',
     address: '',
@@ -78,7 +78,6 @@ const ManageResource = () => {
       technologies: ['Data Science'],
       totalExperience: 8
     },
-    // ... other sample resources ...
   ]);
 
   const handleInputChange = (e) => {
@@ -126,7 +125,6 @@ const ManageResource = () => {
 
   const handleFilterSubmit = (e) => {
     e.preventDefault();
-    setShowFilterForm(false);
     // Add your API call here
   };
 
@@ -156,93 +154,45 @@ const ManageResource = () => {
     navigate('/opportunities', { state: { resource } });
   };
 
+  const clearFilters = () => {
+    setFilterData({
+      technologies: [],
+      totalExperience: ''
+    });
+    // Keep filters section open after clearing
+    setShowFilters(true);
+  };
+
+  const clearAndCloseFilters = () => {
+    setFilterData({
+      technologies: [],
+      totalExperience: ''
+    });
+    setShowFilters(false); // Close the filters section
+  };
+
+  const handleAddResourceClick = () => {
+    setShowLoader(true);
+    setTimeout(() => {
+      setShowLoader(false);
+      setActiveSection('add');
+    }, 3000); // Show loader for 3 seconds
+  };
+
   return (
     <div className="p-6 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl shadow-lg">
+      {showLoader && <YRMSLoader />} {/* Show loader when showLoader is true */}
       {activeSection !== 'add' && (
         <div className="mb-6">
           <div className="flex items-center justify-between mb-2">
             <h2 className="text-3xl font-bold text-blue-800">Resource Details</h2>
             <button
-              className="px-6 py-3 rounded-lg font-semibold text-lg flex items-center bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 transition-all transform hover:scale-105"
-              onClick={() => setActiveSection('add')}
+              className="px-4 py-2 rounded-lg font-semibold text-sm flex items-center bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 transition-all transform hover:scale-105"
+              onClick={handleAddResourceClick}
             >
               <FaPlus className="mr-2" />
               Add Resource
             </button>
-          </div>
-          <div className="flex justify-end">
-            <button
-              className="px-4 py-2 my-4 rounded-lg font-semibold text-sm flex items-center bg-gray-200 text-gray-800 hover:bg-gray-300 transition-all"
-              onClick={() => setShowFilterForm(true)}
-            >
-              <FaFilter className="mr-2" />
-              Add Filter
-            </button>
-          </div>
-        </div>
-      )}
-
-      {showFilterForm && (
-        <div className="fixed inset-0 flex items-center justify-center z-50 backdrop-blur-sm">
-          <div className="bg-gradient-to-br from-white to-gray-50 p-6 rounded-2xl shadow-2xl max-w-md w-full transform transition-all duration-300 scale-100 hover:scale-105">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-bold text-gray-800 flex items-center">
-                <FaFilter className="mr-2 text-blue-600" /> Filter Resources
-              </h3>
-              <button onClick={() => setShowFilterForm(false)} className="text-gray-500 hover:text-gray-700 text-xl">
-                <FaTimes />
-              </button>
-            </div>
-            <form onSubmit={handleFilterSubmit}>
-              <div className="mb-6">
-                <label className="block text-gray-700 font-semibold mb-3 flex items-center">
-                  <FaCogs className="mr-2 text-blue-500" /> Technologies
-                </label>
-                <div className="grid grid-cols-2 gap-3">
-                  {['React', 'Node.js', 'Python', 'JavaScript', 'Kotlin', 'Android', 'AWS', 'Docker', 'SQL', 'Figma'].map(tech => (
-                    <div key={tech} className="flex items-center bg-gray-100 p-2 rounded-lg">
-                      <input
-                        type="checkbox"
-                        name="technologies"
-                        value={tech}
-                        checked={filterData.technologies.includes(tech)}
-                        onChange={handleFilterChange}
-                        className="mr-2 accent-blue-600"
-                      />
-                      <label className="text-sm text-gray-700">{tech}</label>
-                    </div>
-                  ))}
-                </div>
-              </div>
-              <div className="mb-6">
-                <label className="block text-gray-700 font-semibold mb-2 flex items-center">
-                  <FaCalendar className="mr-2 text-blue-500" /> Total Experience (years)
-                </label>
-                <input
-                  type="number"
-                  name="totalExperience"
-                  value={filterData.totalExperience}
-                  onChange={handleFilterChange}
-                  className="w-full p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 transition-colors"
-                  placeholder="Enter minimum years"
-                />
-              </div>
-              <div className="flex justify-end space-x-3">
-                <button
-                  type="button"
-                  onClick={() => setShowFilterForm(false)}
-                  className="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors flex items-center"
-                >
-                  <FaTimes className="mr-2" /> Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition-colors flex items-center"
-                >
-                  <FaFilter className="mr-2" /> Apply Filter
-                </button>
-              </div>
-            </form>
           </div>
         </div>
       )}
@@ -434,6 +384,67 @@ const ManageResource = () => {
         </div>
       ) : (
         <div>
+          <div className="flex justify-end mb-2">
+            <button
+              className={`px-3 py-1.5 rounded-lg text-sm flex items-center transition-all ${showFilters ? 'bg-red-100 text-red-800 hover:bg-red-200' : 'bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700'}`}
+              onClick={showFilters ? clearAndCloseFilters : () => setShowFilters(true)}
+            >
+              {showFilters ? (
+                <>
+                  <FaTimes className="mr-1" />
+                  Remove Filters
+                </>
+              ) : (
+                <>
+                  <FaFilter className="mr-1" />
+                  Filters
+                </>
+              )}
+            </button>
+          </div>
+
+          {/* Filters Section with Transition */}
+          <div className={`overflow-hidden transition-all duration-300 ease-in-out ${showFilters ? 'max-h-40 opacity-100 mb-3' : 'max-h-0 opacity-0 mb-0'}`}>
+            <div className="bg-white p-3 rounded-xl shadow-sm border border-gray-200">
+              <div className="flex flex-wrap items-center gap-4">
+                <div className="flex items-center">
+                  <FaCogs className="mr-2 text-blue-500 text-sm" />
+                  <div className="flex flex-wrap gap-1">
+                    {['React', 'Node', 'Python', 'JS', 'Kotlin', 'Android', 'AWS', 'Docker', 'SQL', 'Figma'].map(tech => (
+                      <label key={tech} className="flex items-center text-xs bg-gray-100 hover:bg-gray-200 px-2 py-1 rounded cursor-pointer transition-colors">
+                        <input
+                          type="checkbox"
+                          name="technologies"
+                          value={tech}
+                          checked={filterData.technologies.includes(tech)}
+                          onChange={handleFilterChange}
+                          className="mr-1 accent-blue-600"
+                        />
+                        {tech}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="flex items-center">
+                  <FaCalendar className="mr-2 text-blue-500 text-sm" />
+                  <div className="flex items-center">
+                    <span className="text-xs mr-2">Exp ≥</span>
+                    <input
+                      type="number"
+                      name="totalExperience"
+                      value={filterData.totalExperience}
+                      onChange={handleFilterChange}
+                      className="w-16 p-1 text-sm border border-gray-300 rounded focus:outline-none focus:border-blue-500"
+                      placeholder="Years"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Resource List */}
           {resources.length > 0 ? (
             <ResourceList
               resources={resources}

@@ -1,10 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import logo from '/YRMS_logo-removebg-preview (1).png';
+import logo from '/header_logo.png';
 import userManual from '../../assets/user-solid.svg';
+// import { SuccessToast } from '../helper/SuccessToast';
+// import { ErrorToast } from '../helper/ErrorToast';
+import { SuccessToast , ErrorToast } from '../helper/ResourceToast';
 
 const Header = ({ isLoggedIn }) => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [currentDateTime, setCurrentDateTime] = useState(new Date());
+  const [showToast, setShowToast] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [showError, setShowError] = useState(false);
 
   // Update time every second
   useEffect(() => {
@@ -16,6 +22,13 @@ const Header = ({ isLoggedIn }) => {
 
   const toggleDropdown = () => {
     setDropdownOpen(!dropdownOpen);
+    setShowToast(true);
+    setTimeout(() => setShowToast(false), 3000); // Hide toast after 3 seconds
+    
+    setShowSuccess(true);
+    setTimeout(() => setShowSuccess(false), 3000); // Hide success toast after 3 seconds
+    setShowError(true);
+    setTimeout(() => setShowError(false), 3000); // Hide error toast after 3 seconds
   };
 
   // Format date and time with seconds
@@ -39,14 +52,14 @@ const Header = ({ isLoggedIn }) => {
           {/* Logo */}
           <div className="flex items-center justify-left sm:items-stretch sm:justify-start">
             <div className="flex shrink-0 items-center">
-              <img className="h-[40px] w-[230px] ml-[20px]" src={logo} alt="Your Company" />
+              <img className="h-[55px] w-[230px] ml-[20px]" src={logo} alt="Your Company" />
             </div>
           </div>
 
           {/* Right side - Time and Profile */}
           <div className="absolute inset-y-0 right-0 flex items-center pr-2 sm:static sm:inset-auto sm:ml-6 sm:pr-0">
             {/* Date/Time Display */}
-            <div className="hidden md:flex items-center mr-4 bg-gray-100 rounded-md px-3 py-1 shadow-sm">
+            <div className="hidden md:flex items-center mr-4 bg-gray-100 rounded-md px-3 py-1 shadow-sm border-2 border-blue-600">
               <span className="text-gray-700 font-medium text-sm mr-2">
                 {formattedDate}
               </span>
@@ -87,6 +100,10 @@ const Header = ({ isLoggedIn }) => {
           </div>
         </div>
       </div>
+      {/* {showToast && <SuccessToast message="Profile icon clicked!" onClose={() => setShowToast(false)} />} */}
+      {/* {showToast && <ErrorToast message="Profile icon clicked!" onClose={() => setShowToast(false)} />} */}
+      {/* {showSuccess && <SuccessToast message="Profile icon clicked!" onClose={() => setShowSuccess(false)} />} */}
+      {showError && <ErrorToast message="Profile icon clicked!" onClose={() => setShowError(false)} />}
     </nav>
   );
 }

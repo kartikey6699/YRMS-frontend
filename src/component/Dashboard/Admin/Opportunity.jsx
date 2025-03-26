@@ -419,7 +419,7 @@ const Opportunities = () => {
                   </div>
                   <button 
                     onClick={closeAddForm}
-                    className="text-white hover:text-indigo-200 text-xl cursor-pointer transition-colors duration-200 p-1 rounded-full hover:bg-white/10"
+                    className="text-white hover:text-red-200 text-xl cursor-pointer transition-colors duration-200 p-1 rounded-full hover:bg-red-500"
                   >
                     <FaTimes className="w-5 h-5" />
                   </button>
@@ -626,7 +626,7 @@ const Opportunities = () => {
                 <button
                   type="button"
                   onClick={closeAddForm}
-                  className="px-6 py-3 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-all duration-200 font-medium cursor-pointer flex items-center shadow-sm hover:shadow-md"
+                  className="px-6 py-3 bg-red-500 text-white rounded-xl hover:bg-red-600 transition-all duration-200 font-medium cursor-pointer flex items-center shadow-sm hover:shadow-md"
                 >
                   <FaTimes className="mr-2" /> Cancel
                 </button>
