@@ -10,6 +10,7 @@ import {
   FaEye,
   FaPlus,
   FaLightbulb,
+  FaUsersCog
 } from 'react-icons/fa';
 import { FiChevronRight, FiChevronLeft } from 'react-icons/fi';
 import logo from '../../assets/images/competency_logos/python.png';
@@ -26,6 +27,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
     { name: 'Analytics', icon: <FaChartBar />, path: '/analytics' },
     { name: 'Trainers', icon: <FaChalkboardTeacher />, path: '/manage-trainers' },
     { name: 'Training', icon: <FaTasks />, path: '/manage-training' },
+    { name: 'Interns', icon: <FaUsersCog />, path: '/interns'},
   ];
 
   return (
