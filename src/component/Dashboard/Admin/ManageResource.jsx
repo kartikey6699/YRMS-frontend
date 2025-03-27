@@ -4,26 +4,76 @@ import { useNavigate } from 'react-router-dom';
 import ResourceList from './ResourceList';
 import YRMSLoader from '../../helper/loader';
 
+const AddOptionModal = ({ field, options, onAddOption, onClose }) => {
+  const [newOption, setNewOption] = useState('');
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (newOption.trim()) {
+      onAddOption(newOption.trim());
+      setNewOption('');
+      onClose();
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white p-6 rounded-lg shadow-xl w-96">
+        <h3 className="text-lg font-semibold mb-4">
+          Add New {field.charAt(0).toUpperCase() + field.slice(1)}
+        </h3>
+        <form onSubmit={handleSubmit}>
+          <input
+            type="text"
+            value={newOption}
+            onChange={(e) => setNewOption(e.target.value)}
+            className="w-full p-2 border rounded-md mb-4"
+            placeholder={`Enter new ${field} name`}
+            autoFocus
+          />
+          <div className="flex justify-end space-x-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            >
+              Add
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
 const ManageResource = () => {
   const navigate = useNavigate();
   const [activeSection, setActiveSection] = useState('view');
   const [showFilters, setShowFilters] = useState(false);
-  const [showLoader, setShowLoader] = useState(false); // State to manage loader visibility
+
+  const [modalField, setModalField] = useState(null);
+
+  const [showLoader, setShowLoader] = useState(false);
   const [formData, setFormData] = useState({
     employeeName: '',
-    address: '',
+    gender: '',
+    location: '',
     email: '',
     phoneNumber: '',
     joiningDate: '',
-    jobTitle: '',
+    designation: '',
     employeeType: '',
     grade: '',
     businessGroup: '',
     businessUnit: '',
     competency: '',
-    status: 'pool',
-    technologies: [],
-    totalExperience: 0
+    status: 'pool'
   });
   const [filterData, setFilterData] = useState({
     technologies: [],
@@ -107,19 +157,18 @@ const ManageResource = () => {
 
     setFormData({
       employeeName: '',
-      address: '',
+      gender: '',
+      location: '',
       email: '',
       phoneNumber: '',
       joiningDate: '',
-      jobTitle: '',
+      designation: '',
       employeeType: '',
       grade: '',
       businessGroup: '',
       businessUnit: '',
       competency: '',
-      status: 'pool',
-      technologies: [],
-      totalExperience: 0
+      status: 'pool'
     });
   };
 
@@ -214,7 +263,7 @@ const ManageResource = () => {
             <div className="md:col-span-2">
               <h3 className="text-xl font-semibold text-gray-800 mb-4">Personal Information</h3>
             </div>
-            <div className="md:col-span-2">
+            <div>
               <label className="block text-gray-700 font-medium mb-2">Employee Name</label>
               <input
                 type="text"
@@ -223,6 +272,32 @@ const ManageResource = () => {
                 onChange={handleInputChange}
                 className="w-full p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 transition-colors"
                 placeholder="Enter employee name"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-gray-700 font-medium mb-2">Gender</label>
+              <select
+                name="gender"
+                value={formData.gender}
+                onChange={handleInputChange}
+                className={`w-full p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 transition-colors ${formData.gender ? 'text-black' : 'text-gray-500'}`}
+                required
+              >
+                <option value="" disabled className="text-gray-400">Select gender</option>
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-gray-700 font-medium mb-2">Location</label>
+              <input
+                type="text"
+                name="location"
+                value={formData.location}
+                onChange={handleInputChange}
+                className="w-full p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 transition-colors"
+                placeholder="Enter location"
                 required
               />
             </div>
@@ -250,17 +325,6 @@ const ManageResource = () => {
                 required
               />
             </div>
-            <div>
-              <label className="block text-gray-700 font-medium mb-2">Address</label>
-              <textarea
-                name="address"
-                value={formData.address}
-                onChange={handleInputChange}
-                className="w-full p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 transition-colors resize-none"
-                placeholder="Enter address"
-                rows="3"
-              />
-            </div>
 
             {/* Employment Details Section */}
             <div className="md:col-span-2">
@@ -278,16 +342,19 @@ const ManageResource = () => {
               />
             </div>
             <div>
-              <label className="block text-gray-700 font-medium mb-2">Job Title</label>
-              <input
-                type="text"
-                name="jobTitle"
-                value={formData.jobTitle}
+              <label className="block text-gray-700 font-medium mb-2">Designation</label>
+              <select
+                name="designation"
+                value={formData.designation}
                 onChange={handleInputChange}
-                className="w-full p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 transition-colors"
-                placeholder="Enter job title"
+                className={`w-full p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 transition-colors ${formData.designation ? 'text-black' : 'text-gray-500'}`}
                 required
-              />
+              >
+                <option value="" disabled className="text-gray-400">Select designation</option>
+                <option value="Software Engineer">Software Engineer</option>
+                <option value="Backend Developer">Backend Developer</option>
+                <option value="Project Manager">Project Manager</option>
+              </select>
             </div>
             <div>
               <label className="block text-gray-700 font-medium mb-2">Employee Type</label>
@@ -295,13 +362,13 @@ const ManageResource = () => {
                 name="employeeType"
                 value={formData.employeeType || ''}
                 onChange={handleInputChange}
-                className="w-full p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 transition-colors"
+                className={`w-full p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 transition-colors ${formData.employeeType ? 'text-black' : 'text-gray-500'}`}
                 required
               >
-                <option value="" disabled>Select type</option>
+                <option value="" disabled className="text-gray-400">Select type</option>
                 <option value="provision">Provision</option>
                 <option value="permanent">Permanent</option>
-                <option value="temporary">Temporary</option>
+                <option value="contract">Contract</option>
               </select>
             </div>
             <div>
@@ -310,11 +377,11 @@ const ManageResource = () => {
                 name="grade"
                 value={formData.grade || ''}
                 onChange={handleInputChange}
-                className="w-full p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 transition-colors"
+                className={`w-full p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 transition-colors ${formData.grade ? 'text-black' : 'text-gray-500'}`}
                 required
               >
-                <option value="" disabled>Select grade</option>
-                {['E1', 'E2', 'E3', 'E4', 'E5'].map(grade => (
+                <option value="" disabled className="text-gray-400">Select grade</option>
+                {['E1', 'E2', 'E3', 'E4', 'E5', 'E6', 'E7'].map(grade => (
                   <option key={grade} value={grade}>{grade}</option>
                 ))}
               </select>
@@ -325,10 +392,10 @@ const ManageResource = () => {
                 name="status"
                 value={formData.status}
                 onChange={handleInputChange}
-                className="w-full p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 transition-colors"
+                className={`w-full p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 transition-colors ${formData.status ? 'text-black' : 'text-gray-500'}`}
                 required
               >
-                <option value="pool">Pool</option>
+                <option value="pool" className="text-gray-400">Pool</option>
                 <option value="deployed">Deployed</option>
                 <option value="pip">PIP</option>
                 <option value="hold">Hold</option>
@@ -336,25 +403,31 @@ const ManageResource = () => {
             </div>
             <div>
               <label className="block text-gray-700 font-medium mb-2">Business Group</label>
-              <input
-                type="text"
+              <select
                 name="businessGroup"
                 value={formData.businessGroup}
                 onChange={handleInputChange}
-                className="w-full p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 transition-colors"
-                placeholder="Enter business group"
-              />
+                className={`w-full p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 transition-colors ${formData.businessGroup ? 'text-black' : 'text-gray-500'}`}
+                required
+              >
+                <option value="" disabled className="text-gray-400">Select business group</option>
+                <option value="Technology Solutions">Technology Solutions</option>
+                <option value="Management Team">Management Team</option>
+              </select>
             </div>
             <div>
               <label className="block text-gray-700 font-medium mb-2">Business Unit</label>
-              <input
-                type="text"
+              <select
                 name="businessUnit"
                 value={formData.businessUnit}
                 onChange={handleInputChange}
-                className="w-full p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 transition-colors"
-                placeholder="Enter business unit"
-              />
+                className={`w-full p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 transition-colors ${formData.businessUnit ? 'text-black' : 'text-gray-500'}`}
+                required
+              >
+                <option value="" disabled className="text-gray-400">Select business unit</option>
+                <option value="Development Team">Development Team</option>
+                <option value="Management Team">Management Team</option>
+              </select>
             </div>
             <div>
               <label className="block text-gray-700 font-medium mb-2">Competency</label>
@@ -362,9 +435,9 @@ const ManageResource = () => {
                 name="competency"
                 value={formData.competency}
                 onChange={handleInputChange}
-                className="w-full p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 transition-colors"
+                className={`w-full p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 transition-colors ${formData.competency ? 'text-black' : 'text-gray-500'}`}
               >
-                <option value="" disabled>Select a competency</option>
+                <option value="" disabled className="text-gray-400">Select a competency</option>
                 <option value="Python">Python</option>
                 <option value="Java">Java</option>
                 <option value="Data Science">Data Science</option>
@@ -375,7 +448,7 @@ const ManageResource = () => {
             <div className="md:col-span-2 flex justify-center mt-8">
               <button
                 type="submit"
-                className="px-8 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg font-semibold hover:from-blue-700 hover:to-purple-700 transition-all transform hover:scale-105"
+                className="px-16 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg font-semibold hover:from-blue-700 hover:to-purple-700 transition-all transform hover:scale-105"
               >
                 Submit
               </button>
