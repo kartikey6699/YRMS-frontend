@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import ProfileCard from "../../helper/ProfileCard";
 import { StarIcon } from "@heroicons/react/20/solid";
 import { FaInfoCircle } from "react-icons/fa";
 
@@ -61,41 +60,17 @@ export const BaselineHistories = ({ histories, employeeName, competency, gender 
         switch (rating) {
             case 0:
             case 1:
-                return {
-                    bg: "bg-red-100",
-                    text: "text-red-800",
-                    border: "border-red-700",
-                };
+                return { bg: "bg-red-100", text: "text-red-800", border: "border-red-700" };
             case 2:
-                return {
-                    bg: "bg-orange-100",
-                    text: "text-orange-800",
-                    border: "border-orange-700",
-                };
+                return { bg: "bg-orange-100", text: "text-orange-800", border: "border-orange-700" };
             case 3:
-                return {
-                    bg: "bg-yellow-100",
-                    text: "text-yellow-800",
-                    border: "border-yellow-700",
-                };
+                return { bg: "bg-yellow-100", text: "text-yellow-800", border: "border-yellow-700" };
             case 4:
-                return {
-                    bg: "bg-lime-100",
-                    text: "text-lime-800",
-                    border: "border-lime-700",
-                };
+                return { bg: "bg-lime-100", text: "text-lime-800", border: "border-lime-700" };
             case 5:
-                return {
-                    bg: "bg-green-100",
-                    text: "text-green-800",
-                    border: "border-green-700",
-                };
+                return { bg: "bg-green-100", text: "text-green-800", border: "border-green-700" };
             default:
-                return {
-                    bg: "bg-gray-100",
-                    text: "text-gray-800",
-                    border: "border-gray-700",
-                };
+                return { bg: "bg-gray-100", text: "text-gray-800", border: "border-gray-700" };
         }
     };
 
@@ -126,16 +101,20 @@ export const BaselineHistories = ({ histories, employeeName, competency, gender 
                             className={`relative rounded-xl shadow-lg overflow-hidden cursor-pointer transition-all duration-300 h-48 flex flex-col ${statusStyles.bg} border-l-4 ${statusStyles.border} hover:shadow-xl hover:translate-y-[-4px]`}
                         >
                             <div className="p-4 flex-1 flex flex-col">
-                                <div className="mb-2">
+                                <div className="mb-2 flex justify-between items-center">
                                     <h3 className="text-lg font-semibold text-gray-800 break-words">
-                                        Baseline - {formatDate(history.timestamp)}
+                                        Baseline-{index + 1}
                                     </h3>
+                                    <p className="text-sm text-gray-600">
+                                        {formatDate(history.timestamp)}
+                                    </p>
+                                </div>
+                                <div>
                                     <p className="text-sm text-gray-600 mt-1">
                                         <strong>Communication:</strong> {history.communication}
                                     </p>
                                 </div>
-
-                <div className="mt-auto flex justify-between items-center">
+                                <div className="mt-auto flex justify-between items-center">
                                     <div className="flex items-center text-sm text-gray-600">
                                         <FaInfoCircle className="mr-1" />
                                         <span>Skills: {history.techSkills.length}</span>
@@ -160,31 +139,42 @@ export const BaselineHistories = ({ histories, employeeName, competency, gender 
 
             {selectedBaseline && (
                 <div
-                    className={`fixed inset-0 bg-gray-900/30 backdrop-blur-sm flex items-center justify-center p-4 z-50 transition-opacity duration-300 ${isPopupOpen ? "opacity-100" : "opacity-0 pointer-events-none"
-                        }`}
+                    className={`fixed inset-0 bg-gray-900/30 backdrop-blur-sm flex items-center justify-center p-4 z-50 transition-opacity duration-300 ${isPopupOpen ? "opacity-100" : "opacity-0 pointer-events-none"}`}
                 >
                     <div
-                        className={`bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto transform transition-all duration-300 ${isPopupOpen ? "scale-100" : "scale-95"
-                            }`}
+                        className={`bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto transform transition-all duration-300 ${isPopupOpen ? "scale-100" : "scale-95"}`}
                     >
                         <div
-                            className={`p-6 ${getStatusStyles(
-                                calculateOverallRating(selectedBaseline.techSkills)
-                            ).bg} rounded-t-xl`}
+                            className={`p-6 ${getStatusStyles(calculateOverallRating(selectedBaseline.techSkills)).bg} rounded-t-xl`}
                         >
-                            <div className="flex justify-between items-start">
-                                <div>
-                                    <h3 className="text-xl font-bold text-gray-800">
+                            <div className="flex justify-between items-center">
+                                <div className="flex items-center space-x-4">
+                                    <div className="w-12 h-12 rounded-full bg-gray-300 flex items-center justify-center overflow-hidden">
+                                        {/* Placeholder for profile picture; replace with actual image if available */}
+                                        <span className="text-gray-600 text-xl font-semibold">
+                                            {employeeName ? employeeName[0] : "N/A"}
+                                        </span>
+                                    </div>
+                                    <div>
+                                        <h3 className="text-xl font-bold text-gray-800">
+                                            {employeeName || "Unknown Employee"}
+                                        </h3>
+                                        <p className="text-gray-600 text-sm">
+                                            Software Developer
+                                        </p>
+                                    </div>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                    <h3 className="text-lg font-semibold text-gray-800">
                                         Baseline - {formatDate(selectedBaseline.timestamp)}
                                     </h3>
-                                    <p className="text-gray-600">Communication: {selectedBaseline.communication}</p>
+                                    <button
+                                        onClick={closeBaselineDetails}
+                                        className="text-gray-500 hover:text-gray-700 text-xl cursor-pointer transition-colors duration-200"
+                                    >
+                                        ✕
+                                    </button>
                                 </div>
-                                <button
-                                    onClick={closeBaselineDetails}
-                                    className="text-gray-500 hover:text-gray-700 text-xl cursor-pointer transition-colors duration-200"
-                                >
-                                    ✕
-                                </button>
                             </div>
                         </div>
 
@@ -193,10 +183,7 @@ export const BaselineHistories = ({ histories, employeeName, competency, gender 
                                 <div>
                                     <h4 className="text-sm font-medium text-gray-500">Overall Rating</h4>
                                     <p
-                                        className={`mt-1 inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border-2 ${getStatusStyles(calculateOverallRating(selectedBaseline.techSkills)).bg
-                                            } ${getStatusStyles(calculateOverallRating(selectedBaseline.techSkills)).text
-                                            } ${getStatusStyles(calculateOverallRating(selectedBaseline.techSkills)).border
-                                            }`}
+                                        className={`mt-1 inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border-2 ${getStatusStyles(calculateOverallRating(selectedBaseline.techSkills)).bg} ${getStatusStyles(calculateOverallRating(selectedBaseline.techSkills)).text} ${getStatusStyles(calculateOverallRating(selectedBaseline.techSkills)).border}`}
                                     >
                                         {calculateOverallRating(selectedBaseline.techSkills)}/5
                                     </p>
@@ -220,8 +207,7 @@ export const BaselineHistories = ({ histories, employeeName, competency, gender 
                                                     {[...Array(5)].map((_, starIndex) => (
                                                         <StarIcon
                                                             key={starIndex}
-                                                            className={`w-5 h-5 ${starIndex < skill.rating ? "text-yellow-400" : "text-gray-300"
-                                                                }`}
+                                                            className={`w-5 h-5 ${starIndex < skill.rating ? "text-yellow-400" : "text-gray-300"}`}
                                                         />
                                                     ))}
                                                     <span className="text-sm text-gray-600 ml-2">({skill.rating}/5)</span>

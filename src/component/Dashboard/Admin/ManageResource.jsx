@@ -1,53 +1,76 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { FaPlus, FaArrowLeft, FaFilter, FaTimes, FaCogs, FaCalendar } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 import ResourceList from './ResourceList';
 import YRMSLoader from '../../helper/loader';
+import AddOptionModal from '../../helper/OptionalModal';
+// Custom Dropdown Component
+const Dropdown = ({ name, value, options, onChange, onAddOption, setModalField }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef(null);
 
-const AddOptionModal = ({ field, options, onAddOption, onClose }) => {
-  const [newOption, setNewOption] = useState('');
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (newOption.trim()) {
-      onAddOption(newOption.trim());
-      setNewOption('');
-      onClose();
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    };
+    if (isOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
     }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isOpen]);
+
+  const handleSelect = (option) => {
+    if (option === "add-new") {
+      setModalField(name);
+    } else {
+      onChange({ target: { name, value: option } });
+    }
+    setIsOpen(false);
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white p-6 rounded-lg shadow-xl w-96">
-        <h3 className="text-lg font-semibold mb-4">
-          Add New {field.charAt(0).toUpperCase() + field.slice(1)}
-        </h3>
-        <form onSubmit={handleSubmit}>
-          <input
-            type="text"
-            value={newOption}
-            onChange={(e) => setNewOption(e.target.value)}
-            className="w-full p-2 border rounded-md mb-4"
-            placeholder={`Enter new ${field} name`}
-            autoFocus
-          />
-          <div className="flex justify-end space-x-2">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded"
+    <div className="relative w-full" ref={dropdownRef}>
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className={`w-full p-3 pr-10 border-2 border-gray-200 rounded-lg text-left focus:outline-none focus:border-blue-500 transition-colors ${value ? 'text-black' : 'text-gray-500'}`}
+      >
+        <span>{value || `Select ${name}`}</span>
+        <svg
+          className={`w-4 h-4 absolute right-3 top-1/2 transform -translate-y-1/2 transition-transform ${isOpen ? "rotate-180" : ""}`}
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+      {isOpen && (
+        <div className="absolute z-10 w-full mt-1 bg-white border rounded-md shadow-lg max-h-60 overflow-y-auto">
+          {options.map((option) => (
+            <div
+              key={option}
+              onClick={() => handleSelect(option)}
+              className="p-2 hover:bg-gray-100 cursor-pointer text-sm"
             >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-            >
-              Add
-            </button>
+              {option}
+            </div>
+          ))}
+          <div
+            onClick={() => handleSelect("add-new")}
+            className="p-2 text-blue-600 bg-blue-50 hover:bg-blue-100 cursor-pointer text-sm font-medium border-t border-gray-200 flex items-center justify-between"
+          >
+            <span>Add New {name}</span>
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
+            </svg>
           </div>
-        </form>
-      </div>
+        </div>
+      )}
     </div>
   );
 };
@@ -56,10 +79,14 @@ const ManageResource = () => {
   const navigate = useNavigate();
   const [activeSection, setActiveSection] = useState('view');
   const [showFilters, setShowFilters] = useState(false);
-
   const [modalField, setModalField] = useState(null);
-
   const [showLoader, setShowLoader] = useState(false);
+
+  const [dropdownOptions, setDropdownOptions] = useState({
+    designations: ['Software Engineer', 'Backend Developer', 'Project Manager'],
+    competencies: ['Python', 'Java', 'Data Science']
+  });
+
   const [formData, setFormData] = useState({
     employeeName: '',
     gender: '',
@@ -75,10 +102,12 @@ const ManageResource = () => {
     competency: '',
     status: 'pool'
   });
+
   const [filterData, setFilterData] = useState({
     technologies: [],
     totalExperience: ''
   });
+
   const [resources, setResources] = useState([
     {
       employeeName: 'John Doe',
@@ -151,10 +180,8 @@ const ManageResource = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-
-    console.log('resouce data' ,formData)
+    console.log('resource data', formData);
     setActiveSection('view');
-
     setFormData({
       employeeName: '',
       gender: '',
@@ -175,6 +202,23 @@ const ManageResource = () => {
   const handleFilterSubmit = (e) => {
     e.preventDefault();
     // Add your API call here
+  };
+
+  const handleAddOption = (field, newOption) => {
+    if (newOption.trim() && !dropdownOptions[field].includes(newOption.trim())) {
+      setDropdownOptions(prev => ({
+        ...prev,
+        [field]: [...prev[field], newOption.trim()]
+      }));
+    }
+    setModalField(null);
+  };
+
+  const handleDeleteOption = (field, option) => {
+    setDropdownOptions(prev => ({
+      ...prev,
+      [field]: prev[field].filter(opt => opt !== option)
+    }));
   };
 
   useEffect(() => {
@@ -208,7 +252,6 @@ const ManageResource = () => {
       technologies: [],
       totalExperience: ''
     });
-    // Keep filters section open after clearing
     setShowFilters(true);
   };
 
@@ -217,7 +260,7 @@ const ManageResource = () => {
       technologies: [],
       totalExperience: ''
     });
-    setShowFilters(false); // Close the filters section
+    setShowFilters(false);
   };
 
   const handleAddResourceClick = () => {
@@ -225,12 +268,12 @@ const ManageResource = () => {
     setTimeout(() => {
       setShowLoader(false);
       setActiveSection('add');
-    }, 3000); // Show loader for 3 seconds
+    }, 3000);
   };
 
   return (
     <div className="p-6 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl shadow-lg">
-      {showLoader && <YRMSLoader />} {/* Show loader when showLoader is true */}
+      {showLoader && <YRMSLoader />}
       {activeSection !== 'add' && (
         <div className="mb-6">
           <div className="flex items-center justify-between mb-2">
@@ -343,18 +386,14 @@ const ManageResource = () => {
             </div>
             <div>
               <label className="block text-gray-700 font-medium mb-2">Designation</label>
-              <select
+              <Dropdown
                 name="designation"
                 value={formData.designation}
+                options={dropdownOptions.designations}
                 onChange={handleInputChange}
-                className={`w-full p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 transition-colors ${formData.designation ? 'text-black' : 'text-gray-500'}`}
-                required
-              >
-                <option value="" disabled className="text-gray-400">Select designation</option>
-                <option value="Software Engineer">Software Engineer</option>
-                <option value="Backend Developer">Backend Developer</option>
-                <option value="Project Manager">Project Manager</option>
-              </select>
+                onAddOption={handleAddOption}
+                setModalField={setModalField}
+              />
             </div>
             <div>
               <label className="block text-gray-700 font-medium mb-2">Employee Type</label>
@@ -431,17 +470,14 @@ const ManageResource = () => {
             </div>
             <div>
               <label className="block text-gray-700 font-medium mb-2">Competency</label>
-              <select
+              <Dropdown
                 name="competency"
                 value={formData.competency}
+                options={dropdownOptions.competencies}
                 onChange={handleInputChange}
-                className={`w-full p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 transition-colors ${formData.competency ? 'text-black' : 'text-gray-500'}`}
-              >
-                <option value="" disabled className="text-gray-400">Select a competency</option>
-                <option value="Python">Python</option>
-                <option value="Java">Java</option>
-                <option value="Data Science">Data Science</option>
-              </select>
+                onAddOption={handleAddOption}
+                setModalField={setModalField}
+              />
             </div>
 
             {/* Submit Button */}
@@ -532,6 +568,16 @@ const ManageResource = () => {
             </div>
           )}
         </div>
+      )}
+
+      {modalField && (
+        <AddOptionModal
+          field={modalField === 'designation' ? 'designations' : 'competencies'}
+          options={dropdownOptions[modalField === 'designation' ? 'designations' : 'competencies']}
+          onAddOption={handleAddOption}
+          onDeleteOption={handleDeleteOption}
+          onClose={() => setModalField(null)}
+        />
       )}
     </div>
   );
