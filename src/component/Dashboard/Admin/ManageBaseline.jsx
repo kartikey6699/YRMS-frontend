@@ -26,9 +26,8 @@ const ManageBaseline = () => {
     experience: [{ technology: "", years: "" }],
     totalExperience: "",
     communication: "",
-    status: "",
     techSkills: [],
-    certification: [{ title: "", technology: "" }],
+    certification: [{ name: "", issuingAuthority: "" }],
     currentStatus: "",
     feedback: "",
     totalRating: "",
@@ -44,6 +43,7 @@ const ManageBaseline = () => {
       "Other": ["CI/CD", "GIT", "Docker", "Kubernetes"],
       "Cloud": ["AWS", "Azure", "GCP", "Heroku"],
     },
+    Authority: ["AWS", "AZURE"],
   });
 
   const formRef = useRef(null);
@@ -75,14 +75,18 @@ const ManageBaseline = () => {
 
   const handleCertChange = (index, field, value) => {
     const updatedCert = [...formData.certification];
-    updatedCert[index][field] = value;
-    setFormData((prev) => ({ ...prev, certification: updatedCert }));
+    if (field === "issuingAuthority" && value === "add-authority") {
+      setModalField("Authority");
+    } else {
+      updatedCert[index][field] = value;
+      setFormData((prev) => ({ ...prev, certification: updatedCert }));
+    }
   };
 
   const addCertification = () => {
     setFormData((prev) => ({
       ...prev,
-      certification: [...prev.certification, { title: "", technology: "" }],
+      certification: [...prev.certification, { name: "", issuingAuthority: "" }],
     }));
   };
 
@@ -137,6 +141,14 @@ const ManageBaseline = () => {
     setModalField(null);
   };
 
+  const addNewIssuingAuthority = (value) => {
+    setDropdownOptions((prev) => ({
+      ...prev,
+      Authority: [...prev.Authority, value],
+    }));
+    setModalField(null);
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!formData.employeeName || !formData.communication || !formData.feedback) {
@@ -156,16 +168,15 @@ const ManageBaseline = () => {
     };
     setBaselineHistories((prev) => [...prev, newHistory]);
 
-    console.log('Base Line Payload ' , formData);
+    console.log("Base Line Payload ", formData);
 
     setFormData({
       ...formData,
       experience: [{ technology: "", years: "" }],
       totalExperience: "",
       communication: "",
-      status: "",
       techSkills: [],
-      certification: [{ title: "", technology: "" }],
+      certification: [{ name: "", issuingAuthority: "" }],
       currentStatus: "",
       feedback: "",
       totalRating: "",
@@ -192,16 +203,23 @@ const ManageBaseline = () => {
     const [search, setSearch] = useState("");
     const dropdownRef = useRef(null);
 
-    const options = field === "category" ? dropdownOptions.skillCategories : dropdownOptions.technologies[categoryForTech] || [];
+    const options =
+      field === "category"
+        ? dropdownOptions.skillCategories
+        : field === "issuingAuthority"
+        ? dropdownOptions.Authority
+        : dropdownOptions.technologies[categoryForTech] || [];
     const filteredOptions = options.filter((opt) =>
       opt.toLowerCase().includes(search.toLowerCase())
     );
 
     const handleSelect = (option) => {
-      if (option === "add-category") {
+      if (option === "add-category" && field === "category") {
         setModalField("skillCategories");
-      } else if (option === "add-tech") {
+      } else if (option === "add-tech" && field === "technology") {
         setModalField(categoryForTech);
+      } else if (option === "add-authority" && field === "issuingAuthority") {
+        setModalField("Authority");
       } else {
         onChange(index, field, option);
       }
@@ -227,13 +245,16 @@ const ManageBaseline = () => {
     }, [isOpen]);
 
     return (
-      <div className="relative w-56" ref={dropdownRef}>
+      <div className="relative w-82" ref={dropdownRef}>
         <button
           type="button"
           onClick={() => setIsOpen(!isOpen)}
           className="p-3 border border-gray-300 rounded-lg w-full text-left flex justify-between items-center bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
-          <span>{selectedCategory || `Select ${field === "category" ? "Category" : "Technology"}`}</span>
+          <span>
+            {selectedCategory ||
+              `Select ${field === "category" ? "Category" : field === "issuingAuthority" ? "Authority" : "Technology"}`}
+          </span>
           <svg
             className={`w-4 h-4 transition-transform ${isOpen ? "rotate-180" : ""}`}
             fill="none"
@@ -265,10 +286,24 @@ const ManageBaseline = () => {
                 </div>
               ))}
               <div
-                onClick={() => handleSelect(field === "category" ? "add-category" : "add-tech")}
+                onClick={() =>
+                  handleSelect(
+                    field === "category"
+                      ? "add-category"
+                      : field === "technology"
+                      ? "add-tech"
+                      : "add-authority"
+                  )
+                }
                 className="p-2 text-blue-600 bg-blue-50 hover:bg-blue-100 cursor-pointer text-sm font-medium border-t border-gray-200 flex items-center justify-between"
               >
-                <span>{field === "category" ? "Add Category" : `Add ${categoryForTech}`}</span>
+                <span>
+                  {field === "category"
+                    ? "Add Category"
+                    : field === "technology"
+                    ? `Add ${categoryForTech}`
+                    : "Add Authority"}
+                </span>
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
                 </svg>
@@ -300,7 +335,7 @@ const ManageBaseline = () => {
       </h2>
 
       {activeSection === "view" && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-10">
+        <div className="grid grid-cols-1 nr sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-10">
           <BaselineHistories
             histories={baselineHistories}
             employeeName={formData.employeeName}
@@ -329,7 +364,7 @@ const ManageBaseline = () => {
           }`}
         >
           <div
-            className={`bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto transform transition-all duration-300 ${
+            className={`bg-white rounded-xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto transform transition-all duration-300 ${
               showForm ? "scale-100" : "scale-95"
             }`}
           >
@@ -392,17 +427,17 @@ const ManageBaseline = () => {
                       <div key={index} className="flex items-center space-x-2 mb-2">
                         <input
                           type="text"
-                          value={cert.title}
-                          onChange={(e) => handleCertChange(index, "title", e.target.value)}
+                          value={cert.name}
+                          onChange={(e) => handleCertChange(index, "name", e.target.value)}
                           className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                          placeholder="Certificate Title"
+                          placeholder="Certification Name"
                         />
-                        <input
-                          type="text"
-                          value={cert.technology}
-                          onChange={(e) => handleCertChange(index, "technology", e.target.value)}
-                          className="w-1/4 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                          placeholder="Tag"
+                        <CategoryDropdown
+                          index={index}
+                          selectedCategory={cert.issuingAuthority}
+                          onChange={handleCertChange}
+                          field="issuingAuthority"
+                          categoryForTech="Authority"
                         />
                         {formData.certification.length > 1 && (
                           <button
@@ -450,34 +485,6 @@ const ManageBaseline = () => {
                       <option value="Medium">Medium</option>
                       <option value="Fluent">Fluent</option>
                     </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
-                    <select
-                      name="status"
-                      value={formData.status}
-                      onChange={handleInputChange}
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                    >
-                      <option value="">Select Status</option>
-                      <option value="Pool">Pool</option>
-                      <option value="Deployed">Deployed</option>
-                      <option value="PIP">PIP</option>
-                      <option value="Hold">Hold</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Current Status</label>
-                    <input
-                      type="text"
-                      name="currentStatus"
-                      value={formData.currentStatus}
-                      onChange={handleInputChange}
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                      placeholder="e.g., Upskill suggestion"
-                    />
                   </div>
                 </div>
               )}
@@ -569,6 +576,18 @@ const ManageBaseline = () => {
                       required
                     />
                   </div>
+
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Upskill Suggestion</label>
+                    <input
+                      type="text"
+                      name="currentStatus"
+                      value={formData.currentStatus}
+                      onChange={handleInputChange}
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                      placeholder="e.g., Learn React"
+                    />
+                  </div>
                 </div>
               )}
 
@@ -618,17 +637,38 @@ const ManageBaseline = () => {
           options={
             modalField === "skillCategories"
               ? dropdownOptions.skillCategories
+              : modalField === "Authority"
+              ? dropdownOptions.Authority
               : dropdownOptions.technologies[modalField] || []
           }
-          onAddOption={modalField === "skillCategories" ? addNewSkillCategory : addNewTechnology}
+          onAddOption={
+            modalField === "skillCategories"
+              ? addNewSkillCategory
+              : modalField === "Authority"
+              ? addNewIssuingAuthority
+              : addNewTechnology
+          }
           onDeleteOption={(category, option) => {
-            setDropdownOptions((prev) => ({
-              ...prev,
-              technologies: {
-                ...prev.technologies,
-                [category]: prev.technologies[category].filter((opt) => opt !== option),
-              },
-            }));
+            if (modalField === "skillCategories") {
+              setDropdownOptions((prev) => ({
+                ...prev,
+                skillCategories: prev.skillCategories.filter((opt) => opt !== option),
+                technologies: { ...prev.technologies, [option]: undefined },
+              }));
+            } else if (modalField === "Authority") {
+              setDropdownOptions((prev) => ({
+                ...prev,
+                Authority: prev.Authority.filter((opt) => opt !== option),
+              }));
+            } else {
+              setDropdownOptions((prev) => ({
+                ...prev,
+                technologies: {
+                  ...prev.technologies,
+                  [category]: prev.technologies[category].filter((opt) => opt !== option),
+                },
+              }));
+            }
           }}
           onClose={() => setModalField(null)}
         />

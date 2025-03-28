@@ -15,7 +15,7 @@ const AddOptionModal = ({ field, options, onAddOption, onDeleteOption, onClose }
   };
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center z-60"> {/* Increased z-index */}
+    <div className="fixed inset-0 flex items-center justify-center z-60 bg-gray-900/30 backdrop-blur-sm">
       <div className="bg-white p-4 rounded-lg shadow-lg w-80 max-h-[80vh] flex flex-col">
         <h3 className="text-lg font-semibold text-gray-800 mb-3">
           {field === 'skillCategories' ? 'Add New Skill Category' : `Add New ${field}`}
@@ -36,26 +36,25 @@ const AddOptionModal = ({ field, options, onAddOption, onDeleteOption, onClose }
             Add
           </button>
         </div>
-        {field !== 'skillCategories' && (
-          <div className="max-h-48 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
-            {options.map((option) => (
-              <div
-                key={option}
-                className="flex items-center justify-between p-2 hover:bg-gray-100"
+        {/* Always show the list with delete buttons, no conditional hiding */}
+        <div className="max-h-48 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+          {options.map((option) => (
+            <div
+              key={option}
+              className="flex items-center justify-between p-2 hover:bg-gray-100"
+            >
+              <span className="text-sm text-gray-700">{option}</span>
+              <button
+                onClick={() => onDeleteOption(field, option)}
+                className="text-red-500 hover:text-red-700"
               >
-                <span className="text-sm text-gray-700">{option}</span>
-                <button
-                  onClick={() => onDeleteOption(field, option)}
-                  className="text-red-500 hover:text-red-700"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5-4h4M4 7h16" />
-                  </svg>
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5-4h4M4 7h16" />
+                </svg>
+              </button>
+            </div>
+          ))}
+        </div>
         <div className="mt-3 flex justify-end">
           <button
             onClick={onClose}

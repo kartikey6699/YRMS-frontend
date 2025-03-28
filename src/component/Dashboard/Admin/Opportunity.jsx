@@ -79,12 +79,9 @@ const Opportunities = () => {
   const [selectedOpportunity, setSelectedOpportunity] = useState(null);
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
-  
-  // New state for search and filter
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
 
-  // Filter and search logic
   const filteredOpportunities = opportunities.filter(opportunity => {
     const matchesSearch = opportunity.client_name.toLowerCase().includes(searchTerm.toLowerCase()) || 
                          opportunity.jd.toLowerCase().includes(searchTerm.toLowerCase());
@@ -92,14 +89,12 @@ const Opportunities = () => {
     return matchesSearch && matchesStatus;
   });
 
-  // Sort opportunities by date
   const sortedOpportunities = [...filteredOpportunities].sort((a, b) => 
     new Date(a.date_of_interview) - new Date(b.date_of_interview)
   );
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-
     if (name === 'cleared_rounds') {
       if (!newOpportunity.total_rounds) {
         setErrorMessage('Please enter total rounds first.');
@@ -109,7 +104,6 @@ const Opportunities = () => {
         return;
       }
     }
-
     setErrorMessage('');
     setNewOpportunity((prev) => ({ ...prev, [name]: value }));
   };
@@ -118,14 +112,8 @@ const Opportunities = () => {
     e.preventDefault();
     setOpportunities((prev) => [
       ...prev,
-      { 
-        ...newOpportunity, 
-        id: prev.length + 1
-      }
+      { ...newOpportunity, id: prev.length + 1 }
     ]);
-
-    console.log('opportunity payload : ' , newOpportunity);
-
     setNewOpportunity({
       client_name: '',
       date_of_interview: '',
@@ -148,37 +136,17 @@ const Opportunities = () => {
     setTimeout(() => setSelectedOpportunity(null), 300);
   };
 
-  const openAddForm = () => {
-    setShowForm(true);
-  };
-
-  const closeAddForm = () => {
-    setShowForm(false);
-  };
+  const openAddForm = () => setShowForm(true);
+  const closeAddForm = () => setShowForm(false);
 
   const getStatusStyles = (status) => {
     switch(status) {
       case 'Cleared':
-        return {
-          bg: 'bg-green-100',
-          text: 'text-green-800',
-          border: 'border-green-700',
-          icon: <FaCheck className="mr-1" />
-        };
+        return { bg: 'bg-green-100', text: 'text-green-800', border: 'border-green-700', icon: <FaCheck className="mr-1" /> };
       case 'Rejected':
-        return {
-          bg: 'bg-red-100',
-          text: 'text-red-800',
-          border: 'border-red-700',
-          icon: <FaTimes className="mr-1" />
-        };
+        return { bg: 'bg-red-100', text: 'text-red-800', border: 'border-red-700', icon: <FaTimes className="mr-1" /> };
       default: // Pending
-        return {
-          bg: 'bg-yellow-100',
-          text: 'text-yellow-800',
-          border: 'border-yellow-700',
-          icon: <FaClock className="mr-1" />
-        };
+        return { bg: 'bg-yellow-100', text: 'text-yellow-800', border: 'border-yellow-700', icon: <FaClock className="mr-1" /> };
     }
   };
 
@@ -191,7 +159,6 @@ const Opportunities = () => {
         <FaArrowLeft className="mr-2" /> Back to Resources
       </button>
 
-      {/* Profile Card */}
       <ProfileCard
         employeeName={resource.employeeName}
         competency={resource.competency}
@@ -216,47 +183,30 @@ const Opportunities = () => {
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
-        
         <div className="flex items-center space-x-4 w-full md:w-auto">
           <span className="text-sm font-medium text-gray-700">Filter by:</span>
           <div className="flex space-x-2">
             <button
               onClick={() => setStatusFilter('All')}
-              className={`px-3 py-1 text-xs font-medium rounded-full transition-colors duration-200 ${
-                statusFilter === 'All' 
-                  ? 'bg-blue-600 text-white' 
-                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-              }`}
+              className={`px-3 py-1 text-xs font-medium rounded-full transition-colors duration-200 ${statusFilter === 'All' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
             >
               All
             </button>
             <button
               onClick={() => setStatusFilter('Cleared')}
-              className={`px-3 py-1 text-xs font-medium rounded-full transition-colors duration-200 flex items-center ${
-                statusFilter === 'Cleared' 
-                  ? 'bg-green-600 text-white' 
-                  : 'bg-green-100 text-green-800 hover:bg-green-200'
-              }`}
+              className={`px-3 py-1 text-xs font-medium rounded-full transition-colors duration-200 flex items-center ${statusFilter === 'Cleared' ? 'bg-green-600 text-white' : 'bg-green-100 text-green-800 hover:bg-green-200'}`}
             >
               <FaCheck className="mr-1" /> Cleared
             </button>
             <button
               onClick={() => setStatusFilter('Rejected')}
-              className={`px-3 py-1 text-xs font-medium rounded-full transition-colors duration-200 flex items-center ${
-                statusFilter === 'Rejected' 
-                  ? 'bg-red-600 text-white' 
-                  : 'bg-red-100 text-red-800 hover:bg-red-200'
-              }`}
+              className={`px-3 py-1 text-xs font-medium rounded-full transition-colors duration-200 flex items-center ${statusFilter === 'Rejected' ? 'bg-red-600 text-white' : 'bg-red-100 text-red-800 hover:bg-red-200'}`}
             >
               <FaTimes className="mr-1" /> Rejected
             </button>
             <button
               onClick={() => setStatusFilter('Pending')}
-              className={`px-3 py-1 text-xs font-medium rounded-full transition-colors duration-200 flex items-center ${
-                statusFilter === 'Pending' 
-                  ? 'bg-yellow-600 text-white' 
-                  : 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200'
-              }`}
+              className={`px-3 py-1 text-xs font-medium rounded-full transition-colors duration-200 flex items-center ${statusFilter === 'Pending' ? 'bg-yellow-600 text-white' : 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200'}`}
             >
               <FaClock className="mr-1" /> Pending
             </button>
@@ -267,22 +217,21 @@ const Opportunities = () => {
       {/* Opportunities Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-10">
         {sortedOpportunities.length > 0 ? (
-          sortedOpportunities.map((opportunity) => {
+          sortedOpportunities.map((opportunity, index) => {
             const statusStyles = getStatusStyles(opportunity.final_result);
             
             return (
               <div 
                 key={opportunity.id}
                 onClick={() => openOpportunityDetails(opportunity)}
-                className={`relative rounded-xl shadow-lg overflow-hidden cursor-pointer transition-all duration-300 h-48 flex flex-col
-                  ${statusStyles.bg} border-l-4 ${statusStyles.border} hover:shadow-xl hover:translate-y-[-4px]`}
+                className={`relative rounded-xl shadow-lg overflow-hidden cursor-pointer transition-all duration-300 h-48 flex flex-col ${statusStyles.bg} border-l-4 ${statusStyles.border} hover:shadow-xl hover:translate-y-[-4px]`}
               >
                 <div className="p-4 flex-1 flex flex-col">
-                  <div className="mb-2">
+                  <div className="mb-2 flex justify-between items-center">
                     <h3 className="text-lg font-semibold text-gray-800 break-words">
-                      {opportunity.client_name}
+                      Opportunity-{index + 1}
                     </h3>
-                    <p className="text-sm text-gray-600 mt-1">
+                    <p className="text-sm text-gray-600">
                       {new Date(opportunity.date_of_interview).toLocaleDateString('en-US', {
                         year: 'numeric',
                         month: 'short',
@@ -290,15 +239,17 @@ const Opportunities = () => {
                       })}
                     </p>
                   </div>
-                  
+                  <div>
+                    <p className="text-sm text-gray-600 mt-1">
+                      {opportunity.client_name}
+                    </p>
+                  </div>
                   <div className="mt-auto flex justify-between items-center">
                     <div className="flex items-center text-sm text-gray-600">
                       <FaInfoCircle className="mr-1" />
                       <span>Rounds: {opportunity.cleared_rounds}/{opportunity.total_rounds}</span>
                     </div>
-                    <div className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border-2
-                      ${statusStyles.bg} ${statusStyles.text} ${statusStyles.border}`}
-                    >
+                    <div className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border-2 ${statusStyles.bg} ${statusStyles.text} ${statusStyles.border}`}>
                       {statusStyles.icon}
                       {opportunity.final_result}
                     </div>
@@ -333,31 +284,49 @@ const Opportunities = () => {
         <div className={`fixed inset-0 bg-gray-900/30 backdrop-blur-sm flex items-center justify-center p-4 z-50 transition-opacity duration-300 ${isPopupOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
           <div className={`bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto transform transition-all duration-300 ${isPopupOpen ? 'scale-100' : 'scale-95'}`}>
             <div className={`p-6 ${getStatusStyles(selectedOpportunity.final_result).bg} rounded-t-xl`}>
-              <div className="flex justify-between items-start">
-                <div>
-                  <h3 className="text-xl font-bold text-gray-800">
-                    {selectedOpportunity.client_name}
-                  </h3>
-                  <p className="text-gray-600">
-                    {new Date(selectedOpportunity.date_of_interview).toLocaleDateString('en-US', {
-                      weekday: 'long',
+              <div className="flex justify-between items-center">
+                <div className="flex items-center space-x-4">
+                  <div className="w-12 h-12 rounded-full bg-gray-300 flex items-center justify-center overflow-hidden">
+                    {/* Placeholder for profile picture; replace with actual image if available */}
+                    <span className="text-gray-600 text-xl font-semibold">
+                      {resource.employeeName ? resource.employeeName[0] : "N/A"}
+                    </span>
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-gray-800">
+                      {resource.employeeName || "Unknown Employee"}
+                    </h3>
+                    <p className="text-gray-600 text-sm">
+                      {resource.competency || "Position N/A"}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <p className="text-lg font-semibold text-gray-800">
+                    Date: {new Date(selectedOpportunity.date_of_interview).toLocaleDateString('en-US', {
                       year: 'numeric',
-                      month: 'long',
+                      month: 'short',
                       day: 'numeric'
                     })}
                   </p>
+                  <button 
+                    onClick={closeOpportunityDetails}
+                    className="text-gray-500 hover:text-gray-700 text-xl cursor-pointer transition-colors duration-200"
+                  >
+                    ✕
+                  </button>
                 </div>
-                <button 
-                  onClick={closeOpportunityDetails}
-                  className="text-gray-500 hover:text-gray-700 text-xl cursor-pointer transition-colors duration-200"
-                >
-                  ✕
-                </button>
               </div>
             </div>
             
             <div className="p-6 space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <h4 className="text-sm font-medium text-gray-500">Client Name</h4>
+                  <p className="mt-1 text-gray-800 p-3 bg-gray-50 rounded-lg">
+                    {selectedOpportunity.client_name}
+                  </p>
+                </div>
                 <div className="md:col-span-2">
                   <h4 className="text-sm font-medium text-gray-500">Job Description</h4>
                   <p className="mt-1 text-gray-800 p-3 bg-gray-50 rounded-lg">
@@ -366,9 +335,7 @@ const Opportunities = () => {
                 </div>
                 <div>
                   <h4 className="text-sm font-medium text-gray-500">Final Result</h4>
-                  <p className={`mt-1 inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border-2
-                    ${getStatusStyles(selectedOpportunity.final_result).bg} ${getStatusStyles(selectedOpportunity.final_result).text} ${getStatusStyles(selectedOpportunity.final_result).border}`}
-                  >
+                  <p className={`mt-1 inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border-2 ${getStatusStyles(selectedOpportunity.final_result).bg} ${getStatusStyles(selectedOpportunity.final_result).text} ${getStatusStyles(selectedOpportunity.final_result).border}`}>
                     {getStatusStyles(selectedOpportunity.final_result).icon}
                     {selectedOpportunity.final_result}
                   </p>
@@ -405,7 +372,6 @@ const Opportunities = () => {
       {showForm && (
         <div className={`fixed inset-0 bg-gray-900/30 backdrop-blur-sm flex items-center justify-center p-4 z-50 transition-opacity duration-300 ${showForm ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
           <div className={`bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto transform transition-all duration-300 ${showForm ? 'scale-100' : 'scale-95'} overflow-hidden`}>
-            {/* Form Header with Gradient */}
             <div className="bg-gradient-to-r from-indigo-600 to-purple-600 p-6 relative">
               <div className="absolute top-0 left-0 w-full h-full opacity-10">
                 <div className="absolute top-0 right-0 w-32 h-32 bg-white rounded-full transform translate-x-16 -translate-y-16"></div>
@@ -424,18 +390,11 @@ const Opportunities = () => {
                     <FaTimes className="w-5 h-5" />
                   </button>
                 </div>
-                {/* <div className="flex mt-6 space-x-2">
-                  <div className="h-1 w-8 bg-white rounded-full"></div>
-                  <div className="h-1 w-8 bg-white/30 rounded-full"></div>
-                  <div className="h-1 w-8 bg-white/30 rounded-full"></div>
-                </div> */}
               </div>
             </div>
             
-            {/* Form Content */}
             <form onSubmit={handleAddOpportunity} className="p-6 space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Client Name Field */}
                 <div className="relative group">
                   <label className="block text-sm font-medium text-gray-700 mb-1 ml-1">Client Name</label>
                   <div className="relative">
@@ -456,7 +415,6 @@ const Opportunities = () => {
                   </div>
                 </div>
                 
-                {/* Interview Date Field */}
                 <div className="relative group">
                   <label className="block text-sm font-medium text-gray-700 mb-1 ml-1">Interview Date</label>
                   <div className="relative">
@@ -476,7 +434,6 @@ const Opportunities = () => {
                   </div>
                 </div>
                 
-                {/* Job Description Field */}
                 <div className="md:col-span-2 relative group">
                   <label className="block text-sm font-medium text-gray-700 mb-1 ml-1">Job Description</label>
                   <div className="relative">
@@ -496,11 +453,9 @@ const Opportunities = () => {
                   </div>
                 </div>
                 
-                {/* Interview Rounds Section */}
                 <div className="md:col-span-2">
                   <h4 className="text-sm font-medium text-gray-700 mb-3 ml-1">Interview Process</h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {/* Total Rounds */}
                     <div className="bg-indigo-50 p-4 rounded-xl border border-indigo-100">
                       <label className="block text-sm font-medium text-indigo-800 mb-2">Total Rounds</label>
                       <div className="flex items-center">
@@ -518,7 +473,6 @@ const Opportunities = () => {
                       </div>
                     </div>
                     
-                    {/* Cleared Rounds */}
                     <div className="bg-indigo-50 p-4 rounded-xl border border-indigo-100">
                       <label className="block text-sm font-medium text-indigo-800 mb-2">Cleared Rounds</label>
                       <div className="flex items-center">
@@ -535,13 +489,10 @@ const Opportunities = () => {
                         />
                         <span className="ml-3 text-indigo-600">rounds passed</span>
                       </div>
-                      {errorMessage && name === 'cleared_rounds' && (
-                        <p className="text-red-500 text-sm mt-2">{errorMessage}</p>
-                      )}
+                      {errorMessage && <p className="text-red-500 text-sm mt-2">{errorMessage}</p>}
                     </div>
                   </div>
                   
-                  {/* Visual Progress Indicator */}
                   {newOpportunity.total_rounds > 0 && (
                     <div className="mt-4">
                       <div className="flex justify-between mb-1">
@@ -553,17 +504,13 @@ const Opportunities = () => {
                       <div className="w-full bg-indigo-100 rounded-full h-2.5">
                         <div 
                           className="bg-gradient-to-r from-indigo-400 to-purple-500 h-2.5 rounded-full" 
-                          style={{ 
-                            width: `${Math.min(100, (newOpportunity.cleared_rounds / newOpportunity.total_rounds) * 100)}%`,
-                            transition: 'width 0.3s ease'
-                          }}
+                          style={{ width: `${Math.min(100, (newOpportunity.cleared_rounds / newOpportunity.total_rounds) * 100)}%`, transition: 'width 0.3s ease' }}
                         ></div>
                       </div>
                     </div>
                   )}
                 </div>
                 
-                {/* Final Result Field */}
                 <div className="relative group">
                   <label className="block text-sm font-medium text-gray-700 mb-1 ml-1">Final Result</label>
                   <div className="relative">
@@ -586,22 +533,16 @@ const Opportunities = () => {
                   </div>
                 </div>
                 
-                {/* Status Badge Preview */}
                 <div className="flex items-end">
                   <div className="w-full">
                     <label className="block text-sm font-medium text-gray-700 mb-1 ml-1">Status Preview</label>
-                    <div className={`inline-flex items-center px-4 py-2 rounded-full text-sm font-medium border-2
-                      ${getStatusStyles(newOpportunity.final_result).bg} 
-                      ${getStatusStyles(newOpportunity.final_result).text} 
-                      ${getStatusStyles(newOpportunity.final_result).border}`}
-                    >
+                    <div className={`inline-flex items-center px-4 py-2 rounded-full text-sm font-medium border-2 ${getStatusStyles(newOpportunity.final_result).bg} ${getStatusStyles(newOpportunity.final_result).text} ${getStatusStyles(newOpportunity.final_result).border}`}>
                       {getStatusStyles(newOpportunity.final_result).icon}
                       {newOpportunity.final_result}
                     </div>
                   </div>
                 </div>
                 
-                {/* Client Feedback Field */}
                 <div className="md:col-span-2 relative group">
                   <label className="block text-sm font-medium text-gray-700 mb-1 ml-1">Client Feedback</label>
                   <div className="relative">
@@ -621,7 +562,6 @@ const Opportunities = () => {
                 </div>
               </div>
               
-              {/* Form Actions */}
               <div className="flex justify-end space-x-4 pt-6 border-t border-gray-100">
                 <button
                   type="button"

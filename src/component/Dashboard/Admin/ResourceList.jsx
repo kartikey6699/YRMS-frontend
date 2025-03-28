@@ -46,7 +46,7 @@ const ResourceList = ({ resources, handleBaselineClick, handleOpportunitiesClick
     { key: 'sno', label: 'S.No' },
     { key: 'employeeName', label: 'Employee Name' },
     { key: 'joiningDate', label: 'Joining Date' },
-    { key: 'jobTitle', label: 'Job Title' },
+    { key: 'jobTitle', label: 'Designation' },
     { key: 'status', label: 'Status' }
   ];
 
