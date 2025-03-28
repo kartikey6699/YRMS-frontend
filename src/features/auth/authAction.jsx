@@ -14,16 +14,16 @@ export const adminLogin = createAsyncThunk(
   async (payload, { rejectWithValue }) => {
     try {
       const response = await apiClient.post("", payload);
-      const { token, data } = response.data;
+      const { success, data, message } = response.data;
 
-      if (!token) {
-        throw new Error("No token received from server");
+      if (!success || !data.token) {
+        throw new Error(message || "No token received from server");
       }
 
-      return { token, data };
+      return { token: data.token, data: {} };
+      
     } catch (error) {
-
-        const errorMessage =
+      const errorMessage =
         error.response?.data?.message ||
         error.message ||
         "Admin login failed";
