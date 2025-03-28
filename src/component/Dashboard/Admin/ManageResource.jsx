@@ -1,80 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { FaPlus, FaArrowLeft, FaFilter, FaTimes, FaCogs, FaCalendar, FaComments, FaChevronDown } from 'react-icons/fa';
+import { FaPlus, FaArrowLeft, FaFilter, FaTimes, FaCogs, FaCalendar, FaComments } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 import ResourceList from './ResourceList';
 import YRMSLoader from '../../helper/loader';
 import AddOptionModal from '../../helper/OptionalModal';
-
-// Custom Dropdown Component
-const Dropdown = ({ name, value, options, onChange, onAddOption, setModalField }) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const dropdownRef = useRef(null);
-
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setIsOpen(false);
-      }
-    };
-    if (isOpen) {
-      document.addEventListener("mousedown", handleClickOutside);
-    }
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [isOpen]);
-
-  const handleSelect = (option) => {
-    if (option === "add-new") {
-      setModalField(name);
-    } else {
-      onChange({ target: { name, value: option } });
-    }
-    setIsOpen(false);
-  };
-
-  return (
-    <div className="relative w-full" ref={dropdownRef}>
-      <button
-        type="button"
-        onClick={() => setIsOpen(!isOpen)}
-        className={`w-full p-3 pr-10 border-2 border-gray-200 rounded-lg text-left focus:outline-none focus:border-blue-500 transition-colors ${value ? 'text-black' : 'text-gray-500'}`}
-      >
-        <span>{value || `Select ${name}`}</span>
-        <svg
-          className={`w-4 h-4 absolute right-3 top-1/2 transform -translate-y-1/2 transition-transform ${isOpen ? "rotate-180" : ""}`}
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-        </svg>
-      </button>
-      {isOpen && (
-        <div className="absolute z-10 w-full mt-1 bg-white border rounded-md shadow-lg max-h-60 overflow-y-auto">
-          {options.map((option) => (
-            <div
-              key={option}
-              onClick={() => handleSelect(option)}
-              className="p-2 hover:bg-gray-100 cursor-pointer text-sm"
-            >
-              {option}
-            </div>
-          ))}
-          <div
-            onClick={() => handleSelect("add-new")}
-            className="p-2 text-blue-600 bg-blue-50 hover:bg-blue-100 cursor-pointer text-sm font-medium border-t border-gray-200 flex items-center justify-between"
-          >
-            <span>Add New {name}</span>
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
-            </svg>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-};
 
 const ManageResource = () => {
   const navigate = useNavigate();
@@ -82,31 +11,7 @@ const ManageResource = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [modalField, setModalField] = useState(null);
   const [showLoader, setShowLoader] = useState(false);
-  const [techDropdownOpen, setTechDropdownOpen] = useState(false);
-  const techDropdownRef = useRef(null);
   
-  // Technology categories for the dropdown
-  const techCategories = {
-    'Frontend': ['React', 'Angular', 'Vue', 'JavaScript', 'TypeScript'],
-    'Backend': ['Node.js', 'Python', 'Java', 'C#', 'Go', 'Ruby'],
-    'Cloud/DevOps': ['AWS', 'Azure', 'Docker', 'Kubernetes', 'CI/CD'],
-    'Mobile': ['React Native', 'Flutter', 'Swift', 'Kotlin'],
-    'Database': ['SQL', 'MongoDB', 'PostgreSQL', 'Redis']
-  };
-
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (techDropdownRef.current && !techDropdownRef.current.contains(event.target)) {
-        setTechDropdownOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, []);
-
   const [dropdownOptions, setDropdownOptions] = useState({
     designations: ['Software Engineer', 'Backend Developer', 'Project Manager'],
     competencies: ['Python', 'Java', 'Data Science']
@@ -213,7 +118,6 @@ const ManageResource = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-
     console.log('resource data', formData);
     setActiveSection('view');
     setFormData({
@@ -233,54 +137,6 @@ const ManageResource = () => {
     });
   };
 
-  const handleFilterSubmit = (e) => {
-    e.preventDefault();
-    // Add your API call here
-  };
-
-  const handleAddOption = (field, newOption) => {
-    if (newOption.trim() && !dropdownOptions[field].includes(newOption.trim())) {
-      setDropdownOptions(prev => ({
-        ...prev,
-        [field]: [...prev[field], newOption.trim()]
-      }));
-    }
-    setModalField(null);
-  };
-
-  const handleDeleteOption = (field, option) => {
-    setDropdownOptions(prev => ({
-      ...prev,
-      [field]: prev[field].filter(opt => opt !== option)
-    }));
-  };
-
-  useEffect(() => {
-    const fetchResources = async () => {
-      console.log('Fetching resources', resources);
-    };
-
-    const fetchRoles = async () => {
-      console.log('Fetching roles');
-    };
-
-    const fetchCompetencies = async () => {
-      console.log('Fetching competencies');
-    };
-
-    fetchResources();
-    fetchRoles();
-    fetchCompetencies();
-  }, [activeSection]);
-
-  const handleBaselineClick = (resource) => {
-    navigate('/manage-baseline', { state: { resource } });
-  };
-
-  const handleOpportunitiesClick = (resource) => {
-    navigate('/opportunities', { state: { resource } });
-  };
-
   const clearFilters = () => {
     setFilterData({
       technologies: [],
@@ -289,14 +145,6 @@ const ManageResource = () => {
       communication: ''
     });
     setShowFilters(false); // Close the filters section
-  };
-
-  const handleAddResourceClick = () => {
-    setShowLoader(true);
-    setTimeout(() => {
-      setShowLoader(false);
-      setActiveSection('add');
-    }, 3000);
   };
 
   return (
@@ -308,7 +156,7 @@ const ManageResource = () => {
             <h2 className="text-3xl font-bold text-blue-800">Resource Details</h2>
             <button
               className="px-4 py-2 rounded-lg font-semibold text-sm flex items-center bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 transition-all transform hover:scale-105"
-              onClick={handleAddResourceClick}
+              onClick={() => setActiveSection('add')}
             >
               <FaPlus className="mr-2" />
               Add Resource
@@ -316,120 +164,46 @@ const ManageResource = () => {
           </div>
 
           {/* Compact Filter Section */}
-          <div className="mb-6">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-semibold text-gray-700">Filter Resources</h3>
+          <div className="mb-4">
+            <div className="flex justify-between items-center mb-2">
+              <h3 className="text-md font-semibold text-gray-700">Filter Resources</h3>
               <div className="flex space-x-2">
                 {filterData.technologies.length > 0 || 
                  filterData.totalExperience || 
                  filterData.communication ? (
                   <button
                     onClick={clearFilters}
-                    className="px-3 py-1.5 rounded-lg text-sm flex items-center bg-red-100 text-red-800 hover:bg-red-200 transition-all"
+                    className="px-2 py-1 rounded-md text-xs flex items-center bg-red-100 text-red-800 hover:bg-red-200 transition-all"
                   >
                     <FaTimes className="mr-1" />
-                    Clear All
+                    Clear
                   </button>
                 ) : null}
                 <button
                   onClick={() => setShowFilters(!showFilters)}
-                  className={`px-3 py-1.5 rounded-lg text-sm flex items-center transition-all ${
+                  className={`px-2 py-1 rounded-md text-xs flex items-center transition-all ${
                     showFilters 
                       ? 'bg-gray-200 text-gray-800 hover:bg-gray-300' 
                       : 'bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700'
                   }`}
                 >
                   <FaFilter className="mr-1" />
-                  {showFilters ? 'Hide Filters' : 'Show Filters'}
+                  {showFilters ? 'Hide' : 'Filters'}
                 </button>
               </div>
             </div>
 
             {/* Filter Panel - Collapsible */}
             <div className={`transition-all duration-300 ease-in-out overflow-hidden ${
-              showFilters ? 'max-h-96 opacity-100 mb-4' : 'max-h-0 opacity-0 mb-0'
+              showFilters ? 'max-h-80 opacity-100 mb-2' : 'max-h-0 opacity-0 mb-0'
             }`}>
-              <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200 relative">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {/* Technology Filter - Updated */}
-                  <div className="relative" ref={techDropdownRef}>
-                    <div className="flex items-center text-blue-600 mb-2">
-                      <FaCogs className="mr-2 text-sm" />
-                      <span className="font-medium text-sm">Technologies</span>
-                    </div>
-                    <div 
-                      onClick={() => setTechDropdownOpen(!techDropdownOpen)}
-                      className={`w-full min-h-10 p-2 border ${techDropdownOpen ? 'border-blue-500' : 'border-gray-300'} rounded-md bg-white text-sm cursor-pointer hover:border-blue-500 transition-colors flex flex-wrap gap-1 relative z-10`}
-                    >
-                      {filterData.technologies.length > 0 ? (
-                        filterData.technologies.map(tech => (
-                          <span 
-                            key={tech} 
-                            className="inline-flex items-center px-2 py-0.5 bg-blue-100 text-blue-800 text-xs rounded-full"
-                          >
-                            {tech}
-                            <button 
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                toggleTechnology(tech);
-                              }}
-                              className="ml-1 text-blue-500 hover:text-blue-700 focus:outline-none cursor-pointer"
-                            >
-                              ×
-                            </button>
-                          </span>
-                        ))
-                      ) : (
-                        <span className="text-gray-500 self-center">Select technologies</span>
-                      )}
-                      <FaChevronDown 
-                        className={`ml-auto self-center text-xs transition-transform ${
-                          techDropdownOpen ? 'transform rotate-180' : ''
-                        }`}
-                      />
-                    </div>
-                    
-                    {techDropdownOpen && (
-                      <div className="relative z-10 mt-1 left-0 right-0 min-w-full bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto"
-                        style={{
-                          width: 'max-content',
-                          minWidth: '100%'
-                        }}
-                      >
-                        <div className="p-2 space-y-2">
-                          {Object.entries(techCategories).map(([category, techs]) => (
-                            <div key={category}>
-                              <div className="px-2 py-1 text-xs font-semibold text-gray-500 uppercase tracking-wider bg-gray-50 rounded">
-                                {category}
-                              </div>
-                              <div className="grid grid-cols-2 gap-1 mt-1">
-                                {techs.map(tech => (
-                                  <label 
-                                    key={tech} 
-                                    className="flex items-center px-2 py-1 hover:bg-blue-50 rounded cursor-pointer whitespace-nowrap"
-                                  >
-                                    <input
-                                      type="checkbox"
-                                      checked={filterData.technologies.includes(tech)}
-                                      onChange={() => toggleTechnology(tech)}
-                                      className="h-4 w-4 text-blue-600 rounded border-gray-300 mr-2 focus:ring-blue-500"
-                                    />
-                                    <span className="text-sm">{tech}</span>
-                                  </label>
-                                ))}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
+              <div className="bg-white p-3 rounded-lg shadow-sm border border-gray-200">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                   {/* Experience Filter */}
-                  <div>
-                    <div className="flex items-center text-purple-600 mb-2">
-                      <FaCalendar className="mr-2 text-sm" />
-                      <span className="font-medium text-sm">Experience (years)</span>
+                  <div className="space-y-1">
+                    <div className="flex items-center text-purple-600">
+                      <FaCalendar className="mr-1 text-xs" />
+                      <span className="font-medium text-xs">Experience</span>
                     </div>
                     <div className="relative">
                       <input
@@ -437,31 +211,74 @@ const ManageResource = () => {
                         name="totalExperience"
                         value={filterData.totalExperience}
                         onChange={handleFilterChange}
-                        className="w-full p-2 pl-3 pr-8 border border-gray-300 rounded-md text-sm focus:border-purple-500 focus:ring-1 focus:ring-purple-200"
+                        className="w-full p-1.5 pl-2 pr-6 border border-gray-300 rounded text-xs focus:border-purple-500 focus:ring-1 focus:ring-purple-200"
                         placeholder="0"
                         min="0"
                       />
-                      <span className="absolute right-3 top-2.5 text-gray-400 text-sm">yrs</span>
+                      <span className="absolute right-2 top-1.5 text-gray-400 text-xs">yrs</span>
                     </div>
                   </div>
 
                   {/* Communication Filter */}
-                  <div>
-                    <div className="flex items-center text-green-600 mb-2">
-                      <FaComments className="mr-2 text-sm" />
-                      <span className="font-medium text-sm">Communication</span>
+                  <div className="space-y-1">
+                    <div className="flex items-center text-green-600">
+                      <FaComments className="mr-1 text-xs" />
+                      <span className="font-medium text-xs">Communication</span>
                     </div>
                     <select
                       name="communication"
                       value={filterData.communication}
                       onChange={handleFilterChange}
-                      className="w-full p-2 border border-gray-300 rounded-md text-sm focus:border-green-500 focus:ring-1 focus:ring-green-200"
+                      className="w-full p-1.5 border border-gray-300 rounded text-xs focus:border-green-500 focus:ring-1 focus:ring-green-200"
                     >
                       <option value="">All levels</option>
                       <option value="Fluent">Fluent</option>
                       <option value="Medium">Medium</option>
                       <option value="Average">Average</option>
                     </select>
+                  </div>
+
+                  {/* Certification Filter */}
+                  <div className="space-y-1">
+                    <div className="flex items-center text-blue-600">
+                      <FaCogs className="mr-1 text-xs" />
+                      <span className="font-medium text-xs">Certifications</span>
+                    </div>
+                    <input
+                      type="text"
+                      name="certifications"
+                      value={filterData.certifications}
+                      onChange={handleFilterChange}
+                      className="w-full p-1.5 border border-gray-300 rounded text-xs focus:border-blue-500 focus:ring-1 focus:ring-blue-200"
+                      placeholder="Certifications"
+                    />
+                  </div>
+
+                  {/* Technology Filter - Compact */}
+                  <div className="md:col-span-3 space-y-1">
+                    <div className="flex items-center text-blue-600">
+                      <FaCogs className="mr-1 text-xs" />
+                      <span className="font-medium text-xs">Technologies</span>
+                    </div>
+                    <div className="flex flex-wrap gap-1.5 max-h-[3.5rem] overflow-y-auto">
+                      {['React', 'Angular', 'Vue', 'JavaScript', 'TypeScript', 'Node.js', 'Python', 'Java', 'C#', 'Go', 'Ruby', 'AWS', 'Azure', 'Docker', 'Kubernetes', 'CI/CD', 'React Native', 'Flutter', 'Swift', 'Kotlin', 'SQL', 'MongoDB', 'PostgreSQL', 'Redis', 'GraphQL', 'Rust', 'Scala', 'Elixir', 'Clojure', 'PHP', 'Perl', 'Shell', 'HTML', 'CSS', 'Spring Boot', 'Django', 'Laravel', 'Express.js', 'ASP.NET', 'TensorFlow', 'PyTorch', 'Hadoop', 'Spark', 'Jenkins', 'Terraform', 'Ansible', 'Unity', 'Unreal Engine', 'WebGL'].map(tech => (
+                        <label key={tech} className="flex items-center cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={filterData.technologies.includes(tech)}
+                            onChange={() => toggleTechnology(tech)}
+                            className="hidden"
+                          />
+                          <span className={`px-2 py-1 text-xs rounded-full transition-all ${
+                            filterData.technologies.includes(tech)
+                              ? 'bg-blue-100 text-blue-800 border border-blue-200'
+                              : 'bg-gray-100 text-gray-700 border border-gray-200 hover:bg-gray-50'
+                          }`}>
+                            {tech}
+                          </span>
+                        </label>
+                      ))}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -472,8 +289,8 @@ const ManageResource = () => {
           {resources.length > 0 ? (
             <ResourceList
               resources={resources}
-              handleBaselineClick={handleBaselineClick}
-              handleOpportunitiesClick={handleOpportunitiesClick}
+              handleBaselineClick={() => {}}
+              handleOpportunitiesClick={() => {}}
               filterData={filterData}
             />
           ) : (
