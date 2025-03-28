@@ -1,79 +1,9 @@
-import React, { useEffect, useState, useRef } from 'react';
-import { FaPlus, FaArrowLeft, FaFilter, FaTimes, FaCogs, FaCalendar } from 'react-icons/fa';
+import React, { useState, useRef, useEffect } from 'react';
+import { FaPlus, FaArrowLeft, FaFilter, FaTimes, FaCogs, FaCalendar, FaComments } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 import ResourceList from './ResourceList';
 import YRMSLoader from '../../helper/loader';
 import AddOptionModal from '../../helper/OptionalModal';
-// Custom Dropdown Component
-const Dropdown = ({ name, value, options, onChange, onAddOption, setModalField }) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const dropdownRef = useRef(null);
-
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setIsOpen(false);
-      }
-    };
-    if (isOpen) {
-      document.addEventListener("mousedown", handleClickOutside);
-    }
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [isOpen]);
-
-  const handleSelect = (option) => {
-    if (option === "add-new") {
-      setModalField(name);
-    } else {
-      onChange({ target: { name, value: option } });
-    }
-    setIsOpen(false);
-  };
-
-  return (
-    <div className="relative w-full" ref={dropdownRef}>
-      <button
-        type="button"
-        onClick={() => setIsOpen(!isOpen)}
-        className={`w-full p-3 pr-10 border-2 border-gray-200 rounded-lg text-left focus:outline-none focus:border-blue-500 transition-colors ${value ? 'text-black' : 'text-gray-500'}`}
-      >
-        <span>{value || `Select ${name}`}</span>
-        <svg
-          className={`w-4 h-4 absolute right-3 top-1/2 transform -translate-y-1/2 transition-transform ${isOpen ? "rotate-180" : ""}`}
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-        </svg>
-      </button>
-      {isOpen && (
-        <div className="absolute z-10 w-full mt-1 bg-white border rounded-md shadow-lg max-h-60 overflow-y-auto">
-          {options.map((option) => (
-            <div
-              key={option}
-              onClick={() => handleSelect(option)}
-              className="p-2 hover:bg-gray-100 cursor-pointer text-sm"
-            >
-              {option}
-            </div>
-          ))}
-          <div
-            onClick={() => handleSelect("add-new")}
-            className="p-2 text-blue-600 bg-blue-50 hover:bg-blue-100 cursor-pointer text-sm font-medium border-t border-gray-200 flex items-center justify-between"
-          >
-            <span>Add New {name}</span>
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
-            </svg>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-};
 
 const ManageResource = () => {
   const navigate = useNavigate();
@@ -81,7 +11,7 @@ const ManageResource = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [modalField, setModalField] = useState(null);
   const [showLoader, setShowLoader] = useState(false);
-
+  
   const [dropdownOptions, setDropdownOptions] = useState({
     designations: ['Software Engineer', 'Backend Developer', 'Project Manager'],
     competencies: ['Python', 'Java', 'Data Science']
@@ -105,7 +35,9 @@ const ManageResource = () => {
 
   const [filterData, setFilterData] = useState({
     technologies: [],
-    totalExperience: ''
+    totalExperience: '',
+    certifications: '',
+    communication: ''
   });
 
   const [resources, setResources] = useState([
@@ -123,7 +55,9 @@ const ManageResource = () => {
       competency: 'Python',
       status: 'pool',
       technologies: ['Python'],
-      totalExperience: 5
+      totalExperience: 5,
+      certifications: 'AWS Certified',
+      communication: 'Fluent'
     },
     {
       employeeName: 'Jane Smith',
@@ -139,7 +73,9 @@ const ManageResource = () => {
       competency: 'Java',
       status: 'deployed',
       technologies: ['Java'],
-      totalExperience: 3
+      totalExperience: 3,
+      certifications: 'Oracle Certified',
+      communication: 'Medium'
     },
     {
       employeeName: 'Alice Johnson',
@@ -155,7 +91,9 @@ const ManageResource = () => {
       competency: 'Data Science',
       status: 'pip',
       technologies: ['Data Science'],
-      totalExperience: 8
+      totalExperience: 8,
+      certifications: 'PMP Certified',
+      communication: 'Average'
     },
   ]);
 
@@ -164,18 +102,18 @@ const ManageResource = () => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
+  const toggleTechnology = (tech) => {
+    setFilterData(prev => ({
+      ...prev,
+      technologies: prev.technologies.includes(tech)
+        ? prev.technologies.filter(t => t !== tech)
+        : [...prev.technologies, tech]
+    }));
+  };
+
   const handleFilterChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    if (type === 'checkbox') {
-      setFilterData(prev => ({
-        ...prev,
-        technologies: checked
-          ? [...prev.technologies, value]
-          : prev.technologies.filter(tech => tech !== value)
-      }));
-    } else {
-      setFilterData(prev => ({ ...prev, [name]: value }));
-    }
+    const { name, value } = e.target;
+    setFilterData(prev => ({ ...prev, [name]: value })); 
   };
 
   const handleSubmit = (e) => {
@@ -199,97 +137,170 @@ const ManageResource = () => {
     });
   };
 
-  const handleFilterSubmit = (e) => {
-    e.preventDefault();
-    // Add your API call here
-  };
-
-  const handleAddOption = (field, newOption) => {
-    if (newOption.trim() && !dropdownOptions[field].includes(newOption.trim())) {
-      setDropdownOptions(prev => ({
-        ...prev,
-        [field]: [...prev[field], newOption.trim()]
-      }));
-    }
-    setModalField(null);
-  };
-
-  const handleDeleteOption = (field, option) => {
-    setDropdownOptions(prev => ({
-      ...prev,
-      [field]: prev[field].filter(opt => opt !== option)
-    }));
-  };
-
-  useEffect(() => {
-    const fetchResources = async () => {
-      console.log('Fetching resources', resources);
-    };
-
-    const fetchRoles = async () => {
-      console.log('Fetching roles');
-    };
-
-    const fetchCompetencies = async () => {
-      console.log('Fetching competencies');
-    };
-
-    fetchResources();
-    fetchRoles();
-    fetchCompetencies();
-  }, [activeSection]);
-
-  const handleBaselineClick = (resource) => {
-    navigate('/manage-baseline', { state: { resource } });
-  };
-
-  const handleOpportunitiesClick = (resource) => {
-    navigate('/opportunities', { state: { resource } });
-  };
-
   const clearFilters = () => {
     setFilterData({
       technologies: [],
-      totalExperience: ''
+      totalExperience: '',
+      certifications: '',
+      communication: ''
     });
-    setShowFilters(true);
-  };
-
-  const clearAndCloseFilters = () => {
-    setFilterData({
-      technologies: [],
-      totalExperience: ''
-    });
-    setShowFilters(false);
-  };
-
-  const handleAddResourceClick = () => {
-    setShowLoader(true);
-    setTimeout(() => {
-      setShowLoader(false);
-      setActiveSection('add');
-    }, 3000);
+    setShowFilters(false); // Close the filters section
   };
 
   return (
     <div className="p-6 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl shadow-lg">
       {showLoader && <YRMSLoader />}
-      {activeSection !== 'add' && (
+      {activeSection !== 'add' ? (
         <div className="mb-6">
           <div className="flex items-center justify-between mb-2">
             <h2 className="text-3xl font-bold text-blue-800">Resource Details</h2>
             <button
               className="px-4 py-2 rounded-lg font-semibold text-sm flex items-center bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 transition-all transform hover:scale-105"
-              onClick={handleAddResourceClick}
+              onClick={() => setActiveSection('add')}
             >
               <FaPlus className="mr-2" />
               Add Resource
             </button>
           </div>
-        </div>
-      )}
 
-      {activeSection === 'add' ? (
+          {/* Compact Filter Section */}
+          <div className="mb-4">
+            <div className="flex justify-between items-center mb-2">
+              <h3 className="text-md font-semibold text-gray-700">Filter Resources</h3>
+              <div className="flex space-x-2">
+                {filterData.technologies.length > 0 || 
+                 filterData.totalExperience || 
+                 filterData.communication ? (
+                  <button
+                    onClick={clearFilters}
+                    className="px-2 py-1 rounded-md text-xs flex items-center bg-red-100 text-red-800 hover:bg-red-200 transition-all"
+                  >
+                    <FaTimes className="mr-1" />
+                    Clear
+                  </button>
+                ) : null}
+                <button
+                  onClick={() => setShowFilters(!showFilters)}
+                  className={`px-2 py-1 rounded-md text-xs flex items-center transition-all ${
+                    showFilters 
+                      ? 'bg-gray-200 text-gray-800 hover:bg-gray-300' 
+                      : 'bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700'
+                  }`}
+                >
+                  <FaFilter className="mr-1" />
+                  {showFilters ? 'Hide' : 'Filters'}
+                </button>
+              </div>
+            </div>
+
+            {/* Filter Panel - Collapsible */}
+            <div className={`transition-all duration-300 ease-in-out overflow-hidden ${
+              showFilters ? 'max-h-80 opacity-100 mb-2' : 'max-h-0 opacity-0 mb-0'
+            }`}>
+              <div className="bg-white p-3 rounded-lg shadow-sm border border-gray-200">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  {/* Experience Filter */}
+                  <div className="space-y-1">
+                    <div className="flex items-center text-purple-600">
+                      <FaCalendar className="mr-1 text-xs" />
+                      <span className="font-medium text-xs">Experience</span>
+                    </div>
+                    <div className="relative">
+                      <input
+                        type="number"
+                        name="totalExperience"
+                        value={filterData.totalExperience}
+                        onChange={handleFilterChange}
+                        className="w-full p-1.5 pl-2 pr-6 border border-gray-300 rounded text-xs focus:border-purple-500 focus:ring-1 focus:ring-purple-200"
+                        placeholder="0"
+                        min="0"
+                      />
+                      <span className="absolute right-2 top-1.5 text-gray-400 text-xs">yrs</span>
+                    </div>
+                  </div>
+
+                  {/* Communication Filter */}
+                  <div className="space-y-1">
+                    <div className="flex items-center text-green-600">
+                      <FaComments className="mr-1 text-xs" />
+                      <span className="font-medium text-xs">Communication</span>
+                    </div>
+                    <select
+                      name="communication"
+                      value={filterData.communication}
+                      onChange={handleFilterChange}
+                      className="w-full p-1.5 border border-gray-300 rounded text-xs focus:border-green-500 focus:ring-1 focus:ring-green-200"
+                    >
+                      <option value="">All levels</option>
+                      <option value="Fluent">Fluent</option>
+                      <option value="Medium">Medium</option>
+                      <option value="Average">Average</option>
+                    </select>
+                  </div>
+
+                  {/* Certification Filter */}
+                  <div className="space-y-1">
+                    <div className="flex items-center text-blue-600">
+                      <FaCogs className="mr-1 text-xs" />
+                      <span className="font-medium text-xs">Certifications</span>
+                    </div>
+                    <input
+                      type="text"
+                      name="certifications"
+                      value={filterData.certifications}
+                      onChange={handleFilterChange}
+                      className="w-full p-1.5 border border-gray-300 rounded text-xs focus:border-blue-500 focus:ring-1 focus:ring-blue-200"
+                      placeholder="Certifications"
+                    />
+                  </div>
+
+                  {/* Technology Filter - Compact */}
+                  <div className="md:col-span-3 space-y-1">
+                    <div className="flex items-center text-blue-600">
+                      <FaCogs className="mr-1 text-xs" />
+                      <span className="font-medium text-xs">Technologies</span>
+                    </div>
+                    <div className="flex flex-wrap gap-1.5 max-h-[3.5rem] overflow-y-auto">
+                      {['React', 'Angular', 'Vue', 'JavaScript', 'TypeScript', 'Node.js', 'Python', 'Java', 'C#', 'Go', 'Ruby', 'AWS', 'Azure', 'Docker', 'Kubernetes', 'CI/CD', 'React Native', 'Flutter', 'Swift', 'Kotlin', 'SQL', 'MongoDB', 'PostgreSQL', 'Redis', 'GraphQL', 'Rust', 'Scala', 'Elixir', 'Clojure', 'PHP', 'Perl', 'Shell', 'HTML', 'CSS', 'Spring Boot', 'Django', 'Laravel', 'Express.js', 'ASP.NET', 'TensorFlow', 'PyTorch', 'Hadoop', 'Spark', 'Jenkins', 'Terraform', 'Ansible', 'Unity', 'Unreal Engine', 'WebGL'].map(tech => (
+                        <label key={tech} className="flex items-center cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={filterData.technologies.includes(tech)}
+                            onChange={() => toggleTechnology(tech)}
+                            className="hidden"
+                          />
+                          <span className={`px-2 py-1 text-xs rounded-full transition-all ${
+                            filterData.technologies.includes(tech)
+                              ? 'bg-blue-100 text-blue-800 border border-blue-200'
+                              : 'bg-gray-100 text-gray-700 border border-gray-200 hover:bg-gray-50'
+                          }`}>
+                            {tech}
+                          </span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Resource List */}
+          {resources.length > 0 ? (
+            <ResourceList
+              resources={resources}
+              handleBaselineClick={() => {}}
+              handleOpportunitiesClick={() => {}}
+              filterData={filterData}
+            />
+          ) : (
+            <div className="text-center text-gray-600 py-10">
+              <p className="text-xl">No resource details available yet.</p>
+              <p className="mt-2 text-lg">Click "Add Resource" to create a new resource entry.</p>
+            </div>
+          )}
+        </div>
+      ) : (
         <div>
           <div className="flex justify-between items-center mb-6">
             <button
@@ -490,83 +501,6 @@ const ManageResource = () => {
               </button>
             </div>
           </form>
-        </div>
-      ) : (
-        <div>
-          <div className="flex justify-end mb-2">
-            <button
-              className={`px-3 py-1.5 rounded-lg text-sm flex items-center transition-all ${showFilters ? 'bg-red-100 text-red-800 hover:bg-red-200' : 'bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700'}`}
-              onClick={showFilters ? clearAndCloseFilters : () => setShowFilters(true)}
-            >
-              {showFilters ? (
-                <>
-                  <FaTimes className="mr-1" />
-                  Remove Filters
-                </>
-              ) : (
-                <>
-                  <FaFilter className="mr-1" />
-                  Filters
-                </>
-              )}
-            </button>
-          </div>
-
-          {/* Filters Section with Transition */}
-          <div className={`overflow-hidden transition-all duration-300 ease-in-out ${showFilters ? 'max-h-40 opacity-100 mb-3' : 'max-h-0 opacity-0 mb-0'}`}>
-            <div className="bg-white p-3 rounded-xl shadow-sm border border-gray-200">
-              <div className="flex flex-wrap items-center gap-4">
-                <div className="flex items-center">
-                  <FaCogs className="mr-2 text-blue-500 text-sm" />
-                  <div className="flex flex-wrap gap-1">
-                    {['React', 'Node', 'Python', 'JS', 'Kotlin', 'Android', 'AWS', 'Docker', 'SQL', 'Figma'].map(tech => (
-                      <label key={tech} className="flex items-center text-xs bg-gray-100 hover:bg-gray-200 px-2 py-1 rounded cursor-pointer transition-colors">
-                        <input
-                          type="checkbox"
-                          name="technologies"
-                          value={tech}
-                          checked={filterData.technologies.includes(tech)}
-                          onChange={handleFilterChange}
-                          className="mr-1 accent-blue-600"
-                        />
-                        {tech}
-                      </label>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="flex items-center">
-                  <FaCalendar className="mr-2 text-blue-500 text-sm" />
-                  <div className="flex items-center">
-                    <span className="text-xs mr-2">Exp ≥</span>
-                    <input
-                      type="number"
-                      name="totalExperience"
-                      value={filterData.totalExperience}
-                      onChange={handleFilterChange}
-                      className="w-16 p-1 text-sm border border-gray-300 rounded focus:outline-none focus:border-blue-500"
-                      placeholder="Years"
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Resource List */}
-          {resources.length > 0 ? (
-            <ResourceList
-              resources={resources}
-              handleBaselineClick={handleBaselineClick}
-              handleOpportunitiesClick={handleOpportunitiesClick}
-              filterData={filterData}
-            />
-          ) : (
-            <div className="text-center text-gray-600 py-10">
-              <p className="text-xl">No resource details available yet.</p>
-              <p className="mt-2 text-lg">Click "Add Resource" to create a new resource entry.</p>
-            </div>
-          )}
         </div>
       )}
 

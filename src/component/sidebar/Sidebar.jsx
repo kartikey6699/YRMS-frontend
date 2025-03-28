@@ -10,7 +10,8 @@ import {
   FaEye,
   FaPlus,
   FaLightbulb,
-  FaUsersCog
+  FaUsersCog,
+  FaSignOutAlt
 } from 'react-icons/fa';
 import { FiChevronRight, FiChevronLeft } from 'react-icons/fi';
 import logo from '../../assets/images/competency_logos/python.png';
@@ -29,6 +30,11 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
     { name: 'Training', icon: <FaTasks />, path: '/manage-training' },
     { name: 'Interns', icon: <FaUsersCog />, path: '/interns'},
   ];
+
+  const handleLogout = () => {
+    // Add logout logic here
+    navigate('/login');
+  };
 
   return (
     <div className={`fixed top-16 left-0 h-[calc(100vh-4rem)] bg-gray-100 text-gray-800 
@@ -105,6 +111,30 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
             );
           })}
         </nav>
+      </div>
+
+      {/* Logout Button */}
+      <div className="mt-auto border-t border-gray-200">
+        <div className="relative group">
+          <button
+            onClick={handleLogout}
+            className={`w-full flex items-center py-4 px-3 bg-gray-200 hover:bg-gray-300
+              text-gray-700 transition-all duration-300 group-hover:text-gray-900
+              ${isOpen ? 'justify-start' : 'justify-center'}`}
+          >
+            <FaSignOutAlt className={`text-xl ${isOpen ? 'mr-3' : ''}`} />
+            {isOpen && (
+              <span className="text-sm font-medium">Logout</span>
+            )}
+          </button>
+          {!isOpen && (
+            <div className="absolute right-0 translate-x-full top-1/2 -translate-y-1/2 px-2 py-1
+              bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100
+              pointer-events-none transition-opacity duration-200 whitespace-nowrap">
+              Logout
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
