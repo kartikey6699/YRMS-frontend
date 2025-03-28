@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { FaChartLine, FaLightbulb, FaSortUp, FaSortDown, FaSort } from 'react-icons/fa';
 import EmployeeDetail from './EmployeDetail';
+
 const ResourceList = ({ resources, handleBaselineClick, handleOpportunitiesClick, filterData }) => {
   const [searchTerms, setSearchTerms] = useState({
     employeeName: '',
@@ -33,7 +34,11 @@ const ResourceList = ({ resources, handleBaselineClick, handleOpportunitiesClick
       resource.jobTitle.toLowerCase().includes(searchTerms.jobTitle.toLowerCase()) &&
       (!searchTerms.status || resource.status === searchTerms.status) &&
       (filterData.technologies.length === 0 || filterData.technologies.every(tech => resource.technologies.includes(tech))) &&
-      (!filterData.totalExperience || resource.totalExperience >= parseInt(filterData.totalExperience))
+      (!filterData.totalExperience || resource.totalExperience >= parseInt(filterData.totalExperience)) &&
+      (!filterData.certifications || 
+        (resource.certifications && 
+         resource.certifications.toLowerCase().includes(filterData.certifications.toLowerCase()))) &&
+      (!filterData.communication || resource.communication === filterData.communication)
     )
     .sort((a, b) => {
       if (!sortConfig.key) return 0;
@@ -51,10 +56,10 @@ const ResourceList = ({ resources, handleBaselineClick, handleOpportunitiesClick
   ];
 
   return (
-    <div className="overflow-x-auto rounded-lg shadow-lg">
+    <div className="overflow-x-auto rounded-lg shadow-lg border border-gray-200">
       <table className="w-full border-collapse">
         <thead>
-          <tr className="bg-gray-100 text-gray-800">
+          <tr className="bg-gradient-to-r from-blue-50 to-purple-50 text-gray-800">
             {columns.map(column => (
               <th key={column.key} className="p-3 text-left font-semibold text-sm border-b border-gray-200">
                 <div className="flex flex-col space-y-2">
@@ -124,13 +129,23 @@ const ResourceList = ({ resources, handleBaselineClick, handleOpportunitiesClick
               </td>
               <td className="p-3 text-gray-700 text-sm">
                 <div className="flex space-x-3">
-                  <button className="flex items-center justify-center w-10 h-10 bg-teal-500 text-white rounded-lg hover:bg-teal-600 transition-colors relative group" onClick={() => handleBaselineClick(resource)}>
+                  <button 
+                    className="flex items-center justify-center w-10 h-10 bg-teal-500 text-white rounded-lg hover:bg-teal-600 transition-colors relative group" 
+                    onClick={() => handleBaselineClick(resource)}
+                  >
                     <FaChartLine />
-                    <span className="absolute bottom-full mb-2 w-max px-2 py-1 bg-gray-800 text-white text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity">Baseline</span>
+                    <span className="absolute bottom-full mb-2 w-max px-2 py-1 bg-gray-800 text-white text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity">
+                      Baseline
+                    </span>
                   </button>
-                  <button className="flex items-center justify-center w-10 h-10 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors relative group" onClick={() => handleOpportunitiesClick(resource)}>
+                  <button 
+                    className="flex items-center justify-center w-10 h-10 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors relative group" 
+                    onClick={() => handleOpportunitiesClick(resource)}
+                  >
                     <FaLightbulb />
-                    <span className="absolute bottom-full mb-2 w-max px-2 py-1 bg-gray-800 text-white text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity">Opportunities</span>
+                    <span className="absolute bottom-full mb-2 w-max px-2 py-1 bg-gray-800 text-white text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity">
+                      Opportunities
+                    </span>
                   </button>
                 </div>
               </td>
@@ -141,6 +156,18 @@ const ResourceList = ({ resources, handleBaselineClick, handleOpportunitiesClick
 
       {selectedResource && (
         <EmployeeDetail resource={selectedResource} onClose={() => setSelectedResource(null)} />
+      )}
+
+      {filteredAndSortedResources.length === 0 && (
+        <div className="text-center py-8 bg-white">
+          <div className="text-gray-500 mb-4">
+            <svg className="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <h3 className="text-lg font-medium text-gray-700">No resources found</h3>
+          <p className="text-gray-500 mt-1">Try adjusting your search or filter criteria</p>
+        </div>
       )}
     </div>
   );

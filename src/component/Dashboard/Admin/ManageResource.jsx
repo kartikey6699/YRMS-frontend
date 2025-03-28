@@ -1,9 +1,10 @@
-import React, { useEffect, useState, useRef } from 'react';
-import { FaPlus, FaArrowLeft, FaFilter, FaTimes, FaCogs, FaCalendar } from 'react-icons/fa';
+import React, { useState, useRef, useEffect } from 'react';
+import { FaPlus, FaArrowLeft, FaFilter, FaTimes, FaCogs, FaCalendar, FaComments, FaChevronDown } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 import ResourceList from './ResourceList';
 import YRMSLoader from '../../helper/loader';
 import AddOptionModal from '../../helper/OptionalModal';
+
 // Custom Dropdown Component
 const Dropdown = ({ name, value, options, onChange, onAddOption, setModalField }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -81,6 +82,30 @@ const ManageResource = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [modalField, setModalField] = useState(null);
   const [showLoader, setShowLoader] = useState(false);
+  const [techDropdownOpen, setTechDropdownOpen] = useState(false);
+  const techDropdownRef = useRef(null);
+  
+  // Technology categories for the dropdown
+  const techCategories = {
+    'Frontend': ['React', 'Angular', 'Vue', 'JavaScript', 'TypeScript'],
+    'Backend': ['Node.js', 'Python', 'Java', 'C#', 'Go', 'Ruby'],
+    'Cloud/DevOps': ['AWS', 'Azure', 'Docker', 'Kubernetes', 'CI/CD'],
+    'Mobile': ['React Native', 'Flutter', 'Swift', 'Kotlin'],
+    'Database': ['SQL', 'MongoDB', 'PostgreSQL', 'Redis']
+  };
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (techDropdownRef.current && !techDropdownRef.current.contains(event.target)) {
+        setTechDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   const [dropdownOptions, setDropdownOptions] = useState({
     designations: ['Software Engineer', 'Backend Developer', 'Project Manager'],
@@ -105,7 +130,9 @@ const ManageResource = () => {
 
   const [filterData, setFilterData] = useState({
     technologies: [],
-    totalExperience: ''
+    totalExperience: '',
+    certifications: '',
+    communication: ''
   });
 
   const [resources, setResources] = useState([
@@ -123,7 +150,9 @@ const ManageResource = () => {
       competency: 'Python',
       status: 'pool',
       technologies: ['Python'],
-      totalExperience: 5
+      totalExperience: 5,
+      certifications: 'AWS Certified',
+      communication: 'Fluent'
     },
     {
       employeeName: 'Jane Smith',
@@ -139,7 +168,9 @@ const ManageResource = () => {
       competency: 'Java',
       status: 'deployed',
       technologies: ['Java'],
-      totalExperience: 3
+      totalExperience: 3,
+      certifications: 'Oracle Certified',
+      communication: 'Medium'
     },
     {
       employeeName: 'Alice Johnson',
@@ -155,7 +186,9 @@ const ManageResource = () => {
       competency: 'Data Science',
       status: 'pip',
       technologies: ['Data Science'],
-      totalExperience: 8
+      totalExperience: 8,
+      certifications: 'PMP Certified',
+      communication: 'Average'
     },
   ]);
 
@@ -164,22 +197,23 @@ const ManageResource = () => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
+  const toggleTechnology = (tech) => {
+    setFilterData(prev => ({
+      ...prev,
+      technologies: prev.technologies.includes(tech)
+        ? prev.technologies.filter(t => t !== tech)
+        : [...prev.technologies, tech]
+    }));
+  };
+
   const handleFilterChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    if (type === 'checkbox') {
-      setFilterData(prev => ({
-        ...prev,
-        technologies: checked
-          ? [...prev.technologies, value]
-          : prev.technologies.filter(tech => tech !== value)
-      }));
-    } else {
-      setFilterData(prev => ({ ...prev, [name]: value }));
-    }
+    const { name, value } = e.target;
+    setFilterData(prev => ({ ...prev, [name]: value })); 
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
+
     console.log('resource data', formData);
     setActiveSection('view');
     setFormData({
@@ -250,17 +284,11 @@ const ManageResource = () => {
   const clearFilters = () => {
     setFilterData({
       technologies: [],
-      totalExperience: ''
+      totalExperience: '',
+      certifications: '',
+      communication: ''
     });
-    setShowFilters(true);
-  };
-
-  const clearAndCloseFilters = () => {
-    setFilterData({
-      technologies: [],
-      totalExperience: ''
-    });
-    setShowFilters(false);
+    setShowFilters(false); // Close the filters section
   };
 
   const handleAddResourceClick = () => {
@@ -274,7 +302,7 @@ const ManageResource = () => {
   return (
     <div className="p-6 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl shadow-lg">
       {showLoader && <YRMSLoader />}
-      {activeSection !== 'add' && (
+      {activeSection !== 'add' ? (
         <div className="mb-6">
           <div className="flex items-center justify-between mb-2">
             <h2 className="text-3xl font-bold text-blue-800">Resource Details</h2>
@@ -286,10 +314,176 @@ const ManageResource = () => {
               Add Resource
             </button>
           </div>
-        </div>
-      )}
 
-      {activeSection === 'add' ? (
+          {/* Compact Filter Section */}
+          <div className="mb-6">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold text-gray-700">Filter Resources</h3>
+              <div className="flex space-x-2">
+                {filterData.technologies.length > 0 || 
+                 filterData.totalExperience || 
+                 filterData.communication ? (
+                  <button
+                    onClick={clearFilters}
+                    className="px-3 py-1.5 rounded-lg text-sm flex items-center bg-red-100 text-red-800 hover:bg-red-200 transition-all"
+                  >
+                    <FaTimes className="mr-1" />
+                    Clear All
+                  </button>
+                ) : null}
+                <button
+                  onClick={() => setShowFilters(!showFilters)}
+                  className={`px-3 py-1.5 rounded-lg text-sm flex items-center transition-all ${
+                    showFilters 
+                      ? 'bg-gray-200 text-gray-800 hover:bg-gray-300' 
+                      : 'bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700'
+                  }`}
+                >
+                  <FaFilter className="mr-1" />
+                  {showFilters ? 'Hide Filters' : 'Show Filters'}
+                </button>
+              </div>
+            </div>
+
+            {/* Filter Panel - Collapsible */}
+            <div className={`transition-all duration-300 ease-in-out overflow-hidden ${
+              showFilters ? 'max-h-96 opacity-100 mb-4' : 'max-h-0 opacity-0 mb-0'
+            }`}>
+              <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200 relative">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {/* Technology Filter - Updated */}
+                  <div className="relative" ref={techDropdownRef}>
+                    <div className="flex items-center text-blue-600 mb-2">
+                      <FaCogs className="mr-2 text-sm" />
+                      <span className="font-medium text-sm">Technologies</span>
+                    </div>
+                    <div 
+                      onClick={() => setTechDropdownOpen(!techDropdownOpen)}
+                      className={`w-full min-h-10 p-2 border ${techDropdownOpen ? 'border-blue-500' : 'border-gray-300'} rounded-md bg-white text-sm cursor-pointer hover:border-blue-500 transition-colors flex flex-wrap gap-1 relative z-10`}
+                    >
+                      {filterData.technologies.length > 0 ? (
+                        filterData.technologies.map(tech => (
+                          <span 
+                            key={tech} 
+                            className="inline-flex items-center px-2 py-0.5 bg-blue-100 text-blue-800 text-xs rounded-full"
+                          >
+                            {tech}
+                            <button 
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                toggleTechnology(tech);
+                              }}
+                              className="ml-1 text-blue-500 hover:text-blue-700 focus:outline-none cursor-pointer"
+                            >
+                              ×
+                            </button>
+                          </span>
+                        ))
+                      ) : (
+                        <span className="text-gray-500 self-center">Select technologies</span>
+                      )}
+                      <FaChevronDown 
+                        className={`ml-auto self-center text-xs transition-transform ${
+                          techDropdownOpen ? 'transform rotate-180' : ''
+                        }`}
+                      />
+                    </div>
+                    
+                    {techDropdownOpen && (
+                      <div className="relative z-10 mt-1 left-0 right-0 min-w-full bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto"
+                        style={{
+                          width: 'max-content',
+                          minWidth: '100%'
+                        }}
+                      >
+                        <div className="p-2 space-y-2">
+                          {Object.entries(techCategories).map(([category, techs]) => (
+                            <div key={category}>
+                              <div className="px-2 py-1 text-xs font-semibold text-gray-500 uppercase tracking-wider bg-gray-50 rounded">
+                                {category}
+                              </div>
+                              <div className="grid grid-cols-2 gap-1 mt-1">
+                                {techs.map(tech => (
+                                  <label 
+                                    key={tech} 
+                                    className="flex items-center px-2 py-1 hover:bg-blue-50 rounded cursor-pointer whitespace-nowrap"
+                                  >
+                                    <input
+                                      type="checkbox"
+                                      checked={filterData.technologies.includes(tech)}
+                                      onChange={() => toggleTechnology(tech)}
+                                      className="h-4 w-4 text-blue-600 rounded border-gray-300 mr-2 focus:ring-blue-500"
+                                    />
+                                    <span className="text-sm">{tech}</span>
+                                  </label>
+                                ))}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Experience Filter */}
+                  <div>
+                    <div className="flex items-center text-purple-600 mb-2">
+                      <FaCalendar className="mr-2 text-sm" />
+                      <span className="font-medium text-sm">Experience (years)</span>
+                    </div>
+                    <div className="relative">
+                      <input
+                        type="number"
+                        name="totalExperience"
+                        value={filterData.totalExperience}
+                        onChange={handleFilterChange}
+                        className="w-full p-2 pl-3 pr-8 border border-gray-300 rounded-md text-sm focus:border-purple-500 focus:ring-1 focus:ring-purple-200"
+                        placeholder="0"
+                        min="0"
+                      />
+                      <span className="absolute right-3 top-2.5 text-gray-400 text-sm">yrs</span>
+                    </div>
+                  </div>
+
+                  {/* Communication Filter */}
+                  <div>
+                    <div className="flex items-center text-green-600 mb-2">
+                      <FaComments className="mr-2 text-sm" />
+                      <span className="font-medium text-sm">Communication</span>
+                    </div>
+                    <select
+                      name="communication"
+                      value={filterData.communication}
+                      onChange={handleFilterChange}
+                      className="w-full p-2 border border-gray-300 rounded-md text-sm focus:border-green-500 focus:ring-1 focus:ring-green-200"
+                    >
+                      <option value="">All levels</option>
+                      <option value="Fluent">Fluent</option>
+                      <option value="Medium">Medium</option>
+                      <option value="Average">Average</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Resource List */}
+          {resources.length > 0 ? (
+            <ResourceList
+              resources={resources}
+              handleBaselineClick={handleBaselineClick}
+              handleOpportunitiesClick={handleOpportunitiesClick}
+              filterData={filterData}
+            />
+          ) : (
+            <div className="text-center text-gray-600 py-10">
+              <p className="text-xl">No resource details available yet.</p>
+              <p className="mt-2 text-lg">Click "Add Resource" to create a new resource entry.</p>
+            </div>
+          )}
+        </div>
+      ) : (
         <div>
           <div className="flex justify-between items-center mb-6">
             <button
@@ -490,83 +684,6 @@ const ManageResource = () => {
               </button>
             </div>
           </form>
-        </div>
-      ) : (
-        <div>
-          <div className="flex justify-end mb-2">
-            <button
-              className={`px-3 py-1.5 rounded-lg text-sm flex items-center transition-all ${showFilters ? 'bg-red-100 text-red-800 hover:bg-red-200' : 'bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700'}`}
-              onClick={showFilters ? clearAndCloseFilters : () => setShowFilters(true)}
-            >
-              {showFilters ? (
-                <>
-                  <FaTimes className="mr-1" />
-                  Remove Filters
-                </>
-              ) : (
-                <>
-                  <FaFilter className="mr-1" />
-                  Filters
-                </>
-              )}
-            </button>
-          </div>
-
-          {/* Filters Section with Transition */}
-          <div className={`overflow-hidden transition-all duration-300 ease-in-out ${showFilters ? 'max-h-40 opacity-100 mb-3' : 'max-h-0 opacity-0 mb-0'}`}>
-            <div className="bg-white p-3 rounded-xl shadow-sm border border-gray-200">
-              <div className="flex flex-wrap items-center gap-4">
-                <div className="flex items-center">
-                  <FaCogs className="mr-2 text-blue-500 text-sm" />
-                  <div className="flex flex-wrap gap-1">
-                    {['React', 'Node', 'Python', 'JS', 'Kotlin', 'Android', 'AWS', 'Docker', 'SQL', 'Figma'].map(tech => (
-                      <label key={tech} className="flex items-center text-xs bg-gray-100 hover:bg-gray-200 px-2 py-1 rounded cursor-pointer transition-colors">
-                        <input
-                          type="checkbox"
-                          name="technologies"
-                          value={tech}
-                          checked={filterData.technologies.includes(tech)}
-                          onChange={handleFilterChange}
-                          className="mr-1 accent-blue-600"
-                        />
-                        {tech}
-                      </label>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="flex items-center">
-                  <FaCalendar className="mr-2 text-blue-500 text-sm" />
-                  <div className="flex items-center">
-                    <span className="text-xs mr-2">Exp ≥</span>
-                    <input
-                      type="number"
-                      name="totalExperience"
-                      value={filterData.totalExperience}
-                      onChange={handleFilterChange}
-                      className="w-16 p-1 text-sm border border-gray-300 rounded focus:outline-none focus:border-blue-500"
-                      placeholder="Years"
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Resource List */}
-          {resources.length > 0 ? (
-            <ResourceList
-              resources={resources}
-              handleBaselineClick={handleBaselineClick}
-              handleOpportunitiesClick={handleOpportunitiesClick}
-              filterData={filterData}
-            />
-          ) : (
-            <div className="text-center text-gray-600 py-10">
-              <p className="text-xl">No resource details available yet.</p>
-              <p className="mt-2 text-lg">Click "Add Resource" to create a new resource entry.</p>
-            </div>
-          )}
         </div>
       )}
 
