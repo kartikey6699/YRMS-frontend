@@ -1,105 +1,116 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { FaPlus, FaArrowLeft, FaFilter, FaTimes, FaCogs, FaCalendar, FaComments } from 'react-icons/fa';
-import { useNavigate } from 'react-router-dom';
-import ResourceList from './ResourceList';
-import YRMSLoader from '../../helper/loader';
-import AddOptionModal from '../../helper/OptionalModal';
+import React, { useEffect, useState } from "react";
+import { FaPlus, FaArrowLeft, FaFilter, FaTimes, FaCogs, FaCalendar, FaComments } from "react-icons/fa";
+import { useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import ResourceList from "./ResourceList";
+import { createResource, fetchResources } from "../../../features/resource/resourceAction";
+import { addDesignation, addCompetency } from "../../../features/resource/resourceSlice";
+import YRMSLoader from "../../helper/loader";
+import AddOptionModal from "../../helper/OptionalModal";
+import { SuccessToast, ErrorToast } from "../../helper/ResourceToast";
+
+const Dropdown = ({ name, value, options, onChange, setModalField }) => {
+  const [isOpen, setIsOpen] = useState(false);
+
+  const handleSelect = (option) => {
+    if (option === "add-new") {
+      setModalField(name);
+    } else {
+      onChange({ target: { name, value: option } });
+    }
+    setIsOpen(false);
+  };
+
+  return (
+    <div className="relative w-full">
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className={`w-full p-3 pr-10 border-2 border-gray-200 rounded-lg text-left focus:outline-none focus:border-blue-500 transition-colors ${
+          value ? "text-black" : "text-gray-500"
+        }`}
+      >
+        <span>{value || `Select ${name}`}</span>
+        <svg
+          className={`w-4 h-4 absolute right-3 top-1/2 transform -translate-y-1/2 transition-transform ${
+            isOpen ? "rotate-180" : ""
+          }`}
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+      {isOpen && (
+        <div className="absolute z-10 w-full mt-1 bg-white border rounded-md shadow-lg max-h-60 overflow-y-auto">
+          {options.map((option) => (
+            <div
+              key={option}
+              onClick={() => handleSelect(option)}
+              className="p-2 hover:bg-gray-100 cursor-pointer text-sm"
+            >
+              {option}
+            </div>
+          ))}
+          <div
+            onClick={() => handleSelect("add-new")}
+            className="p-2 text-blue-600 bg-blue-50 hover:bg-blue-100 cursor-pointer text-sm font-medium border-t border-gray-200 flex items-center justify-between"
+          >
+            <span>Add New {name}</span>
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
+            </svg>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
 
 const ManageResource = () => {
   const navigate = useNavigate();
-  const [activeSection, setActiveSection] = useState('view');
-  const [showFilters, setShowFilters] = useState(false);
-  const [modalField, setModalField] = useState(null);
-  const [showLoader, setShowLoader] = useState(false);
+  const dispatch = useDispatch();
   
-  const [dropdownOptions, setDropdownOptions] = useState({
-    designations: ['Software Engineer', 'Backend Developer', 'Project Manager'],
-    competencies: ['Python', 'Java', 'Data Science']
-  });
+  const { resources, loading, error, designations, competencies } = useSelector(
+    (state) => state.resource
+  );
+  const [activeSection, setActiveSection] = useState("view");
+  const [modalField, setModalField] = useState(null);
+  const [toast, setToast] = useState(null);
+  const [showFilters, setShowFilters] = useState(false);
 
   const [formData, setFormData] = useState({
-    employeeName: '',
-    gender: '',
-    location: '',
-    email: '',
-    phoneNumber: '',
-    joiningDate: '',
-    designation: '',
-    employeeType: '',
-    grade: '',
-    businessGroup: '',
-    businessUnit: '',
-    competency: '',
-    status: 'pool'
+    employeeId: "",
+    employeeName: "",
+    gender: "",
+    location: "",
+    email: "",
+    phoneNumber: "",
+    joiningDate: "",
+    designation: "",
+    employeeType: "",
+    grade: "",
+    businessGroup: "",
+    businessUnit: "",
+    competency: "",
+    status: "pool",
   });
 
   const [filterData, setFilterData] = useState({
     technologies: [],
-    totalExperience: '',
-    certifications: '',
-    communication: ''
+    totalExperience: "",
+    certifications: "",
+    communication: ""
   });
 
-  const [resources, setResources] = useState([
-    {
-      employeeName: 'John Doe',
-      address: '123 Main Street, Springfield',
-      email: 'john.doe@example.com',
-      phoneNumber: '123-456-7890',
-      joiningDate: '2025-03-20',
-      jobTitle: 'Software Engineer',
-      employeeType: 'permanent',
-      grade: 'E3',
-      businessGroup: 'Technology Solutions',
-      businessUnit: 'Development Team',
-      competency: 'Python',
-      status: 'pool',
-      technologies: ['Python'],
-      totalExperience: 5,
-      certifications: 'AWS Certified',
-      communication: 'Fluent'
-    },
-    {
-      employeeName: 'Jane Smith',
-      address: '456 Elm Street, Springfield',
-      email: 'jane.smith@example.com',
-      phoneNumber: '234-567-8901',
-      joiningDate: '2025-04-15',
-      jobTitle: 'Backend Developer',
-      employeeType: 'temporary',
-      grade: 'E2',
-      businessGroup: 'Technology Solutions',
-      businessUnit: 'Development Team',
-      competency: 'Java',
-      status: 'deployed',
-      technologies: ['Java'],
-      totalExperience: 3,
-      certifications: 'Oracle Certified',
-      communication: 'Medium'
-    },
-    {
-      employeeName: 'Alice Johnson',
-      address: '789 Oak Street, Springfield',
-      email: 'alice.johnson@example.com',
-      phoneNumber: '345-678-9012',
-      joiningDate: '2025-05-10',
-      jobTitle: 'Project Manager',
-      employeeType: 'permanent',
-      grade: 'E5',
-      businessGroup: 'Technology Solutions',
-      businessUnit: 'Management Team',
-      competency: 'Data Science',
-      status: 'pip',
-      technologies: ['Data Science'],
-      totalExperience: 8,
-      certifications: 'PMP Certified',
-      communication: 'Average'
-    },
-  ]);
+  useEffect(() => {
+    dispatch(fetchResources());
+  }, [dispatch]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const toggleTechnology = (tech) => {
@@ -116,47 +127,95 @@ const ManageResource = () => {
     setFilterData(prev => ({ ...prev, [name]: value })); 
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    console.log('resource data', formData);
-    setActiveSection('view');
-    setFormData({
-      employeeName: '',
-      gender: '',
-      location: '',
-      email: '',
-      phoneNumber: '',
-      joiningDate: '',
-      designation: '',
-      employeeType: '',
-      grade: '',
-      businessGroup: '',
-      businessUnit: '',
-      competency: '',
-      status: 'pool'
-    });
-  };
-
   const clearFilters = () => {
     setFilterData({
       technologies: [],
-      totalExperience: '',
-      certifications: '',
-      communication: ''
+      totalExperience: "",
+      certifications: "",
+      communication: ""
     });
-    setShowFilters(false); // Close the filters section
+    setShowFilters(false);
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      setToast(<YRMSLoader message="Creating resource..." />);
+      
+      const createResult = await dispatch(createResource(formData));
+      
+      if (createResource.fulfilled.match(createResult)) {
+        setToast(<SuccessToast message="Resource created successfully!" onClose={() => setToast(null)} />);
+        
+        setToast(<YRMSLoader message="Refreshing data..." />);
+        
+        try {
+          await dispatch(fetchResources()).unwrap();
+          
+          // Reset form and switch to view
+          setFormData({
+            employeeId: "",
+            employeeName: "",
+            gender: "",
+            location: "",
+            email: "",
+            phoneNumber: "",
+            joiningDate: "",
+            designation: "",
+            employeeType: "",
+            grade: "",
+            businessGroup: "",
+            businessUnit: "",
+            competency: "",
+            status: "pool",
+          });
+          setActiveSection("view");
+          
+          setToast(null);
+        } catch (fetchError) {
+          setToast(<ErrorToast 
+            message={`Created successfully but failed to refresh: ${fetchError}`} 
+            onClose={() => setToast(null)} 
+          />);
+        }
+      } else {
+        throw new Error(createResult.error.message || "Failed to create resource");
+      }
+    } catch (err) {
+      setToast(<ErrorToast message={err.message || "Failed to create resource"} onClose={() => setToast(null)} />);
+    }
+  };
+
+  const handleAddOption = (field, newOption) => {
+    if (newOption.trim()) {
+      if (field === "designations") {
+        dispatch(addDesignation(newOption.trim()));
+      } else if (field === "competencies") {
+        dispatch(addCompetency(newOption.trim()));
+      }
+    }
+    setModalField(null);
+  };
+
+  const handleBaselineClick = (resource) => {
+    navigate("/manage-baseline", { state: { resource } });
+  };
+
+  const handleOpportunitiesClick = (resource) => {
+    navigate("/opportunities", { state: { resource } });
   };
 
   return (
     <div className="p-6 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl shadow-lg">
-      {showLoader && <YRMSLoader />}
-      {activeSection !== 'add' ? (
+      {loading && <YRMSLoader />}
+      {toast}
+      {activeSection !== "add" ? (
         <div className="mb-6">
           <div className="flex items-center justify-between mb-2">
             <h2 className="text-3xl font-bold text-blue-800">Resource Details</h2>
             <button
               className="px-4 py-2 rounded-lg font-semibold text-sm flex items-center bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 transition-all transform hover:scale-105"
-              onClick={() => setActiveSection('add')}
+              onClick={() => setActiveSection("add")}
             >
               <FaPlus className="mr-2" />
               Add Resource
@@ -166,7 +225,7 @@ const ManageResource = () => {
           {/* Compact Filter Section */}
           <div className="mb-4">
             <div className="flex justify-between items-center mb-2">
-              <h3 className="text-md font-semibold text-gray-700">Filter Resources</h3>
+              <h3 className="text-md font-semibold text-gray-700"></h3>
               <div className="flex space-x-2">
                 {filterData.technologies.length > 0 || 
                  filterData.totalExperience || 
@@ -286,26 +345,18 @@ const ManageResource = () => {
           </div>
 
           {/* Resource List */}
-          {resources.length > 0 ? (
-            <ResourceList
-              resources={resources}
-              handleBaselineClick={() => {}}
-              handleOpportunitiesClick={() => {}}
-              filterData={filterData}
-            />
-          ) : (
-            <div className="text-center text-gray-600 py-10">
-              <p className="text-xl">No resource details available yet.</p>
-              <p className="mt-2 text-lg">Click "Add Resource" to create a new resource entry.</p>
-            </div>
-          )}
+          <ResourceList
+            handleBaselineClick={handleBaselineClick}
+            handleOpportunitiesClick={handleOpportunitiesClick}
+            filterData={filterData}
+          />
         </div>
       ) : (
         <div>
           <div className="flex justify-between items-center mb-6">
             <button
               className="flex items-center text-blue-600 hover:text-blue-800 transition-colors"
-              onClick={() => setActiveSection('view')}
+              onClick={() => setActiveSection("view")}
             >
               <FaArrowLeft className="mr-2" />
               Back to Resources
@@ -330,15 +381,31 @@ const ManageResource = () => {
               />
             </div>
             <div>
+              <label className="block text-gray-700 font-medium mb-2">Employee Id</label>
+              <input
+                type="text"
+                name="employeeId"
+                value={formData.employeeId}
+                onChange={handleInputChange}
+                className="w-full p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 transition-colors"
+                placeholder="Enter employee ID"
+                required
+              />
+            </div>
+            <div>
               <label className="block text-gray-700 font-medium mb-2">Gender</label>
               <select
                 name="gender"
                 value={formData.gender}
                 onChange={handleInputChange}
-                className={`w-full p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 transition-colors ${formData.gender ? 'text-black' : 'text-gray-500'}`}
+                className={`w-full p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 transition-colors ${
+                  formData.gender ? "text-black" : "text-gray-500"
+                }`}
                 required
               >
-                <option value="" disabled className="text-gray-400">Select gender</option>
+                <option value="" disabled>
+                  Select gender
+                </option>
                 <option value="male">Male</option>
                 <option value="female">Female</option>
               </select>
@@ -400,9 +467,8 @@ const ManageResource = () => {
               <Dropdown
                 name="designation"
                 value={formData.designation}
-                options={dropdownOptions.designations}
+                options={designations}
                 onChange={handleInputChange}
-                onAddOption={handleAddOption}
                 setModalField={setModalField}
               />
             </div>
@@ -410,13 +476,17 @@ const ManageResource = () => {
               <label className="block text-gray-700 font-medium mb-2">Employee Type</label>
               <select
                 name="employeeType"
-                value={formData.employeeType || ''}
+                value={formData.employeeType}
                 onChange={handleInputChange}
-                className={`w-full p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 transition-colors ${formData.employeeType ? 'text-black' : 'text-gray-500'}`}
+                className={`w-full p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 transition-colors ${
+                  formData.employeeType ? "text-black" : "text-gray-500"
+                }`}
                 required
               >
-                <option value="" disabled className="text-gray-400">Select type</option>
-                <option value="provision">Provision</option>
+                <option value="" disabled>
+                  Select type
+                </option>
+                <option value="probation">Probation</option>
                 <option value="permanent">Permanent</option>
                 <option value="contract">Contract</option>
               </select>
@@ -425,14 +495,20 @@ const ManageResource = () => {
               <label className="block text-gray-700 font-medium mb-2">Grade</label>
               <select
                 name="grade"
-                value={formData.grade || ''}
+                value={formData.grade}
                 onChange={handleInputChange}
-                className={`w-full p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 transition-colors ${formData.grade ? 'text-black' : 'text-gray-500'}`}
+                className={`w-full p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 transition-colors ${
+                  formData.grade ? "text-black" : "text-gray-500"
+                }`}
                 required
               >
-                <option value="" disabled className="text-gray-400">Select grade</option>
-                {['E1', 'E2', 'E3', 'E4', 'E5', 'E6', 'E7'].map(grade => (
-                  <option key={grade} value={grade}>{grade}</option>
+                <option value="" disabled>
+                  Select grade
+                </option>
+                {["E1", "E2", "E3", "E4", "E5", "E6", "E7"].map((grade) => (
+                  <option key={grade} value={grade}>
+                    {grade}
+                  </option>
                 ))}
               </select>
             </div>
@@ -442,10 +518,12 @@ const ManageResource = () => {
                 name="status"
                 value={formData.status}
                 onChange={handleInputChange}
-                className={`w-full p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 transition-colors ${formData.status ? 'text-black' : 'text-gray-500'}`}
+                className={`w-full p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 transition-colors ${
+                  formData.status ? "text-black" : "text-gray-500"
+                }`}
                 required
               >
-                <option value="pool" className="text-gray-400">Pool</option>
+                <option value="pool">Pool</option>
                 <option value="deployed">Deployed</option>
                 <option value="pip">PIP</option>
                 <option value="hold">Hold</option>
@@ -457,10 +535,14 @@ const ManageResource = () => {
                 name="businessGroup"
                 value={formData.businessGroup}
                 onChange={handleInputChange}
-                className={`w-full p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 transition-colors ${formData.businessGroup ? 'text-black' : 'text-gray-500'}`}
+                className={`w-full p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 transition-colors ${
+                  formData.businessGroup ? "text-black" : "text-gray-500"
+                }`}
                 required
               >
-                <option value="" disabled className="text-gray-400">Select business group</option>
+                <option value="" disabled>
+                  Select business group
+                </option>
                 <option value="Technology Solutions">Technology Solutions</option>
                 <option value="Management Team">Management Team</option>
               </select>
@@ -471,10 +553,14 @@ const ManageResource = () => {
                 name="businessUnit"
                 value={formData.businessUnit}
                 onChange={handleInputChange}
-                className={`w-full p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 transition-colors ${formData.businessUnit ? 'text-black' : 'text-gray-500'}`}
+                className={`w-full p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 transition-colors ${
+                  formData.businessUnit ? "text-black" : "text-gray-500"
+                }`}
                 required
               >
-                <option value="" disabled className="text-gray-400">Select business unit</option>
+                <option value="" disabled>
+                  Select business unit
+                </option>
                 <option value="Development Team">Development Team</option>
                 <option value="Management Team">Management Team</option>
               </select>
@@ -484,9 +570,8 @@ const ManageResource = () => {
               <Dropdown
                 name="competency"
                 value={formData.competency}
-                options={dropdownOptions.competencies}
+                options={competencies}
                 onChange={handleInputChange}
-                onAddOption={handleAddOption}
                 setModalField={setModalField}
               />
             </div>
@@ -495,9 +580,14 @@ const ManageResource = () => {
             <div className="md:col-span-2 flex justify-center mt-8">
               <button
                 type="submit"
-                className="px-16 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg font-semibold hover:from-blue-700 hover:to-purple-700 transition-all transform hover:scale-105"
+                disabled={loading}
+                className={`px-16 py-3 rounded-lg font-semibold transition-all transform hover:scale-105 ${
+                  loading
+                    ? "bg-gray-400 cursor-not-allowed"
+                    : "bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700"
+                }`}
               >
-                Submit
+                {loading ? "Submitting..." : "Submit"}
               </button>
             </div>
           </form>
@@ -506,10 +596,9 @@ const ManageResource = () => {
 
       {modalField && (
         <AddOptionModal
-          field={modalField === 'designation' ? 'designations' : 'competencies'}
-          options={dropdownOptions[modalField === 'designation' ? 'designations' : 'competencies']}
+          field={modalField === "designation" ? "designations" : "competencies"}
+          options={modalField === "designation" ? designations : competencies}
           onAddOption={handleAddOption}
-          onDeleteOption={handleDeleteOption}
           onClose={() => setModalField(null)}
         />
       )}

@@ -1,81 +1,105 @@
-import React, { useState } from 'react';
-import { FaChartLine, FaLightbulb, FaSortUp, FaSortDown, FaSort } from 'react-icons/fa';
-import EmployeeDetail from './EmployeDetail';
+import React, { useState } from "react";
+import { FaChartLine, FaLightbulb, FaSortUp, FaSortDown, FaSort } from "react-icons/fa";
+import { useSelector } from "react-redux";
+import EmployeeDetail from "./EmployeDetail";
 
-const ResourceList = ({ resources, handleBaselineClick, handleOpportunitiesClick, filterData }) => {
+const ResourceList = ({ handleBaselineClick, handleOpportunitiesClick, filterData }) => {
+  const { resources, loading, error } = useSelector((state) => state.resource);
   const [searchTerms, setSearchTerms] = useState({
-    employeeName: '',
-    joiningDate: '',
-    jobTitle: '',
-    status: ''
+    employeeName: "",
+    joiningDate: "",
+    designation: "",
+    status: "",
   });
   const [sortConfig, setSortConfig] = useState({
     key: null,
-    direction: 'ascending'
+    direction: "ascending",
   });
   const [selectedResource, setSelectedResource] = useState(null);
 
   const handleSearchChange = (e, column) => {
-    setSearchTerms(prev => ({ ...prev, [column]: e.target.value }));
+    setSearchTerms((prev) => ({ ...prev, [column]: e.target.value }));
   };
 
   const handleSort = (key) => {
-    let direction = 'ascending';
-    if (sortConfig.key === key && sortConfig.direction === 'ascending') {
-      direction = 'descending';
+    let direction = "ascending";
+    if (sortConfig.key === key && sortConfig.direction === "ascending") {
+      direction = "descending";
     }
     setSortConfig({ key, direction });
   };
 
-  const filteredAndSortedResources = [...resources]
-    .filter(resource => 
-      resource.employeeName.toLowerCase().includes(searchTerms.employeeName.toLowerCase()) &&
-      resource.joiningDate.toLowerCase().includes(searchTerms.joiningDate.toLowerCase()) &&
-      resource.jobTitle.toLowerCase().includes(searchTerms.jobTitle.toLowerCase()) &&
-      (!searchTerms.status || resource.status === searchTerms.status) &&
-      (filterData.technologies.length === 0 || filterData.technologies.every(tech => resource.technologies.includes(tech))) &&
-      (!filterData.totalExperience || resource.totalExperience >= parseInt(filterData.totalExperience)) &&
-      (!filterData.certifications || 
-        (resource.certifications && 
-         resource.certifications.toLowerCase().includes(filterData.certifications.toLowerCase()))) &&
-      (!filterData.communication || resource.communication === filterData.communication)
-    )
+  const filteredAndSortedResources = [...(resources || [])]
+    .filter((resource = {}) => {
+      return (
+        (resource?.employeeName || "").toLowerCase().includes(searchTerms.employeeName.toLowerCase()) &&
+        (resource.joiningDate || "").toLowerCase().includes(searchTerms.joiningDate.toLowerCase()) &&
+        (resource.designation || "").toLowerCase().includes(searchTerms.designation.toLowerCase()) &&
+        (!searchTerms.status || (resource.status || "pool") === searchTerms.status) &&
+        (filterData.technologies.length === 0 || 
+          (resource.technologies && 
+           filterData.technologies.every(tech => resource.technologies.includes(tech)))) &&
+        (!filterData.totalExperience || 
+          (resource.experience && 
+           resource.experience >= parseInt(filterData.totalExperience))) &&
+        (!filterData.certifications || 
+          (resource.certifications && 
+           resource.certifications.toLowerCase().includes(filterData.certifications.toLowerCase()))) &&
+        (!filterData.communication || 
+          (resource.communication === filterData.communication))
+      );
+    })
     .sort((a, b) => {
       if (!sortConfig.key) return 0;
-      const valueA = a[sortConfig.key];
-      const valueB = b[sortConfig.key];
-      return sortConfig.direction === 'ascending' ? (valueA > valueB ? 1 : -1) : (valueA < valueB ? 1 : -1);
+      const valueA = a[sortConfig.key] || "";
+      const valueB = b[sortConfig.key] || "";
+      return sortConfig.direction === "ascending" 
+        ? valueA.localeCompare(valueB) 
+        : valueB.localeCompare(valueA);
     });
 
   const columns = [
-    { key: 'sno', label: 'S.No' },
-    { key: 'employeeName', label: 'Employee Name' },
-    { key: 'joiningDate', label: 'Joining Date' },
-    { key: 'jobTitle', label: 'Designation' },
-    { key: 'status', label: 'Status' }
+    { key: "sno", label: "S.No" },
+    { key: "employeeName", label: "Employee Name" },
+    { key: "joiningDate", label: "Joining Date" },
+    { key: "designation", label: "Designation" },
+    { key: "status", label: "Status" },
   ];
+
+  if (loading) return <div className="text-center py-8">Loading resources...</div>;
+  if (error) return <div className="text-red-500 text-center py-8">Error: {error}</div>;
 
   return (
     <div className="overflow-x-auto rounded-lg shadow-lg border border-gray-200">
       <table className="w-full border-collapse">
         <thead>
           <tr className="bg-gradient-to-r from-blue-50 to-purple-50 text-gray-800">
-            {columns.map(column => (
-              <th key={column.key} className="p-3 text-left font-semibold text-sm border-b border-gray-200">
+            {columns.map((column) => (
+              <th
+                key={column.key}
+                className="p-3 text-left font-semibold text-sm border-b border-gray-200"
+              >
                 <div className="flex flex-col space-y-2">
                   <div className="flex items-center justify-between">
                     <span>{column.label}</span>
-                    {column.key !== 'sno' && column.key !== 'status' && (
-                      <button onClick={() => handleSort(column.key)} className="ml-2 focus:outline-none">
+                    {column.key !== "sno" && column.key !== "status" && (
+                      <button 
+                        onClick={() => handleSort(column.key)} 
+                        className="ml-2 focus:outline-none"
+                      >
                         {sortConfig.key === column.key ? (
-                          sortConfig.direction === 'ascending' ? <FaSortUp className="text-blue-600" /> : <FaSortDown className="text-blue-600" />
+                          sortConfig.direction === "ascending" ? (
+                            <FaSortUp className="text-blue-600" />
+                          ) : (
+                            <FaSortDown className="text-blue-600" />
+                          )
                         ) : (
                           <FaSort className="text-gray-400 hover:text-blue-600" />
                         )}
                       </button>
                     )}
                   </div>
-                  {column.key !== 'sno' && column.key !== 'status' && (
+                  {column.key !== "sno" && column.key !== "status" && (
                     <input
                       type="text"
                       value={searchTerms[column.key]}
@@ -84,10 +108,10 @@ const ResourceList = ({ resources, handleBaselineClick, handleOpportunitiesClick
                       className="w-full p-2 text-sm rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-800 placeholder-gray-400"
                     />
                   )}
-                  {column.key === 'status' && (
+                  {column.key === "status" && (
                     <select
                       value={searchTerms.status}
-                      onChange={(e) => handleSearchChange(e, 'status')}
+                      onChange={(e) => handleSearchChange(e, "status")}
                       className="w-full p-2 text-sm rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
                       <option value="">All Statuses</option>
@@ -105,32 +129,43 @@ const ResourceList = ({ resources, handleBaselineClick, handleOpportunitiesClick
         </thead>
         <tbody>
           {filteredAndSortedResources.map((resource, index) => (
-            <tr key={index} className={`${index % 2 === 0 ? 'bg-gray-50' : 'bg-white'} hover:bg-gray-100 transition-colors`}>
+            <tr
+              key={resource.publicId}
+              className={`${index % 2 === 0 ? "bg-gray-50" : "bg-white"} hover:bg-gray-100 transition-colors`}
+            >
               <td className="p-3 text-gray-700 text-sm border-r border-gray-200">{index + 1}</td>
-              <td 
+              <td
                 className="p-3 text-blue-600 text-sm border-r border-gray-200 cursor-pointer hover:underline"
-                onClick={() => setSelectedResource(resource)}
+                onClick={() => setSelectedResource(resource.publicId)}
               >
-                {resource.employeeName}
+                {resource.employeeName || "N/A"}
               </td>
               <td className="p-3 text-gray-700 text-sm border-r border-gray-200">
-                {new Date(resource.joiningDate).toLocaleDateString()}
+                {resource.joiningDate ? new Date(resource.joiningDate).toLocaleDateString() : "N/A"}
               </td>
-              <td className="p-3 text-gray-700 text-sm border-r border-gray-200">{resource.jobTitle}</td>
               <td className="p-3 text-gray-700 text-sm border-r border-gray-200">
-                <span className={`px-2 py-1 rounded-full text-xs ${
-                  resource.status === 'pool' ? 'bg-blue-100 text-blue-800' :
-                  resource.status === 'deployed' ? 'bg-green-100 text-green-800' :
-                  resource.status === 'pip' ? 'bg-yellow-100 text-yellow-800' :
-                  'bg-red-100 text-red-800'
-                }`}>
-                  {resource.status.charAt(0).toUpperCase() + resource.status.slice(1)}
+                {resource.designation || "N/A"}
+              </td>
+              <td className="p-3 text-gray-700 text-sm border-r border-gray-200">
+                <span
+                  className={`px-2 py-1 rounded-full text-xs ${
+                    (resource.status || "pool") === "pool"
+                      ? "bg-blue-100 text-blue-800"
+                      : resource.status === "deployed"
+                      ? "bg-green-100 text-green-800"
+                      : resource.status === "pip"
+                      ? "bg-yellow-100 text-yellow-800"
+                      : "bg-red-100 text-red-800"
+                  }`}
+                >
+                  {(resource.status || "pool").charAt(0).toUpperCase() + 
+                   (resource.status || "pool").slice(1)}
                 </span>
               </td>
               <td className="p-3 text-gray-700 text-sm">
                 <div className="flex space-x-3">
-                  <button 
-                    className="flex items-center justify-center w-10 h-10 bg-teal-500 text-white rounded-lg hover:bg-teal-600 transition-colors relative group" 
+                  <button
+                    className="flex items-center justify-center w-10 h-10 bg-teal-500 text-white rounded-lg hover:bg-teal-600 transition-colors relative group"
                     onClick={() => handleBaselineClick(resource)}
                   >
                     <FaChartLine />
@@ -138,8 +173,8 @@ const ResourceList = ({ resources, handleBaselineClick, handleOpportunitiesClick
                       Baseline
                     </span>
                   </button>
-                  <button 
-                    className="flex items-center justify-center w-10 h-10 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors relative group" 
+                  <button
+                    className="flex items-center justify-center w-10 h-10 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors relative group"
                     onClick={() => handleOpportunitiesClick(resource)}
                   >
                     <FaLightbulb />
@@ -155,10 +190,13 @@ const ResourceList = ({ resources, handleBaselineClick, handleOpportunitiesClick
       </table>
 
       {selectedResource && (
-        <EmployeeDetail resource={selectedResource} onClose={() => setSelectedResource(null)} />
+        <EmployeeDetail 
+          publicId={selectedResource} 
+          onClose={() => setSelectedResource(null)} 
+        />
       )}
 
-      {filteredAndSortedResources.length === 0 && (
+      {!loading && filteredAndSortedResources.length === 0 && (
         <div className="text-center py-8 bg-white">
           <div className="text-gray-500 mb-4">
             <svg className="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">

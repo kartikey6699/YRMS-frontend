@@ -1,34 +1,63 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { 
   FaUser, 
-  FaCalendar, 
-  FaBriefcase, 
-  FaUsers, 
-  FaCogs, 
-  FaStar, 
+  FaIdBadge,
+  FaBriefcase,
+  FaLayerGroup,
+  FaCalendarAlt,
+  FaBusinessTime,
+  FaChartLine,
   FaTimes, 
   FaEdit,
   FaSave,
-  FaCode,
   FaDownload,
-  FaUpload
+  FaUpload,
+  FaCode,
+  FaFilePdf
 } from 'react-icons/fa';
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchResourceDetails } from '../../../features/resource/resourceAction';
+import { resetResourceDetails } from '../../../features/resource/resourceSlice';
 
-const EmployeeDetail = ({ resource, onClose }) => {
+const EmployeeDetail = ({ publicId, onClose }) => {
+  const dispatch = useDispatch();
+  const { resourceDetails, loading } = useSelector((state) => state.resource);
   const [isEditing, setIsEditing] = useState(false);
-  const [formData, setFormData] = useState(resource);
-  const [resumeFile, setResumeFile] = useState(null);
+  const [formData, setFormData] = useState({
+    employeeId: '',
+    designation: '',
+    grade: '',
+    joiningDate: '',
+    experience: '',
+    status: 'pool'
+  });
+  const [technologies] = useState([]);
+
+  useEffect(() => {
+    if (publicId) {
+      dispatch(fetchResourceDetails(publicId));
+    }
+    return () => {
+      dispatch(resetResourceDetails());
+    };
+  }, [publicId, dispatch]);
+
+  useEffect(() => {
+    if (resourceDetails) {
+      setFormData({
+        employeeId: resourceDetails.employeeId || '',
+        designation: resourceDetails.designation || '',
+        grade: resourceDetails.grade || '',
+        joiningDate: resourceDetails.joiningDate || '',
+        experience: resourceDetails.experience || '',
+        status: resourceDetails.status || 'pool'
+      });
+    }
+  }, [resourceDetails]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleTechChange = (e) => {
-    setFormData(prev => ({
-      ...prev,
-      technologies: e.target.value.split(',').map(tech => tech.trim())
-    }));
   };
 
   const handleSubmit = () => {
@@ -38,196 +67,185 @@ const EmployeeDetail = ({ resource, onClose }) => {
 
   const handleResumeUpload = (e) => {
     const file = e.target.files[0];
-    setResumeFile(file);
     console.log('Uploading resume:', file);
   };
 
   const handleResumeDownload = () => {
-    console.log('Downloading resume for:', resource.employeeName);
+    console.log('Downloading resume for:', resourceDetails?.employeeName);
   };
 
+  if (!resourceDetails) return null;
+
   return (
-    <div className="fixed inset-0 flex items-center justify-center z-50 backdrop-blur-md bg-black/20">
-      <div className="bg-white rounded-3xl shadow-2xl p-8 w-full max-w-5xl transform transition-all duration-500 scale-95 hover:scale-100 border-2 border-blue-300/50">
+    <div className="fixed inset-0 flex items-center justify-center z-50 backdrop-blur-sm bg-black/20 p-4">
+      <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-3xl border border-gray-200">
         {/* Header */}
-        <div className="flex justify-between items-center mb-8">
-          <h3 className="text-3xl font-bold text-gray-800 flex items-center bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-            <FaUser className="mr-3 text-blue-600" /> {resource.employeeName}
-          </h3>
-          <div className="flex items-center gap-4">
+        <div className="flex justify-between items-center mb-6">
+          <div className="flex items-center">
+            <FaUser className="text-blue-600 mr-2 text-xl" />
+            <h3 className="text-xl font-semibold text-gray-800">
+              {resourceDetails.employeeName}
+            </h3>
+          </div>
+          <div className="flex items-center gap-2">
             <button 
               onClick={() => setIsEditing(!isEditing)}
-              className="p-2 rounded-full bg-blue-100 hover:bg-blue-200 text-blue-600 transition-all duration-300"
-              title={isEditing ? "Cancel" : "Edit"}
+              className="flex items-center px-3 py-1.5 bg-blue-50 text-blue-600 rounded-md hover:bg-blue-100 text-sm"
             >
-              <FaEdit />
+              {isEditing ? (
+                <>
+                  <FaTimes className="mr-1" /> Cancel
+                </>
+              ) : (
+                <>
+                  <FaEdit className="mr-1" /> Edit
+                </>
+              )}
             </button>
             <button 
               onClick={onClose}
-              className="p-2 rounded-full bg-red-100 hover:bg-red-200 text-red-600 transition-all duration-300"
-              title="Close"
+              className="p-1.5 rounded-md bg-gray-100 hover:bg-gray-200 text-gray-600"
             >
-              <FaTimes />
+              <FaTimes size={14} />
             </button>
           </div>
         </div>
         
-        {/* Content */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        {/* Content - Side by Side Sections */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Employment Details Section */}
-          <div className={`bg-gray-50 rounded-xl p-6 shadow-sm transition-all duration-300 ${isEditing ? 'ring-2 ring-blue-200' : ''}`}>
-            <h4 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
-              <FaBriefcase className="mr-2 text-blue-500" /> Employment Details
+          <div className={`bg-gray-50 rounded-lg p-4 ${isEditing ? 'ring-1 ring-blue-200' : ''}`}>
+            <h4 className="flex items-center text-base font-medium text-gray-800 mb-3">
+              <FaBriefcase className="text-blue-500 mr-2 text-sm" />
+              Employment Details
             </h4>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="flex items-center">
-                <FaUser className="text-blue-500 mr-3" />
-                {isEditing ? (
-                  <input
-                    name="employeeId"
-                    value={formData.employeeId || ''}
-                    onChange={handleInputChange}
-                    className="w-full border rounded-lg p-2 focus:ring-2 focus:ring-blue-300"
-                    placeholder="Employee ID"
-                  />
-                ) : (
-                  <div>
-                    <p className="text-sm text-gray-600">Employee ID</p>
-                    <p className="font-semibold text-gray-800">{resource.employeeId || 'EMP123'}</p>
-                  </div>
-                )}
+            <div className="space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">Employee ID</label>
+                  {isEditing ? (
+                    <input
+                      name="employeeId"
+                      value={formData.employeeId}
+                      onChange={handleInputChange}
+                      className="w-full border rounded-md px-2 py-1.5 text-sm focus:ring-1 focus:ring-blue-300"
+                    />
+                  ) : (
+                    <p className="text-sm font-medium text-gray-800">{formData.employeeId || 'N/A'}</p>
+                  )}
+                </div>
+                
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">Designation</label>
+                  {isEditing ? (
+                    <input
+                      name="designation"
+                      value={formData.designation}
+                      onChange={handleInputChange}
+                      className="w-full border rounded-md px-2 py-1.5 text-sm focus:ring-1 focus:ring-blue-300"
+                    />
+                  ) : (
+                    <p className="text-sm font-medium text-gray-800">{formData.designation || 'N/A'}</p>
+                  )}
+                </div>
               </div>
-              <div className="flex items-center">
-                <FaBriefcase className="text-blue-500 mr-3" />
-                {isEditing ? (
-                  <input
-                    name="designation"
-                    value={formData.designation || ''}
-                    onChange={handleInputChange}
-                    className="w-full border rounded-lg p-2 focus:ring-2 focus:ring-blue-300"
-                    placeholder="Designation"
-                  />
-                ) : (
-                  <div>
-                    <p className="text-sm text-gray-600">Designation</p>
-                    <p className="font-semibold text-gray-800">{resource.designation || 'Senior Developer'}</p>
-                  </div>
-                )}
+              
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">Grade</label>
+                  {isEditing ? (
+                    <input
+                      name="grade"
+                      value={formData.grade}
+                      onChange={handleInputChange}
+                      className="w-full border rounded-md px-2 py-1.5 text-sm focus:ring-1 focus:ring-blue-300"
+                    />
+                  ) : (
+                    <p className="text-sm font-medium text-gray-800">{formData.grade || 'N/A'}</p>
+                  )}
+                </div>
+                
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">Joining Date</label>
+                  {isEditing ? (
+                    <input
+                      type="date"
+                      name="joiningDate"
+                      value={formData.joiningDate}
+                      onChange={handleInputChange}
+                      className="w-full border rounded-md px-2 py-1.5 text-sm focus:ring-1 focus:ring-blue-300"
+                    />
+                  ) : (
+                    <p className="text-sm font-medium text-gray-800">
+                      {formData.joiningDate ? new Date(formData.joiningDate).toLocaleDateString() : 'N/A'}
+                    </p>
+                  )}
+                </div>
               </div>
-              <div className="flex items-center">
-                <FaCalendar className="text-blue-500 mr-3" />
-                {isEditing ? (
-                  <input
-                    type="date"
-                    name="joiningDate"
-                    value={formData.joiningDate || ''}
-                    onChange={handleInputChange}
-                    className="w-full border rounded-lg p-2 focus:ring-2 focus:ring-blue-300"
-                  />
-                ) : (
-                  <div>
-                    <p className="text-sm text-gray-600">Joining Date</p>
-                    <p className="font-semibold text-gray-800">{new Date(resource.joiningDate).toLocaleDateString()}</p>
-                  </div>
-                )}
-              </div>
-              <div className="flex items-center">
-                <FaCalendar className="text-blue-500 mr-3" />
-                {isEditing ? (
-                  <input
-                    name="totalExperience"
-                    value={formData.totalExperience || ''}
-                    onChange={handleInputChange}
-                    className="w-full border rounded-lg p-2 focus:ring-2 focus:ring-blue-300"
-                    placeholder="Experience (years)"
-                  />
-                ) : (
-                  <div>
-                    <p className="text-sm text-gray-600">Experience</p>
-                    <p className="font-semibold text-gray-800">{resource.totalExperience} years</p>
-                  </div>
-                )}
-              </div>
-              <div className="flex items-center">
-                <FaStar className="text-blue-500 mr-3" />
-                {isEditing ? (
-                  <select
-                    name="status"
-                    value={formData.status}
-                    onChange={handleInputChange}
-                    className="w-full border rounded-lg p-2 focus:ring-2 focus:ring-blue-300"
-                  >
-                    <option value="pool">Pool</option>
-                    <option value="deployed">Deployed</option>
-                    <option value="pip">PIP</option>
-                  </select>
-                ) : (
-                  <div>
-                    <p className="text-sm text-gray-600">Status</p>
-                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                      resource.status === 'pool' ? 'bg-blue-100 text-blue-800' :
-                      resource.status === 'deployed' ? 'bg-green-100 text-green-800' :
-                      resource.status === 'pip' ? 'bg-yellow-100 text-yellow-800' :
+              
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">Experience</label>
+                  {isEditing ? (
+                    <input
+                      name="experience"
+                      value={formData.experience}
+                      onChange={handleInputChange}
+                      className="w-full border rounded-md px-2 py-1.5 text-sm focus:ring-1 focus:ring-blue-300"
+                    />
+                  ) : (
+                    <p className="text-sm font-medium text-gray-800">
+                      {formData.experience ? `${formData.experience} years` : 'N/A'}
+                    </p>
+                  )}
+                </div>
+                
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">Status</label>
+                  {isEditing ? (
+                    <select
+                      name="status"
+                      value={formData.status}
+                      onChange={handleInputChange}
+                      className="w-full border rounded-md px-2 py-1.5 text-sm focus:ring-1 focus:ring-blue-300"
+                    >
+                      <option value="pool">Pool</option>
+                      <option value="deployed">Deployed</option>
+                      <option value="pip">PIP</option>
+                    </select>
+                  ) : (
+                    <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                      formData.status === 'pool' ? 'bg-blue-100 text-blue-800' :
+                      formData.status === 'deployed' ? 'bg-green-100 text-green-800' :
+                      formData.status === 'pip' ? 'bg-yellow-100 text-yellow-800' :
                       'bg-red-100 text-red-800'
                     }`}>
-                      {resource.status.charAt(0).toUpperCase() + resource.status.slice(1)}
+                      {formData.status.charAt(0).toUpperCase() + formData.status.slice(1)}
                     </span>
-                  </div>
-                )}
-              </div>
-              <div className="flex items-center">
-                <FaUsers className="text-blue-500 mr-3" />
-                {isEditing ? (
-                  <input
-                    name="grade"
-                    value={formData.grade || ''}
-                    onChange={handleInputChange}
-                    className="w-full border rounded-lg p-2 focus:ring-2 focus:ring-blue-300"
-                    placeholder="Grade (E1, E2)"
-                  />
-                ) : (
-                  <div>
-                    <p className="text-sm text-gray-600">Grade</p>
-                    <p className="font-semibold text-gray-800">{resource.grade || 'E1'}</p>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
             </div>
           </div>
 
-          {/* Technologies Section */}
-          <div className={`bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl p-6 shadow-sm transition-all duration-300 ${isEditing ? 'ring-2 ring-blue-200' : ''}`}>
-            <h4 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
-              <FaCode className="mr-2 text-blue-500" /> Technologies
+          {/* Technologies Section - Empty */}
+          <div className="bg-gray-50 rounded-lg p-4">
+            <h4 className="flex items-center text-base font-medium text-gray-800 mb-3">
+              <FaCode className="text-blue-500 mr-2 text-sm" />
+              Technologies
             </h4>
-            {isEditing ? (
-              <textarea
-                name="technologies"
-                value={formData.technologies?.join(', ') || 'Python, Flask, Django'}
-                onChange={handleTechChange}
-                className="w-full h-40 border rounded-lg p-3 focus:ring-2 focus:ring-blue-300 resize-none bg-white/80 backdrop-blur-sm"
-                placeholder="Enter technologies separated by commas"
-              />
-            ) : (
-              <div className="flex flex-wrap gap-2">
-                {(formData.technologies || ['Python', 'Flask', 'Django']).map((tech, index) => (
-                  <span 
-                    key={index}
-                    className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium hover:bg-blue-200 transition-all duration-200 shadow-sm"
-                  >
-                    {tech}
-                  </span>
-                ))}
-              </div>
-            )}
+            <div className="bg-white/50 rounded-md p-3 flex flex-col items-center justify-center border border-dashed border-gray-300 text-center">
+              <FaCode className="text-gray-400 text-2xl mb-2" />
+              <p className="text-gray-500 text-sm">No technologies assigned yet</p>
+            </div>
           </div>
         </div>
 
-        {/* Footer with Buttons */}
-        <div className="flex flex-col sm:flex-row gap-4 justify-between items-center">
-          <div className="flex gap-4">
-            <label className="flex items-center px-4 py-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-all duration-300 cursor-pointer">
-              <FaUpload className="mr-2" />
+        {/* Footer with Resume Buttons on Left */}
+        <div className="mt-4 flex justify-between items-center">
+          <div className="flex gap-2">
+            <label className="flex items-center px-3 py-1.5 bg-blue-50 text-blue-700 rounded-md hover:bg-blue-100 text-sm cursor-pointer">
+              <FaUpload className="mr-1 text-xs" />
               Upload Resume
               <input
                 type="file"
@@ -238,24 +256,23 @@ const EmployeeDetail = ({ resource, onClose }) => {
             </label>
             <button
               onClick={handleResumeDownload}
-              className="flex items-center px-4 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-all duration-300"
+              className="flex items-center px-3 py-1.5 bg-green-50 text-green-700 rounded-md hover:bg-green-100 text-sm"
             >
-              <FaDownload className="mr-2" />
+              <FaDownload className="mr-1 text-xs" />
               Download Resume
             </button>
           </div>
+          
           <button
-            className="w-full sm:w-auto px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-300 flex items-center justify-center font-semibold shadow-md"
+            className="flex items-center px-4 py-1.5 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm font-medium"
             onClick={isEditing ? handleSubmit : onClose}
           >
             {isEditing ? (
               <>
-                <FaSave className="mr-2" /> Update Details
+                <FaSave className="mr-1" /> Save
               </>
             ) : (
-              <>
-                <FaTimes className="mr-2" /> Close Details
-              </>
+              'Close'
             )}
           </button>
         </div>
