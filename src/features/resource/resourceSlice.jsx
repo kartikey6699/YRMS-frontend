@@ -1,5 +1,5 @@
 import { createSlice } from "@reduxjs/toolkit";
-import { createResource, fetchResources , fetchResourceDetails } from "./resourceAction";
+import { createResource, fetchResources, fetchResourceDetails } from "./resourceAction";
 
 const initialState = {
   resources: [],
@@ -38,15 +38,9 @@ const resourceSlice = createSlice({
         state.loading = true;
         state.error = null;
       })
-      .addCase(createResource.fulfilled, (state, { payload }) => {
+      .addCase(createResource.fulfilled, (state) => {
         state.loading = false;
-        state.resources.unshift({
-          publicId: payload.public_id,
-          employeeName: payload.employee_name,
-          joiningDate: payload.joining_date,
-          designation: payload.designation,
-          status: payload.status
-        });
+        // Don't modify resources here - we'll fetch fresh data
       })
       .addCase(createResource.rejected, (state, { payload }) => {
         state.loading = false;
@@ -60,12 +54,23 @@ const resourceSlice = createSlice({
       })
       .addCase(fetchResources.fulfilled, (state, { payload }) => {
         state.loading = false;
-        state.resources = payload.map(resource => ({
-          publicId: resource.public_id,
-          employeeName: resource.employee_name,
-          joiningDate: resource.joining_date,
-          designation: resource.designation,
-          status: resource.status
+        state.resources = payload.users.map(user => ({
+          publicId: user.publicId,
+          employeeName: user.employeeName,
+          joiningDate: user.joiningDate,
+          designation: user.designation,
+          status: user.status || "pool",
+          email: user.email,
+          phoneNumber: user.phoneNumber,
+          gender: user.gender,
+          location: user.location,
+          businessGroup: user.businessGroup,
+          businessUnit: user.businessUnit,
+          competency: user.competency,
+          technologies: [],
+          experience: 0,
+          certifications: "",
+          communication: ""
         }));
       })
       .addCase(fetchResources.rejected, (state, { payload }) => {
@@ -81,19 +86,20 @@ const resourceSlice = createSlice({
       .addCase(fetchResourceDetails.fulfilled, (state, { payload }) => {
         state.loading = false;
         state.resourceDetails = {
-          publicId: payload.public_id,
-          employeeName: payload.employee_name,
-          employeeId: payload.employee_id,
+          publicId: payload.publicId,
+          employeeName: payload.employeeName,
+          employeeId: payload.employeeId,
           designation: payload.designation,
-          businessGroup: payload.business_group,
-          businessUnit: payload.business_unit,
+          businessGroup: payload.businessGroup,
+          businessUnit: payload.businessUnit,
           location: payload.location,
-          phoneNumber: payload.phone_number,
+          phoneNumber: payload.phoneNumber,
           email: payload.email,
           joiningDate: payload.joiningDate,
-          status: payload.status,
+          status: payload.status || "pool",
           grade: payload.grade,
-          experience: payload.experience
+          experience: payload.experience || 0,
+          competency: payload.competency
         };
       })
       .addCase(fetchResourceDetails.rejected, (state, { payload }) => {
@@ -105,4 +111,3 @@ const resourceSlice = createSlice({
 
 export const { clearError, addDesignation, addCompetency, resetResourceDetails } = resourceSlice.actions;
 export default resourceSlice.reducer;
-2

@@ -50,7 +50,7 @@ export const fetchResources = createAsyncThunk(
         throw new Error("Failed to fetch resources");
       }
 
-      return data.users;
+      return data; 
     } catch (error) {
       const errorMessage =
         error.response?.data?.message ||

@@ -9,6 +9,6 @@ export const AUTH_API = {
 export const RESOURCE_API = {
     CREATE_RESOURCE: `${ADMIN_API_BASE_URL}/register-user`,
     LIST_RESOURCES: `${ADMIN_API_BASE_URL}/user-list`,
-    USER_DETAIL: `${ADMIN_API_BASE_URL}/user-update`,
+    USER_DETAIL: `${ADMIN_API_BASE_URL}/user-detail`,
 
 };
