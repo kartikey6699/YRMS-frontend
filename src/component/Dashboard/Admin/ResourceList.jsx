@@ -1,7 +1,8 @@
 import React, { useState, useMemo } from "react";
 import { FaChartLine, FaLightbulb, FaSortUp, FaSortDown, FaSort } from "react-icons/fa";
 import { useSelector } from "react-redux";
-import EmployeeDetail from './EmployeDetail'
+import EmployeeDetail from './EmployeDetail';
+
 const ResourceList = ({ handleBaselineClick, handleOpportunitiesClick, filterData }) => {
   const { resources, loading, error } = useSelector((state) => state.resource);
   const [searchTerms, setSearchTerms] = useState({
@@ -65,7 +66,6 @@ const ResourceList = ({ handleBaselineClick, handleOpportunitiesClick, filterDat
   if (loading) return <div className="text-center py-8">Loading resources...</div>;
   if (error) return <div className="text-red-500 text-center py-8">Error: {error}</div>;
 
-
   return (
     <div className="overflow-x-auto rounded-lg shadow-lg border border-gray-200">
       <table className="w-full border-collapse">
@@ -127,8 +127,11 @@ const ResourceList = ({ handleBaselineClick, handleOpportunitiesClick, filterDat
         <tbody>
           {filteredAndSortedResources.map((resource, index) => (
             <tr key={resource.publicId}>
+              <td className="p-3 text-gray-700 text-sm border-r border-gray-200">
+                {index + 1}
+              </td>
               <td
-                className="p-3 text-blue-600 text-sm cursor-pointer hover:underline"
+                className="p-3 text-blue-600 text-sm cursor-pointer hover:underline border-r border-gray-200"
                 onClick={() => setSelectedResource(resource.publicId)}
               >
                 {resource.employeeName || "N/A"}
@@ -183,7 +186,7 @@ const ResourceList = ({ handleBaselineClick, handleOpportunitiesClick, filterDat
 
       {selectedResource && (
         <EmployeeDetail
-          key={selectedResource} 
+          key={selectedResource}
           publicId={selectedResource}
           onClose={() => setSelectedResource(null)}
         />
