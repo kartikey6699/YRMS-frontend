@@ -1,64 +1,234 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
+import { FaSearch, FaTimes, FaEdit, FaTrash, FaCheck, FaPlus } from "react-icons/fa";
+import { SuccessToast, ErrorToast } from "./ResourceToast";
+import { useDispatch } from "react-redux";
+import {
+  fetchDesignations,
+  fetchCompetencies,
+  createDesignation,
+  createCompetency,
+  updateDesignation,
+  updateCompetency,
+  deleteDesignation,
+  deleteCompetency
+} from "../../features/resource/resourceAction";
 
-const AddOptionModal = ({ field, options, onAddOption, onDeleteOption, onClose }) => {
-  const [newOption, setNewOption] = useState('');
+const AddOptionModal = ({ field, options, onClose, setToast }) => {
+  const dispatch = useDispatch();
+  const [searchTerm, setSearchTerm] = useState("");
+  const [newOption, setNewOption] = useState("");
+  const [editingOption, setEditingOption] = useState(null);
+  const [editValue, setEditValue] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleAdd = () => {
-    if (newOption.trim() && !options.includes(newOption)) {
-      if (field === 'skillCategories') {
-        onAddOption(newOption);
+  const filteredOptions = options.filter(option =>
+    option.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const handleAdd = async () => {
+    if (!newOption.trim()) return;
+
+    try {
+      setLoading(true);
+      const action = field === "designation" ? createDesignation : createCompetency;
+      const result = await dispatch(action(newOption.trim()));
+
+      if (action.fulfilled.match(result)) {
+        setToast(<SuccessToast message={`${field} created successfully!`} onClose={() => setToast(null)} />);
+        setNewOption("");
+        refreshData();
       } else {
-        onAddOption(field, newOption);
+        throw new Error(result.error.message || `Failed to create ${field}`);
       }
-      setNewOption('');
+    } catch (error) {
+      setToast(<ErrorToast message={error.message} onClose={() => setToast(null)} />);
+    } finally {
+      setLoading(false);
     }
   };
 
+  const handleUpdate = async () => {
+    if (!editValue.trim() || !editingOption) return;
+
+    try {
+      setLoading(true);
+      const action = field === "designation" ? updateDesignation : updateCompetency;
+      const payload = {
+        id: editingOption.publicId,
+        name: editValue.trim()
+      };
+      const result = await dispatch(action(payload));
+
+      if (action.fulfilled.match(result)) {
+        setToast(<SuccessToast message={`${field} updated successfully!`} onClose={() => setToast(null)} />);
+        setEditingOption(null);
+        setEditValue("");
+        refreshData();
+      } else {
+        throw new Error(result.error.message || `Failed to update ${field}`);
+      }
+    } catch (error) {
+      setToast(<ErrorToast message={error.message} onClose={() => setToast(null)} />);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = async (option) => {
+    try {
+      setLoading(true);
+      const action = field === "designation" ? deleteDesignation : deleteCompetency;
+      const result = await dispatch(action(option.publicId));
+
+      if (action.fulfilled.match(result)) {
+        setToast(<SuccessToast message={`${field} deleted successfully!`} onClose={() => setToast(null)} />);
+        refreshData();
+      } else {
+        throw new Error(result.error.message || `Failed to delete ${field}`);
+      }
+    } catch (error) {
+      setToast(<ErrorToast message={error.message} onClose={() => setToast(null)} />);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const refreshData = () => {
+    if (field === "designation") {
+      dispatch(fetchDesignations());
+    } else if (field === "competency") {
+      dispatch(fetchCompetencies());
+    }
+  };
+
+  const startEditing = (option) => {
+    setEditingOption(option);
+    setEditValue(option.name);
+  };
+
+  const cancelEditing = () => {
+    setEditingOption(null);
+    setEditValue("");
+  };
+
   return (
-    <div className="fixed inset-0 flex items-center justify-center z-60 bg-gray-900/30 backdrop-blur-sm">
-      <div className="bg-white p-4 rounded-lg shadow-lg w-80 max-h-[80vh] flex flex-col">
-        <h3 className="text-lg font-semibold text-gray-800 mb-3">
-          {field === 'skillCategories' ? 'Add New Skill Category' : `Add New ${field}`}
-        </h3>
-        <div className="flex items-center mb-3">
-          <input
-            type="text"
-            value={newOption}
-            onChange={(e) => setNewOption(e.target.value)}
-            className="flex-1 p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder={field === 'skillCategories' ? 'Enter new category' : `Enter new ${field}`}
-            onKeyPress={(e) => e.key === 'Enter' && handleAdd()}
-          />
-          <button
-            onClick={handleAdd}
-            className="ml-2 px-3 py-1 bg-blue-500 text-white rounded-md hover:bg-blue-600 text-sm"
-          >
-            Add
-          </button>
-        </div>
-        {/* Always show the list with delete buttons, no conditional hiding */}
-        <div className="max-h-48 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
-          {options.map((option) => (
-            <div
-              key={option}
-              className="flex items-center justify-between p-2 hover:bg-gray-100"
-            >
-              <span className="text-sm text-gray-700">{option}</span>
-              <button
-                onClick={() => onDeleteOption(field, option)}
-                className="text-red-500 hover:text-red-700"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5-4h4M4 7h16" />
-                </svg>
-              </button>
-            </div>
-          ))}
-        </div>
-        <div className="mt-3 flex justify-end">
+    <div className="fixed inset-0 flex items-center justify-center z-50">
+      <div
+        className="bg-white rounded-lg shadow-xl w-full max-w-sm max-h-[70vh] flex flex-col border border-gray-300"
+        style={{ minWidth: '300px' }}
+      >
+        <div className="p-4 border-b border-gray-200 flex justify-between items-center bg-blue-50">
+          <h3 className="text-lg font-semibold text-gray-800 capitalize">
+            Manage {field}s
+          </h3>
           <button
             onClick={onClose}
-            className="px-3 py-1 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 text-sm"
+            className="text-gray-500 hover:text-gray-700"
+          >
+            <FaTimes />
+          </button>
+        </div>
+
+        <div className="p-4 flex-1 flex flex-col">
+          <div className="relative mb-4">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <FaSearch className="text-gray-400" />
+            </div>
+            <input
+              type="text"
+              placeholder={`Search ${field}s...`}
+              className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+
+          <div className="mb-4 flex">
+            <input
+              type="text"
+              placeholder={`Add new ${field}`}
+              className="flex-1 px-3 py-2 border border-gray-300 rounded-l-md focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
+              value={newOption}
+              onChange={(e) => setNewOption(e.target.value)}
+              onKeyPress={(e) => e.key === 'Enter' && handleAdd()}
+            />
+            <button
+              onClick={handleAdd}
+              disabled={loading}
+              className="bg-blue-600 text-white px-3 py-2 rounded-r-md hover:bg-blue-700 transition-colors flex items-center text-sm disabled:bg-blue-400"
+            >
+              {loading ? 'Adding...' : <><FaPlus className="mr-1" /> Add</>}
+            </button>
+          </div>
+
+          <div className="border border-gray-200 rounded-md flex-1 overflow-hidden">
+            <div className="h-[200px] overflow-y-auto custom-scrollbar">
+              {filteredOptions.length === 0 ? (
+                <div className="p-4 text-center text-gray-500 text-sm">
+                  No {field}s found
+                </div>
+              ) : (
+                <ul className="divide-y divide-gray-200">
+                  {filteredOptions.map((option) => (
+                    <li key={option.publicId} className="p-2 hover:bg-gray-50">
+                      {editingOption?.publicId === option.publicId ? (
+                        <div className="flex items-center">
+                          <input
+                            type="text"
+                            value={editValue}
+                            onChange={(e) => setEditValue(e.target.value)}
+                            className="flex-1 px-2 py-1 border border-gray-300 rounded-md mr-2 text-sm"
+                            onKeyPress={(e) => e.key === 'Enter' && handleUpdate()}
+                          />
+                          <button
+                            onClick={handleUpdate}
+                            disabled={loading}
+                            className="p-1 text-green-600 hover:text-green-800 mr-1"
+                            title="Save"
+                          >
+                            <FaCheck />
+                          </button>
+                          <button
+                            onClick={cancelEditing}
+                            className="p-1 text-red-600 hover:text-red-800"
+                            title="Cancel"
+                          >
+                            <FaTimes />
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="flex justify-between items-center">
+                          <span className="text-gray-800 text-sm">{option.name}</span>
+                          <div className="flex space-x-1">
+                            <button
+                              onClick={() => startEditing(option)}
+                              className="p-1 text-blue-600 hover:text-blue-800"
+                              title="Edit"
+                            >
+                              <FaEdit size={14} />
+                            </button>
+                            <button
+                              onClick={() => handleDelete(option)}
+                              className="p-1 text-red-600 hover:text-red-800"
+                              title="Delete"
+                            >
+                              <FaTrash size={14} />
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div className="p-3 border-t border-gray-200 flex justify-end bg-gray-50">
+          <button
+            onClick={onClose}
+            className="px-3 py-1.5 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 transition-colors text-sm"
           >
             Close
           </button>

@@ -114,6 +114,8 @@ const Opportunities = () => {
       ...prev,
       { ...newOpportunity, id: prev.length + 1 }
     ]);
+
+    console.log('opportunity payload: '  ,newOpportunity);
     setNewOpportunity({
       client_name: '',
       date_of_interview: '',

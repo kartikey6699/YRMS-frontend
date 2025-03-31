@@ -1,49 +1,44 @@
-import React, { useEffect, useState } from 'react';
-import { 
-  FaUser, 
-  FaIdBadge,
-  FaBriefcase,
-  FaLayerGroup,
-  FaCalendarAlt,
-  FaBusinessTime,
-  FaChartLine,
-  FaTimes, 
-  FaEdit,
-  FaSave,
-  FaDownload,
-  FaUpload,
-  FaCode,
-  FaFilePdf
-} from 'react-icons/fa';
+import React, { useEffect, useState, useRef } from 'react';
+import { FaUser, FaTimes, FaEdit, FaSave, FaDownload, FaUpload, FaCode, FaBriefcase } from 'react-icons/fa';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchResourceDetails } from '../../../features/resource/resourceAction';
-import { resetResourceDetails } from '../../../features/resource/resourceSlice';
+import { resetResourceDetails, cacheResourceDetails } from '../../../features/resource/resourceSlice';
 
 const EmployeeDetail = ({ publicId, onClose }) => {
   const dispatch = useDispatch();
-  const { resourceDetails, loading } = useSelector((state) => state.resource);
+  const { resourceDetails, resourceCache } = useSelector((state) => state.resource);
   const [isEditing, setIsEditing] = useState(false);
-  const [formData, setFormData] = useState({
-    employeeId: '',
-    designation: '',
-    grade: '',
-    joiningDate: '',
-    experience: '',
-    status: 'pool'
-  });
-  const [technologies] = useState([]);
+  const [formData, setFormData] = useState(null);
+  const initialLoadDone = useRef(false);
 
+  // Check cache first, then fetch if needed
   useEffect(() => {
-    if (publicId) {
+    if (!publicId) return;
+
+    // Check if we have cached data
+    const cachedData = resourceCache?.[publicId];
+    if (cachedData) {
+      setFormData({
+        employeeId: cachedData.employeeId || '',
+        designation: cachedData.designation || '',
+        grade: cachedData.grade || '',
+        joiningDate: cachedData.joiningDate || '',
+        experience: cachedData.experience || '',
+        status: cachedData.status || 'pool'
+      });
+      return;
+    }
+
+    // Only fetch if we haven't already loaded this resource
+    if (!initialLoadDone.current && (!resourceDetails || resourceDetails.publicId !== publicId)) {
+      initialLoadDone.current = true;
       dispatch(fetchResourceDetails(publicId));
     }
-    return () => {
-      dispatch(resetResourceDetails());
-    };
-  }, [publicId, dispatch]);
+  }, [publicId, resourceDetails, resourceCache, dispatch]);
 
+  // Update formData when we get new details
   useEffect(() => {
-    if (resourceDetails) {
+    if (resourceDetails && resourceDetails.publicId === publicId) {
       setFormData({
         employeeId: resourceDetails.employeeId || '',
         designation: resourceDetails.designation || '',
@@ -52,29 +47,36 @@ const EmployeeDetail = ({ publicId, onClose }) => {
         experience: resourceDetails.experience || '',
         status: resourceDetails.status || 'pool'
       });
+      // Cache these details
+      dispatch(cacheResourceDetails(resourceDetails));
     }
-  }, [resourceDetails]);
+  }, [resourceDetails, publicId, dispatch]);
+
+  // Cleanup only when completely unmounting
+  useEffect(() => {
+    return () => {
+      initialLoadDone.current = false;
+      // Only reset if we're not just reopening the same modal
+      if (!publicId) {
+        dispatch(resetResourceDetails());
+      }
+    };
+  }, [dispatch, publicId]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = () => {
-    setIsEditing(false);
-    console.log('Updated data:', formData);
-  };
-
-  const handleResumeUpload = (e) => {
-    const file = e.target.files[0];
-    console.log('Uploading resume:', file);
-  };
-
-  const handleResumeDownload = () => {
-    console.log('Downloading resume for:', resourceDetails?.employeeName);
-  };
-
-  if (!resourceDetails) return null;
+  if (!formData) {
+    return (
+      <div className="fixed inset-0 flex items-center justify-center z-50 backdrop-blur-sm bg-black/20 p-4">
+        <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-3xl">
+          Loading employee details...
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 flex items-center justify-center z-50 backdrop-blur-sm bg-black/20 p-4">
@@ -88,7 +90,7 @@ const EmployeeDetail = ({ publicId, onClose }) => {
             </h3>
           </div>
           <div className="flex items-center gap-2">
-            <button 
+            <button
               onClick={() => setIsEditing(!isEditing)}
               className="flex items-center px-3 py-1.5 bg-blue-50 text-blue-600 rounded-md hover:bg-blue-100 text-sm"
             >
@@ -102,7 +104,7 @@ const EmployeeDetail = ({ publicId, onClose }) => {
                 </>
               )}
             </button>
-            <button 
+            <button
               onClick={onClose}
               className="p-1.5 rounded-md bg-gray-100 hover:bg-gray-200 text-gray-600"
             >
@@ -110,7 +112,7 @@ const EmployeeDetail = ({ publicId, onClose }) => {
             </button>
           </div>
         </div>
-        
+
         {/* Content - Side by Side Sections */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Employment Details Section */}
@@ -134,7 +136,7 @@ const EmployeeDetail = ({ publicId, onClose }) => {
                     <p className="text-sm font-medium text-gray-800">{formData.employeeId || 'N/A'}</p>
                   )}
                 </div>
-                
+
                 <div>
                   <label className="block text-xs text-gray-500 mb-1">Designation</label>
                   {isEditing ? (
@@ -149,7 +151,7 @@ const EmployeeDetail = ({ publicId, onClose }) => {
                   )}
                 </div>
               </div>
-              
+
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs text-gray-500 mb-1">Grade</label>
@@ -164,7 +166,7 @@ const EmployeeDetail = ({ publicId, onClose }) => {
                     <p className="text-sm font-medium text-gray-800">{formData.grade || 'N/A'}</p>
                   )}
                 </div>
-                
+
                 <div>
                   <label className="block text-xs text-gray-500 mb-1">Joining Date</label>
                   {isEditing ? (
@@ -182,7 +184,7 @@ const EmployeeDetail = ({ publicId, onClose }) => {
                   )}
                 </div>
               </div>
-              
+
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs text-gray-500 mb-1">Experience</label>
@@ -199,7 +201,7 @@ const EmployeeDetail = ({ publicId, onClose }) => {
                     </p>
                   )}
                 </div>
-                
+
                 <div>
                   <label className="block text-xs text-gray-500 mb-1">Status</label>
                   {isEditing ? (
@@ -214,12 +216,11 @@ const EmployeeDetail = ({ publicId, onClose }) => {
                       <option value="pip">PIP</option>
                     </select>
                   ) : (
-                    <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-                      formData.status === 'pool' ? 'bg-blue-100 text-blue-800' :
+                    <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${formData.status === 'pool' ? 'bg-blue-100 text-blue-800' :
                       formData.status === 'deployed' ? 'bg-green-100 text-green-800' :
-                      formData.status === 'pip' ? 'bg-yellow-100 text-yellow-800' :
-                      'bg-red-100 text-red-800'
-                    }`}>
+                        formData.status === 'pip' ? 'bg-yellow-100 text-yellow-800' :
+                          'bg-red-100 text-red-800'
+                      }`}>
                       {formData.status.charAt(0).toUpperCase() + formData.status.slice(1)}
                     </span>
                   )}
@@ -249,20 +250,20 @@ const EmployeeDetail = ({ publicId, onClose }) => {
               Upload Resume
               <input
                 type="file"
-                onChange={handleResumeUpload}
+                // onChange={handleResumeUpload}
                 className="hidden"
                 accept=".pdf,.doc,.docx"
               />
             </label>
             <button
-              onClick={handleResumeDownload}
+              // onClick={handleResumeDownload}
               className="flex items-center px-3 py-1.5 bg-green-50 text-green-700 rounded-md hover:bg-green-100 text-sm"
             >
               <FaDownload className="mr-1 text-xs" />
               Download Resume
             </button>
           </div>
-          
+
           <button
             className="flex items-center px-4 py-1.5 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm font-medium"
             onClick={isEditing ? handleSubmit : onClose}

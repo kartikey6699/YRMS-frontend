@@ -1,8 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { FaChartLine, FaLightbulb, FaSortUp, FaSortDown, FaSort } from "react-icons/fa";
 import { useSelector } from "react-redux";
-import EmployeeDetail from "./EmployeDetail";
-
+import EmployeeDetail from './EmployeDetail'
 const ResourceList = ({ handleBaselineClick, handleOpportunitiesClick, filterData }) => {
   const { resources, loading, error } = useSelector((state) => state.resource);
   const [searchTerms, setSearchTerms] = useState({
@@ -29,34 +28,31 @@ const ResourceList = ({ handleBaselineClick, handleOpportunitiesClick, filterDat
     setSortConfig({ key, direction });
   };
 
-  const filteredAndSortedResources = [...(resources || [])]
-    .filter((resource = {}) => {
-      return (
-        (resource?.employeeName || "").toLowerCase().includes(searchTerms.employeeName.toLowerCase()) &&
-        (resource.joiningDate || "").toLowerCase().includes(searchTerms.joiningDate.toLowerCase()) &&
-        (resource.designation || "").toLowerCase().includes(searchTerms.designation.toLowerCase()) &&
-        (!searchTerms.status || (resource.status || "pool") === searchTerms.status) &&
-        (filterData.technologies.length === 0 || 
-          (resource.technologies && 
-           filterData.technologies.every(tech => resource.technologies.includes(tech)))) &&
-        (!filterData.totalExperience || 
-          (resource.experience && 
-           resource.experience >= parseInt(filterData.totalExperience))) &&
-        (!filterData.certifications || 
-          (resource.certifications && 
-           resource.certifications.toLowerCase().includes(filterData.certifications.toLowerCase()))) &&
-        (!filterData.communication || 
-          (resource.communication === filterData.communication))
-      );
-    })
-    .sort((a, b) => {
-      if (!sortConfig.key) return 0;
-      const valueA = a[sortConfig.key] || "";
-      const valueB = b[sortConfig.key] || "";
-      return sortConfig.direction === "ascending" 
-        ? valueA.localeCompare(valueB) 
-        : valueB.localeCompare(valueA);
-    });
+  const filteredAndSortedResources = useMemo(() => {
+    return [...(resources || [])]
+      .filter((resource = {}) => {
+        return (
+          (resource?.employeeName || "").toLowerCase().includes(searchTerms.employeeName.toLowerCase()) &&
+          (resource.joiningDate || "").toLowerCase().includes(searchTerms.joiningDate.toLowerCase()) &&
+          (resource.designation || "").toLowerCase().includes(searchTerms.designation.toLowerCase()) &&
+          (!searchTerms.status || (resource.status || "pool") === searchTerms.status) &&
+          (filterData.technologies.length === 0 ||
+            (resource.technologies &&
+              filterData.technologies.every(tech => resource.technologies.includes(tech)))) &&
+          (!filterData.totalExperience ||
+            (resource.experience &&
+              resource.experience >= parseInt(filterData.totalExperience)))
+        );
+      })
+      .sort((a, b) => {
+        if (!sortConfig.key) return 0;
+        const valueA = a[sortConfig.key] || "";
+        const valueB = b[sortConfig.key] || "";
+        return sortConfig.direction === "ascending"
+          ? valueA.localeCompare(valueB)
+          : valueB.localeCompare(valueA);
+      });
+  }, [resources, searchTerms, sortConfig, filterData]);
 
   const columns = [
     { key: "sno", label: "S.No" },
@@ -68,6 +64,7 @@ const ResourceList = ({ handleBaselineClick, handleOpportunitiesClick, filterDat
 
   if (loading) return <div className="text-center py-8">Loading resources...</div>;
   if (error) return <div className="text-red-500 text-center py-8">Error: {error}</div>;
+
 
   return (
     <div className="overflow-x-auto rounded-lg shadow-lg border border-gray-200">
@@ -83,8 +80,8 @@ const ResourceList = ({ handleBaselineClick, handleOpportunitiesClick, filterDat
                   <div className="flex items-center justify-between">
                     <span>{column.label}</span>
                     {column.key !== "sno" && column.key !== "status" && (
-                      <button 
-                        onClick={() => handleSort(column.key)} 
+                      <button
+                        onClick={() => handleSort(column.key)}
                         className="ml-2 focus:outline-none"
                       >
                         {sortConfig.key === column.key ? (
@@ -129,13 +126,9 @@ const ResourceList = ({ handleBaselineClick, handleOpportunitiesClick, filterDat
         </thead>
         <tbody>
           {filteredAndSortedResources.map((resource, index) => (
-            <tr
-              key={resource.publicId}
-              className={`${index % 2 === 0 ? "bg-gray-50" : "bg-white"} hover:bg-gray-100 transition-colors`}
-            >
-              <td className="p-3 text-gray-700 text-sm border-r border-gray-200">{index + 1}</td>
+            <tr key={resource.publicId}>
               <td
-                className="p-3 text-blue-600 text-sm border-r border-gray-200 cursor-pointer hover:underline"
+                className="p-3 text-blue-600 text-sm cursor-pointer hover:underline"
                 onClick={() => setSelectedResource(resource.publicId)}
               >
                 {resource.employeeName || "N/A"}
@@ -148,18 +141,17 @@ const ResourceList = ({ handleBaselineClick, handleOpportunitiesClick, filterDat
               </td>
               <td className="p-3 text-gray-700 text-sm border-r border-gray-200">
                 <span
-                  className={`px-2 py-1 rounded-full text-xs ${
-                    (resource.status || "pool") === "pool"
-                      ? "bg-blue-100 text-blue-800"
-                      : resource.status === "deployed"
+                  className={`px-2 py-1 rounded-full text-xs ${(resource.status || "pool") === "pool"
+                    ? "bg-blue-100 text-blue-800"
+                    : resource.status === "deployed"
                       ? "bg-green-100 text-green-800"
                       : resource.status === "pip"
-                      ? "bg-yellow-100 text-yellow-800"
-                      : "bg-red-100 text-red-800"
-                  }`}
+                        ? "bg-yellow-100 text-yellow-800"
+                        : "bg-red-100 text-red-800"
+                    }`}
                 >
-                  {(resource.status || "pool").charAt(0).toUpperCase() + 
-                   (resource.status || "pool").slice(1)}
+                  {(resource.status || "pool").charAt(0).toUpperCase() +
+                    (resource.status || "pool").slice(1)}
                 </span>
               </td>
               <td className="p-3 text-gray-700 text-sm">
@@ -190,9 +182,10 @@ const ResourceList = ({ handleBaselineClick, handleOpportunitiesClick, filterDat
       </table>
 
       {selectedResource && (
-        <EmployeeDetail 
-          publicId={selectedResource} 
-          onClose={() => setSelectedResource(null)} 
+        <EmployeeDetail
+          key={selectedResource} 
+          publicId={selectedResource}
+          onClose={() => setSelectedResource(null)}
         />
       )}
 
