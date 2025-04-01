@@ -4,19 +4,11 @@ import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import ResourceList from "./ResourceList";
 import { createResource, fetchResources } from "../../../features/resource/resourceAction";
-// import { addDesignation, addCompetency } from "../../../features/resource/resourceSlice";
 import YRMSLoader from "../../helper/loader";
 import AddOptionModal from "../../helper/OptionalModal";
 import { SuccessToast, ErrorToast } from "../../helper/ResourceToast";
 import Dropdown from "../../helper/Dropdown";
-import {
-  fetchDesignations,
-  fetchCompetencies,
-  createDesignation,
-  createCompetency,
-  deleteDesignation,
-  deleteCompetency
-} from "../../../features/resource/resourceAction";
+import { fetchDesignations, fetchCompetencies } from "../../../features/resource/resourceAction";
 
 const ManageResource = () => {
   const navigate = useNavigate();
@@ -30,12 +22,16 @@ const ManageResource = () => {
   const [modalField, setModalField] = useState(null);
   const [toast, setToast] = useState(null);
   const [showFilters, setShowFilters] = useState(false);
+  const [profilePic, setProfilePic] = useState(null);
+  const [profilePicPreview, setProfilePicPreview] = useState(null);
+  const [loadingBaselineId, setLoadingBaselineId] = useState(null);
+  const [loadingOpportunityId, setLoadingOpportunityId] = useState(null);
 
   const [formData, setFormData] = useState({
     employeeId: "",
     employeeName: "",
     gender: "",
-    location: "",
+    location: "indore",
     email: "",
     phoneNumber: "",
     joiningDate: "",
@@ -64,6 +60,23 @@ const ManageResource = () => {
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleProfilePicChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setProfilePic(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setProfilePicPreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const removeProfilePic = () => {
+    setProfilePic(null);
+    setProfilePicPreview(null);
   };
 
   const toggleTechnology = (tech) => {
@@ -95,6 +108,15 @@ const ManageResource = () => {
     try {
       setToast(<YRMSLoader message="Creating resource..." />);
 
+      // Create FormData object to handle file upload
+      const formDataWithPic = new FormData();
+      for (const key in formData) {
+        formDataWithPic.append(key, formData[key]);
+      }
+      if (profilePic) {
+        formDataWithPic.append('profilePic', profilePic);
+      }
+
       const createResult = await dispatch(createResource(formData));
 
       if (createResource.fulfilled.match(createResult)) {
@@ -105,12 +127,11 @@ const ManageResource = () => {
         try {
           await dispatch(fetchResources()).unwrap();
 
-          // Reset form and switch to view
           setFormData({
             employeeId: "",
             employeeName: "",
             gender: "",
-            location: "",
+            location: "indore", 
             email: "",
             phoneNumber: "",
             joiningDate: "",
@@ -122,6 +143,8 @@ const ManageResource = () => {
             competency: "",
             status: "pool",
           });
+          setProfilePic(null);
+          setProfilePicPreview(null);
           setActiveSection("view");
 
           setToast(null);
@@ -140,11 +163,13 @@ const ManageResource = () => {
   };
 
   const handleBaselineClick = (resource) => {
-    navigate("/manage-baseline", { state: { resource } });
+    setLoadingBaselineId(resource.publicId);
+    navigate(`/manage-baseline/${resource.publicId}`);
   };
 
   const handleOpportunitiesClick = (resource) => {
-    navigate("/opportunities", { state: { resource } });
+    setLoadingOpportunityId(resource.publicId);
+    navigate(`/opportunities/${resource.publicId}`);
   };
 
   return (
@@ -307,6 +332,55 @@ const ManageResource = () => {
             <div className="md:col-span-2">
               <h3 className="text-xl font-semibold text-gray-800 mb-4">Personal Information</h3>
             </div>
+            
+            {/* Profile Picture Upload */}
+            <div className="md:col-span-2">
+              <label className="block text-gray-700 font-medium mb-2">Profile Picture </label>
+              <div className="flex items-center space-x-4">
+                <div className="relative">
+                  {profilePicPreview ? (
+                    <>
+                      <img 
+                        src={profilePicPreview} 
+                        alt="Profile preview" 
+                        className="w-20 h-20 rounded-full object-cover border-2 border-blue-200"
+                      />
+                      <button
+                        type="button"
+                        onClick={removeProfilePic}
+                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
+                      >
+                        <FaTimes className="text-xs" />
+                      </button>
+                    </>
+                  ) : (
+                    <div className="w-20 h-20 rounded-full bg-gray-200 flex items-center justify-center text-gray-500">
+                      No Image
+                    </div>
+                  )}
+                </div>
+                <div className="flex-1">
+                  <input
+                    type="file"
+                    id="profilePic"
+                    name="profilePic"
+                    accept="image/*"
+                    onChange={handleProfilePicChange}
+                    className="hidden"
+                  />
+                  <label
+                    htmlFor="profilePic"
+                    className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-lg cursor-pointer transition-colors inline-block"
+                  >
+                    Choose File
+                  </label>
+                  <span className="ml-2 text-sm text-gray-500">
+                    {profilePic ? profilePic.name : "No file chosen"}
+                  </span>
+                </div>
+              </div>
+            </div>
+            
             <div>
               <label className="block text-gray-700 font-medium mb-2">Employee Name</label>
               <input
@@ -350,15 +424,17 @@ const ManageResource = () => {
             </div>
             <div>
               <label className="block text-gray-700 font-medium mb-2">Location</label>
-              <input
-                type="text"
+              <select
                 name="location"
                 value={formData.location}
                 onChange={handleInputChange}
-                className="w-full p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 transition-colors"
-                placeholder="Enter location"
+                className={`w-full p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 transition-colors ${formData.location ? "text-black" : "text-gray-500"
+                  }`}
                 required
-              />
+              >
+                <option value="indore">Indore</option>
+                <option value="pune">Pune</option>
+              </select>
             </div>
             <div>
               <label className="block text-gray-700 font-medium mb-2">Email</label>

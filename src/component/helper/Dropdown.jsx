@@ -1,9 +1,24 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { FaSpinner } from "react-icons/fa";
 
 const Dropdown = ({ name, value, options, onChange, setModalField }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const dropdownRef = useRef(null); // Ref for the dropdown container
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   const handleSelect = (option) => {
     if (option === "add-new") {
@@ -15,7 +30,7 @@ const Dropdown = ({ name, value, options, onChange, setModalField }) => {
   };
 
   return (
-    <div className="relative w-full">
+    <div className="relative w-full" ref={dropdownRef}> {/* Attach ref here */}
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
@@ -47,23 +62,25 @@ const Dropdown = ({ name, value, options, onChange, setModalField }) => {
       </button>
       {isOpen && (
         <div className="absolute z-10 w-full mt-1 bg-white border rounded-md shadow-lg max-h-60 overflow-y-auto">
-          {options.map((option) => (
+          <div className="max-h-[240px] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+            {options.map((option) => (
+              <div
+                key={typeof option === 'object' ? option.publicId : option}
+                onClick={() => handleSelect(option)}
+                className="p-2 hover:bg-gray-100 cursor-pointer text-sm"
+              >
+                {typeof option === 'object' ? option.name : option}
+              </div>
+            ))}
             <div
-              key={typeof option === 'object' ? option.publicId : option}
-              onClick={() => handleSelect(option)}
-              className="p-2 hover:bg-gray-100 cursor-pointer text-sm"
+              onClick={() => handleSelect("add-new")}
+              className="p-2 text-blue-600 bg-blue-50 hover:bg-blue-100 cursor-pointer text-sm font-medium border-t border-gray-200 flex items-center justify-between sticky bottom-0"
             >
-              {typeof option === 'object' ? option.name : option}
+              <span>Add New {name}</span>
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
+              </svg>
             </div>
-          ))}
-          <div
-            onClick={() => handleSelect("add-new")}
-            className="p-2 text-blue-600 bg-blue-50 hover:bg-blue-100 cursor-pointer text-sm font-medium border-t border-gray-200 flex items-center justify-between"
-          >
-            <span>Add New {name}</span>
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
-            </svg>
           </div>
         </div>
       )}
