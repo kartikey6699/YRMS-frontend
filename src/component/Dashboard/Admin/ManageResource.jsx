@@ -24,6 +24,8 @@ const ManageResource = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [profilePic, setProfilePic] = useState(null);
   const [profilePicPreview, setProfilePicPreview] = useState(null);
+  const [loadingBaselineId, setLoadingBaselineId] = useState(null);
+  const [loadingOpportunityId, setLoadingOpportunityId] = useState(null);
 
   const [formData, setFormData] = useState({
     employeeId: "",
@@ -161,11 +163,13 @@ const ManageResource = () => {
   };
 
   const handleBaselineClick = (resource) => {
-    navigate("/manage-baseline", { state: { resource } });
+    setLoadingBaselineId(resource.publicId);
+    navigate(`/manage-baseline/${resource.publicId}`);
   };
 
   const handleOpportunitiesClick = (resource) => {
-    navigate("/opportunities", { state: { resource } });
+    setLoadingOpportunityId(resource.publicId);
+    navigate(`/opportunities/${resource.publicId}`);
   };
 
   return (

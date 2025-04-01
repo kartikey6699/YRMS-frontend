@@ -1,9 +1,13 @@
 import React, { useState, useMemo } from "react";
-import { FaChartLine, FaLightbulb, FaSortUp, FaSortDown, FaSort } from "react-icons/fa";
+import { FaChartLine, FaLightbulb, FaSortUp, FaSortDown, FaSort, FaSpinner } from "react-icons/fa";
 import { useSelector } from "react-redux";
 import EmployeeDetail from './EmployeDetail';
 
-const ResourceList = ({ handleBaselineClick, handleOpportunitiesClick, filterData }) => {
+const ResourceList = ({ 
+  handleBaselineClick, 
+  handleOpportunitiesClick, 
+  filterData 
+}) => {
   const { resources, loading, error } = useSelector((state) => state.resource);
   const [searchTerms, setSearchTerms] = useState({
     employeeName: "",
@@ -16,6 +20,7 @@ const ResourceList = ({ handleBaselineClick, handleOpportunitiesClick, filterDat
     direction: "ascending",
   });
   const [selectedResource, setSelectedResource] = useState(null);
+  const [loadingBaselineId, setLoadingBaselineId] = useState(null);
 
   const handleSearchChange = (e, column) => {
     setSearchTerms((prev) => ({ ...prev, [column]: e.target.value }));
@@ -54,6 +59,15 @@ const ResourceList = ({ handleBaselineClick, handleOpportunitiesClick, filterDat
           : valueB.localeCompare(valueA);
       });
   }, [resources, searchTerms, sortConfig, filterData]);
+
+  const handleBaselineClickWithLoading = async (resource) => {
+    setLoadingBaselineId(resource.publicId);
+    try {
+      await handleBaselineClick(resource);
+    } finally {
+      setLoadingBaselineId(null);
+    }
+  };
 
   const columns = [
     { key: "sno", label: "S.No" },
@@ -160,10 +174,15 @@ const ResourceList = ({ handleBaselineClick, handleOpportunitiesClick, filterDat
               <td className="p-3 text-gray-700 text-sm">
                 <div className="flex space-x-3">
                   <button
-                    className="flex items-center justify-center w-10 h-10 bg-teal-500 text-white rounded-lg hover:bg-teal-600 transition-colors relative group"
-                    onClick={() => handleBaselineClick(resource)}
+                    className={`flex items-center justify-center w-10 h-10 bg-teal-500 text-white rounded-lg hover:bg-teal-600 transition-colors relative group ${loadingBaselineId === resource.publicId ? "opacity-75" : ""}`}
+                    onClick={() => handleBaselineClickWithLoading(resource)}
+                    disabled={loadingBaselineId === resource.publicId}
                   >
-                    <FaChartLine />
+                    {loadingBaselineId === resource.publicId ? (
+                      <FaSpinner className="animate-spin" />
+                    ) : (
+                      <FaChartLine />
+                    )}
                     <span className="absolute bottom-full mb-2 w-max px-2 py-1 bg-gray-800 text-white text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity">
                       Baseline
                     </span>
