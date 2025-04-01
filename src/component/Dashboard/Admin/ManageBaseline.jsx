@@ -1,11 +1,12 @@
-import React, { useState, useEffect, useRef } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import React, { useState, useEffect, useRef  } from "react";
+import { useLocation, useNavigate , useParams } from "react-router-dom";
 import ProfileCard from "../../helper/ProfileCard";
 import { FaArrowLeft, FaInfoCircle, FaTrash } from "react-icons/fa";
 import { BaselineHistories } from "./BaselineHistory";
 import AddOptionModal from "../../helper/OptionalModal";
 
 const ManageBaseline = () => {
+  const { publicId } = useParams();
   const { state } = useLocation();
   const resource = state?.resource || {};
   const navigate = useNavigate();
@@ -152,7 +153,7 @@ const ManageBaseline = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!formData.employeeName || !formData.communication || !formData.feedback) {
-      alert("Required fields are missing");
+      alert(" fields are missing");
       return;
     }
     const newHistory = {
@@ -169,6 +170,8 @@ const ManageBaseline = () => {
     setBaselineHistories((prev) => [...prev, newHistory]);
 
     console.log("Base Line Payload ", formData);
+    console.log("Base Line Payload 2 ", newHistory);
+
 
     setFormData({
       ...formData,
@@ -207,8 +210,8 @@ const ManageBaseline = () => {
       field === "category"
         ? dropdownOptions.skillCategories
         : field === "issuingAuthority"
-        ? dropdownOptions.Authority
-        : dropdownOptions.technologies[categoryForTech] || [];
+          ? dropdownOptions.Authority
+          : dropdownOptions.technologies[categoryForTech] || [];
     const filteredOptions = options.filter((opt) =>
       opt.toLowerCase().includes(search.toLowerCase())
     );
@@ -291,8 +294,8 @@ const ManageBaseline = () => {
                     field === "category"
                       ? "add-category"
                       : field === "technology"
-                      ? "add-tech"
-                      : "add-authority"
+                        ? "add-tech"
+                        : "add-authority"
                   )
                 }
                 className="p-2 text-blue-600 bg-blue-50 hover:bg-blue-100 cursor-pointer text-sm font-medium border-t border-gray-200 flex items-center justify-between"
@@ -301,8 +304,8 @@ const ManageBaseline = () => {
                   {field === "category"
                     ? "Add Category"
                     : field === "technology"
-                    ? `Add ${categoryForTech}`
-                    : "Add Authority"}
+                      ? `Add ${categoryForTech}`
+                      : "Add Authority"}
                 </span>
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
@@ -324,11 +327,7 @@ const ManageBaseline = () => {
         <FaArrowLeft className="mr-2" /> Back to Resources
       </button>
 
-      <ProfileCard
-        employeeName={formData.employeeName}
-        competency={formData.competency}
-        gender={formData.gender}
-      />
+      <ProfileCard publicId={publicId} />
 
       <h2 className="text-3xl font-bold text-blue-800 mb-6">
         Baseline Management for {formData.employeeName}
@@ -359,14 +358,12 @@ const ManageBaseline = () => {
 
       {showForm && (
         <div
-          className={`fixed inset-0 bg-gray-900/30 backdrop-blur-sm flex items-center justify-center p-4 z-50 transition-opacity duration-300 ${
-            showForm ? "opacity-100" : "opacity-0 pointer-events-none"
-          }`}
+          className={`fixed inset-0 bg-gray-900/30 backdrop-blur-sm flex items-center justify-center p-4 z-50 transition-opacity duration-300 ${showForm ? "opacity-100" : "opacity-0 pointer-events-none"
+            }`}
         >
           <div
-            className={`bg-white rounded-xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto transform transition-all duration-300 ${
-              showForm ? "scale-100" : "scale-95"
-            }`}
+            className={`bg-white rounded-xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto transform transition-all duration-300 ${showForm ? "scale-100" : "scale-95"
+              }`}
           >
             <div className="bg-gradient-to-r from-blue-500 to-purple-600 p-6 rounded-t-xl">
               <div className="flex justify-between items-center">
@@ -478,7 +475,7 @@ const ManageBaseline = () => {
                       value={formData.communication}
                       onChange={handleInputChange}
                       className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                      required
+
                     >
                       <option value="">Select Communication Level</option>
                       <option value="Average">Average</option>
@@ -573,7 +570,7 @@ const ManageBaseline = () => {
                       className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                       placeholder="Add feedback here"
                       rows="3"
-                      required
+
                     />
                   </div>
 
@@ -638,15 +635,15 @@ const ManageBaseline = () => {
             modalField === "skillCategories"
               ? dropdownOptions.skillCategories
               : modalField === "Authority"
-              ? dropdownOptions.Authority
-              : dropdownOptions.technologies[modalField] || []
+                ? dropdownOptions.Authority
+                : dropdownOptions.technologies[modalField] || []
           }
           onAddOption={
             modalField === "skillCategories"
               ? addNewSkillCategory
               : modalField === "Authority"
-              ? addNewIssuingAuthority
-              : addNewTechnology
+                ? addNewIssuingAuthority
+                : addNewTechnology
           }
           onDeleteOption={(category, option) => {
             if (modalField === "skillCategories") {
