@@ -1,12 +1,15 @@
 import { configureStore } from '@reduxjs/toolkit'
 import authReducer from './features/auth/authSlice'
 import resourceReducer from "./features/resource/resourceSlice";
+import opportunityReducer from './features/opportunity/opportunitySlice'; 
 import baselineReducer from "./features/baseline/baselineSlice";
+
 
 export const store = configureStore({
     reducer: {
-        auth : authReducer,
+        auth: authReducer,
         resource: resourceReducer,
-        baseline: baselineReducer
+        opportunity: opportunityReducer,
+        baseline: baselineReducer 
     }
 })

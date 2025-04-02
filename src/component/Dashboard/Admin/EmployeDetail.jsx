@@ -2,39 +2,25 @@ import React, { useEffect, useState, useRef } from 'react';
 import { FaUser, FaTimes, FaEdit, FaSave, FaDownload, FaUpload, FaCode, FaBriefcase } from 'react-icons/fa';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchResourceDetails } from '../../../features/resource/resourceAction';
-import { resetResourceDetails, cacheResourceDetails } from '../../../features/resource/resourceSlice';
+import { resetResourceDetails } from '../../../features/resource/resourceSlice';
 
 const EmployeeDetail = ({ publicId, onClose }) => {
   const dispatch = useDispatch();
-  const { resourceDetails, resourceCache } = useSelector((state) => state.resource);
+  const { resourceDetails } = useSelector((state) => state.resource);
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState(null);
   const initialLoadDone = useRef(false);
 
-  // Check cache first, then fetch if needed
+  // Fetch resource details if needed
   useEffect(() => {
     if (!publicId) return;
-
-    // Check if we have cached data
-    const cachedData = resourceCache?.[publicId];
-    if (cachedData) {
-      setFormData({
-        employeeId: cachedData.employeeId || '',
-        designation: cachedData.designation || '',
-        grade: cachedData.grade || '',
-        joiningDate: cachedData.joiningDate || '',
-        experience: cachedData.experience || '',
-        status: cachedData.status || 'pool'
-      });
-      return;
-    }
 
     // Only fetch if we haven't already loaded this resource
     if (!initialLoadDone.current && (!resourceDetails || resourceDetails.publicId !== publicId)) {
       initialLoadDone.current = true;
       dispatch(fetchResourceDetails(publicId));
     }
-  }, [publicId, resourceDetails, resourceCache, dispatch]);
+  }, [publicId, resourceDetails, dispatch]);
 
   // Update formData when we get new details
   useEffect(() => {
@@ -47,10 +33,8 @@ const EmployeeDetail = ({ publicId, onClose }) => {
         experience: resourceDetails.experience || '',
         status: resourceDetails.status || 'pool'
       });
-      // Cache these details
-      dispatch(cacheResourceDetails(resourceDetails));
     }
-  }, [resourceDetails, publicId, dispatch]);
+  }, [resourceDetails, publicId]);
 
   // Cleanup only when completely unmounting
   useEffect(() => {
