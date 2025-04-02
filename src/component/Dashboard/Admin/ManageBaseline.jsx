@@ -1,21 +1,45 @@
-import React, { useState, useEffect, useRef  } from "react";
-import { useLocation, useNavigate , useParams } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
 import ProfileCard from "../../helper/ProfileCard";
 import { FaArrowLeft, FaInfoCircle, FaTrash } from "react-icons/fa";
 import { BaselineHistories } from "./BaselineHistory";
+import Dropdown from "../../helper/Dropdown";
 import AddOptionModal from "../../helper/OptionalModal";
+import {
+  fetchCertificationAuthorities,
+  fetchTechnologyCategories,
+  fetchTechnologyStacks
+} from "../../../features/baseline/baselineAction";
+import { SuccessToast, ErrorToast } from "../../helper/ResourceToast";
 
 const ManageBaseline = () => {
   const { publicId } = useParams();
   const { state } = useLocation();
   const resource = state?.resource || {};
   const navigate = useNavigate();
+  const dispatch = useDispatch();
 
+  // Redux state selectors with proper initial values
+  const {
+    certificationAuthorities = [],
+    technologyCategories = [],
+    technologyStacks = [],
+    certificationAuthorityLoading = false,
+    technologyCategoryLoading = false,
+    technologyStackLoading = false,
+    designations = [],
+    competencies = []
+  } = useSelector((state) => state.baseline);
+
+  // Local state
   const [activeSection, setActiveSection] = useState("view");
   const [modalField, setModalField] = useState(null);
   const [baselineHistories, setBaselineHistories] = useState([]);
   const [showForm, setShowForm] = useState(false);
   const [formStep, setFormStep] = useState(1);
+  const [toast, setToast] = useState(null);
+  const [hasFetchedInitialData, setHasFetchedInitialData] = useState(false);
 
   const [formData, setFormData] = useState({
     employeeName: resource.employeeName || "",
@@ -34,20 +58,25 @@ const ManageBaseline = () => {
     totalRating: "",
   });
 
-  const [dropdownOptions, setDropdownOptions] = useState({
-    skillCategories: ["Web Framework", "Data Library", "Database", "Frontend", "Other", "Cloud"],
-    technologies: {
-      "Web Framework": ["Django", "Flask", "Spring", "Express"],
-      "Data Library": ["Numpy", "Pandas", "TensorFlow", "PyTorch"],
-      "Database": ["MySQL", "PostgreSQL", "MongoDB", "Oracle"],
-      "Frontend": ["React", "Angular", "Vue", "Svelte"],
-      "Other": ["CI/CD", "GIT", "Docker", "Kubernetes"],
-      "Cloud": ["AWS", "Azure", "GCP", "Heroku"],
-    },
-    Authority: ["AWS", "AZURE"],
-  });
+  // Fetch initial data only once
+  useEffect(() => {
+    if (!hasFetchedInitialData) {
+      dispatch(fetchCertificationAuthorities());
+      dispatch(fetchTechnologyCategories());
+      setHasFetchedInitialData(true);
+    }
+  }, [dispatch, hasFetchedInitialData]);
 
-  const formRef = useRef(null);
+  // Fetch technologies when categories are loaded - with proper null check
+  useEffect(() => {
+    if (Array.isArray(technologyCategories) && technologyCategories.length > 0) {
+      technologyCategories.forEach(category => {
+        if (category?.publicId) {
+          dispatch(fetchTechnologyStacks(category.publicId));
+        }
+      });
+    }
+  }, [technologyCategories, dispatch]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -76,12 +105,8 @@ const ManageBaseline = () => {
 
   const handleCertChange = (index, field, value) => {
     const updatedCert = [...formData.certification];
-    if (field === "issuingAuthority" && value === "add-authority") {
-      setModalField("Authority");
-    } else {
-      updatedCert[index][field] = value;
-      setFormData((prev) => ({ ...prev, certification: updatedCert }));
-    }
+    updatedCert[index][field] = value;
+    setFormData((prev) => ({ ...prev, certification: updatedCert }));
   };
 
   const addCertification = () => {
@@ -100,12 +125,8 @@ const ManageBaseline = () => {
 
   const handleTechSkillChange = (index, field, value) => {
     const updatedTechSkills = [...formData.techSkills];
-    if (field === "technology" && value === "add-tech") {
-      setModalField(updatedTechSkills[index].category);
-    } else {
-      updatedTechSkills[index][field] = value;
-      setFormData((prev) => ({ ...prev, techSkills: updatedTechSkills }));
-    }
+    updatedTechSkills[index][field] = value;
+    setFormData((prev) => ({ ...prev, techSkills: updatedTechSkills }));
   };
 
   const addTechSkill = () => {
@@ -122,40 +143,13 @@ const ManageBaseline = () => {
     }));
   };
 
-  const addNewSkillCategory = (newCategory) => {
-    setDropdownOptions((prev) => ({
-      ...prev,
-      skillCategories: [...prev.skillCategories, newCategory],
-      technologies: { ...prev.technologies, [newCategory]: [] },
-    }));
-    setModalField(null);
-  };
-
-  const addNewTechnology = (category, value) => {
-    setDropdownOptions((prev) => ({
-      ...prev,
-      technologies: {
-        ...prev.technologies,
-        [category]: [...prev.technologies[category], value],
-      },
-    }));
-    setModalField(null);
-  };
-
-  const addNewIssuingAuthority = (value) => {
-    setDropdownOptions((prev) => ({
-      ...prev,
-      Authority: [...prev.Authority, value],
-    }));
-    setModalField(null);
-  };
-
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!formData.employeeName || !formData.communication || !formData.feedback) {
-      alert(" fields are missing");
+      setToast(<ErrorToast message="Required fields are missing" onClose={() => setToast(null)} />);
       return;
     }
+
     const newHistory = {
       employeeId: formData.employeeId,
       communication: formData.communication,
@@ -167,12 +161,8 @@ const ManageBaseline = () => {
       totalRating: parseInt(formData.totalRating) || 0,
       timestamp: new Date().toISOString(),
     };
+
     setBaselineHistories((prev) => [...prev, newHistory]);
-
-    console.log("Base Line Payload ", formData);
-    console.log("Base Line Payload 2 ", newHistory);
-
-
     setFormData({
       ...formData,
       experience: [{ technology: "", years: "" }],
@@ -187,6 +177,7 @@ const ManageBaseline = () => {
     setShowForm(false);
     setFormStep(1);
     setActiveSection("view");
+    setToast(<SuccessToast message="Baseline created successfully!" onClose={() => setToast(null)} />);
   };
 
   const openAddForm = () => {
@@ -201,125 +192,29 @@ const ManageBaseline = () => {
   const nextStep = () => setFormStep(2);
   const prevStep = () => setFormStep(1);
 
-  const CategoryDropdown = ({ index, selectedCategory, onChange, field, categoryForTech }) => {
-    const [isOpen, setIsOpen] = useState(false);
-    const [search, setSearch] = useState("");
-    const dropdownRef = useRef(null);
-
-    const options =
-      field === "category"
-        ? dropdownOptions.skillCategories
-        : field === "issuingAuthority"
-          ? dropdownOptions.Authority
-          : dropdownOptions.technologies[categoryForTech] || [];
-    const filteredOptions = options.filter((opt) =>
-      opt.toLowerCase().includes(search.toLowerCase())
-    );
-
-    const handleSelect = (option) => {
-      if (option === "add-category" && field === "category") {
-        setModalField("skillCategories");
-      } else if (option === "add-tech" && field === "technology") {
-        setModalField(categoryForTech);
-      } else if (option === "add-authority" && field === "issuingAuthority") {
-        setModalField("Authority");
-      } else {
-        onChange(index, field, option);
-      }
-      setIsOpen(false);
-      setSearch("");
-    };
-
-    useEffect(() => {
-      const handleClickOutside = (event) => {
-        if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-          setIsOpen(false);
-          setSearch("");
-        }
-      };
-
-      if (isOpen) {
-        document.addEventListener("mousedown", handleClickOutside);
-      }
-
-      return () => {
-        document.removeEventListener("mousedown", handleClickOutside);
-      };
-    }, [isOpen]);
-
-    return (
-      <div className="relative w-82" ref={dropdownRef}>
-        <button
-          type="button"
-          onClick={() => setIsOpen(!isOpen)}
-          className="p-3 border border-gray-300 rounded-lg w-full text-left flex justify-between items-center bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-        >
-          <span>
-            {selectedCategory ||
-              `Select ${field === "category" ? "Category" : field === "issuingAuthority" ? "Authority" : "Technology"}`}
-          </span>
-          <svg
-            className={`w-4 h-4 transition-transform ${isOpen ? "rotate-180" : ""}`}
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-          </svg>
-        </button>
-        {isOpen && (
-          <div className="absolute z-10 w-full mt-1 bg-white border rounded-md shadow-lg">
-            <div className="p-2 border-b">
-              <input
-                type="text"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="w-full p-1 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Search..."
-              />
-            </div>
-            <div className="max-h-40 overflow-y-auto">
-              {filteredOptions.map((opt) => (
-                <div
-                  key={opt}
-                  onClick={() => handleSelect(opt)}
-                  className="p-2 hover:bg-gray-100 cursor-pointer text-sm"
-                >
-                  {opt}
-                </div>
-              ))}
-              <div
-                onClick={() =>
-                  handleSelect(
-                    field === "category"
-                      ? "add-category"
-                      : field === "technology"
-                        ? "add-tech"
-                        : "add-authority"
-                  )
-                }
-                className="p-2 text-blue-600 bg-blue-50 hover:bg-blue-100 cursor-pointer text-sm font-medium border-t border-gray-200 flex items-center justify-between"
-              >
-                <span>
-                  {field === "category"
-                    ? "Add Category"
-                    : field === "technology"
-                      ? `Add ${categoryForTech}`
-                      : "Add Authority"}
-                </span>
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
-                </svg>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-    );
+  const getModalOptions = () => {
+    switch (modalField) {
+      case "designation":
+        return designations;
+      case "competency":
+        return competencies;
+      case "certification_authority":
+        return certificationAuthorities;
+      case "technology_category":
+        return technologyCategories;
+      case "technology_stack":
+        // Get the selected category from the form
+        const selectedCategory = formData.techSkills.find(skill => skill.category)?.category;
+        const category = technologyCategories.find(cat => cat.name === selectedCategory);
+        return category ? technologyStacks.filter(tech => tech.categoryId === category.publicId) : [];
+      default:
+        return [];
+    }
   };
 
   return (
     <div className="p-6 bg-gradient-to-b from-blue-50 to-purple-50 min-h-screen">
+      {toast}
       <button
         onClick={() => navigate("/manage-resources")}
         className="flex items-center mb-6 text-blue-600 hover:text-blue-800 transition-colors duration-200 cursor-pointer"
@@ -357,14 +252,8 @@ const ManageBaseline = () => {
       )}
 
       {showForm && (
-        <div
-          className={`fixed inset-0 bg-gray-900/30 backdrop-blur-sm flex items-center justify-center p-4 z-50 transition-opacity duration-300 ${showForm ? "opacity-100" : "opacity-0 pointer-events-none"
-            }`}
-        >
-          <div
-            className={`bg-white rounded-xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto transform transition-all duration-300 ${showForm ? "scale-100" : "scale-95"
-              }`}
-          >
+        <div className="fixed inset-0 bg-gray-900/30 backdrop-blur-sm flex items-center justify-center p-4 z-50 transition-opacity duration-300">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
             <div className="bg-gradient-to-r from-blue-500 to-purple-600 p-6 rounded-t-xl">
               <div className="flex justify-between items-center">
                 <h3 className="text-xl font-bold text-white">Create New Baseline (Step {formStep} of 2)</h3>
@@ -388,14 +277,14 @@ const ManageBaseline = () => {
                           type="text"
                           value={exp.technology}
                           onChange={(e) => handleExpChange(index, "technology", e.target.value)}
-                          className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                          className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                           placeholder="Technology"
                         />
                         <input
                           type="text"
                           value={exp.years}
                           onChange={(e) => handleExpChange(index, "years", e.target.value)}
-                          className="w-1/4 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                          className="w-1/4 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                           placeholder="Years"
                         />
                         {formData.experience.length > 1 && (
@@ -426,15 +315,16 @@ const ManageBaseline = () => {
                           type="text"
                           value={cert.name}
                           onChange={(e) => handleCertChange(index, "name", e.target.value)}
-                          className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                          className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                           placeholder="Certification Name"
                         />
-                        <CategoryDropdown
-                          index={index}
-                          selectedCategory={cert.issuingAuthority}
-                          onChange={handleCertChange}
-                          field="issuingAuthority"
-                          categoryForTech="Authority"
+                        <Dropdown
+                          name="Authority"
+                          value={cert.issuingAuthority}
+                          options={certificationAuthorities}
+                          onChange={(e) => handleCertChange(index, "issuingAuthority", e.target.value)}
+                          setModalField={() => setModalField("certification_authority")}
+                          loading={certificationAuthorityLoading}
                         />
                         {formData.certification.length > 1 && (
                           <button
@@ -463,7 +353,7 @@ const ManageBaseline = () => {
                       name="totalExperience"
                       value={formData.totalExperience}
                       onChange={handleInputChange}
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                       placeholder="e.g., 5"
                     />
                   </div>
@@ -474,8 +364,7 @@ const ManageBaseline = () => {
                       name="communication"
                       value={formData.communication}
                       onChange={handleInputChange}
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
                       <option value="">Select Communication Level</option>
                       <option value="Average">Average</option>
@@ -492,33 +381,37 @@ const ManageBaseline = () => {
                     <label className="block text-sm font-medium text-gray-700 mb-1">Tech Skills</label>
                     <div className="space-y-3">
                       {formData.techSkills.map((skill, index) => (
-                        <div
-                          key={index}
-                          className="flex items-center space-x-3 bg-gray-50 p-3 rounded-lg shadow-sm border border-gray-200"
-                        >
-                          <CategoryDropdown
-                            index={index}
-                            selectedCategory={skill.category}
-                            onChange={handleTechSkillChange}
-                            field="category"
-                            categoryForTech={skill.category}
+                        <div key={index} className="flex items-center space-x-3 bg-gray-50 p-3 rounded-lg shadow-sm border border-gray-200">
+                          <Dropdown
+                            name="category"
+                            value={skill.category}
+                            options={technologyCategories?.map(c => c.name)}
+                            onChange={(e) => handleTechSkillChange(index, "category", e.target.value)}
+                            setModalField={() => setModalField("technology_category")}
+                            loading={technologyCategoryLoading}
                           />
                           {skill.category && (
-                            <CategoryDropdown
-                              index={index}
-                              selectedCategory={skill.technology}
-                              onChange={handleTechSkillChange}
-                              field="technology"
-                              categoryForTech={skill.category}
+                            <Dropdown
+                              name="technology"
+                              value={skill.technology}
+                              options={technologyStacks
+                                .filter(tech => {
+                                  const category = technologyCategories.find(cat => cat.name === skill.category);
+                                  return category ? tech.categoryId === category.publicId : false;
+                                })
+                                .map(tech => tech.name)}
+                              onChange={(e) => handleTechSkillChange(index, "technology", e.target.value)}
+                              setModalField={() => setModalField("technology_stack")}
+                              loading={technologyStackLoading}
                             />
                           )}
-                          {skill.technology && skill.technology !== "add-tech" && (
+                          {skill.technology && (
                             <div className="flex items-center">
                               <input
                                 type="number"
                                 value={skill.rating}
                                 onChange={(e) => handleTechSkillChange(index, "rating", e.target.value)}
-                                className="w-16 p-2 border border-gray-300 rounded-l-lg border-r-0 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                                className="w-16 p-2 border border-gray-300 rounded-l-lg border-r-0 focus:outline-none focus:ring-2 focus:ring-blue-500"
                                 placeholder="0-5"
                                 min="0"
                                 max="5"
@@ -554,7 +447,7 @@ const ManageBaseline = () => {
                       name="totalRating"
                       value={formData.totalRating}
                       onChange={handleInputChange}
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                       placeholder="0-5"
                       min="0"
                       max="5"
@@ -567,10 +460,9 @@ const ManageBaseline = () => {
                       name="feedback"
                       value={formData.feedback}
                       onChange={handleInputChange}
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                       placeholder="Add feedback here"
                       rows="3"
-
                     />
                   </div>
 
@@ -581,7 +473,7 @@ const ManageBaseline = () => {
                       name="currentStatus"
                       value={formData.currentStatus}
                       onChange={handleInputChange}
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                       placeholder="e.g., Learn React"
                     />
                   </div>
@@ -631,43 +523,9 @@ const ManageBaseline = () => {
       {modalField && (
         <AddOptionModal
           field={modalField}
-          options={
-            modalField === "skillCategories"
-              ? dropdownOptions.skillCategories
-              : modalField === "Authority"
-                ? dropdownOptions.Authority
-                : dropdownOptions.technologies[modalField] || []
-          }
-          onAddOption={
-            modalField === "skillCategories"
-              ? addNewSkillCategory
-              : modalField === "Authority"
-                ? addNewIssuingAuthority
-                : addNewTechnology
-          }
-          onDeleteOption={(category, option) => {
-            if (modalField === "skillCategories") {
-              setDropdownOptions((prev) => ({
-                ...prev,
-                skillCategories: prev.skillCategories.filter((opt) => opt !== option),
-                technologies: { ...prev.technologies, [option]: undefined },
-              }));
-            } else if (modalField === "Authority") {
-              setDropdownOptions((prev) => ({
-                ...prev,
-                Authority: prev.Authority.filter((opt) => opt !== option),
-              }));
-            } else {
-              setDropdownOptions((prev) => ({
-                ...prev,
-                technologies: {
-                  ...prev.technologies,
-                  [category]: prev.technologies[category].filter((opt) => opt !== option),
-                },
-              }));
-            }
-          }}
+          options={getModalOptions()}
           onClose={() => setModalField(null)}
+          setToast={setToast}
         />
       )}
     </div>
