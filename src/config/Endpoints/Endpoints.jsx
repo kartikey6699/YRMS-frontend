@@ -1,5 +1,5 @@
 
-import { ADMIN_API_BASE_URL , DESIGNATION_API_BASE_URL , COMPETENCY_API_BASE_URL } from "./BaseEndpoints";
+import { ADMIN_API_BASE_URL , DESIGNATION_API_BASE_URL , COMPETENCY_API_BASE_URL , CERTIFICATION_AUTHORITY_API_BASE_URL } from "./BaseEndpoints";
 
 export const AUTH_API = {
     ADMIN_LOGIN: `${ADMIN_API_BASE_URL}/login`,
@@ -25,4 +25,11 @@ export const COMPETENCY_API = {
     CREATE: `${COMPETENCY_API_BASE_URL}/competency-create`,
     UPDATE: `${COMPETENCY_API_BASE_URL}/competency-update`,
     DELETE: `${COMPETENCY_API_BASE_URL}/competency-delete`
+};
+
+export const CERTIFICATION_AUTHORITY = {
+    LIST: `${CERTIFICATION_AUTHORITY_API_BASE_URL}/certification-authority-list`,
+    CREATE: `${CERTIFICATION_AUTHORITY_API_BASE_URL}/certification-authority-create`,
+    UPDATE: `${CERTIFICATION_AUTHORITY_API_BASE_URL}/certification-authority-update`,
+    DELETE: `${CERTIFICATION_AUTHORITY_API_BASE_URL}/certification-authority-delete`
 };

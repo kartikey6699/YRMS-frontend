@@ -3,14 +3,24 @@ import { FaSearch, FaTimes, FaEdit, FaTrash, FaCheck, FaPlus } from "react-icons
 import { SuccessToast, ErrorToast } from "./ResourceToast";
 import { useDispatch } from "react-redux";
 import {
-  fetchDesignations,
-  fetchCompetencies,
-  createDesignation,
-  createCompetency,
-  updateDesignation,
+  updateCertificationAuthority,
+  deleteCertificationAuthority,
+  updateTechnologyCategory,
+  deleteTechnologyCategory,
+  updateTechnologyStack,
+  deleteTechnologyStack,
+  createCertificationAuthority,
+  createTechnologyCategory,
+  createTechnologyStack,
+  fetchCertificationAuthorities,
+  fetchTechnologyCategories,
+  fetchTechnologyStacks
+} from "../../features/baseline/baselineAction";
+
+import {
+  updateDesignation, deleteDesignation,
   updateCompetency,
-  deleteDesignation,
-  deleteCompetency
+  deleteCompetency, createDesignation, fetchCompetencies, fetchDesignations, createCompetency
 } from "../../features/resource/resourceAction";
 
 const AddOptionModal = ({ field, options, onClose, setToast }) => {
@@ -30,16 +40,40 @@ const AddOptionModal = ({ field, options, onClose, setToast }) => {
 
     try {
       setLoading(true);
-      const action = field === "designation" ? createDesignation : createCompetency;
-      const result = await dispatch(action(newOption.trim()));
-
-      if (action.fulfilled.match(result)) {
-        setToast(<SuccessToast message={`${field} created successfully!`} onClose={() => setToast(null)} />);
-        setNewOption("");
-        refreshData();
-      } else {
-        throw new Error(result.error.message || `Failed to create ${field}`);
+      let result;
+      switch (field) {
+        case "designation":
+          result = await dispatch(createDesignation(newOption.trim())).unwrap();
+          dispatch(fetchDesignations());
+          break;
+        case "competency":
+          result = await dispatch(createCompetency(newOption.trim())).unwrap();
+          dispatch(fetchCompetencies());
+          break;
+        case "certification_authority":
+          result = await dispatch(createCertificationAuthority(newOption.trim())).unwrap();
+          dispatch(fetchCertificationAuthorities());
+          break;
+        case "technology_category":
+          result = await dispatch(createTechnologyCategory(newOption.trim())).unwrap();
+          dispatch(fetchTechnologyCategories());
+          break;
+        case "technology_stack":
+          // For technology stack, we need to know the category
+          const category = options.find(opt => opt.name === field)?.publicId;
+          if (category) {
+            result = await dispatch(createTechnologyStack({
+              categoryId: category,
+              name: newOption.trim()
+            })).unwrap();
+            dispatch(fetchTechnologyStacks(category));
+          }
+          break;
+        default:
+          break;
       }
+      setToast(<SuccessToast message={`${getFieldLabel()} added successfully!`} onClose={() => setToast(null)} />);
+      setNewOption("");
     } catch (error) {
       setToast(<ErrorToast message={error.message} onClose={() => setToast(null)} />);
     } finally {
@@ -52,21 +86,53 @@ const AddOptionModal = ({ field, options, onClose, setToast }) => {
 
     try {
       setLoading(true);
-      const action = field === "designation" ? updateDesignation : updateCompetency;
-      const payload = {
-        id: editingOption.publicId,
-        name: editValue.trim()
-      };
-      const result = await dispatch(action(payload));
-
-      if (action.fulfilled.match(result)) {
-        setToast(<SuccessToast message={`${field} updated successfully!`} onClose={() => setToast(null)} />);
-        setEditingOption(null);
-        setEditValue("");
-        refreshData();
-      } else {
-        throw new Error(result.error.message || `Failed to update ${field}`);
+      let result;
+      switch (field) {
+        case "designation":
+          result = await dispatch(updateDesignation({
+            id: editingOption.publicId,
+            name: editValue.trim()
+          })).unwrap();
+          dispatch(fetchDesignations());
+          break;
+        case "competency":
+          result = await dispatch(updateCompetency({
+            id: editingOption.publicId,
+            name: editValue.trim()
+          })).unwrap();
+          dispatch(fetchCompetencies());
+          break;
+        case "certification_authority":
+          result = await dispatch(updateCertificationAuthority({
+            id: editingOption.publicId,
+            name: editValue.trim()
+          })).unwrap();
+          dispatch(fetchCertificationAuthorities());
+          break;
+        case "technology_category":
+          result = await dispatch(updateTechnologyCategory({
+            id: editingOption.publicId,
+            name: editValue.trim()
+          })).unwrap();
+          dispatch(fetchTechnologyCategories());
+          break;
+        case "technology_stack":
+          result = await dispatch(updateTechnologyStack({
+            id: editingOption.publicId,
+            name: editValue.trim()
+          })).unwrap();
+          // Find the category for this technology stack
+          const category = options.find(opt => opt.publicId === editingOption.categoryId)?.publicId;
+          if (category) {
+            dispatch(fetchTechnologyStacks(category));
+          }
+          break;
+        default:
+          break;
       }
+      setToast(<SuccessToast message={`${getFieldLabel()} updated successfully!`} onClose={() => setToast(null)} />);
+      setEditingOption(null);
+      setEditValue("");
     } catch (error) {
       setToast(<ErrorToast message={error.message} onClose={() => setToast(null)} />);
     } finally {
@@ -77,27 +143,39 @@ const AddOptionModal = ({ field, options, onClose, setToast }) => {
   const handleDelete = async (option) => {
     try {
       setLoading(true);
-      const action = field === "designation" ? deleteDesignation : deleteCompetency;
-      const result = await dispatch(action(option.publicId));
-
-      if (action.fulfilled.match(result)) {
-        setToast(<SuccessToast message={`${field} deleted successfully!`} onClose={() => setToast(null)} />);
-        refreshData();
-      } else {
-        throw new Error(result.error.message || `Failed to delete ${field}`);
+      switch (field) {
+        case "designation":
+          await dispatch(deleteDesignation(option.publicId)).unwrap();
+          dispatch(fetchDesignations());
+          break;
+        case "competency":
+          await dispatch(deleteCompetency(option.publicId)).unwrap();
+          dispatch(fetchCompetencies());
+          break;
+        case "certification_authority":
+          await dispatch(deleteCertificationAuthority(option.publicId)).unwrap();
+          dispatch(fetchCertificationAuthorities());
+          break;
+        case "technology_category":
+          await dispatch(deleteTechnologyCategory(option.publicId)).unwrap();
+          dispatch(fetchTechnologyCategories());
+          break;
+        case "technology_stack":
+          await dispatch(deleteTechnologyStack(option.publicId)).unwrap();
+          // Find the category for this technology stack
+          const category = options.find(opt => opt.publicId === option.categoryId)?.publicId;
+          if (category) {
+            dispatch(fetchTechnologyStacks(category));
+          }
+          break;
+        default:
+          break;
       }
+      setToast(<SuccessToast message={`${getFieldLabel()} deleted successfully!`} onClose={() => setToast(null)} />);
     } catch (error) {
       setToast(<ErrorToast message={error.message} onClose={() => setToast(null)} />);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const refreshData = () => {
-    if (field === "designation") {
-      dispatch(fetchDesignations());
-    } else if (field === "competency") {
-      dispatch(fetchCompetencies());
     }
   };
 
@@ -111,6 +189,23 @@ const AddOptionModal = ({ field, options, onClose, setToast }) => {
     setEditValue("");
   };
 
+  const getFieldLabel = () => {
+    switch (field) {
+      case "designation":
+        return "Designation";
+      case "competency":
+        return "Competency";
+      case "certification_authority":
+        return "Certification Authority";
+      case "technology_category":
+        return "Technology Category";
+      case "technology_stack":
+        return "Technology Stack";
+      default:
+        return field;
+    }
+  };
+
   return (
     <div className="fixed inset-0 flex items-center justify-center z-50">
       <div
@@ -118,8 +213,8 @@ const AddOptionModal = ({ field, options, onClose, setToast }) => {
         style={{ minWidth: '300px' }}
       >
         <div className="p-4 border-b border-gray-200 flex justify-between items-center bg-blue-50">
-          <h3 className="text-lg font-semibold text-gray-800 capitalize">
-            Manage {field}s
+          <h3 className="text-lg font-semibold text-gray-800">
+            Manage {getFieldLabel()}
           </h3>
           <button
             onClick={onClose}
@@ -136,7 +231,7 @@ const AddOptionModal = ({ field, options, onClose, setToast }) => {
             </div>
             <input
               type="text"
-              placeholder={`Search ${field}s...`}
+              placeholder={`Search ${getFieldLabel()}...`}
               className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -146,7 +241,7 @@ const AddOptionModal = ({ field, options, onClose, setToast }) => {
           <div className="mb-4 flex">
             <input
               type="text"
-              placeholder={`Add new ${field}`}
+              placeholder={`Add new ${getFieldLabel()}`}
               className="flex-1 px-3 py-2 border border-gray-300 rounded-l-md focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
               value={newOption}
               onChange={(e) => setNewOption(e.target.value)}
@@ -165,7 +260,7 @@ const AddOptionModal = ({ field, options, onClose, setToast }) => {
             <div className="h-[200px] overflow-y-auto custom-scrollbar">
               {filteredOptions.length === 0 ? (
                 <div className="p-4 text-center text-gray-500 text-sm">
-                  No {field}s found
+                  No {getFieldLabel()} found
                 </div>
               ) : (
                 <ul className="divide-y divide-gray-200">
