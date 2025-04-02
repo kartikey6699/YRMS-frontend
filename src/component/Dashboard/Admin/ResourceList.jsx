@@ -88,9 +88,9 @@ const ResourceList = ({
             {columns.map((column) => (
               <th
                 key={column.key}
-                className="p-3 text-left font-semibold text-sm border-b border-gray-200"
+                className="p-2 text-left font-semibold text-sm border-b border-gray-200" // Increased padding
               >
-                <div className="flex flex-col space-y-2">
+                <div className="flex flex-col space-y-1">
                   <div className="flex items-center justify-between">
                     <span>{column.label}</span>
                     {column.key !== "sno" && column.key !== "status" && (
@@ -116,14 +116,14 @@ const ResourceList = ({
                       value={searchTerms[column.key]}
                       onChange={(e) => handleSearchChange(e, column.key)}
                       placeholder={`Search ${column.label}`}
-                      className="w-full p-2 text-sm rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-800 placeholder-gray-400"
+                      className="w-full p-1 text-sm rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-800 placeholder-gray-400"
                     />
                   )}
                   {column.key === "status" && (
                     <select
                       value={searchTerms.status}
                       onChange={(e) => handleSearchChange(e, "status")}
-                      className="w-full p-2 text-sm rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full p-1 text-sm rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
                       <option value="">All Statuses</option>
                       <option value="pool">Pool</option>
@@ -135,28 +135,28 @@ const ResourceList = ({
                 </div>
               </th>
             ))}
-            <th className="p-3 text-left font-semibold text-sm border-b border-gray-200">Actions</th>
+            <th className="p-2 text-left font-semibold text-sm border-b border-gray-200">Actions</th> {/* Increased padding */}
           </tr>
         </thead>
         <tbody>
           {filteredAndSortedResources.map((resource, index) => (
             <tr key={resource.publicId}>
-              <td className="p-3 text-gray-700 text-sm border-r border-gray-200">
+              <td className="p-2 text-gray-700 text-sm border-r border-gray-200"> {/* Increased padding */}
                 {index + 1}
               </td>
               <td
-                className="p-3 text-blue-600 text-sm cursor-pointer hover:underline border-r border-gray-200"
+                className="p-2 text-blue-600 text-sm cursor-pointer hover:underline border-r border-gray-200" // Increased padding
                 onClick={() => setSelectedResource(resource.publicId)}
               >
                 {resource.employeeName || "N/A"}
               </td>
-              <td className="p-3 text-gray-700 text-sm border-r border-gray-200">
+              <td className="p-2 text-gray-700 text-sm border-r border-gray-200"> {/* Increased padding */}
                 {resource.joiningDate ? new Date(resource.joiningDate).toLocaleDateString() : "N/A"}
               </td>
-              <td className="p-3 text-gray-700 text-sm border-r border-gray-200">
+              <td className="p-2 text-gray-700 text-sm border-r border-gray-200"> {/* Increased padding */}
                 {resource.designation || "N/A"}
               </td>
-              <td className="p-3 text-gray-700 text-sm border-r border-gray-200">
+              <td className="p-2 text-gray-700 text-sm border-r border-gray-200"> {/* Increased padding */}
                 <span
                   className={`px-2 py-1 rounded-full text-xs ${(resource.status || "pool") === "pool"
                     ? "bg-blue-100 text-blue-800"
@@ -171,10 +171,10 @@ const ResourceList = ({
                     (resource.status || "pool").slice(1)}
                 </span>
               </td>
-              <td className="p-3 text-gray-700 text-sm">
+              <td className="p-2 text-gray-700 text-sm"> {/* Increased padding */}
                 <div className="flex space-x-3">
                   <button
-                    className={`flex items-center justify-center w-10 h-10 bg-teal-500 text-white rounded-lg hover:bg-teal-600 transition-colors relative group ${loadingBaselineId === resource.publicId ? "opacity-75" : ""}`}
+                    className={`flex items-center justify-center w-10 h-10 bg-teal-500 text-white rounded-lg hover:bg-teal-600 transition-colors relative group cursor-pointer ${loadingBaselineId === resource.publicId ? "opacity-75" : ""}`}
                     onClick={() => handleBaselineClickWithLoading(resource)}
                     disabled={loadingBaselineId === resource.publicId}
                   >
@@ -188,11 +188,11 @@ const ResourceList = ({
                     </span>
                   </button>
                   <button
-                    className="flex items-center justify-center w-10 h-10 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors relative group"
+                    className="flex items-center justify-center w-10 h-10 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors relative group cursor-pointer"
                     onClick={() => handleOpportunitiesClick(resource)}
                   >
                     <FaLightbulb />
-                    <span className="absolute bottom-full mb-2 w-max px-2 py-1 bg-gray-800 text-white text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity">
+                    <span className="absolute bottom-full mb-1 w-max px-1 py-0.5 bg-gray-800 text-white text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity">
                       Opportunities
                     </span>
                   </button>

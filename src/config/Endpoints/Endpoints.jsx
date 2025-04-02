@@ -1,8 +1,9 @@
 
-import { ADMIN_API_BASE_URL , DESIGNATION_API_BASE_URL , COMPETENCY_API_BASE_URL , CERTIFICATION_AUTHORITY_API_BASE_URL } from "./BaseEndpoints";
+import { ADMIN_API_BASE_URL , DESIGNATION_API_BASE_URL , COMPETENCY_API_BASE_URL, OPPORTUNITY_API_BASE_URL , CERTIFICATION_AUTHORITY_API_BASE_URL } from "./BaseEndpoints";
 
 export const AUTH_API = {
-    ADMIN_LOGIN: `${ADMIN_API_BASE_URL}/login`,
+    // ADMIN_LOGIN: `${ADMIN_API_BASE_URL}/user/login`,
+    ADMIN_LOGIN: `${ADMIN_API_BASE_URL}/user/login`,
     FORGOT_PASSWORD: `${ADMIN_API_BASE_URL}/forgot-password`,
 }
 
@@ -25,6 +26,15 @@ export const COMPETENCY_API = {
     CREATE: `${COMPETENCY_API_BASE_URL}/competency-create`,
     UPDATE: `${COMPETENCY_API_BASE_URL}/competency-update`,
     DELETE: `${COMPETENCY_API_BASE_URL}/competency-delete`
+};
+
+export const OPPORTUNITY_API = {
+    CREATE: `${OPPORTUNITY_API_BASE_URL}/opportunity-create`,
+    // LIST: `${OPPORTUNITY_API_BASE_URL}/opportunity-list`,
+    LIST: (userId) => `http://127.0.0.1:8000/user/${userId}/opportunity-list`,
+    DETAIL: `${OPPORTUNITY_API_BASE_URL}/opportunity-detail`,
+    UPDATE: `${OPPORTUNITY_API_BASE_URL}/opportunity-update`,
+    DELETE: `${OPPORTUNITY_API_BASE_URL}/opportunity-delete`
 };
 
 export const CERTIFICATION_AUTHORITY = {

@@ -282,7 +282,7 @@ const ManageResource = () => {
                   <div className="md:col-span-3 space-y-1">
                     <div className="flex items-center text-blue-600">
                       <FaCogs className="mr-1 text-xs" />
-                      <span className="font-medium text-xs">Technologies</span>
+                      <span className="font-medium text-sm">Filter by selecting technology</span>
                     </div>
                     <div className="flex flex-wrap gap-1.5 max-h-[3.5rem] overflow-y-auto">
                       {['React', 'Angular', 'Vue', 'JavaScript', 'TypeScript', 'Node.js', 'Python', 'Java', 'C#', 'Go', 'Ruby', 'AWS', 'Azure', 'Docker', 'Kubernetes', 'CI/CD', 'React Native', 'Flutter', 'Swift', 'Kotlin', 'SQL', 'MongoDB', 'PostgreSQL', 'Redis', 'GraphQL', 'Rust', 'Scala', 'Elixir', 'Clojure', 'PHP', 'Perl', 'Shell', 'HTML', 'CSS', 'Spring Boot', 'Django', 'Laravel', 'Express.js', 'ASP.NET', 'TensorFlow', 'PyTorch', 'Hadoop', 'Spark', 'Jenkins', 'Terraform', 'Ansible', 'Unity', 'Unreal Engine', 'WebGL'].map(tech => (
@@ -294,7 +294,7 @@ const ManageResource = () => {
                             className="hidden"
                           />
                           <span className={`px-2 py-1 text-xs rounded-full transition-all ${filterData.technologies.includes(tech)
-                            ? 'bg-blue-100 text-blue-800 border border-blue-200'
+                            ?  'bg-[#ffc9c9] text-[#9F0712] border border-[#9F0712]'
                             : 'bg-gray-100 text-gray-700 border border-gray-200 hover:bg-gray-50'
                             }`}>
                             {tech}

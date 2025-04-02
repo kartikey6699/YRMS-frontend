@@ -41,10 +41,6 @@ const resourceSlice = createSlice({
       if (state.resourceDetails) {
         state.resourceDetails = null;
       }
-    },
-    cacheResourceDetails: (state, action) => {
-      if (!state.resourceCache) state.resourceCache = {};
-      state.resourceCache[action.payload.publicId] = action.payload;
     }
   },
   extraReducers: (builder) => {
@@ -224,5 +220,5 @@ const resourceSlice = createSlice({
   }
 });
 
-export const { clearError, resetResourceDetails , cacheResourceDetails } = resourceSlice.actions;
+export const { clearError, resetResourceDetails } = resourceSlice.actions;
 export default resourceSlice.reducer;

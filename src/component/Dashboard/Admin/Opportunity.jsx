@@ -1,78 +1,44 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { FaPlus, FaArrowLeft, FaCheck, FaTimes, FaInfoCircle, FaClock, FaSearch, FaChevronDown } from 'react-icons/fa';
 import ProfileCard from '../../helper/ProfileCard';
+import { createOpportunity, fetchOpportunities } from '../../../features/opportunity/opportunityAction';
+import { fetchResourceDetails } from '../../../features/resource/resourceAction';
+import { useDispatch, useSelector } from 'react-redux';
+import YRMSLoader from '../../helper/loader';
+import { SuccessToast, ErrorToast } from '../../helper/ResourceToast';
 
 const Opportunities = () => {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const { state } = useLocation();
-  const resource = state?.resource || {
-    employeeName: 'John Doe',
-    competency: 'Advanced',
-    gender: 'male'
-  };
+  const userId = window.location.pathname.split('/').pop(); 
 
-  const [opportunities, setOpportunities] = useState([
-    {
-      id: 1,
-      client_name: 'Tech Solutions Inc.',
-      date_of_interview: '2023-10-15',
-      jd: 'Senior Frontend Developer with 5+ years of React experience',
-      total_rounds: 3,
-      cleared_rounds: 3,
-      final_result: 'Cleared',
-      client_feedback: 'Excellent technical skills and communication'
-    },
-    {
-      id: 2,
-      client_name: 'Global Enterprises Corporation',
-      date_of_interview: '2023-09-20',
-      jd: 'Full Stack Developer with Node.js and React',
-      total_rounds: 4,
-      cleared_rounds: 2,
-      final_result: 'Rejected',
-      client_feedback: 'Strong frontend skills but needs more backend experience'
-    },
-    {
-      id: 3,
-      client_name: 'Innovate Corp',
-      date_of_interview: '2023-11-05',
-      jd: 'React Native Mobile Developer',
-      total_rounds: 2,
-      cleared_rounds: 2,
-      final_result: 'Cleared',
-      client_feedback: 'Perfect fit for our mobile team'
-    },
-    {
-      id: 4,
-      client_name: 'Data Systems Ltd',
-      date_of_interview: '2023-08-10',
-      jd: 'Data Visualization Specialist',
-      total_rounds: 3,
-      cleared_rounds: 1,
-      final_result: 'Rejected',
-      client_feedback: 'Good technical skills but lacking in data visualization experience'
-    },
-    {
-      id: 5,
-      client_name: 'Future Tech Ventures',
-      date_of_interview: '2023-12-01',
-      jd: 'Cloud Solutions Architect',
-      total_rounds: 5,
-      cleared_rounds: 3,
-      final_result: 'Pending',
-      client_feedback: 'Waiting for final decision from hiring manager'
+  const [resource, setResource] = useState(null);
+
+  useEffect(() => {
+    if (userId) {
+      dispatch(fetchOpportunities(userId));
+      console.log("this is the user id", userId);
+      dispatch(fetchResourceDetails(userId)).then((result) => {
+        if (fetchResourceDetails.fulfilled.match(result)) {
+          setResource(result.payload);
+        }
+      });
     }
-  ]);
+  }, [dispatch, userId]); 
+
+  const { opportunities, loading, error } = useSelector((state) => state.opportunity);
 
   const [newOpportunity, setNewOpportunity] = useState({
-    client_name: '',
-    date_of_interview: '',
-    jd: '',
-    total_rounds: '',
-    cleared_rounds: '',
-    final_result: 'Pending',
-    client_feedback: ''
+    clientName: '',
+    dateOfInterview: '',
+    jobDescription: '',
+    totalRounds: '',
+    clearedRounds: '',
+    finalResult: 'Pending',
+    clientFeedback: '',
+    userId: userId // Ensure userId is included in the payload
   });
 
   const [showForm, setShowForm] = useState(false);
@@ -81,11 +47,12 @@ const Opportunities = () => {
   const [errorMessage, setErrorMessage] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
+  const [toast, setToast] = useState(null);
 
   const filteredOpportunities = opportunities.filter(opportunity => {
-    const matchesSearch = opportunity.client_name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                         opportunity.jd.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === 'All' || opportunity.final_result === statusFilter;
+    const matchesSearch = opportunity.clientName.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                         opportunity.jobDescription.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus = statusFilter === 'All' || opportunity.finalResult === statusFilter;
     return matchesSearch && matchesStatus;
   });
 
@@ -95,11 +62,11 @@ const Opportunities = () => {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    if (name === 'cleared_rounds') {
-      if (!newOpportunity.total_rounds) {
+    if (name === 'clearedRounds') {
+      if (!newOpportunity.totalRounds) {
         setErrorMessage('Please enter total rounds first.');
         return;
-      } else if (parseInt(value) > parseInt(newOpportunity.total_rounds)) {
+      } else if (parseInt(value) > parseInt(newOpportunity.totalRounds)) {
         setErrorMessage('Cleared rounds cannot be greater than total rounds.');
         return;
       }
@@ -108,24 +75,34 @@ const Opportunities = () => {
     setNewOpportunity((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleAddOpportunity = (e) => {
+  const handleAddOpportunity = async (e) => {
     e.preventDefault();
-    setOpportunities((prev) => [
-      ...prev,
-      { ...newOpportunity, id: prev.length + 1 }
-    ]);
-
-    console.log('opportunity payload: '  ,newOpportunity);
-    setNewOpportunity({
-      client_name: '',
-      date_of_interview: '',
-      jd: '',
-      total_rounds: '',
-      cleared_rounds: '',
-      final_result: 'Pending',
-      client_feedback: ''
-    });
-    setShowForm(false);
+    setToast(<YRMSLoader message="Creating opportunity..." />);
+    try {
+      const result = await dispatch(createOpportunity(newOpportunity)); 
+      if (createOpportunity.fulfilled.match(result)) {
+        setToast(<SuccessToast message="Opportunity created successfully!" onClose={() => setToast(null)} />);
+        dispatch(fetchOpportunities(userId));
+      } else {
+        const errorMessage = result.error.message || "Failed to create opportunity";
+        setToast(<ErrorToast message={errorMessage} onClose={() => setToast(null)} />);
+        throw new Error(errorMessage);
+      }
+    } catch (err) {
+      setToast(<ErrorToast message={err.message || "Failed to create opportunity"} onClose={() => setToast(null)} />);
+    } finally {
+      setNewOpportunity({
+        clientName: '',
+        dateOfInterview: '',
+        jobDescription: '',
+        totalRounds: '',
+        clearedRounds: '',
+        finalResult: 'Pending',
+        clientFeedback: '',
+        userId: userId // Reset userId in the new opportunity
+      });
+      setShowForm(false);
+    }
   };
 
   const openOpportunityDetails = (opportunity) => {
@@ -147,13 +124,17 @@ const Opportunities = () => {
         return { bg: 'bg-green-100', text: 'text-green-800', border: 'border-green-700', icon: <FaCheck className="mr-1" /> };
       case 'Rejected':
         return { bg: 'bg-red-100', text: 'text-red-800', border: 'border-red-700', icon: <FaTimes className="mr-1" /> };
-      default: // Pending
+      case 'Pending':
         return { bg: 'bg-yellow-100', text: 'text-yellow-800', border: 'border-yellow-700', icon: <FaClock className="mr-1" /> };
+      default:
+        return { bg: 'bg-gray-100', text: 'text-gray-800', border: 'border-gray-700', icon: null };
     }
   };
 
   return (
     <div className="p-6 bg-gradient-to-b from-blue-50 to-purple-50 min-h-screen">
+      {loading && <YRMSLoader />}
+      {toast}
       <button
         onClick={() => navigate(-1)}
         className="flex items-center mb-6 text-blue-600 hover:text-blue-800 transition-colors duration-200 cursor-pointer"
@@ -161,14 +142,14 @@ const Opportunities = () => {
         <FaArrowLeft className="mr-2" /> Back to Resources
       </button>
 
-      <ProfileCard
-        employeeName={resource.employeeName}
-        competency={resource.competency}
-        gender={resource.gender}
-      />
+      {resource && (
+        <ProfileCard
+        publicId={userId}
+        />
+      )}
 
       <h2 className="text-3xl font-bold text-blue-800 mb-6">
-        Opportunities for {resource.employeeName}
+        Opportunities for {resource ? resource.employeeName : "Loading..."}
       </h2>
 
       {/* Search and Filter Section */}
@@ -220,11 +201,11 @@ const Opportunities = () => {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-10">
         {sortedOpportunities.length > 0 ? (
           sortedOpportunities.map((opportunity, index) => {
-            const statusStyles = getStatusStyles(opportunity.final_result);
+            const statusStyles = getStatusStyles(opportunity.finalResult);
             
             return (
               <div 
-                key={opportunity.id}
+                key={opportunity.publicId} // Changed to use a unique identifier
                 onClick={() => openOpportunityDetails(opportunity)}
                 className={`relative rounded-xl shadow-lg overflow-hidden cursor-pointer transition-all duration-300 h-48 flex flex-col ${statusStyles.bg} border-l-4 ${statusStyles.border} hover:shadow-xl hover:translate-y-[-4px]`}
               >
@@ -234,7 +215,7 @@ const Opportunities = () => {
                       Opportunity-{index + 1}
                     </h3>
                     <p className="text-sm text-gray-600">
-                      {new Date(opportunity.date_of_interview).toLocaleDateString('en-US', {
+                      {new Date(opportunity.dateOfInterview).toLocaleDateString('en-US', {
                         year: 'numeric',
                         month: 'short',
                         day: 'numeric'
@@ -243,28 +224,26 @@ const Opportunities = () => {
                   </div>
                   <div>
                     <p className="text-sm text-gray-600 mt-1">
-                      {opportunity.client_name}
+                      {opportunity.clientName}
                     </p>
                   </div>
                   <div className="mt-auto flex justify-between items-center">
                     <div className="flex items-center text-sm text-gray-600">
                       <FaInfoCircle className="mr-1" />
-                      <span>Rounds: {opportunity.cleared_rounds}/{opportunity.total_rounds}</span>
+                      <span>Rounds: {opportunity.clearedRounds}/{opportunity.totalRounds}</span>
                     </div>
                     <div className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border-2 ${statusStyles.bg} ${statusStyles.text} ${statusStyles.border}`}>
                       {statusStyles.icon}
-                      {opportunity.final_result}
+                      {opportunity.finalResult}
                     </div>
                   </div>
                 </div>
               </div>
             );
           })
-        ) : (
-          <div className="col-span-full text-center py-10">
-            <p className="text-gray-500 text-lg">No opportunities found matching your criteria</p>
-          </div>
-        )}
+        ) : null
+        }
+
 
         {/* Add New Opportunity Card */}
         <div 
@@ -285,11 +264,10 @@ const Opportunities = () => {
       {selectedOpportunity && (
         <div className={`fixed inset-0 bg-gray-900/30 backdrop-blur-sm flex items-center justify-center p-4 z-50 transition-opacity duration-300 ${isPopupOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
           <div className={`bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto transform transition-all duration-300 ${isPopupOpen ? 'scale-100' : 'scale-95'}`}>
-            <div className={`p-6 ${getStatusStyles(selectedOpportunity.final_result).bg} rounded-t-xl`}>
+            <div className={`p-6 ${getStatusStyles(selectedOpportunity.finalResult).bg} rounded-t-xl`}>
               <div className="flex justify-between items-center">
                 <div className="flex items-center space-x-4">
                   <div className="w-12 h-12 rounded-full bg-gray-300 flex items-center justify-center overflow-hidden">
-                    {/* Placeholder for profile picture; replace with actual image if available */}
                     <span className="text-gray-600 text-xl font-semibold">
                       {resource.employeeName ? resource.employeeName[0] : "N/A"}
                     </span>
@@ -299,13 +277,13 @@ const Opportunities = () => {
                       {resource.employeeName || "Unknown Employee"}
                     </h3>
                     <p className="text-gray-600 text-sm">
-                      {resource.competency || "Position N/A"}
+                      {resource.designation || "Position N/A"}
                     </p>
                   </div>
                 </div>
                 <div className="flex items-center space-x-2">
                   <p className="text-lg font-semibold text-gray-800">
-                    Date: {new Date(selectedOpportunity.date_of_interview).toLocaleDateString('en-US', {
+                    Date: {new Date(selectedOpportunity.dateOfInterview).toLocaleDateString('en-US', {
                       year: 'numeric',
                       month: 'short',
                       day: 'numeric'
@@ -326,20 +304,20 @@ const Opportunities = () => {
                 <div>
                   <h4 className="text-sm font-medium text-gray-500">Client Name</h4>
                   <p className="mt-1 text-gray-800 p-3 bg-gray-50 rounded-lg">
-                    {selectedOpportunity.client_name}
+                    {selectedOpportunity.clientName}
                   </p>
                 </div>
                 <div className="md:col-span-2">
                   <h4 className="text-sm font-medium text-gray-500">Job Description</h4>
                   <p className="mt-1 text-gray-800 p-3 bg-gray-50 rounded-lg">
-                    {selectedOpportunity.jd}
+                    {selectedOpportunity.jobDescription}
                   </p>
                 </div>
                 <div>
                   <h4 className="text-sm font-medium text-gray-500">Final Result</h4>
-                  <p className={`mt-1 inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border-2 ${getStatusStyles(selectedOpportunity.final_result).bg} ${getStatusStyles(selectedOpportunity.final_result).text} ${getStatusStyles(selectedOpportunity.final_result).border}`}>
-                    {getStatusStyles(selectedOpportunity.final_result).icon}
-                    {selectedOpportunity.final_result}
+                  <p className={`mt-1 inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border-2 ${getStatusStyles(selectedOpportunity.finalResult).bg} ${getStatusStyles(selectedOpportunity.finalResult).text} ${getStatusStyles(selectedOpportunity.finalResult).border}`}>
+                    {getStatusStyles(selectedOpportunity.finalResult).icon}
+                    {selectedOpportunity.finalResult}
                   </p>
                 </div>
                 <div>
@@ -348,12 +326,12 @@ const Opportunities = () => {
                     <div className="flex items-center">
                       <div className="w-full bg-gray-200 rounded-full h-2.5 mr-2">
                         <div 
-                          className={`h-2.5 rounded-full ${getStatusStyles(selectedOpportunity.final_result).bg}`}
-                          style={{ width: `${(selectedOpportunity.cleared_rounds / selectedOpportunity.total_rounds) * 100}%` }}
+                          className={`h-2.5 rounded-full ${getStatusStyles(selectedOpportunity.finalResult).bg}`}
+                          style={{ width: `${(selectedOpportunity.clearedRounds / selectedOpportunity.totalRounds) * 100}%` }}
                         ></div>
                       </div>
                       <span className="text-sm font-medium">
-                        {selectedOpportunity.cleared_rounds}/{selectedOpportunity.total_rounds}
+                        {selectedOpportunity.clearedRounds}/{selectedOpportunity.totalRounds}
                       </span>
                     </div>
                   </div>
@@ -361,7 +339,7 @@ const Opportunities = () => {
                 <div className="md:col-span-2">
                   <h4 className="text-sm font-medium text-gray-500">Client Feedback</h4>
                   <p className="mt-1 text-gray-800 p-3 bg-gray-50 rounded-lg italic">
-                    "{selectedOpportunity.client_feedback}"
+                    "{selectedOpportunity.clientFeedback}"
                   </p>
                 </div>
               </div>
@@ -382,7 +360,7 @@ const Opportunities = () => {
               <div className="relative z-10">
                 <div className="flex justify-between items-center">
                   <div>
-                    <h3 className="text-2xl font-bold text-white">Add New Opportunity for {resource.employeeName}</h3>
+                    <h3 className="text-2xl font-bold text-white">Add New Opportunity for {resource ? resource.employeeName : "Loading..."}</h3>
                     <p className="text-indigo-100 mt-1">Add details about the interview process</p>
                   </div>
                   <button 
@@ -402,8 +380,8 @@ const Opportunities = () => {
                   <div className="relative">
                     <input
                       type="text"
-                      name="client_name"
-                      value={newOpportunity.client_name}
+                      name="clientName"
+                      value={newOpportunity.clientName}
                       onChange={handleInputChange}
                       className="w-full p-4 pl-12 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200 bg-gray-50 group-hover:bg-white"
                       placeholder="Tech Solutions Inc."
@@ -422,8 +400,8 @@ const Opportunities = () => {
                   <div className="relative">
                     <input
                       type="date"
-                      name="date_of_interview"
-                      value={newOpportunity.date_of_interview}
+                      name="dateOfInterview"
+                      value={newOpportunity.dateOfInterview}
                       onChange={handleInputChange}
                       className="w-full p-4 pl-12 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200 bg-gray-50 group-hover:bg-white appearance-none"
                       required
@@ -440,8 +418,8 @@ const Opportunities = () => {
                   <label className="block text-sm font-medium text-gray-700 mb-1 ml-1">Job Description</label>
                   <div className="relative">
                     <textarea
-                      name="jd"
-                      value={newOpportunity.jd}
+                      name="jobDescription"
+                      value={newOpportunity.jobDescription}
                       onChange={handleInputChange}
                       className="w-full p-4 pl-12 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200 bg-gray-50 group-hover:bg-white min-h-[120px]"
                       placeholder="Describe the position requirements and responsibilities..."
@@ -463,8 +441,8 @@ const Opportunities = () => {
                       <div className="flex items-center">
                         <input
                           type="number"
-                          name="total_rounds"
-                          value={newOpportunity.total_rounds}
+                          name="totalRounds"
+                          value={newOpportunity.totalRounds}
                           onChange={handleInputChange}
                           className="w-20 p-3 border border-indigo-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white text-center text-indigo-800 font-bold"
                           placeholder="0"
@@ -480,14 +458,14 @@ const Opportunities = () => {
                       <div className="flex items-center">
                         <input
                           type="number"
-                          name="cleared_rounds"
-                          value={newOpportunity.cleared_rounds}
+                          name="clearedRounds"
+                          value={newOpportunity.clearedRounds}
                           onChange={handleInputChange}
                           className="w-20 p-3 border border-indigo-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white text-center text-indigo-800 font-bold"
                           placeholder="0"
                           required
                           min="0"
-                          max={newOpportunity.total_rounds || 10}
+                          max={newOpportunity.totalRounds || 10}
                         />
                         <span className="ml-3 text-indigo-600">rounds passed</span>
                       </div>
@@ -495,18 +473,18 @@ const Opportunities = () => {
                     </div>
                   </div>
                   
-                  {newOpportunity.total_rounds > 0 && (
+                  {newOpportunity.totalRounds > 0 && (
                     <div className="mt-4">
                       <div className="flex justify-between mb-1">
                         <span className="text-xs font-medium text-indigo-700">Progress</span>
                         <span className="text-xs font-medium text-indigo-700">
-                          {Math.round((newOpportunity.cleared_rounds / newOpportunity.total_rounds) * 100)}%
+                          {Math.round((newOpportunity.clearedRounds / newOpportunity.totalRounds) * 100)}%
                         </span>
                       </div>
                       <div className="w-full bg-indigo-100 rounded-full h-2.5">
                         <div 
                           className="bg-gradient-to-r from-indigo-400 to-purple-500 h-2.5 rounded-full" 
-                          style={{ width: `${Math.min(100, (newOpportunity.cleared_rounds / newOpportunity.total_rounds) * 100)}%`, transition: 'width 0.3s ease' }}
+                          style={{ width: `${Math.min(100, (newOpportunity.clearedRounds / newOpportunity.totalRounds) * 100)}%`, transition: 'width 0.3s ease' }}
                         ></div>
                       </div>
                     </div>
@@ -517,8 +495,8 @@ const Opportunities = () => {
                   <label className="block text-sm font-medium text-gray-700 mb-1 ml-1">Final Result</label>
                   <div className="relative">
                     <select
-                      name="final_result"
-                      value={newOpportunity.final_result}
+                      name="finalResult"
+                      value={newOpportunity.finalResult}
                       onChange={handleInputChange}
                       className="w-full p-4 pl-12 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200 bg-gray-50 group-hover:bg-white appearance-none"
                       required
@@ -541,9 +519,9 @@ const Opportunities = () => {
                 <div className="flex items-end">
                   <div className="w-full">
                     <label className="block text-sm font-medium text-gray-700 mb-1 ml-1">Status Preview</label>
-                    <div className={`inline-flex items-center px-4 py-2 rounded-full text-sm font-medium border-2 ${getStatusStyles(newOpportunity.final_result).bg} ${getStatusStyles(newOpportunity.final_result).text} ${getStatusStyles(newOpportunity.final_result).border}`}>
-                      {getStatusStyles(newOpportunity.final_result).icon}
-                      {newOpportunity.final_result}
+                    <div className={`inline-flex items-center px-4 py-2 rounded-full text-sm font-medium border-2 ${getStatusStyles(newOpportunity.finalResult).bg} ${getStatusStyles(newOpportunity.finalResult).text} ${getStatusStyles(newOpportunity.finalResult).border}`}>
+                      {getStatusStyles(newOpportunity.finalResult).icon}
+                      {newOpportunity.finalResult}
                     </div>
                   </div>
                 </div>
@@ -552,8 +530,8 @@ const Opportunities = () => {
                   <label className="block text-sm font-medium text-gray-700 mb-1 ml-1">Client Feedback</label>
                   <div className="relative">
                     <textarea
-                      name="client_feedback"
-                      value={newOpportunity.client_feedback}
+                      name="clientFeedback"
+                      value={newOpportunity.clientFeedback}
                       onChange={handleInputChange}
                       className="w-full p-4 pl-12 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200 bg-gray-50 group-hover:bg-white min-h-[100px]"
                       placeholder="Any specific feedback from the client..."
