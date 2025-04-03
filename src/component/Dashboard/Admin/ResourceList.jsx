@@ -88,7 +88,7 @@ const ResourceList = ({
             {columns.map((column) => (
               <th
                 key={column.key}
-                className="p-2 text-left font-semibold text-sm border-b border-gray-200" // Increased padding
+                className="p-1 text-left font-semibold text-sm border-b border-gray-200" // Reduced padding
               >
                 <div className="flex flex-col space-y-1">
                   <div className="flex items-center justify-between">
@@ -135,30 +135,30 @@ const ResourceList = ({
                 </div>
               </th>
             ))}
-            <th className="p-2 text-left font-semibold text-sm border-b border-gray-200">Actions</th> {/* Increased padding */}
+            <th className="p-1 text-left font-semibold text-sm border-b border-gray-200">Actions</th> {/* Reduced padding */}
           </tr>
         </thead>
         <tbody>
           {filteredAndSortedResources.map((resource, index) => (
-            <tr key={resource.publicId}>
-              <td className="p-2 text-gray-700 text-sm border-r border-gray-200"> {/* Increased padding */}
+            <tr key={resource.publicId} className={`h-8 ${index % 2 === 0 ? 'bg-gray-100' : 'bg-white'}`}> {/* Zebra striping */}
+              <td className="p-1 text-gray-700 text-sm border-r border-gray-200"> {/* Reduced padding */}
                 {index + 1}
               </td>
               <td
-                className="p-2 text-blue-600 text-sm cursor-pointer hover:underline border-r border-gray-200" // Increased padding
+                className="p-1 text-blue-600 text-sm cursor-pointer hover:underline border-r border-gray-200" // Reduced padding
                 onClick={() => setSelectedResource(resource.publicId)}
               >
                 {resource.employeeName || "N/A"}
               </td>
-              <td className="p-2 text-gray-700 text-sm border-r border-gray-200"> {/* Increased padding */}
+              <td className="p-1 text-gray-700 text-sm border-r border-gray-200"> {/* Reduced padding */}
                 {resource.joiningDate ? new Date(resource.joiningDate).toLocaleDateString() : "N/A"}
               </td>
-              <td className="p-2 text-gray-700 text-sm border-r border-gray-200"> {/* Increased padding */}
+              <td className="p-1 text-gray-700 text-sm border-r border-gray-200"> {/* Reduced padding */}
                 {resource.designation || "N/A"}
               </td>
-              <td className="p-2 text-gray-700 text-sm border-r border-gray-200"> {/* Increased padding */}
+              <td className="p-1 text-gray-700 text-sm border-r border-gray-200"> {/* Reduced padding */}
                 <span
-                  className={`px-2 py-1 rounded-full text-xs ${(resource.status || "pool") === "pool"
+                  className={`px-1 py-0.5 rounded-full text-xs ${(resource.status || "pool") === "pool"
                     ? "bg-blue-100 text-blue-800"
                     : resource.status === "deployed"
                       ? "bg-green-100 text-green-800"
@@ -171,10 +171,10 @@ const ResourceList = ({
                     (resource.status || "pool").slice(1)}
                 </span>
               </td>
-              <td className="p-2 text-gray-700 text-sm"> {/* Increased padding */}
-                <div className="flex space-x-3">
+              <td className="p-1 text-gray-700 text-sm"> {/* Reduced padding */}
+                <div className="flex space-x-1"> {/* Further reduced space between buttons */}
                   <button
-                    className={`flex items-center justify-center w-10 h-10 bg-teal-500 text-white rounded-lg hover:bg-teal-600 transition-colors relative group cursor-pointer ${loadingBaselineId === resource.publicId ? "opacity-75" : ""}`}
+                    className={`flex items-center justify-center w-7 h-7 bg-teal-500 text-white rounded-lg hover:bg-teal-600 transition-colors relative group cursor-pointer ${loadingBaselineId === resource.publicId ? "opacity-75" : ""}`} // Further reduced button size
                     onClick={() => handleBaselineClickWithLoading(resource)}
                     disabled={loadingBaselineId === resource.publicId}
                   >
@@ -183,12 +183,12 @@ const ResourceList = ({
                     ) : (
                       <FaChartLine />
                     )}
-                    <span className="absolute bottom-full mb-2 w-max px-2 py-1 bg-gray-800 text-white text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity">
+                    <span className="absolute bottom-full mb-1 w-max px-1 py-0.5 bg-gray-800 text-white text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity">
                       Baseline
                     </span>
                   </button>
                   <button
-                    className="flex items-center justify-center w-10 h-10 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors relative group cursor-pointer"
+                    className="flex items-center justify-center w-7 h-7 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors relative group cursor-pointer" // Further reduced button size
                     onClick={() => handleOpportunitiesClick(resource)}
                   >
                     <FaLightbulb />

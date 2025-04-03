@@ -50,8 +50,7 @@ const Opportunities = () => {
   const [toast, setToast] = useState(null);
 
   const filteredOpportunities = opportunities.filter(opportunity => {
-    const matchesSearch = opportunity.clientName.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                         opportunity.jobDescription.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = opportunity.clientName.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === 'All' || opportunity.finalResult === statusFilter;
     return matchesSearch && matchesStatus;
   });

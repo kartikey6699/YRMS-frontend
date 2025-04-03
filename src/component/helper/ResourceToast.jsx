@@ -9,7 +9,7 @@ import {
   
   const ResourceToast = ({ type, message, onClose }) => {
     useEffect(() => {
-      const timer = setTimeout(onClose, 3000)
+      const timer = setTimeout(onClose, 2000) // Toast will be visible for 2 seconds
       return () => clearTimeout(timer)
     }, [onClose])
   
@@ -70,7 +70,7 @@ import {
             <div className="h-1.5 flex-1 rounded-full bg-gray-200">
               <div 
                 className={`h-full rounded-full ${config[type].progressColor} animate-progress`}
-                style={{ animationDuration: '3s' }}
+                style={{ animationDuration: '2s' }} // Progress bar duration matches toast visibility
               />
             </div>
             <span className="ml-2 text-xs text-gray-500">syncing</span>
