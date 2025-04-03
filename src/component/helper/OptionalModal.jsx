@@ -13,17 +13,20 @@ import {
   createTechnologyCategory,
   createTechnologyStack,
   fetchCertificationAuthorities,
-  fetchTechnologyCategories,
-  fetchTechnologyStacks
+  fetchTechnologyCategoriesStack,
 } from "../../features/baseline/baselineAction";
-
 import {
-  updateDesignation, deleteDesignation,
+  updateDesignation,
+  deleteDesignation,
   updateCompetency,
-  deleteCompetency, createDesignation, fetchCompetencies, fetchDesignations, createCompetency
+  deleteCompetency,
+  createDesignation,
+  fetchCompetencies,
+  fetchDesignations,
+  createCompetency,
 } from "../../features/resource/resourceAction";
 
-const AddOptionModal = ({ field, options, onClose, setToast }) => {
+const AddOptionModal = ({ field, options, onClose, setToast, categoryId }) => {
   const dispatch = useDispatch();
   const [searchTerm, setSearchTerm] = useState("");
   const [newOption, setNewOption] = useState("");
@@ -31,8 +34,10 @@ const AddOptionModal = ({ field, options, onClose, setToast }) => {
   const [editValue, setEditValue] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const filteredOptions = options.filter(option =>
-    option.name.toLowerCase().includes(searchTerm.toLowerCase())
+  // Ensure options is an array and filter safely
+  const safeOptions = Array.isArray(options) ? options : [];
+  const filteredOptions = safeOptions.filter((option) =>
+    option?.name?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const handleAdd = async () => {
@@ -56,18 +61,19 @@ const AddOptionModal = ({ field, options, onClose, setToast }) => {
           break;
         case "technology_category":
           result = await dispatch(createTechnologyCategory(newOption.trim())).unwrap();
-          dispatch(fetchTechnologyCategories());
+          dispatch(fetchTechnologyCategoriesStack());
           break;
         case "technology_stack":
-          // For technology stack, we need to know the category
-          const category = options.find(opt => opt.name === field)?.publicId;
-          if (category) {
-            result = await dispatch(createTechnologyStack({
-              categoryId: category,
-              name: newOption.trim()
-            })).unwrap();
-            dispatch(fetchTechnologyStacks(category));
+          if (!categoryId) {
+            throw new Error("Please select a category first");
           }
+          result = await dispatch(
+            createTechnologyStack({
+              name: newOption.trim(),
+              technology_category: categoryId,
+            })
+          ).unwrap();
+          dispatch(fetchTechnologyCategoriesStack());
           break;
         default:
           break;
@@ -89,43 +95,50 @@ const AddOptionModal = ({ field, options, onClose, setToast }) => {
       let result;
       switch (field) {
         case "designation":
-          result = await dispatch(updateDesignation({
-            id: editingOption.publicId,
-            name: editValue.trim()
-          })).unwrap();
+          result = await dispatch(
+            updateDesignation({
+              id: editingOption.publicId,
+              name: editValue.trim(),
+            })
+          ).unwrap();
           dispatch(fetchDesignations());
           break;
         case "competency":
-          result = await dispatch(updateCompetency({
-            id: editingOption.publicId,
-            name: editValue.trim()
-          })).unwrap();
+          result = await dispatch(
+            updateCompetency({
+              id: editingOption.publicId,
+              name: editValue.trim(),
+            })
+          ).unwrap();
           dispatch(fetchCompetencies());
           break;
         case "certification_authority":
-          result = await dispatch(updateCertificationAuthority({
-            id: editingOption.publicId,
-            name: editValue.trim()
-          })).unwrap();
+          result = await dispatch(
+            updateCertificationAuthority({
+              id: editingOption.publicId,
+              name: editValue.trim(),
+            })
+          ).unwrap();
           dispatch(fetchCertificationAuthorities());
           break;
         case "technology_category":
-          result = await dispatch(updateTechnologyCategory({
-            id: editingOption.publicId,
-            name: editValue.trim()
-          })).unwrap();
-          dispatch(fetchTechnologyCategories());
+          result = await dispatch(
+            updateTechnologyCategory({
+              id: editingOption.publicId,
+              name: editValue.trim(),
+            })
+          ).unwrap();
+          dispatch(fetchTechnologyCategoriesStack());
           break;
         case "technology_stack":
-          result = await dispatch(updateTechnologyStack({
-            id: editingOption.publicId,
-            name: editValue.trim()
-          })).unwrap();
-          // Find the category for this technology stack
-          const category = options.find(opt => opt.publicId === editingOption.categoryId)?.publicId;
-          if (category) {
-            dispatch(fetchTechnologyStacks(category));
-          }
+          result = await dispatch(
+            updateTechnologyStack({
+              id: editingOption.publicId,
+              name: editValue.trim(),
+              technology_category: categoryId,
+            })
+          ).unwrap();
+          dispatch(fetchTechnologyCategoriesStack());
           break;
         default:
           break;
@@ -158,15 +171,11 @@ const AddOptionModal = ({ field, options, onClose, setToast }) => {
           break;
         case "technology_category":
           await dispatch(deleteTechnologyCategory(option.publicId)).unwrap();
-          dispatch(fetchTechnologyCategories());
+          dispatch(fetchTechnologyCategoriesStack());
           break;
         case "technology_stack":
           await dispatch(deleteTechnologyStack(option.publicId)).unwrap();
-          // Find the category for this technology stack
-          const category = options.find(opt => opt.publicId === option.categoryId)?.publicId;
-          if (category) {
-            dispatch(fetchTechnologyStacks(category));
-          }
+          dispatch(fetchTechnologyCategoriesStack());
           break;
         default:
           break;
@@ -208,18 +217,10 @@ const AddOptionModal = ({ field, options, onClose, setToast }) => {
 
   return (
     <div className="fixed inset-0 flex items-center justify-center z-50">
-      <div
-        className="bg-white rounded-lg shadow-xl w-full max-w-sm max-h-[70vh] flex flex-col border border-gray-300"
-        style={{ minWidth: '300px' }}
-      >
+      <div className="bg-white rounded-lg shadow-xl w-full max-w-sm max-h-[70vh] flex flex-col border border-gray-300">
         <div className="p-4 border-b border-gray-200 flex justify-between items-center bg-blue-50">
-          <h3 className="text-lg font-semibold text-gray-800">
-            Manage {getFieldLabel()}
-          </h3>
-          <button
-            onClick={onClose}
-            className="text-gray-500 hover:text-gray-700"
-          >
+          <h3 className="text-lg font-semibold text-gray-800">Manage {getFieldLabel()}</h3>
+          <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
             <FaTimes />
           </button>
         </div>
@@ -245,14 +246,14 @@ const AddOptionModal = ({ field, options, onClose, setToast }) => {
               className="flex-1 px-3 py-2 border border-gray-300 rounded-l-md focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
               value={newOption}
               onChange={(e) => setNewOption(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && handleAdd()}
+              onKeyPress={(e) => e.key === "Enter" && handleAdd()}
             />
             <button
               onClick={handleAdd}
               disabled={loading}
               className="bg-blue-600 text-white px-3 py-2 rounded-r-md hover:bg-blue-700 transition-colors flex items-center text-sm disabled:bg-blue-400"
             >
-              {loading ? 'Adding...' : <><FaPlus className="mr-1" /> Add</>}
+              {loading ? "Adding..." : <><FaPlus className="mr-1" /> Add</>}
             </button>
           </div>
 
@@ -273,7 +274,7 @@ const AddOptionModal = ({ field, options, onClose, setToast }) => {
                             value={editValue}
                             onChange={(e) => setEditValue(e.target.value)}
                             className="flex-1 px-2 py-1 border border-gray-300 rounded-md mr-2 text-sm"
-                            onKeyPress={(e) => e.key === 'Enter' && handleUpdate()}
+                            onKeyPress={(e) => e.key === "Enter" && handleUpdate()}
                           />
                           <button
                             onClick={handleUpdate}

@@ -1,8 +1,8 @@
 import { createSlice } from "@reduxjs/toolkit";
-import { 
-    fetchCertificationAuthorities, 
-    createCertificationAuthority, 
-    updateCertificationAuthority, 
+import {
+    fetchCertificationAuthorities,
+    createCertificationAuthority,
+    updateCertificationAuthority,
     deleteCertificationAuthority,
     fetchTechnologyCategories,
     createTechnologyCategory,
@@ -11,7 +11,10 @@ import {
     fetchTechnologyStacks,
     createTechnologyStack,
     updateTechnologyStack,
-    deleteTechnologyStack
+    deleteTechnologyStack,
+    createBaseline,
+    fetchBaselineHistories,
+    fetchTechnologyCategoriesStack
 } from "./baselineAction";
 
 const initialState = {
@@ -26,13 +29,23 @@ const initialState = {
     designationLoading: false,
     certificationAuthorityLoading: false,
     technologyCategoryLoading: false,
-    technologyStackLoading: false
+    technologyStackLoading: false,
+    baselineHistories: [],
+    baselineLoading: false,
+    technologyCategoriesStack: [],
+    technologyCategoriesStackLoading: false,
+    technologyCategoriesWithTech: []
+
 };
 
-const resourceSlice = createSlice({
+const baselineSlice = createSlice({
     name: "baseline",
     initialState,
-    reducers: {},
+    reducers: {
+        clearBaselineHistories: (state) => {
+            state.baselineHistories = [];
+        }
+    },
     extraReducers: (builder) => {
         builder
             // Certification Authority
@@ -121,10 +134,13 @@ const resourceSlice = createSlice({
             })
             .addCase(createTechnologyCategory.fulfilled, (state, { payload }) => {
                 state.technologyCategoryLoading = false;
-                state.technologyCategories.push({
-                    publicId: payload.publicId,
-                    name: payload.name
-                });
+                if (payload.data) {
+                    state.technologyCategoriesWithTech.push({
+                        publicId: payload.data.publicId,
+                        name: payload.data.name,
+                        technologies: []
+                    });
+                }
             })
             .addCase(createTechnologyCategory.rejected, (state, { payload }) => {
                 state.technologyCategoryLoading = false;
@@ -186,10 +202,17 @@ const resourceSlice = createSlice({
             })
             .addCase(createTechnologyStack.fulfilled, (state, { payload }) => {
                 state.technologyStackLoading = false;
-                state.technologyStacks.push({
-                    publicId: payload.publicId,
-                    name: payload.name
-                });
+                if (payload.data) {
+                    const categoryIndex = state.technologyCategoriesWithTech.findIndex(
+                        cat => cat.publicId === payload.data.technologyCategoryId
+                    );
+                    if (categoryIndex !== -1) {
+                        state.technologyCategoriesWithTech[categoryIndex].technologies.push({
+                            publicId: payload.data.publicId,
+                            name: payload.data.name
+                        });
+                    }
+                }
             })
             .addCase(createTechnologyStack.rejected, (state, { payload }) => {
                 state.technologyStackLoading = false;
@@ -201,14 +224,15 @@ const resourceSlice = createSlice({
             })
             .addCase(updateTechnologyStack.fulfilled, (state, { payload }) => {
                 state.technologyStackLoading = false;
-                const index = state.technologyStacks.findIndex(
-                    (ts) => ts.publicId === payload.publicId
-                );
-                if (index !== -1) {
-                    state.technologyStacks[index] = {
-                        publicId: payload.publicId,
-                        name: payload.name
-                    };
+                if (payload.data) {
+                    state.technologyCategoriesWithTech = state.technologyCategoriesWithTech.map(category => {
+                        const updatedTechs = category.technologies.map(tech =>
+                            tech.publicId === payload.data.publicId
+                                ? { ...tech, name: payload.data.name }
+                                : tech
+                        );
+                        return { ...category, technologies: updatedTechs };
+                    });
                 }
             })
             .addCase(updateTechnologyStack.rejected, (state, { payload }) => {
@@ -221,15 +245,87 @@ const resourceSlice = createSlice({
             })
             .addCase(deleteTechnologyStack.fulfilled, (state, { payload }) => {
                 state.technologyStackLoading = false;
-                state.technologyStacks = state.technologyStacks.filter(
-                    (ts) => ts.publicId !== payload
-                );
+                state.technologyCategoriesWithTech = state.technologyCategoriesWithTech.map(category => ({
+                    ...category,
+                    technologies: category.technologies.filter(tech => tech.publicId !== payload)
+                }));
             })
             .addCase(deleteTechnologyStack.rejected, (state, { payload }) => {
                 state.technologyStackLoading = false;
                 state.error = payload;
-            });
+            })
+            .addCase(fetchBaselineHistories.pending, (state) => {
+                state.baselineLoading = true;
+            })
+            .addCase(fetchBaselineHistories.fulfilled, (state, { payload }) => {
+                state.baselineLoading = false;
+                if (payload.success && payload.data) {
+                    state.baselineHistories = payload.data.resourceBaselines.map(baseline => ({
+                        publicId: baseline.publicId,
+                        technologyExperience: baseline.technologyExperience,
+                        certification: baseline.certification,
+                        totalExperience: baseline.totalExperience,
+                        communication: baseline.communication,
+                        technicalSkills: baseline.technicalSkills,
+                        rating: baseline.rating,
+                        feedback: baseline.feedback,
+                        upskillSuggestion: baseline.upskillSuggestion,
+                        professionalism: baseline.professionalism,
+                        timestamp: new Date().toISOString() // Add timestamp if not provided by API
+                    }));
+                }
+            })
+            .addCase(fetchBaselineHistories.rejected, (state, { payload }) => {
+                state.baselineLoading = false;
+                state.error = payload;
+            })
+
+            .addCase(createBaseline.pending, (state) => {
+                state.baselineLoading = true;
+            })
+            .addCase(createBaseline.fulfilled, (state, { payload }) => {
+                state.baselineLoading = false;
+                if (payload.success && payload.data) {
+                    const newBaseline = {
+                        publicId: payload.data.publicId,
+                        technologyExperience: payload.data.technologyExperience,
+                        certification: payload.data.certification,
+                        totalExperience: payload.data.totalExperience,
+                        communication: payload.data.communication,
+                        technicalSkills: payload.data.technicalSkills,
+                        rating: payload.data.rating,
+                        feedback: payload.data.feedback,
+                        upskillSuggestion: payload.data.upskillSuggestion,
+                        professionalism: payload.data.professionalism,
+                        timestamp: new Date().toISOString()
+                    };
+                    state.baselineHistories.unshift(newBaseline);
+                }
+            })
+            .addCase(createBaseline.rejected, (state, { payload }) => {
+                state.baselineLoading = false;
+                state.error = payload;
+            })
+            .addCase(fetchTechnologyCategoriesStack.pending, (state) => {
+                state.technologyCategoriesStackLoading = true;
+            })
+            .addCase(fetchTechnologyCategoriesStack.fulfilled, (state, { payload }) => {
+                state.technologyCategoriesStackLoading = false;
+                if (payload.success) {
+                    state.technologyCategoriesWithTech = payload.data.categories.map(category => ({
+                        publicId: category.publicId,
+                        name: category.name,
+                        technologies: category.technology || []
+                    }));
+                }
+            })
+            .addCase(fetchTechnologyCategoriesStack.rejected, (state, { payload }) => {
+                state.technologyCategoriesStackLoading = false;
+                state.error = payload;
+            })
+
     }
 });
 
-export default resourceSlice.reducer;
+export const { clearBaselineHistories } = baselineSlice.actions;
+export default baselineSlice.reducer;

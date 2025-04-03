@@ -8,76 +8,64 @@ import Dropdown from "../../helper/Dropdown";
 import AddOptionModal from "../../helper/OptionalModal";
 import {
   fetchCertificationAuthorities,
-  fetchTechnologyCategories,
-  fetchTechnologyStacks
+  fetchTechnologyCategoriesStack,
+  fetchBaselineHistories,
+  createBaseline
 } from "../../../features/baseline/baselineAction";
 import { SuccessToast, ErrorToast } from "../../helper/ResourceToast";
 
 const ManageBaseline = () => {
   const { publicId } = useParams();
   const { state } = useLocation();
-  const resource = state?.resource || {};
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
-  // Redux state selectors with proper initial values
+  // Redux state selectors
   const {
     certificationAuthorities = [],
-    technologyCategories = [],
-    technologyStacks = [],
+    technologyCategoriesWithTech = [],
     certificationAuthorityLoading = false,
-    technologyCategoryLoading = false,
-    technologyStackLoading = false,
-    designations = [],
-    competencies = []
+    technologyCategoriesStackLoading = false,
+    baselineHistories = [],
+    baselineLoading = false
   } = useSelector((state) => state.baseline);
+
+  const resourceDetails = useSelector((state) =>
+    state.resource.resources.find(res => res.publicId === publicId) ||
+    state.resource.resourceDetails
+  );
 
   // Local state
   const [activeSection, setActiveSection] = useState("view");
   const [modalField, setModalField] = useState(null);
-  const [baselineHistories, setBaselineHistories] = useState([]);
+  const [selectedCategoryId, setSelectedCategoryId] = useState(null); // New state to track category for modal
   const [showForm, setShowForm] = useState(false);
   const [formStep, setFormStep] = useState(1);
   const [toast, setToast] = useState(null);
   const [hasFetchedInitialData, setHasFetchedInitialData] = useState(false);
 
   const [formData, setFormData] = useState({
-    employeeName: resource.employeeName || "",
-    employeeId: resource.employeeId || "",
-    position: resource.jobTitle || "",
-    phone: resource.phoneNumber || "",
-    competency: resource.competency || "",
-    gender: resource.gender || "",
     experience: [{ technology: "", years: "" }],
     totalExperience: "",
     communication: "",
-    techSkills: [],
+    techSkills: [{ category: "", technology: "", rating: "" }],
     certification: [{ name: "", issuingAuthority: "" }],
-    currentStatus: "",
+    rating: "",
     feedback: "",
-    totalRating: "",
+    upskillSuggestion: "",
   });
 
-  // Fetch initial data only once
+  // Fetch initial data
   useEffect(() => {
     if (!hasFetchedInitialData) {
       dispatch(fetchCertificationAuthorities());
-      dispatch(fetchTechnologyCategories());
+      dispatch(fetchTechnologyCategoriesStack());
+      dispatch(fetchBaselineHistories(publicId));
       setHasFetchedInitialData(true);
     }
-  }, [dispatch, hasFetchedInitialData]);
+  }, [dispatch, hasFetchedInitialData, publicId]);
 
-  // Fetch technologies when categories are loaded - with proper null check
-  useEffect(() => {
-    if (Array.isArray(technologyCategories) && technologyCategories.length > 0) {
-      technologyCategories.forEach(category => {
-        if (category?.publicId) {
-          dispatch(fetchTechnologyStacks(category.publicId));
-        }
-      });
-    }
-  }, [technologyCategories, dispatch]);
-
+  // Form handlers
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -126,7 +114,12 @@ const ManageBaseline = () => {
   const handleTechSkillChange = (index, field, value) => {
     const updatedTechSkills = [...formData.techSkills];
     updatedTechSkills[index][field] = value;
-    setFormData((prev) => ({ ...prev, techSkills: updatedTechSkills }));
+
+    if (field === "category") {
+      updatedTechSkills[index].technology = ""; // Reset technology when category changes
+    }
+
+    setFormData(prev => ({ ...prev, techSkills: updatedTechSkills }));
   };
 
   const addTechSkill = () => {
@@ -143,57 +136,103 @@ const ManageBaseline = () => {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.employeeName || !formData.communication || !formData.feedback) {
-      setToast(<ErrorToast message="Required fields are missing" onClose={() => setToast(null)} />);
+    if (!formData.communication || !formData.feedback || !formData.rating) {
+      setToast(<ErrorToast message="Please fill all required fields" onClose={() => setToast(null)} />);
       return;
     }
 
-    const newHistory = {
-      employeeId: formData.employeeId,
-      communication: formData.communication,
-      feedback: formData.feedback,
-      techSkills: formData.techSkills.map((skill) => ({
-        technology: skill.technology,
-        rating: parseInt(skill.rating) || 0,
-      })),
-      totalRating: parseInt(formData.totalRating) || 0,
-      timestamp: new Date().toISOString(),
-    };
+    try {
+      // Helper function to find name by publicId
+      const getNameById = (publicId, collection) => {
+        if (!publicId) return '';
+        const item = collection?.find(item => item.publicId === publicId);
+        return item?.name || publicId; // Fallback to publicId if not found
+      };
 
-    setBaselineHistories((prev) => [...prev, newHistory]);
-    setFormData({
-      ...formData,
-      experience: [{ technology: "", years: "" }],
-      totalExperience: "",
-      communication: "",
-      techSkills: [],
-      certification: [{ name: "", issuingAuthority: "" }],
-      currentStatus: "",
-      feedback: "",
-      totalRating: "",
-    });
-    setShowForm(false);
-    setFormStep(1);
-    setActiveSection("view");
-    setToast(<SuccessToast message="Baseline created successfully!" onClose={() => setToast(null)} />);
+      // For technologyExperience (simple technologies)
+      const technologyExperience = formData.experience
+        .filter(exp => exp.technology && exp.years)
+        .map(exp => ({
+          technology: exp.technology, // Already using name
+          years: parseInt(exp.years) || 0
+        }));
+
+      // For certification
+      const certification = formData.certification
+        .filter(cert => cert.name && cert.issuingAuthority)
+        .map(cert => ({
+          title: cert.name,
+          technology: getNameById(cert.issuingAuthority, certificationAuthorities)
+        }));
+
+      // For technicalSkills
+      const technicalSkills = formData.techSkills
+        .filter(skill => skill.category && skill.technology && skill.rating)
+        .map(skill => {
+          // Find the category name
+          const categoryObj = technologyCategoriesWithTech.find(
+            cat => cat.publicId === skill.category
+          );
+          const categoryName = categoryObj?.name || skill.category;
+
+          // Find the technology name
+          let technologyName = skill.technology;
+          if (categoryObj) {
+            const techObj = categoryObj.technologies.find(
+              tech => tech.publicId === skill.technology
+            );
+            if (techObj) technologyName = techObj.name;
+          }
+
+          return {
+            category: categoryName,
+            technology: technologyName,
+            rating: parseInt(skill.rating) || 0
+          };
+        });
+
+      const baselineData = {
+        technologyExperience,
+        certification,
+        totalExperience: parseInt(formData.totalExperience) || 0,
+        communication: parseInt(formData.communication) || 0,
+        technicalSkills,
+        rating: parseInt(formData.rating) || 0,
+        feedback: formData.feedback,
+        upskillSuggestion: formData.upskillSuggestion,
+        userId: publicId
+      };
+
+      console.log("Submitting baseline data:", baselineData); // For debugging
+
+      await dispatch(createBaseline({ userId: publicId, baselineData })).unwrap();
+
+      // Reset form and show success
+      setFormData({
+        experience: [{ technology: "", years: "" }],
+        totalExperience: "",
+        communication: "",
+        techSkills: [{ category: "", technology: "", rating: "" }],
+        certification: [{ name: "", issuingAuthority: "" }],
+        rating: "",
+        feedback: "",
+        upskillSuggestion: "",
+      });
+
+      setShowForm(false);
+      setFormStep(1);
+      setActiveSection("view");
+      setToast(<SuccessToast message="Baseline created successfully!" onClose={() => setToast(null)} />);
+      dispatch(fetchBaselineHistories(publicId));
+    } catch (error) {
+      setToast(<ErrorToast message={error.message || "Failed to create baseline"} onClose={() => setToast(null)} />);
+    }
   };
 
-  const openAddForm = () => {
-    setShowForm(true);
-  };
-
-  const closeAddForm = () => {
-    setShowForm(false);
-    setFormStep(1);
-  };
-
-  const nextStep = () => setFormStep(2);
-  const prevStep = () => setFormStep(1);
-
-  const getModalOptions = () => {
-    switch (modalField) {
+  const getModalOptions = (fieldName) => {
+    switch (fieldName) {
       case "designation":
         return designations;
       case "competency":
@@ -201,15 +240,34 @@ const ManageBaseline = () => {
       case "certification_authority":
         return certificationAuthorities;
       case "technology_category":
-        return technologyCategories;
+        return technologyCategoriesWithTech;
       case "technology_stack":
-        // Get the selected category from the form
-        const selectedCategory = formData.techSkills.find(skill => skill.category)?.category;
-        const category = technologyCategories.find(cat => cat.name === selectedCategory);
-        return category ? technologyStacks.filter(tech => tech.categoryId === category.publicId) : [];
+        if (!selectedCategoryId) {
+          console.warn("No category ID selected for technology stack");
+          return [];
+        }
+        const category = technologyCategoriesWithTech?.find(
+          cat => cat.publicId === selectedCategoryId
+        );
+        console.log("Found category:", category);
+        return category?.technologies || [];
       default:
         return [];
     }
+  };
+
+  const openAddForm = () => setShowForm(true);
+  const closeAddForm = () => {
+    setShowForm(false);
+    setFormStep(1);
+  };
+  const nextStep = () => setFormStep(2);
+  const prevStep = () => setFormStep(1);
+
+  // Function to set modal field and category ID
+  const openModalWithCategory = (field, categoryId) => {
+    setModalField(field);
+    setSelectedCategoryId(categoryId);
   };
 
   return (
@@ -222,19 +280,26 @@ const ManageBaseline = () => {
         <FaArrowLeft className="mr-2" /> Back to Resources
       </button>
 
-      <ProfileCard publicId={publicId} />
+      <ProfileCard
+        publicId={publicId}
+        employeeName={resourceDetails?.employeeName}
+        designation={resourceDetails?.designation}
+        email={resourceDetails?.email}
+        phoneNumber={resourceDetails?.phoneNumber}
+        status={resourceDetails?.status}
+      />
 
       <h2 className="text-3xl font-bold text-blue-800 mb-6">
-        Baseline Management for {formData.employeeName}
+        Baseline Management for {resourceDetails?.employeeName || 'Resource'}
       </h2>
 
       {activeSection === "view" && (
-        <div className="grid grid-cols-1 nr sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-10">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-10">
           <BaselineHistories
             histories={baselineHistories}
-            employeeName={formData.employeeName}
-            competency={formData.competency}
-            gender={formData.gender}
+            employeeName={resourceDetails?.employeeName}
+            competency={resourceDetails?.competency}
+            gender={resourceDetails?.gender}
           />
           <div
             onClick={openAddForm}
@@ -267,7 +332,7 @@ const ManageBaseline = () => {
             </div>
 
             <form onSubmit={handleSubmit} className="p-6 space-y-4">
-              {formStep === 1 && (
+              {formStep === 1 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Experience</label>
@@ -281,11 +346,12 @@ const ManageBaseline = () => {
                           placeholder="Technology"
                         />
                         <input
-                          type="text"
+                          type="number"
                           value={exp.years}
                           onChange={(e) => handleExpChange(index, "years", e.target.value)}
                           className="w-1/4 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                           placeholder="Years"
+                          min="0"
                         />
                         {formData.experience.length > 1 && (
                           <button
@@ -319,11 +385,11 @@ const ManageBaseline = () => {
                           placeholder="Certification Name"
                         />
                         <Dropdown
-                          name="Authority"
+                          name="certification_authority"
                           value={cert.issuingAuthority}
                           options={certificationAuthorities}
                           onChange={(e) => handleCertChange(index, "issuingAuthority", e.target.value)}
-                          setModalField={() => setModalField("certification_authority")}
+                          setModalField={() => openModalWithCategory("certification_authority", null)}
                           loading={certificationAuthorityLoading}
                         />
                         {formData.certification.length > 1 && (
@@ -347,7 +413,7 @@ const ManageBaseline = () => {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Total Experience (Years)</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Total Experience (Years)*</label>
                     <input
                       type="number"
                       name="totalExperience"
@@ -355,56 +421,56 @@ const ManageBaseline = () => {
                       onChange={handleInputChange}
                       className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                       placeholder="e.g., 5"
+                      min="0"
+                      required
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Communication*</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Communication Level*</label>
                     <select
                       name="communication"
                       value={formData.communication}
                       onChange={handleInputChange}
                       className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      required
                     >
                       <option value="">Select Communication Level</option>
-                      <option value="Average">Average</option>
-                      <option value="Medium">Medium</option>
-                      <option value="Fluent">Fluent</option>
+                      <option value="1">Average</option>
+                      <option value="2">Medium</option>
+                      <option value="3">Fluent</option>
                     </select>
                   </div>
                 </div>
-              )}
-
-              {formStep === 2 && (
+              ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Tech Skills</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Tech Skills*</label>
                     <div className="space-y-3">
                       {formData.techSkills.map((skill, index) => (
                         <div key={index} className="flex items-center space-x-3 bg-gray-50 p-3 rounded-lg shadow-sm border border-gray-200">
                           <Dropdown
-                            name="category"
+                            name="Category"
                             value={skill.category}
-                            options={technologyCategories?.map(c => c.name)}
+                            options={technologyCategoriesWithTech}
                             onChange={(e) => handleTechSkillChange(index, "category", e.target.value)}
-                            setModalField={() => setModalField("technology_category")}
-                            loading={technologyCategoryLoading}
+                            setModalField={() => setModalField("technology_category")}  // Set modalField correctly
+                            loading={technologyCategoriesStackLoading}
                           />
-                          {skill.category && (
-                            <Dropdown
-                              name="technology"
-                              value={skill.technology}
-                              options={technologyStacks
-                                .filter(tech => {
-                                  const category = technologyCategories.find(cat => cat.name === skill.category);
-                                  return category ? tech.categoryId === category.publicId : false;
-                                })
-                                .map(tech => tech.name)}
-                              onChange={(e) => handleTechSkillChange(index, "technology", e.target.value)}
-                              setModalField={() => setModalField("technology_stack")}
-                              loading={technologyStackLoading}
-                            />
-                          )}
+                          <Dropdown
+                            name="Technology"
+                            value={skill.technology}
+                            options={
+                              technologyCategoriesWithTech.find(cat => cat.publicId === skill.category)?.technologies || []
+                            }
+                            onChange={(e) => handleTechSkillChange(index, "technology", e.target.value)}
+                            setModalField={() => {
+                              setModalField("technology_stack");
+                              setSelectedCategoryId(skill.category); // Set the category ID here
+                            }}
+                            dependentValue={skill.category}
+                            loading={technologyCategoriesStackLoading}
+                          />
                           {skill.technology && (
                             <div className="flex items-center">
                               <input
@@ -415,6 +481,7 @@ const ManageBaseline = () => {
                                 placeholder="0-5"
                                 min="0"
                                 max="5"
+                                required
                               />
                               <span className="px-2 py-2 bg-gray-200 text-gray-700 text-sm font-medium rounded-r-lg border border-l-0 border-gray-300">
                                 /5
@@ -441,16 +508,17 @@ const ManageBaseline = () => {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Total Rating</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Overall Rating*</label>
                     <input
                       type="number"
-                      name="totalRating"
-                      value={formData.totalRating}
+                      name="rating"
+                      value={formData.rating}
                       onChange={handleInputChange}
                       className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                       placeholder="0-5"
                       min="0"
                       max="5"
+                      required
                     />
                   </div>
 
@@ -463,6 +531,7 @@ const ManageBaseline = () => {
                       className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                       placeholder="Add feedback here"
                       rows="3"
+                      required
                     />
                   </div>
 
@@ -470,8 +539,8 @@ const ManageBaseline = () => {
                     <label className="block text-sm font-medium text-gray-700 mb-1">Upskill Suggestion</label>
                     <input
                       type="text"
-                      name="currentStatus"
-                      value={formData.currentStatus}
+                      name="upskillSuggestion"
+                      value={formData.upskillSuggestion}
                       onChange={handleInputChange}
                       className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                       placeholder="e.g., Learn React"
@@ -510,8 +579,9 @@ const ManageBaseline = () => {
                   <button
                     type="submit"
                     className="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-200 font-medium cursor-pointer hover:shadow-md"
+                    disabled={baselineLoading}
                   >
-                    Create Baseline
+                    {baselineLoading ? "Creating..." : "Create Baseline"}
                   </button>
                 )}
               </div>
@@ -523,9 +593,13 @@ const ManageBaseline = () => {
       {modalField && (
         <AddOptionModal
           field={modalField}
-          options={getModalOptions()}
-          onClose={() => setModalField(null)}
+          options={getModalOptions(modalField)}
+          onClose={() => {
+            setModalField(null);
+            setSelectedCategoryId(null);
+          }}
           setToast={setToast}
+          categoryId={selectedCategoryId} // Pass the dynamically selected category ID
         />
       )}
     </div>

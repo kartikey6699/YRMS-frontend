@@ -131,7 +131,7 @@ const ManageResource = () => {
             employeeId: "",
             employeeName: "",
             gender: "",
-            location: "indore", 
+            location: "indore",
             email: "",
             phoneNumber: "",
             joiningDate: "",
@@ -294,7 +294,7 @@ const ManageResource = () => {
                             className="hidden"
                           />
                           <span className={`px-2 py-1 text-xs rounded-full transition-all ${filterData.technologies.includes(tech)
-                            ?  'bg-[#ffc9c9] text-[#9F0712] border border-[#9F0712]'
+                            ? 'bg-[#ffc9c9] text-[#9F0712] border border-[#9F0712]'
                             : 'bg-gray-100 text-gray-700 border border-gray-200 hover:bg-gray-50'
                             }`}>
                             {tech}
@@ -332,7 +332,7 @@ const ManageResource = () => {
             <div className="md:col-span-2">
               <h3 className="text-xl font-semibold text-gray-800 mb-4">Personal Information</h3>
             </div>
-            
+
             {/* Profile Picture Upload */}
             <div className="md:col-span-2">
               <label className="block text-gray-700 font-medium mb-2">Profile Picture </label>
@@ -340,9 +340,9 @@ const ManageResource = () => {
                 <div className="relative">
                   {profilePicPreview ? (
                     <>
-                      <img 
-                        src={profilePicPreview} 
-                        alt="Profile preview" 
+                      <img
+                        src={profilePicPreview}
+                        alt="Profile preview"
                         className="w-20 h-20 rounded-full object-cover border-2 border-blue-200"
                       />
                       <button
@@ -380,7 +380,7 @@ const ManageResource = () => {
                 </div>
               </div>
             </div>
-            
+
             <div>
               <label className="block text-gray-700 font-medium mb-2">Employee Name</label>
               <input
@@ -482,7 +482,10 @@ const ManageResource = () => {
                 name="designation"
                 value={formData.designation}
                 options={designations}
-                onChange={handleInputChange}
+                onChange={(e) => {
+                  console.log("Designation selected:", e.target.value);
+                  handleInputChange(e);
+                }}
                 setModalField={setModalField}
               />
             </div>

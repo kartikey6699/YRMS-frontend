@@ -1,6 +1,6 @@
 import axios from "axios";
 import { createAsyncThunk } from "@reduxjs/toolkit";
-import { CERTIFICATION_AUTHORITY } from "../../config/Endpoints/Endpoints";
+import { BASELINE } from "../../config/Endpoints/Endpoints";
 
 const baselineApiClient = axios.create({
   headers: {
@@ -16,12 +16,42 @@ baselineApiClient.interceptors.request.use((config) => {
   return config;
 });
 
+
+export const fetchBaselineHistories = createAsyncThunk(
+  "baseline/fetchBaselineHistories",
+  async (userId, { rejectWithValue }) => {
+    try {
+      const response = await baselineApiClient.get(
+        `${BASELINE.BASELINE_LIST}/${userId}/baseline-list`
+      );
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || error.message);
+    }
+  }
+);
+
+export const createBaseline = createAsyncThunk(
+  "baseline/createBaseline",
+  async ({ userId, baselineData }, { rejectWithValue }) => {
+    try {
+      const response = await baselineApiClient.post(
+        BASELINE.BASELINE_CREATE,
+        baselineData
+      );
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || error.message);
+    }
+  }
+);
+
 // Certification Authority CRUD Operations
 export const fetchCertificationAuthorities = createAsyncThunk(
   "baseline/fetchCertificationAuthorities",
   async (_, { rejectWithValue }) => {
     try {
-      const response = await baselineApiClient.get(CERTIFICATION_AUTHORITY.LIST);
+      const response = await baselineApiClient.get(BASELINE.LIST);
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || error.message);
@@ -34,7 +64,7 @@ export const createCertificationAuthority = createAsyncThunk(
   async (name, { rejectWithValue }) => {
     try {
       const response = await baselineApiClient.post(
-        CERTIFICATION_AUTHORITY.CREATE,
+        BASELINE.CREATE,
         { name }
       );
       return response.data.data;
@@ -49,7 +79,7 @@ export const updateCertificationAuthority = createAsyncThunk(
   async ({ id, name }, { rejectWithValue }) => {
     try {
       const response = await baselineApiClient.patch(
-        `${CERTIFICATION_AUTHORITY.UPDATE}/${id}`,
+        `${BASELINE.UPDATE}/${id}`,
         { name }
       );
       return response.data.data;
@@ -63,8 +93,20 @@ export const deleteCertificationAuthority = createAsyncThunk(
   "baseline/deleteCertificationAuthority",
   async (id, { rejectWithValue }) => {
     try {
-      await baselineApiClient.delete(`${CERTIFICATION_AUTHORITY.DELETE}/${id}`);
+      await baselineApiClient.delete(`${BASELINE.DELETE}/${id}`);
       return id;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || error.message);
+    }
+  }
+);
+
+export const fetchTechnologyCategoriesStack = createAsyncThunk(
+  "baseline/fetchTechnologyCategoriesStack",
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await baselineApiClient.get(BASELINE.CATEGORY_LIST_TECHNOLOGY);
+      return response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || error.message);
     }
@@ -76,7 +118,7 @@ export const fetchTechnologyCategories = createAsyncThunk(
   "baseline/fetchTechnologyCategories",
   async (_, { rejectWithValue }) => {
     try {
-      const response = await baselineApiClient.get(CERTIFICATION_AUTHORITY.LIST);
+      const response = await baselineApiClient.get(BASELINE.CATEGORY_LIST);
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || error.message);
@@ -89,7 +131,7 @@ export const createTechnologyCategory = createAsyncThunk(
   async (name, { rejectWithValue }) => {
     try {
       const response = await baselineApiClient.post(
-        CERTIFICATION_AUTHORITY.CREATE,
+        BASELINE.CATEGORY_CREATE,
         { name }
       );
       return response.data.data;
@@ -104,7 +146,7 @@ export const updateTechnologyCategory = createAsyncThunk(
   async ({ id, name }, { rejectWithValue }) => {
     try {
       const response = await baselineApiClient.patch(
-        `${CERTIFICATION_AUTHORITY.UPDATE}/${id}`,
+        `${BASELINE.CATEGORY_UPDATE}/${id}`,
         { name }
       );
       return response.data.data;
@@ -118,7 +160,7 @@ export const deleteTechnologyCategory = createAsyncThunk(
   "baseline/deleteTechnologyCategory",
   async (id, { rejectWithValue }) => {
     try {
-      await baselineApiClient.delete(`${CERTIFICATION_AUTHORITY.DELETE}/${id}`);
+      await baselineApiClient.delete(`${BASELINE.CATEGORY_DELETE}/${id}`);
       return id;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || error.message);
@@ -131,7 +173,7 @@ export const fetchTechnologyStacks = createAsyncThunk(
   "baseline/fetchTechnologyStacks",
   async (_, { rejectWithValue }) => {
     try {
-      const response = await baselineApiClient.get(CERTIFICATION_AUTHORITY.LIST);
+      const response = await baselineApiClient.get(BASELINE.TECHNOLOGY_LIST);
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || error.message);
@@ -141,11 +183,11 @@ export const fetchTechnologyStacks = createAsyncThunk(
 
 export const createTechnologyStack = createAsyncThunk(
   "baseline/createTechnologyStack",
-  async (name, { rejectWithValue }) => {
+  async ({ name, technology_category }, { rejectWithValue }) => {
     try {
       const response = await baselineApiClient.post(
-        CERTIFICATION_AUTHORITY.CREATE,
-        { name }
+        BASELINE.TECHNOLOGY_CREATE,
+        { name, technology_category }
       );
       return response.data.data;
     } catch (error) {
@@ -156,11 +198,11 @@ export const createTechnologyStack = createAsyncThunk(
 
 export const updateTechnologyStack = createAsyncThunk(
   "baseline/updateTechnologyStack",
-  async ({ id, name }, { rejectWithValue }) => {
+  async ({ id, name, technology_category }, { rejectWithValue }) => {
     try {
       const response = await baselineApiClient.patch(
-        `${CERTIFICATION_AUTHORITY.UPDATE}/${id}`,
-        { name }
+        `${BASELINE.TECHNOLOGY_UPDATE}/${id}`,
+        { name, technology_category }
       );
       return response.data.data;
     } catch (error) {
@@ -173,7 +215,7 @@ export const deleteTechnologyStack = createAsyncThunk(
   "baseline/deleteTechnologyStack",
   async (id, { rejectWithValue }) => {
     try {
-      await baselineApiClient.delete(`${CERTIFICATION_AUTHORITY.DELETE}/${id}`);
+      await baselineApiClient.delete(`${BASELINE.TECHNOLOGY_DELETE}/${id}`);
       return id;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || error.message);
