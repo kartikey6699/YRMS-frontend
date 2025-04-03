@@ -32,7 +32,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
   ];
 
   const handleLogout = () => {
-    // Add logout logic here
+    sessionStorage.clear();
     navigate('/login');
   };
 

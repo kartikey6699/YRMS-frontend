@@ -18,8 +18,11 @@ const Login = () => {
   const { loading, error, isAuthenticated } = useSelector((state) => state.auth);
 
   useEffect(() => {
-    console.log("isAuthenticated:" , isAuthenticated);
-    if (isAuthenticated) {
+    // Check if user is already logged in by checking for token in session storage
+    const token = sessionStorage.getItem("token");
+    if (token) {
+      navigate("/dashboard");
+    } else if (isAuthenticated) {
       setToast(<SuccessToast message="Login successful!" onClose={() => setToast(null)} />);
       navigate("/dashboard");
     }

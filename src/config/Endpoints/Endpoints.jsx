@@ -3,7 +3,7 @@ import { ADMIN_API_BASE_URL , DESIGNATION_API_BASE_URL , COMPETENCY_API_BASE_URL
 
 export const AUTH_API = {
     // ADMIN_LOGIN: `${ADMIN_API_BASE_URL}/user/login`,
-    ADMIN_LOGIN: `${ADMIN_API_BASE_URL}/user/login`,
+    ADMIN_LOGIN: `${ADMIN_API_BASE_URL}/login`,
     FORGOT_PASSWORD: `${ADMIN_API_BASE_URL}/forgot-password`,
 }
 
@@ -42,4 +42,9 @@ export const CERTIFICATION_AUTHORITY = {
     CREATE: `${CERTIFICATION_AUTHORITY_API_BASE_URL}/certification-authority-create`,
     UPDATE: `${CERTIFICATION_AUTHORITY_API_BASE_URL}/certification-authority-update`,
     DELETE: `${CERTIFICATION_AUTHORITY_API_BASE_URL}/certification-authority-delete`
+};
+
+export const RESUME_API = {
+    UPLOAD_RESUME: (publicId) => `${ADMIN_API_BASE_URL}/user-resume-upload/?public_id=${publicId}`,
+    DOWNLOAD_RESUME: (publicId) => `${ADMIN_API_BASE_URL}/user-resume-download/?public_id=${publicId}`,
 };
