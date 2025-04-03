@@ -1,42 +1,9 @@
+// BaselineHistories.jsx
 import React, { useState } from "react";
 import { StarIcon } from "@heroicons/react/20/solid";
 import { FaInfoCircle } from "react-icons/fa";
 
 export const BaselineHistories = ({ histories, employeeName, competency, gender }) => {
-    const dummyHistories = [
-        {
-            employeeId: "EMP123456",
-            communication: "Fluent",
-            feedback: "Excellent team player",
-            techSkills: [
-                { technology: "React", rating: 1 },
-                { technology: "Node.js", rating: 1 },
-            ],
-            timestamp: "2024-10-01T10:00:00Z",
-        },
-        {
-            employeeId: "EMP123456",
-            communication: "Medium",
-            feedback: "Needs improvement in communication",
-            techSkills: [
-                { technology: "Java", rating: 2 },
-                { technology: "Spring", rating: 3 },
-            ],
-            timestamp: "2024-11-15T14:30:00Z",
-        },
-        {
-            employeeId: "EMP123456",
-            communication: "Average",
-            feedback: "Good performance",
-            techSkills: [
-                { technology: "Python", rating: 5 },
-                { technology: "Django", rating: 4 },
-            ],
-            timestamp: "2025-01-20T09:15:00Z",
-        },
-    ];
-
-    const combinedHistories = [...dummyHistories, ...histories];
     const [selectedBaseline, setSelectedBaseline] = useState(null);
     const [isPopupOpen, setIsPopupOpen] = useState(false);
 
@@ -52,7 +19,7 @@ export const BaselineHistories = ({ histories, employeeName, competency, gender 
 
     const calculateOverallRating = (techSkills) => {
         if (!techSkills || techSkills.length === 0) return 0;
-        const total = techSkills.reduce((sum, skill) => sum + skill.rating, 0);
+        const total = techSkills.reduce((sum, skill) => sum + (skill.rating || 0), 0);
         return Math.round(total / techSkills.length);
     };
 
@@ -84,18 +51,18 @@ export const BaselineHistories = ({ histories, employeeName, competency, gender 
         setTimeout(() => setSelectedBaseline(null), 300);
     };
 
-    const sortedHistories = [...combinedHistories].sort(
-        (a, b) => new Date(a.timestamp) - new Date(b.timestamp)
+    const sortedHistories = [...histories].sort(
+        (a, b) => new Date(b.timestamp) - new Date(a.timestamp)
     );
 
     return (
         <>
             {sortedHistories.map((history, index) => {
-                const overallRating = calculateOverallRating(history.techSkills);
+                const overallRating = history.rating || calculateOverallRating(history.technicalSkills);
                 const statusStyles = getStatusStyles(overallRating);
 
                 return (
-                    <div key={index} className="col-span-1">
+                    <div key={history.publicId || index} className="col-span-1">
                         <div
                             onClick={() => openBaselineDetails(history)}
                             className={`relative rounded-xl shadow-lg overflow-hidden cursor-pointer transition-all duration-300 h-48 flex flex-col ${statusStyles.bg} border-l-4 ${statusStyles.border} hover:shadow-xl hover:translate-y-[-4px]`}
@@ -103,7 +70,7 @@ export const BaselineHistories = ({ histories, employeeName, competency, gender 
                             <div className="p-4 flex-1 flex flex-col">
                                 <div className="mb-2 flex justify-between items-center">
                                     <h3 className="text-lg font-semibold text-gray-800 break-words">
-                                        Baseline-{index + 1}
+                                        Baseline-{sortedHistories.length - index}
                                     </h3>
                                     <p className="text-sm text-gray-600">
                                         {formatDate(history.timestamp)}
@@ -117,7 +84,7 @@ export const BaselineHistories = ({ histories, employeeName, competency, gender 
                                 <div className="mt-auto flex justify-between items-center">
                                     <div className="flex items-center text-sm text-gray-600">
                                         <FaInfoCircle className="mr-1" />
-                                        <span>Skills: {history.techSkills.length}</span>
+                                        <span>Skills: {history.technicalSkills?.length || 0}</span>
                                     </div>
                                     <div
                                         className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border-2 ${statusStyles.bg} ${statusStyles.text} ${statusStyles.border}`}
@@ -145,12 +112,11 @@ export const BaselineHistories = ({ histories, employeeName, competency, gender 
                         className={`bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto transform transition-all duration-300 ${isPopupOpen ? "scale-100" : "scale-95"}`}
                     >
                         <div
-                            className={`p-6 ${getStatusStyles(calculateOverallRating(selectedBaseline.techSkills)).bg} rounded-t-xl`}
+                            className={`p-6 ${getStatusStyles(selectedBaseline.rating || calculateOverallRating(selectedBaseline.technicalSkills)).bg} rounded-t-xl`}
                         >
                             <div className="flex justify-between items-center">
                                 <div className="flex items-center space-x-4">
                                     <div className="w-12 h-12 rounded-full bg-gray-300 flex items-center justify-center overflow-hidden">
-                                        {/* Placeholder for profile picture; replace with actual image if available */}
                                         <span className="text-gray-600 text-xl font-semibold">
                                             {employeeName ? employeeName[0] : "N/A"}
                                         </span>
@@ -160,7 +126,7 @@ export const BaselineHistories = ({ histories, employeeName, competency, gender 
                                             {employeeName || "Unknown Employee"}
                                         </h3>
                                         <p className="text-gray-600 text-sm">
-                                            Software Developer
+                                            {competency || "N/A"}
                                         </p>
                                     </div>
                                 </div>
@@ -180,40 +146,109 @@ export const BaselineHistories = ({ histories, employeeName, competency, gender 
 
                         <div className="p-6 space-y-4">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {/* Experience */}
+                                <div className="md:col-span-2">
+                                    <h4 className="text-sm font-medium text-gray-500">Technology Experience</h4>
+                                    <div className="mt-2 space-y-2">
+                                        {selectedBaseline.technologyExperience?.map((exp, expIndex) => (
+                                            <div key={expIndex} className="flex justify-between bg-gray-50 p-3 rounded-lg">
+                                                <span className="text-gray-800 font-medium">{exp.technology}</span>
+                                                <span className="text-gray-600">{exp.years} years</span>
+                                            </div>
+                                        ))}
+                                        {(!selectedBaseline.technologyExperience || selectedBaseline.technologyExperience.length === 0) && (
+                                            <p className="text-gray-500 italic">No experience recorded</p>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* Certifications */}
+                                <div className="md:col-span-2">
+                                    <h4 className="text-sm font-medium text-gray-500">Certifications</h4>
+                                    <div className="mt-2 space-y-2">
+                                        {selectedBaseline.certification?.map((cert, certIndex) => (
+                                            <div key={certIndex} className="flex justify-between bg-gray-50 p-3 rounded-lg">
+                                                <span className="text-gray-800 font-medium">{cert.title}</span>
+                                                <span className="text-gray-600">{cert.technology}</span>
+                                            </div>
+                                        ))}
+                                        {(!selectedBaseline.certification || selectedBaseline.certification.length === 0) && (
+                                            <p className="text-gray-500 italic">No certifications recorded</p>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* Total Experience */}
+                                <div>
+                                    <h4 className="text-sm font-medium text-gray-500">Total Experience</h4>
+                                    <p className="mt-1 text-gray-800">
+                                        {selectedBaseline.totalExperience || 0} years
+                                    </p>
+                                </div>
+
+                                {/* Communication */}
+                                <div>
+                                    <h4 className="text-sm font-medium text-gray-500">Communication</h4>
+                                    <p className="mt-1 text-gray-800">
+                                        {selectedBaseline.communication}
+                                    </p>
+                                </div>
+
+                                {/* Overall Rating */}
                                 <div>
                                     <h4 className="text-sm font-medium text-gray-500">Overall Rating</h4>
                                     <p
-                                        className={`mt-1 inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border-2 ${getStatusStyles(calculateOverallRating(selectedBaseline.techSkills)).bg} ${getStatusStyles(calculateOverallRating(selectedBaseline.techSkills)).text} ${getStatusStyles(calculateOverallRating(selectedBaseline.techSkills)).border}`}
+                                        className={`mt-1 inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border-2 ${getStatusStyles(selectedBaseline.rating || calculateOverallRating(selectedBaseline.technicalSkills)).bg} ${getStatusStyles(selectedBaseline.rating || calculateOverallRating(selectedBaseline.technicalSkills)).text} ${getStatusStyles(selectedBaseline.rating || calculateOverallRating(selectedBaseline.technicalSkills)).border}`}
                                     >
-                                        {calculateOverallRating(selectedBaseline.techSkills)}/5
+                                        {selectedBaseline.rating || calculateOverallRating(selectedBaseline.technicalSkills)}/5
                                     </p>
                                 </div>
+
+                                {/* Feedback */}
                                 <div className="md:col-span-2">
                                     <h4 className="text-sm font-medium text-gray-500">Feedback</h4>
                                     <p className="mt-1 text-gray-800 p-3 bg-gray-50 rounded-lg italic">
-                                        "{selectedBaseline.feedback}"
+                                        "{selectedBaseline.feedback || "No feedback provided"}"
                                     </p>
                                 </div>
+
+                                {/* Upskill Suggestion */}
+                                {selectedBaseline.upskillSuggestion && (
+                                    <div className="md:col-span-2">
+                                        <h4 className="text-sm font-medium text-gray-500">Upskill Suggestion</h4>
+                                        <p className="mt-1 text-gray-800 p-3 bg-gray-50 rounded-lg">
+                                            {selectedBaseline.upskillSuggestion}
+                                        </p>
+                                    </div>
+                                )}
+
+                                {/* Technical Skills */}
                                 <div className="md:col-span-2">
-                                    <h4 className="text-sm font-medium text-gray-500">Technology Ratings</h4>
+                                    <h4 className="text-sm font-medium text-gray-500">Technical Skills</h4>
                                     <div className="mt-2 space-y-3">
-                                        {selectedBaseline.techSkills.map((skill, skillIndex) => (
+                                        {selectedBaseline.technicalSkills?.map((skill, skillIndex) => (
                                             <div
                                                 key={skillIndex}
                                                 className="flex items-center justify-between bg-gray-50 p-3 rounded-lg"
                                             >
-                                                <span className="text-gray-800 font-medium">{skill.technology}</span>
+                                                <div>
+                                                    <span className="text-gray-800 font-medium">{skill.technology}</span>
+                                                    <span className="text-gray-500 text-sm block">{skill.category}</span>
+                                                </div>
                                                 <div className="flex items-center space-x-1">
                                                     {[...Array(5)].map((_, starIndex) => (
                                                         <StarIcon
                                                             key={starIndex}
-                                                            className={`w-5 h-5 ${starIndex < skill.rating ? "text-yellow-400" : "text-gray-300"}`}
+                                                            className={`w-5 h-5 ${starIndex < (skill.rating || 0) ? "text-yellow-400" : "text-gray-300"}`}
                                                         />
                                                     ))}
-                                                    <span className="text-sm text-gray-600 ml-2">({skill.rating}/5)</span>
+                                                    <span className="text-sm text-gray-600 ml-2">({skill.rating || 0}/5)</span>
                                                 </div>
                                             </div>
                                         ))}
+                                        {(!selectedBaseline.technicalSkills || selectedBaseline.technicalSkills.length === 0) && (
+                                            <p className="text-gray-500 italic">No technical skills recorded</p>
+                                        )}
                                     </div>
                                 </div>
                             </div>
