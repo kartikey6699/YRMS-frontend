@@ -11,6 +11,7 @@ export const RESOURCE_API = {
     CREATE_RESOURCE: `${ADMIN_API_BASE_URL}/register-user`,
     LIST_RESOURCES: `${ADMIN_API_BASE_URL}/user-list`,
     USER_DETAIL: `${ADMIN_API_BASE_URL}/user-detail`,
+    UPDATE_RESOURCE: `${ADMIN_API_BASE_URL}/user-update`,
 
 };
 
@@ -31,7 +32,7 @@ export const COMPETENCY_API = {
 export const OPPORTUNITY_API = {
     CREATE: `${OPPORTUNITY_API_BASE_URL}/opportunity-create`,
     // LIST: `${OPPORTUNITY_API_BASE_URL}/opportunity-list`,
-    LIST: (userId) => `http://127.0.0.1:8000/user/${userId}/opportunity-list`,
+    LIST: (userId) => `${ADMIN_API_BASE_URL}${userId}/opportunity-list`,
     DETAIL: `${OPPORTUNITY_API_BASE_URL}/opportunity-detail`,
     UPDATE: `${OPPORTUNITY_API_BASE_URL}/opportunity-update`,
     DELETE: `${OPPORTUNITY_API_BASE_URL}/opportunity-delete`
