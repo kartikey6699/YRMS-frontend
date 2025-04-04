@@ -1,21 +1,23 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { FaUser, FaTimes, FaEdit, FaSave, FaDownload, FaUpload, FaCode, FaBriefcase } from 'react-icons/fa';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchResourceDetails } from '../../../features/resource/resourceAction';
+import { fetchResourceDetails, updateResource, fetchDesignations } from '../../../features/resource/resourceAction';
 import { resetResourceDetails } from '../../../features/resource/resourceSlice';
-import { SuccessToast, ErrorToast } from '../../helper/ResourceToast'; // Import the toast components
+import { SuccessToast, ErrorToast } from '../../helper/ResourceToast';
 import { RESUME_API } from '../../../config/Endpoints/Endpoints';
 
 const EmployeeDetail = ({ publicId, onClose }) => {
   const dispatch = useDispatch();
-  const { resourceDetails } = useSelector((state) => state.resource);
+  const { resourceDetails, loading, designations } = useSelector((state) => state.resource);
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState(null);
   const [resumeFile, setResumeFile] = useState(null);
   const [toast, setToast] = useState(null);
   const initialLoadDone = useRef(false);
 
-  // Close toast after timeout
+  // Grade options
+  const gradeOptions = ['E1', 'E2', 'E3', 'E4', 'E5', 'E6', 'E7'];
+
   useEffect(() => {
     if (toast) {
       const timer = setTimeout(() => setToast(null), 2000);
@@ -23,20 +25,20 @@ const EmployeeDetail = ({ publicId, onClose }) => {
     }
   }, [toast]);
 
-  // Fetch resource details if needed
   useEffect(() => {
     if (!publicId) return;
 
     if (!initialLoadDone.current && (!resourceDetails || resourceDetails.publicId !== publicId)) {
       initialLoadDone.current = true;
       dispatch(fetchResourceDetails(publicId));
+      dispatch(fetchDesignations()); // Fetch designations when component mounts
     }
   }, [publicId, resourceDetails, dispatch]);
 
-  // Update formData when we get new details
   useEffect(() => {
     if (resourceDetails && resourceDetails.publicId === publicId) {
       setFormData({
+        employeeName: resourceDetails.employeeName || '',
         employeeId: resourceDetails.employeeId || '',
         designation: resourceDetails.designation || '',
         grade: resourceDetails.grade || '',
@@ -47,7 +49,6 @@ const EmployeeDetail = ({ publicId, onClose }) => {
     }
   }, [resourceDetails, publicId]);
 
-  // Cleanup only when completely unmounting
   useEffect(() => {
     return () => {
       initialLoadDone.current = false;
@@ -60,6 +61,35 @@ const EmployeeDetail = ({ publicId, onClose }) => {
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = async () => {
+    try {
+      const updatedData = {
+        employeeName: formData.employeeName,
+        employeeId: formData.employeeId,
+        designation: formData.designation,
+        grade: formData.grade,
+        joiningDate: formData.joiningDate,
+        status: formData.status
+      };
+
+      await dispatch(updateResource({ 
+        publicId, 
+        resourceData: updatedData 
+      })).unwrap();
+
+      setToast({
+        type: 'success',
+        message: 'Employee details updated successfully!'
+      });
+      setIsEditing(false);
+    } catch (error) {
+      setToast({
+        type: 'error',
+        message: error || 'Failed to update employee details'
+      });
+    }
   };
 
   const handleResumeUpload = async (e) => {
@@ -112,7 +142,7 @@ const EmployeeDetail = ({ publicId, onClose }) => {
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `${formData.employeeId}_resume.pdf`; // Changed file name to {user_id}_resume
+        a.download = `${formData.employeeId}_resume.pdf`;
         document.body.appendChild(a);
         a.click();
         a.remove();
@@ -149,8 +179,7 @@ const EmployeeDetail = ({ publicId, onClose }) => {
 
   return (
     <>
-      {/* Toast Notification */}
-      <div className="fixed top-4 right-4 z-60"> {/* Adjusted z-index and positioning to top right */}
+      <div className="fixed top-4 right-4 z-60">
         {toast?.type === 'success' && (
           <SuccessToast message={toast.message} onClose={() => setToast(null)} />
         )}
@@ -159,21 +188,30 @@ const EmployeeDetail = ({ publicId, onClose }) => {
         )}
       </div>
 
-      {/* Main Modal Content */}
       <div className="fixed inset-0 flex items-center justify-center z-50 backdrop-blur-sm bg-black/20 p-4">
         <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-3xl border border-gray-200">
-          {/* Header */}
           <div className="flex justify-between items-center mb-6">
             <div className="flex items-center">
               <FaUser className="text-blue-600 mr-2 text-xl" />
-              <h3 className="text-xl font-semibold text-gray-800">
-                {resourceDetails.employeeName}
-              </h3>
+              {isEditing ? (
+                <input
+                  name="employeeName"
+                  value={formData.employeeName}
+                  onChange={handleInputChange}
+                  className="text-xl font-semibold text-gray-800 border rounded-md px-2 py-1 focus:ring-1 focus:ring-blue-300"
+                  disabled={loading}
+                />
+              ) : (
+                <h3 className="text-xl font-semibold text-gray-800">
+                  {resourceDetails.employeeName}
+                </h3>
+              )}
             </div>
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setIsEditing(!isEditing)}
                 className="flex items-center px-3 py-1.5 bg-blue-50 text-blue-600 rounded-md hover:bg-blue-100 text-sm"
+                disabled={loading}
               >
                 {isEditing ? (
                   <>
@@ -188,15 +226,14 @@ const EmployeeDetail = ({ publicId, onClose }) => {
               <button
                 onClick={onClose}
                 className="p-1.5 rounded-md bg-gray-100 hover:bg-gray-200 text-gray-600"
+                disabled={loading}
               >
                 <FaTimes size={14} />
               </button>
             </div>
           </div>
 
-          {/* Content - Side by Side Sections */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Employment Details Section */}
             <div className={`bg-gray-50 rounded-lg p-4 ${isEditing ? 'ring-1 ring-blue-200' : ''}`}>
               <h4 className="flex items-center text-base font-medium text-gray-800 mb-3">
                 <FaBriefcase className="text-blue-500 mr-2 text-sm" />
@@ -212,42 +249,56 @@ const EmployeeDetail = ({ publicId, onClose }) => {
                         value={formData.employeeId}
                         onChange={handleInputChange}
                         className="w-full border rounded-md px-2 py-1.5 text-sm focus:ring-1 focus:ring-blue-300"
+                        disabled={loading}
                       />
                     ) : (
                       <p className="text-sm font-medium text-gray-800">{formData.employeeId || 'N/A'}</p>
                     )}
                   </div>
-
                   <div>
                     <label className="block text-xs text-gray-500 mb-1">Designation</label>
                     {isEditing ? (
-                      <input
+                      <select
                         name="designation"
                         value={formData.designation}
                         onChange={handleInputChange}
                         className="w-full border rounded-md px-2 py-1.5 text-sm focus:ring-1 focus:ring-blue-300"
-                      />
+                        disabled={loading}
+                      >
+                        <option value="">Select Designation</option>
+                        {designations.map(designation => (
+                          <option key={designation.publicId} value={designation.name}>
+                            {designation.name}
+                          </option>
+                        ))}
+                      </select>
                     ) : (
                       <p className="text-sm font-medium text-gray-800">{formData.designation || 'N/A'}</p>
                     )}
                   </div>
                 </div>
-
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="block text-xs text-gray-500 mb-1">Grade</label>
                     {isEditing ? (
-                      <input
+                      <select
                         name="grade"
                         value={formData.grade}
                         onChange={handleInputChange}
                         className="w-full border rounded-md px-2 py-1.5 text-sm focus:ring-1 focus:ring-blue-300"
-                      />
+                        disabled={loading}
+                      >
+                        <option value="">Select Grade</option>
+                        {gradeOptions.map(grade => (
+                          <option key={grade} value={grade}>
+                            {grade}
+                          </option>
+                        ))}
+                      </select>
                     ) : (
                       <p className="text-sm font-medium text-gray-800">{formData.grade || 'N/A'}</p>
                     )}
                   </div>
-
                   <div>
                     <label className="block text-xs text-gray-500 mb-1">Joining Date</label>
                     {isEditing ? (
@@ -257,6 +308,7 @@ const EmployeeDetail = ({ publicId, onClose }) => {
                         value={formData.joiningDate}
                         onChange={handleInputChange}
                         className="w-full border rounded-md px-2 py-1.5 text-sm focus:ring-1 focus:ring-blue-300"
+                        disabled={loading}
                       />
                     ) : (
                       <p className="text-sm font-medium text-gray-800">
@@ -265,24 +317,13 @@ const EmployeeDetail = ({ publicId, onClose }) => {
                     )}
                   </div>
                 </div>
-
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="block text-xs text-gray-500 mb-1">Experience</label>
-                    {isEditing ? (
-                      <input
-                        name="experience"
-                        value={formData.experience}
-                        onChange={handleInputChange}
-                        className="w-full border rounded-md px-2 py-1.5 text-sm focus:ring-1 focus:ring-blue-300"
-                      />
-                    ) : (
-                      <p className="text-sm font-medium text-gray-800">
-                        {formData.experience ? `${formData.experience} years` : 'N/A'}
-                      </p>
-                    )}
+                    <p className="text-sm font-medium text-gray-800">
+                      {formData.experience ? `${formData.experience} years` : 'N/A'}
+                    </p>
                   </div>
-
                   <div>
                     <label className="block text-xs text-gray-500 mb-1">Status</label>
                     {isEditing ? (
@@ -291,6 +332,7 @@ const EmployeeDetail = ({ publicId, onClose }) => {
                         value={formData.status}
                         onChange={handleInputChange}
                         className="w-full border rounded-md px-2 py-1.5 text-sm focus:ring-1 focus:ring-blue-300"
+                        disabled={loading}
                       >
                         <option value="pool">Pool</option>
                         <option value="deployed">Deployed</option>
@@ -310,7 +352,6 @@ const EmployeeDetail = ({ publicId, onClose }) => {
               </div>
             </div>
 
-            {/* Technologies Section - Empty */}
             <div className="bg-gray-50 rounded-lg p-4">
               <h4 className="flex items-center text-base font-medium text-gray-800 mb-3">
                 <FaCode className="text-blue-500 mr-2 text-sm" />
@@ -323,7 +364,6 @@ const EmployeeDetail = ({ publicId, onClose }) => {
             </div>
           </div>
 
-          {/* Footer with Resume Buttons on Left */}
           <div className="mt-4 flex justify-between items-center">
             <div className="flex gap-2">
               <label className="flex items-center px-3 py-1.5 bg-blue-50 text-blue-700 rounded-md hover:bg-blue-100 text-sm cursor-pointer">
@@ -334,11 +374,13 @@ const EmployeeDetail = ({ publicId, onClose }) => {
                   onChange={handleResumeUpload}
                   className="hidden"
                   accept=".pdf,.doc,.docx"
+                  disabled={loading}
                 />
               </label>
               <button
                 onClick={handleResumeDownload}
                 className="flex items-center px-3 py-1.5 bg-green-50 text-green-700 rounded-md hover:bg-green-100 text-sm"
+                disabled={loading}
               >
                 <FaDownload className="mr-1 text-xs" />
                 Download Resume
@@ -346,12 +388,13 @@ const EmployeeDetail = ({ publicId, onClose }) => {
             </div>
 
             <button
-              className="flex items-center px-4 py-1.5 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm font-medium"
+              className="flex items-center px-4 py-1.5 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm font-medium disabled:bg-blue-400"
               onClick={isEditing ? handleSubmit : onClose}
+              disabled={loading}
             >
               {isEditing ? (
                 <>
-                  <FaSave className="mr-1" /> Save
+                  <FaSave className="mr-1" /> {loading ? 'Saving...' : 'Save'}
                 </>
               ) : (
                 'Close'

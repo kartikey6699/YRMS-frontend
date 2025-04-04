@@ -76,6 +76,31 @@ export const fetchResourceDetails = createAsyncThunk(
   }
 );
 
+export const updateResource = createAsyncThunk(
+  "resource/updateResource",
+  async ({ publicId, resourceData }, { rejectWithValue }) => {
+    try {
+      const response = await resourceApiClient.patch(
+        `${RESOURCE_API.UPDATE_RESOURCE}/${publicId}`,
+        resourceData
+      );
+      const { success, data, message } = response.data;
+
+      if (!success) {
+        throw new Error(message || "Failed to update resource");
+      }
+
+      return data;
+    } catch (error) {
+      const errorMessage =
+        error.response?.data?.message ||
+        error.message ||
+        "Failed to update resource";
+      return rejectWithValue(errorMessage);
+    }
+  }
+);
+
 
 export const fetchDesignations = createAsyncThunk(
   "resource/fetchDesignations",

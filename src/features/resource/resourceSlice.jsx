@@ -10,7 +10,8 @@ import {
   fetchCompetencies,
   createCompetency,
   updateCompetency,
-  deleteCompetency
+  deleteCompetency,
+  updateResource
 } from "./resourceAction";
 
 const initialState = {
@@ -22,7 +23,7 @@ const initialState = {
   competencies: [],
   designationLoading: false,
   competencyLoading: false,
-  createdResource: null 
+  createdResource: null
 };
 
 const isResourceDetailsDifferent = (current, incoming) => {
@@ -90,6 +91,41 @@ const resourceSlice = createSlice({
         }));
       })
       .addCase(fetchResources.rejected, (state, { payload }) => {
+        state.loading = false;
+        state.error = payload;
+      })
+
+      .addCase(updateResource.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(updateResource.fulfilled, (state, { payload }) => {
+        state.loading = false;
+
+        if (state.resourceDetails?.publicId === payload.publicId) {
+          state.resourceDetails = {
+            ...state.resourceDetails,
+            employeeId: payload.employeeId,
+            designation: payload.designation,
+            grade: payload.grade,
+            joiningDate: payload.joiningDate,
+            experience: payload.experience,
+            status: payload.status
+          };
+        }
+
+        const index = state.resources.findIndex(r => r.publicId === payload.publicId);
+        if (index !== -1) {
+          state.resources[index] = {
+            ...state.resources[index],
+            employeeId: payload.employeeId,
+            designation: payload.designation,
+            joiningDate: payload.joiningDate,
+            status: payload.status
+          };
+        }
+      })
+      .addCase(updateResource.rejected, (state, { payload }) => {
         state.loading = false;
         state.error = payload;
       })
