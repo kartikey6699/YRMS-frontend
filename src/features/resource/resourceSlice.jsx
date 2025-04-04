@@ -84,10 +84,10 @@ const resourceSlice = createSlice({
           businessGroup: user.businessGroup,
           businessUnit: user.businessUnit,
           competency: user.competency,
-          technologies: [],
-          experience: 0,
-          certifications: "",
-          communication: ""
+          technologies: user.technologies ? user.technologies.split(',') : [],
+          experience: user.experience || 0,
+          certifications: user.certification || "",
+          communication: user.communication || ""
         }));
       })
       .addCase(fetchResources.rejected, (state, { payload }) => {
