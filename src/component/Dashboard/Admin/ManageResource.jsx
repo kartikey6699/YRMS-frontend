@@ -9,6 +9,8 @@ import AddOptionModal from "../../helper/OptionalModal";
 import { SuccessToast, ErrorToast } from "../../helper/ResourceToast";
 import Dropdown from "../../helper/Dropdown";
 import { fetchDesignations, fetchCompetencies } from "../../../features/resource/resourceAction";
+import axios from "axios";
+import { ADMIN_API_BASE_URL } from "../../../config/Endpoints/BaseEndpoints";
 
 const ManageResource = () => {
   const navigate = useNavigate();
@@ -103,60 +105,77 @@ const ManageResource = () => {
     setShowFilters(false);
   };
 
+  const uploadProfilePicture = async (userId) => {
+    if (!profilePic) return;
+
+    try {
+      const formData = new FormData();
+      formData.append('payload', profilePic);
+
+      const response = await axios.post(
+        `${ADMIN_API_BASE_URL}/user-profile-upload/?user_id=${userId}`,
+        formData,
+        {
+          headers: {
+            'accept': 'application/json',
+            'Content-Type': 'multipart/form-data'
+          }
+        }
+      );
+
+      return response.data;
+    } catch (error) {
+      console.error("Profile upload failed:", error);
+      throw error;
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
       setToast(<YRMSLoader message="Creating resource..." />);
 
-      // Create FormData object to handle file upload
-      const formDataWithPic = new FormData();
-      for (const key in formData) {
-        formDataWithPic.append(key, formData[key]);
-      }
-      if (profilePic) {
-        formDataWithPic.append('profilePic', profilePic);
-      }
-
       const createResult = await dispatch(createResource(formData));
 
-      if (createResource.fulfilled.match(createResult)) {
-        setToast(<SuccessToast message="Resource created successfully!" onClose={() => setToast(null)} />);
-
-        setToast(<YRMSLoader message="Refreshing data..." />);
-
-        try {
-          await dispatch(fetchResources()).unwrap();
-
-          setFormData({
-            employeeId: "",
-            employeeName: "",
-            gender: "",
-            location: "indore",
-            email: "",
-            phoneNumber: "",
-            joiningDate: "",
-            designation: "",
-            employeeType: "",
-            grade: "",
-            businessGroup: "",
-            businessUnit: "",
-            competency: "",
-            status: "pool",
-          });
-          setProfilePic(null);
-          setProfilePicPreview(null);
-          setActiveSection("view");
-
-          setToast(null);
-        } catch (fetchError) {
-          setToast(<ErrorToast
-            message={`Created successfully but failed to refresh: ${fetchError}`}
-            onClose={() => setToast(null)}
-          />);
-        }
-      } else {
-        throw new Error(createResult.error.message || "Failed to create resource");
+      if (!createResult.payload?.publicId) {
+        throw new Error("Failed to get publicId from response");
       }
+
+      const publicId = createResult.payload.publicId;
+
+      if (profilePic) {
+        setToast(<YRMSLoader message="Uploading profile picture..." />);
+        await uploadProfilePicture(publicId);
+      }
+
+      setToast(<SuccessToast message="Resource created successfully!" onClose={() => setToast(null)} />);
+
+      // Refresh data
+      setToast(<YRMSLoader message="Refreshing data..." />);
+      await dispatch(fetchResources());
+
+      // Reset form
+      setFormData({
+        employeeId: "",
+        employeeName: "",
+        gender: "",
+        location: "indore",
+        email: "",
+        phoneNumber: "",
+        joiningDate: "",
+        designation: "",
+        employeeType: "",
+        grade: "",
+        businessGroup: "",
+        businessUnit: "",
+        competency: "",
+        status: "pool",
+      });
+      setProfilePic(null);
+      setProfilePicPreview(null);
+      setActiveSection("view");
+      setToast(null);
+
     } catch (err) {
       setToast(<ErrorToast message={err.message || "Failed to create resource"} onClose={() => setToast(null)} />);
     }
