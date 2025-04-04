@@ -48,13 +48,23 @@ const ManageResource = () => {
 
   const [filterData, setFilterData] = useState({
     technologies: [],
-    totalExperience: "",
-    certifications: "",
-    communication: ""
+    experience: "", // Changed to match thunk parameter
+    certifications: "", // Changed to match thunk parameter
+    communication: "",
   });
 
+  // Fetch resources whenever filterData changes
   useEffect(() => {
-    dispatch(fetchResources());
+    dispatch(fetchResources({
+      experience: filterData.experience || undefined,
+      communication: filterData.communication || undefined,
+      certification: filterData.certifications || undefined,
+      technology: filterData.technologies.length > 0 ? filterData.technologies : undefined,
+    }));
+  }, [dispatch, filterData]);
+
+  // Initial fetch for designations and competencies
+  useEffect(() => {
     dispatch(fetchDesignations());
     dispatch(fetchCompetencies());
   }, [dispatch]);
@@ -82,25 +92,25 @@ const ManageResource = () => {
   };
 
   const toggleTechnology = (tech) => {
-    setFilterData(prev => ({
+    setFilterData((prev) => ({
       ...prev,
       technologies: prev.technologies.includes(tech)
-        ? prev.technologies.filter(t => t !== tech)
-        : [...prev.technologies, tech]
+        ? prev.technologies.filter((t) => t !== tech)
+        : [...prev.technologies, tech],
     }));
   };
 
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
-    setFilterData(prev => ({ ...prev, [name]: value }));
+    setFilterData((prev) => ({ ...prev, [name]: value }));
   };
 
   const clearFilters = () => {
     setFilterData({
       technologies: [],
-      totalExperience: "",
+      experience: "",
       certifications: "",
-      communication: ""
+      communication: "",
     });
     setShowFilters(false);
   };
@@ -110,16 +120,16 @@ const ManageResource = () => {
 
     try {
       const formData = new FormData();
-      formData.append('payload', profilePic);
+      formData.append("payload", profilePic);
 
       const response = await axios.post(
         `${ADMIN_API_BASE_URL}/user-profile-upload/?user_id=${userId}`,
         formData,
         {
           headers: {
-            'accept': 'application/json',
-            'Content-Type': 'multipart/form-data'
-          }
+            accept: "application/json",
+            "Content-Type": "multipart/form-data",
+          },
         }
       );
 
@@ -150,11 +160,9 @@ const ManageResource = () => {
 
       setToast(<SuccessToast message="Resource created successfully!" onClose={() => setToast(null)} />);
 
-      // Refresh data
       setToast(<YRMSLoader message="Refreshing data..." />);
       await dispatch(fetchResources());
 
-      // Reset form
       setFormData({
         employeeId: "",
         employeeName: "",
@@ -175,7 +183,6 @@ const ManageResource = () => {
       setProfilePicPreview(null);
       setActiveSection("view");
       setToast(null);
-
     } catch (err) {
       setToast(<ErrorToast message={err.message || "Failed to create resource"} onClose={() => setToast(null)} />);
     }
@@ -214,7 +221,8 @@ const ManageResource = () => {
               <h3 className="text-md font-semibold text-gray-700"></h3>
               <div className="flex space-x-2">
                 {filterData.technologies.length > 0 ||
-                  filterData.totalExperience ||
+                  filterData.experience ||
+                  filterData.certifications ||
                   filterData.communication ? (
                   <button
                     onClick={clearFilters}
@@ -226,20 +234,24 @@ const ManageResource = () => {
                 ) : null}
                 <button
                   onClick={() => setShowFilters(!showFilters)}
-                  className={`px-2 py-1 rounded-md text-xs flex items-center transition-all ${showFilters
-                    ? 'bg-gray-200 text-gray-800 hover:bg-gray-300'
-                    : 'bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700'
-                    }`}
+                  className={`px-2 py-1 rounded-md text-xs flex items-center transition-all ${
+                    showFilters
+                      ? "bg-gray-200 text-gray-800 hover:bg-gray-300"
+                      : "bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700"
+                  }`}
                 >
                   <FaFilter className="mr-1" />
-                  {showFilters ? 'Hide' : 'Filters'}
+                  {showFilters ? "Hide" : "Filters"}
                 </button>
               </div>
             </div>
 
             {/* Filter Panel - Collapsible */}
-            <div className={`transition-all duration-300 ease-in-out overflow-hidden ${showFilters ? 'max-h-80 opacity-100 mb-2' : 'max-h-0 opacity-0 mb-0'
-              }`}>
+            <div
+              className={`transition-all duration-300 ease-in-out overflow-hidden ${
+                showFilters ? "max-h-80 opacity-100 mb-2" : "max-h-0 opacity-0 mb-0"
+              }`}
+            >
               <div className="bg-white p-3 rounded-lg shadow-sm border border-gray-200">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                   {/* Experience Filter */}
@@ -251,8 +263,8 @@ const ManageResource = () => {
                     <div className="relative">
                       <input
                         type="number"
-                        name="totalExperience"
-                        value={filterData.totalExperience}
+                        name="experience" // Updated to match filterData
+                        value={filterData.experience}
                         onChange={handleFilterChange}
                         className="w-full p-1.5 pl-2 pr-6 border border-gray-300 rounded text-xs focus:border-purple-500 focus:ring-1 focus:ring-purple-200"
                         placeholder="0"
@@ -275,9 +287,9 @@ const ManageResource = () => {
                       className="w-full p-1.5 border border-gray-300 rounded text-xs focus:border-green-500 focus:ring-1 focus:ring-green-200"
                     >
                       <option value="">All levels</option>
-                      <option value="Fluent">Fluent</option>
-                      <option value="Medium">Medium</option>
                       <option value="Average">Average</option>
+                      <option value="Medium">Medium</option>
+                      <option value="Fluent">Fluent</option>
                     </select>
                   </div>
 
@@ -289,7 +301,7 @@ const ManageResource = () => {
                     </div>
                     <input
                       type="text"
-                      name="certifications"
+                      name="certifications" // Updated to match filterData
                       value={filterData.certifications}
                       onChange={handleFilterChange}
                       className="w-full p-1.5 border border-gray-300 rounded text-xs focus:border-blue-500 focus:ring-1 focus:ring-blue-200"
@@ -304,7 +316,57 @@ const ManageResource = () => {
                       <span className="font-medium text-sm">Filter by selecting technology</span>
                     </div>
                     <div className="flex flex-wrap gap-1.5 max-h-[3.5rem] overflow-y-auto">
-                      {['React', 'Angular', 'Vue', 'JavaScript', 'TypeScript', 'Node.js', 'Python', 'Java', 'C#', 'Go', 'Ruby', 'AWS', 'Azure', 'Docker', 'Kubernetes', 'CI/CD', 'React Native', 'Flutter', 'Swift', 'Kotlin', 'SQL', 'MongoDB', 'PostgreSQL', 'Redis', 'GraphQL', 'Rust', 'Scala', 'Elixir', 'Clojure', 'PHP', 'Perl', 'Shell', 'HTML', 'CSS', 'Spring Boot', 'Django', 'Laravel', 'Express.js', 'ASP.NET', 'TensorFlow', 'PyTorch', 'Hadoop', 'Spark', 'Jenkins', 'Terraform', 'Ansible', 'Unity', 'Unreal Engine', 'WebGL'].map(tech => (
+                      {[
+                        "React",
+                        "Angular",
+                        "Vue",
+                        "JavaScript",
+                        "TypeScript",
+                        "Node.js",
+                        "Python",
+                        "Java",
+                        "C#",
+                        "Go",
+                        "Ruby",
+                        "AWS",
+                        "Azure",
+                        "Docker",
+                        "Kubernetes",
+                        "CI/CD",
+                        "React Native",
+                        "Flutter",
+                        "Swift",
+                        "Kotlin",
+                        "SQL",
+                        "MongoDB",
+                        "PostgreSQL",
+                        "Redis",
+                        "GraphQL",
+                        "Rust",
+                        "Scala",
+                        "Elixir",
+                        "Clojure",
+                        "PHP",
+                        "Perl",
+                        "Shell",
+                        "HTML",
+                        "CSS",
+                        "Spring Boot",
+                        "Django",
+                        "Laravel",
+                        "Express.js",
+                        "ASP.NET",
+                        "TensorFlow",
+                        "PyTorch",
+                        "Hadoop",
+                        "Spark",
+                        "Jenkins",
+                        "Terraform",
+                        "Ansible",
+                        "Unity",
+                        "Unreal Engine",
+                        "WebGL",
+                      ].map((tech) => (
                         <label key={tech} className="flex items-center cursor-pointer">
                           <input
                             type="checkbox"
@@ -312,10 +374,13 @@ const ManageResource = () => {
                             onChange={() => toggleTechnology(tech)}
                             className="hidden"
                           />
-                          <span className={`px-2 py-1 text-xs rounded-full transition-all ${filterData.technologies.includes(tech)
-                            ? 'bg-[#ffc9c9] text-[#9F0712] border border-[#9F0712]'
-                            : 'bg-gray-100 text-gray-700 border border-gray-200 hover:bg-gray-50'
-                            }`}>
+                          <span
+                            className={`px-2 py-1 text-xs rounded-full transition-all ${
+                              filterData.technologies.includes(tech)
+                                ? "bg-[#ffc9c9] text-[#9F0712] border border-[#9F0712]"
+                                : "bg-gray-100 text-gray-700 border border-gray-200 hover:bg-gray-50"
+                            }`}
+                          >
                             {tech}
                           </span>
                         </label>
@@ -331,7 +396,6 @@ const ManageResource = () => {
           <ResourceList
             handleBaselineClick={handleBaselineClick}
             handleOpportunitiesClick={handleOpportunitiesClick}
-            filterData={filterData}
           />
         </div>
       ) : (
@@ -367,7 +431,7 @@ const ManageResource = () => {
                       <button
                         type="button"
                         onClick={removeProfilePic}
-                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
+                        className="absolute -top-2 -right-2 bg-red- Fulham500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
                       >
                         <FaTimes className="text-xs" />
                       </button>
@@ -430,8 +494,9 @@ const ManageResource = () => {
                 name="gender"
                 value={formData.gender}
                 onChange={handleInputChange}
-                className={`w-full p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 transition-colors ${formData.gender ? "text-black" : "text-gray-500"
-                  }`}
+                className={`w-full p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 transition-colors ${
+                  formData.gender ? "text-black" : "text-gray-500"
+                }`}
                 required
               >
                 <option value="" disabled>
@@ -447,8 +512,9 @@ const ManageResource = () => {
                 name="location"
                 value={formData.location}
                 onChange={handleInputChange}
-                className={`w-full p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 transition-colors ${formData.location ? "text-black" : "text-gray-500"
-                  }`}
+                className={`w-full p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 transition-colors ${
+                  formData.location ? "text-black" : "text-gray-500"
+                }`}
                 required
               >
                 <option value="indore">Indore</option>
@@ -514,8 +580,9 @@ const ManageResource = () => {
                 name="employeeType"
                 value={formData.employeeType}
                 onChange={handleInputChange}
-                className={`w-full p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 transition-colors ${formData.employeeType ? "text-black" : "text-gray-500"
-                  }`}
+                className={`w-full p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 transition-colors ${
+                  formData.employeeType ? "text-black" : "text-gray-500"
+                }`}
                 required
               >
                 <option value="" disabled>
@@ -532,8 +599,9 @@ const ManageResource = () => {
                 name="grade"
                 value={formData.grade}
                 onChange={handleInputChange}
-                className={`w-full p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 transition-colors ${formData.grade ? "text-black" : "text-gray-500"
-                  }`}
+                className={`w-full p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 transition-colors ${
+                  formData.grade ? "text-black" : "text-gray-500"
+                }`}
                 required
               >
                 <option value="" disabled>
@@ -552,8 +620,9 @@ const ManageResource = () => {
                 name="status"
                 value={formData.status}
                 onChange={handleInputChange}
-                className={`w-full p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 transition-colors ${formData.status ? "text-black" : "text-gray-500"
-                  }`}
+                className={`w-full p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 transition-colors ${
+                  formData.status ? "text-black" : "text-gray-500"
+                }`}
                 required
               >
                 <option value="pool">Pool</option>
@@ -568,8 +637,9 @@ const ManageResource = () => {
                 name="businessGroup"
                 value={formData.businessGroup}
                 onChange={handleInputChange}
-                className={`w-full p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 transition-colors ${formData.businessGroup ? "text-black" : "text-gray-500"
-                  }`}
+                className={`w-full p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 transition-colors ${
+                  formData.businessGroup ? "text-black" : "text-gray-500"
+                }`}
                 required
               >
                 <option value="" disabled>
@@ -585,8 +655,9 @@ const ManageResource = () => {
                 name="businessUnit"
                 value={formData.businessUnit}
                 onChange={handleInputChange}
-                className={`w-full p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 transition-colors ${formData.businessUnit ? "text-black" : "text-gray-500"
-                  }`}
+                className={`w-full p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 transition-colors ${
+                  formData.businessUnit ? "text-black" : "text-gray-500"
+                }`}
                 required
               >
                 <option value="" disabled>
@@ -612,10 +683,11 @@ const ManageResource = () => {
               <button
                 type="submit"
                 disabled={loading}
-                className={`px-16 py-3 rounded-lg font-semibold transition-all transform hover:scale-105 ${loading
-                  ? "bg-gray-400 cursor-not-allowed"
-                  : "bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700"
-                  }`}
+                className={`px-16 py-3 rounded-lg font-semibold transition-all transform hover:scale-105 ${
+                  loading
+                    ? "bg-gray-400 cursor-not-allowed"
+                    : "bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700"
+                }`}
               >
                 {loading ? "Submitting..." : "Submit"}
               </button>

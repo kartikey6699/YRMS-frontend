@@ -1,6 +1,6 @@
 import axios from "axios";
 import { createAsyncThunk } from "@reduxjs/toolkit";
-import { RESOURCE_API , DESIGNATION_API , COMPETENCY_API } from "../../config/Endpoints/Endpoints";
+import { RESOURCE_API, DESIGNATION_API, COMPETENCY_API } from "../../config/Endpoints/Endpoints";
 
 
 const resourceApiClient = axios.create({
@@ -41,16 +41,48 @@ export const createResource = createAsyncThunk(
 
 export const fetchResources = createAsyncThunk(
   "resource/fetchResources",
-  async (_, { rejectWithValue }) => {
+  async (
+    {
+      experience,
+      communication,
+      certification,
+      technology,
+    } = {},
+    { rejectWithValue }
+  ) => {
     try {
-      const response = await resourceApiClient.get(RESOURCE_API.LIST_RESOURCES);
+      // Map communication values to API-expected numbers
+      const communicationMap = {
+        Average: "1",
+        Medium: "2",
+        Fluent: "3",
+      };
+      const mappedCommunication = communication
+        ? communicationMap[communication] || communication
+        : undefined;
+
+      // Convert technology array to comma-separated string
+      const technologyString = Array.isArray(technology) ? technology.join(",") : technology;
+
+      const params = new URLSearchParams({
+        ...(experience && { experience }),
+        ...(mappedCommunication && { communication: mappedCommunication }),
+        ...(certification && { certification }),
+        ...(technologyString && { technology: technologyString }),
+      });
+
+      console.log("params log", params.toString());
+
+      const response = await resourceApiClient.get(
+        `${RESOURCE_API.LIST_RESOURCES}?${params.toString()}`
+      );
       const { success, data } = response.data;
 
       if (!success) {
         throw new Error("Failed to fetch resources");
       }
 
-      return data; 
+      return data;
     } catch (error) {
       const errorMessage =
         error.response?.data?.message ||

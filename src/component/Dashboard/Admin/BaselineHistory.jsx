@@ -130,13 +130,13 @@ export const BaselineHistories = ({ histories, employeeName, competency, gender 
                                         </p>
                                     </div>
                                 </div>
-                                <div className="flex items-center space-x-2">
-                                    <h3 className="text-lg font-semibold text-gray-800">
+                                <div className="flex items-center space-x-4 bg-gray-50 rounded-lg p-2">
+                                    <h3 className="text-lg font-semibold text-gray-800 flex-grow">
                                         Baseline - {formatDate(selectedBaseline.timestamp)}
                                     </h3>
                                     <button
                                         onClick={closeBaselineDetails}
-                                        className="text-gray-500 hover:text-gray-700 text-xl cursor-pointer transition-colors duration-200"
+                                        className="text-gray-600 text-xl font-medium bg-white w-6 h-6 flex items-center justify-center rounded-full shadow-sm"
                                     >
                                         ✕
                                     </button>
