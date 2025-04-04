@@ -21,7 +21,8 @@ const initialState = {
   designations: [],
   competencies: [],
   designationLoading: false,
-  competencyLoading: false
+  competencyLoading: false,
+  createdResource: null 
 };
 
 const isResourceDetailsDifferent = (current, incoming) => {
@@ -41,6 +42,9 @@ const resourceSlice = createSlice({
       if (state.resourceDetails) {
         state.resourceDetails = null;
       }
+    },
+    resetCreatedResource: (state) => {
+      state.createdResource = null;
     }
   },
   extraReducers: (builder) => {
@@ -50,8 +54,9 @@ const resourceSlice = createSlice({
         state.loading = true;
         state.error = null;
       })
-      .addCase(createResource.fulfilled, (state) => {
+      .addCase(createResource.fulfilled, (state, { payload }) => {
         state.loading = false;
+        state.createdResource = payload;
       })
       .addCase(createResource.rejected, (state, { payload }) => {
         state.loading = false;
