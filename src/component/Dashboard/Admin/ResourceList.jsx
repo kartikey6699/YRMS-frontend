@@ -1,7 +1,9 @@
 import React, { useState } from "react";
-import { FaChartLine, FaLightbulb, FaSortUp, FaSortDown, FaSort, FaSpinner } from "react-icons/fa";
+import { FaChartLine, FaLightbulb, FaSortUp, FaSortDown, FaSort, FaSpinner, FaSearch, FaCalendarAlt } from "react-icons/fa";
 import { useSelector } from "react-redux";
 import EmployeeDetail from "./EmployeDetail";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
 
 const ResourceList = ({ handleBaselineClick, handleOpportunitiesClick }) => {
   const { resources, loading, error } = useSelector((state) => state.resource);
@@ -11,6 +13,14 @@ const ResourceList = ({ handleBaselineClick, handleOpportunitiesClick }) => {
   });
   const [selectedResource, setSelectedResource] = useState(null);
   const [loadingBaselineId, setLoadingBaselineId] = useState(null);
+  const [searchValues, setSearchValues] = useState({
+    employeeName: "",
+    joiningDate: null, // Changed to null for DatePicker
+    designation: "",
+    status: "", // Will be used for dropdown
+  });
+
+  const statusOptions = ["Pool", "Deployed", "PIP"];
 
   const handleSort = (key) => {
     let direction = "ascending";
@@ -20,7 +30,43 @@ const ResourceList = ({ handleBaselineClick, handleOpportunitiesClick }) => {
     setSortConfig({ key, direction });
   };
 
-  const sortedResources = [...(resources || [])].sort((a, b) => {
+  const handleSearchChange = (key, value) => {
+    setSearchValues({
+      ...searchValues,
+      [key]: value,
+    });
+  };
+
+  const handleDateChange = (date) => {
+    setSearchValues({
+      ...searchValues,
+      joiningDate: date,
+    });
+  };
+
+  // Filter resources based on search values
+  const filteredResources = (resources || []).filter((resource) => {
+    const matchesName = resource.employeeName?.toLowerCase().includes(searchValues.employeeName.toLowerCase()) ?? true;
+    const matchesDesignation = resource.designation?.toLowerCase().includes(searchValues.designation.toLowerCase()) ?? true;
+    const matchesStatus = searchValues.status ? resource.status?.toLowerCase() === searchValues.status.toLowerCase() : true;
+    
+    // Date filtering
+    let matchesDate = true;
+    if (searchValues.joiningDate) {
+      const resourceDate = resource.joiningDate ? new Date(resource.joiningDate) : null;
+      if (resourceDate) {
+        matchesDate = 
+          resourceDate.getDate() === searchValues.joiningDate.getDate() &&
+          resourceDate.getMonth() === searchValues.joiningDate.getMonth() &&
+          resourceDate.getFullYear() === searchValues.joiningDate.getFullYear();
+      }
+    }
+
+    return matchesName && matchesDesignation && matchesStatus && matchesDate;
+  });
+
+  // Sort filtered resources
+  const sortedResources = [...filteredResources].sort((a, b) => {
     if (!sortConfig.key) return 0;
     const valueA = a[sortConfig.key] || "";
     const valueB = b[sortConfig.key] || "";
@@ -78,9 +124,53 @@ const ResourceList = ({ handleBaselineClick, handleOpportunitiesClick }) => {
                     </button>
                   )}
                 </div>
+                {/* Search input for each column (except S.No) */}
+                {column.key !== "sno" && (
+                  <div className="relative mt-1">
+                    {column.key === "joiningDate" ? (
+                      <div className="relative">
+                        <DatePicker
+                          selected={searchValues.joiningDate}
+                          onChange={handleDateChange}
+                          dateFormat="MM/dd/yyyy"
+                          placeholderText="Select date"
+                          className="w-full px-2 py-1 pr-6 text-xs border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        />
+                        <FaCalendarAlt className="absolute right-2 top-2 text-gray-400 text-xs" />
+                      </div>
+                    ) : column.key === "status" ? (
+                      <select
+                        value={searchValues.status}
+                        onChange={(e) => handleSearchChange("status", e.target.value)}
+                        className="w-full px-2 py-1 text-xs border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      >
+                        <option value="">All Statuses</option>
+                        {statusOptions.map((option) => (
+                          <option key={option} value={option}>
+                            {option}
+                          </option>
+                        ))}
+                      </select>
+                    ) : (
+                      <div className="relative">
+                        <input
+                          type="text"
+                          placeholder={`Search ${column.label}`}
+                          value={searchValues[column.key] || ""}
+                          onChange={(e) => handleSearchChange(column.key, e.target.value)}
+                          className="w-full px-2 py-1 pr-6 text-xs border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        />
+                        <FaSearch className="absolute right-2 top-2 text-gray-400 text-xs" />
+                      </div>
+                    )}
+                  </div>
+                )}
               </th>
             ))}
-            <th className="p-1 text-left font-semibold text-sm border-b border-gray-200">Actions</th>
+            <th className="p-1 text-left font-semibold text-sm border-b border-gray-200">
+              Actions
+              <div className="mt-1 h-8"></div> {/* Spacer for alignment */}
+            </th>
           </tr>
         </thead>
         <tbody>
