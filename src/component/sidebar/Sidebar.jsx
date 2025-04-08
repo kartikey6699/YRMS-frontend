@@ -26,8 +26,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
     { name: 'Dashboard', icon: <FaTachometerAlt />, path: '/dashboard' },
     { name: 'Resources', icon: <FaCogs />, path: '/manage-resources' },
     { name: 'Analytics', icon: <FaChartBar />, path: '/analytics' },
-    { name: 'Trainers', icon: <FaChalkboardTeacher />, path: '/manage-trainers' },
-    { name: 'Training', icon: <FaTasks />, path: '/manage-training' },
+    { name: 'Training and Upskilling', icon: <FaChalkboardTeacher />, path: '/manage-training' },
     { name: 'Interns', icon: <FaUsersCog />, path: '/interns'},
   ];
 
