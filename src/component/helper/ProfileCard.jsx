@@ -74,11 +74,19 @@ const ProfileCard = ({ publicId }) => {
 
       <div className="absolute top-0 left-0 w-full h-full flex items-center p-6">
         <div className="relative">
-          <img
-            src={boyImage}
-            alt="Profile"
-            className="w-24 h-24 rounded-full border-4 border-white"
-          />
+          {resourceDetails?.profileImage ? (
+            <img 
+              src={`data:image/png;base64,${resourceDetails.profileImage}`} 
+              alt="Profile" 
+              className="w-24 h-24 rounded-full border-4 border-white"
+            />
+          ) : (
+            <img
+              src={boyImage}
+              alt="Default Profile"
+              className="w-24 h-24 rounded-full border-4 border-white"
+            />
+          )}
         </div>
 
         <div className="ml-6 text-white">

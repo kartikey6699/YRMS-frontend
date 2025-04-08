@@ -44,7 +44,8 @@ const EmployeeDetail = ({ publicId, onClose }) => {
         grade: resourceDetails.grade || '',
         joiningDate: resourceDetails.joiningDate || '',
         experience: resourceDetails.experience || '',
-        status: resourceDetails.status || 'pool'
+        status: resourceDetails.status || 'pool',
+        profileImage: resourceDetails.profileImage || null
       });
     }
   }, [resourceDetails, publicId]);
@@ -192,7 +193,15 @@ const EmployeeDetail = ({ publicId, onClose }) => {
         <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-3xl border border-gray-200">
           <div className="flex justify-between items-center mb-6">
             <div className="flex items-center">
-              <FaUser className="text-blue-600 mr-2 text-xl" />
+              {formData.profileImage ? (
+                <img 
+                  src={`data:image/png;base64,${formData.profileImage}`} 
+                  alt="Profile" 
+                  className="w-10 h-10 rounded-full mr-2 object-cover"
+                />
+              ) : (
+                <FaUser className="w-10 h-10 rounded-full mr-2 text-gray-400" />
+              )}
               {isEditing ? (
                 <input
                   name="employeeName"
@@ -203,7 +212,7 @@ const EmployeeDetail = ({ publicId, onClose }) => {
                 />
               ) : (
                 <h3 className="text-xl font-semibold text-gray-800">
-                  {resourceDetails.employeeName}
+                  {formData.employeeName}
                 </h3>
               )}
             </div>
