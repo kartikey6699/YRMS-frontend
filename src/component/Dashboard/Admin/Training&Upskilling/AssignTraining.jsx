@@ -25,6 +25,7 @@ import {
 
 import AttendanceDetailsModal from './AttendanceDetailsModal';
 import ViewAttendanceModal from './ViewAttendanceModal';
+import ParticipantDetailsModal from './ParticipantDetailsModal';
 
 const AssignTraining = () => {
   const [activeTab, setActiveTab] = useState('training');
@@ -35,6 +36,7 @@ const AssignTraining = () => {
   // New state variables
   const [showAttendanceDetails, setShowAttendanceDetails] = useState(false);
   const [showViewAttendance, setShowViewAttendance] = useState(false);
+  const [showParticipantDetails, setShowParticipantDetails] = useState(false);
   const [selectedTraining, setSelectedTraining] = useState(null);
 
   // Enhanced training data with new columns
@@ -271,7 +273,13 @@ const AssignTraining = () => {
                     <td className="p-2 text-gray-700 text-sm border-r border-gray-200">
                       {training.competency}
                     </td>
-                    <td className="p-2 text-gray-700 text-sm border-r border-gray-200 text-center">
+                    <td 
+                      className="p-2 text-gray-700 text-sm border-r border-gray-200 text-center cursor-pointer hover:bg-purple-50 transition-colors"
+                      onClick={() => {
+                        setSelectedTraining(training);
+                        setShowParticipantDetails(true);
+                      }}
+                    >
                       <span className="font-medium text-purple-600">
                         {training.participants}
                       </span>
@@ -426,7 +434,13 @@ const AssignTraining = () => {
                     <td className="p-2 text-gray-700 text-sm border-r border-gray-200">
                       {upskilling.competency}
                     </td>
-                    <td className="p-2 text-gray-700 text-sm border-r border-gray-200 text-center">
+                    <td 
+                      className="p-2 text-gray-700 text-sm border-r border-gray-200 text-center cursor-pointer hover:bg-purple-50 transition-colors"
+                      onClick={() => {
+                        setSelectedTraining(upskilling);
+                        setShowParticipantDetails(true);
+                      }}
+                    >
                       <span className="font-medium text-purple-600">
                         {upskilling.participants}
                       </span>
@@ -522,6 +536,14 @@ const AssignTraining = () => {
         {showViewAttendance && (
           <ViewAttendanceModal 
             onClose={() => setShowViewAttendance(false)}
+            training={selectedTraining}
+          />
+        )}
+
+        {/* Participant Details Modal */}
+        {showParticipantDetails && (
+          <ParticipantDetailsModal 
+            onClose={() => setShowParticipantDetails(false)}
             training={selectedTraining}
           />
         )}
