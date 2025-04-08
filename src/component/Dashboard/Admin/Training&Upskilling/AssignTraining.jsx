@@ -32,7 +32,7 @@ const AssignTraining = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [editingStatus, setEditingStatus] = useState(null);
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'ascending' });
-  
+
   // New state variables
   const [showAttendanceDetails, setShowAttendanceDetails] = useState(false);
   const [showViewAttendance, setShowViewAttendance] = useState(false);
@@ -55,10 +55,50 @@ const AssignTraining = () => {
       score: 87,
       status: 'running'
     },
-    // ... other training data
+    {
+      id: 2,
+      name: 'Advanced Node.js',
+      startDate: '2023-07-10',
+      endDate: '2023-07-12',
+      trainer: 'Sarah Johnson',
+      requester: 'Engineering Team',
+      competency: 'Backend Development',
+      participants: 10,
+      inAttendance: 9,
+      feedback: 4.7,
+      score: 92,
+      status: 'completed'
+    },
+    {
+      id: 3,
+      name: 'Cloud Architecture',
+      startDate: '2023-08-05',
+      endDate: '2023-08-09',
+      trainer: 'Michael Chen',
+      requester: 'DevOps Team',
+      competency: 'Cloud Computing',
+      participants: 20,
+      inAttendance: 18,
+      feedback: 4.3,
+      score: 85,
+      status: 'completed'
+    },
+    {
+      id: 4,
+      name: 'Agile Project Management',
+      startDate: '2023-09-12',
+      endDate: '2023-09-14',
+      trainer: 'Emily Wilson',
+      requester: 'Project Management Office',
+      competency: 'Project Management',
+      participants: 12,
+      inAttendance: 12,
+      feedback: 4.8,
+      score: 95,
+      status: 'completed'
+    }
   ]);
 
-  // Enhanced upskilling data with new columns
   const [upskillingData, setUpskillingData] = useState([
     {
       id: 1,
@@ -79,9 +119,9 @@ const AssignTraining = () => {
 
   const statusOptions = [
     { value: 'hold', label: 'Hold', icon: <FaPause className="inline mr-1" />, color: 'bg-yellow-100 text-yellow-800' },
-    { value: 'pending', label: 'Pending', icon: <FaHourglassHalf className="inline mr-1" />, color: 'bg-blue-100 text-blue-800' },
-    { value: 'running', label: 'Running', icon: <FaArrowRight className="inline mr-1" />, color: 'bg-green-100 text-green-800' },
-    { value: 'completed', label: 'Completed', icon: <FaCheck className="inline mr-1" />, color: 'bg-purple-100 text-purple-800' }
+    { value: 'pending', label: 'Pending', icon: <FaHourglassHalf className="inline mr-1" />, color: 'bg-red-100 text-red-800' },
+    { value: 'running', label: 'Running', icon: <FaArrowRight className="inline mr-1" />, color: 'bg-orange-100 text-orange-800' },
+    { value: 'completed', label: 'Completed', icon: <FaCheck className="inline mr-1" />, color: 'bg-green-100 text-green-800' }
   ];
 
   const handleStatusChange = (id, newStatus, isTraining) => {
@@ -168,11 +208,10 @@ const AssignTraining = () => {
                 setSearchTerm('');
                 setSortConfig({ key: null, direction: 'ascending' });
               }}
-              className={`px-6 py-3 text-sm font-medium rounded-l-lg focus:outline-none transition-colors ${
-                activeTab === 'training'
+              className={`px-6 py-3 text-sm font-medium rounded-l-lg focus:outline-none transition-colors ${activeTab === 'training'
                   ? 'bg-purple-600 text-white shadow-purple'
                   : 'bg-white text-purple-600 hover:bg-purple-50 border border-purple-200'
-              }`}
+                }`}
             >
               <FaChalkboardTeacher className="inline mr-2" />
               Training Programs
@@ -183,11 +222,10 @@ const AssignTraining = () => {
                 setSearchTerm('');
                 setSortConfig({ key: null, direction: 'ascending' });
               }}
-              className={`px-6 py-3 text-sm font-medium rounded-r-lg focus:outline-none transition-colors ${
-                activeTab === 'upskilling'
+              className={`px-6 py-3 text-sm font-medium rounded-r-lg focus:outline-none transition-colors ${activeTab === 'upskilling'
                   ? 'bg-purple-600 text-white shadow-purple'
                   : 'bg-white text-purple-600 hover:bg-purple-50 border border-purple-200'
-              }`}
+                }`}
             >
               <FaUserPlus className="inline mr-2" />
               Upskilling Programs
@@ -289,7 +327,7 @@ const AssignTraining = () => {
                     </td>
                     <td className="p-2 text-gray-700 text-sm border-r border-gray-200">
                       <div className="flex space-x-2 justify-center">
-                        <button 
+                        <button
                           onClick={() => {
                             setSelectedTraining(training);
                             setShowAttendanceDetails(true);
@@ -299,7 +337,7 @@ const AssignTraining = () => {
                         >
                           <FaEdit />
                         </button>
-                        <button 
+                        <button
                           onClick={() => {
                             setSelectedTraining(training);
                             setShowViewAttendance(true);
@@ -523,10 +561,10 @@ const AssignTraining = () => {
             )}
           </div>
         )}
-        
+
         {/* Attendance Details Modal */}
         {showAttendanceDetails && (
-          <AttendanceDetailsModal 
+          <AttendanceDetailsModal
             onClose={() => setShowAttendanceDetails(false)}
             training={selectedTraining}
           />
@@ -534,7 +572,7 @@ const AssignTraining = () => {
 
         {/* View Attendance Modal */}
         {showViewAttendance && (
-          <ViewAttendanceModal 
+          <ViewAttendanceModal
             onClose={() => setShowViewAttendance(false)}
             training={selectedTraining}
           />
