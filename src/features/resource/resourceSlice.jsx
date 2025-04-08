@@ -23,7 +23,13 @@ const initialState = {
   competencies: [],
   designationLoading: false,
   competencyLoading: false,
-  createdResource: null
+  createdResource: null,
+  pagination: {
+    currentPage: 1,
+    totalPages: 1,
+    totalItems: 0,
+    size: 10
+  }
 };
 
 const isResourceDetailsDifferent = (current, incoming) => {
@@ -46,6 +52,13 @@ const resourceSlice = createSlice({
     },
     resetCreatedResource: (state) => {
       state.createdResource = null;
+    },
+    setPage: (state, action) => {
+      state.pagination.currentPage = action.payload;
+    },
+    setPageSize: (state, action) => {
+      state.pagination.size = action.payload;
+      state.pagination.currentPage = 1; // Reset to first page when page size changes
     }
   },
   extraReducers: (builder) => {
@@ -58,6 +71,24 @@ const resourceSlice = createSlice({
       .addCase(createResource.fulfilled, (state, { payload }) => {
         state.loading = false;
         state.createdResource = payload;
+        // Add the new resource to the beginning of the list
+        state.resources.unshift({
+          publicId: payload.publicId,
+          employeeName: payload.employeeName,
+          joiningDate: payload.joiningDate,
+          designation: payload.designation,
+          status: payload.status || "pool",
+          email: payload.email,
+          phoneNumber: payload.phoneNumber,
+          gender: payload.gender,
+          location: payload.location,
+          businessGroup: payload.businessGroup,
+          businessUnit: payload.businessUnit,
+          competency: payload.competency,
+          profileImage: payload.profileImage // Added profileImage
+        });
+        // Update total items count
+        state.pagination.totalItems += 1;
       })
       .addCase(createResource.rejected, (state, { payload }) => {
         state.loading = false;
@@ -87,14 +118,26 @@ const resourceSlice = createSlice({
           technologies: user.technologies ? user.technologies.split(',') : [],
           experience: user.experience || 0,
           certifications: user.certification || "",
-          communication: user.communication || ""
+          communication: user.communication || "",
+          profileImage: user.profileImage // Added profileImage
         }));
+        
+        // Update pagination info from API response
+        if (payload.pagination) {
+          state.pagination = {
+            currentPage: payload.pagination.currentPage || 1,
+            totalPages: payload.pagination.totalPages || 1,
+            totalItems: payload.pagination.totalItems || 0,
+            size: payload.pagination.size || 10
+          };
+        }
       })
       .addCase(fetchResources.rejected, (state, { payload }) => {
         state.loading = false;
         state.error = payload;
       })
 
+      // Update Resource
       .addCase(updateResource.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -102,6 +145,7 @@ const resourceSlice = createSlice({
       .addCase(updateResource.fulfilled, (state, { payload }) => {
         state.loading = false;
 
+        // Update resource details if it's the current one being viewed
         if (state.resourceDetails?.publicId === payload.publicId) {
           state.resourceDetails = {
             ...state.resourceDetails,
@@ -110,10 +154,12 @@ const resourceSlice = createSlice({
             grade: payload.grade,
             joiningDate: payload.joiningDate,
             experience: payload.experience,
-            status: payload.status
+            status: payload.status,
+            profileImage: payload.profileImage // Added profileImage
           };
         }
 
+        // Update the resource in the list
         const index = state.resources.findIndex(r => r.publicId === payload.publicId);
         if (index !== -1) {
           state.resources[index] = {
@@ -121,7 +167,8 @@ const resourceSlice = createSlice({
             employeeId: payload.employeeId,
             designation: payload.designation,
             joiningDate: payload.joiningDate,
-            status: payload.status
+            status: payload.status,
+            profileImage: payload.profileImage // Added profileImage
           };
         }
       })
@@ -152,7 +199,11 @@ const resourceSlice = createSlice({
             status: payload.status || "pool",
             grade: payload.grade,
             experience: payload.experience || 0,
-            competency: payload.competency
+            competency: payload.competency,
+            technologies: payload.technologies ? payload.technologies.split(',') : [],
+            certifications: payload.certification || "",
+            communication: payload.communication || "",
+            profileImage: payload.profileImage // Added profileImage
           };
         }
       })
@@ -180,8 +231,12 @@ const resourceSlice = createSlice({
       .addCase(createDesignation.pending, (state) => {
         state.designationLoading = true;
       })
-      .addCase(createDesignation.fulfilled, (state) => {
+      .addCase(createDesignation.fulfilled, (state, { payload }) => {
         state.designationLoading = false;
+        state.designations.push({
+          publicId: payload.publicId,
+          name: payload.name
+        });
       })
       .addCase(createDesignation.rejected, (state, { payload }) => {
         state.designationLoading = false;
@@ -191,8 +246,12 @@ const resourceSlice = createSlice({
       .addCase(updateDesignation.pending, (state) => {
         state.designationLoading = true;
       })
-      .addCase(updateDesignation.fulfilled, (state) => {
+      .addCase(updateDesignation.fulfilled, (state, { payload }) => {
         state.designationLoading = false;
+        const index = state.designations.findIndex(d => d.publicId === payload.publicId);
+        if (index !== -1) {
+          state.designations[index].name = payload.name;
+        }
       })
       .addCase(updateDesignation.rejected, (state, { payload }) => {
         state.designationLoading = false;
@@ -202,8 +261,9 @@ const resourceSlice = createSlice({
       .addCase(deleteDesignation.pending, (state) => {
         state.designationLoading = true;
       })
-      .addCase(deleteDesignation.fulfilled, (state) => {
+      .addCase(deleteDesignation.fulfilled, (state, { payload }) => {
         state.designationLoading = false;
+        state.designations = state.designations.filter(d => d.publicId !== payload.publicId);
       })
       .addCase(deleteDesignation.rejected, (state, { payload }) => {
         state.designationLoading = false;
@@ -229,8 +289,12 @@ const resourceSlice = createSlice({
       .addCase(createCompetency.pending, (state) => {
         state.competencyLoading = true;
       })
-      .addCase(createCompetency.fulfilled, (state) => {
+      .addCase(createCompetency.fulfilled, (state, { payload }) => {
         state.competencyLoading = false;
+        state.competencies.push({
+          publicId: payload.publicId,
+          name: payload.name
+        });
       })
       .addCase(createCompetency.rejected, (state, { payload }) => {
         state.competencyLoading = false;
@@ -240,8 +304,12 @@ const resourceSlice = createSlice({
       .addCase(updateCompetency.pending, (state) => {
         state.competencyLoading = true;
       })
-      .addCase(updateCompetency.fulfilled, (state) => {
+      .addCase(updateCompetency.fulfilled, (state, { payload }) => {
         state.competencyLoading = false;
+        const index = state.competencies.findIndex(c => c.publicId === payload.publicId);
+        if (index !== -1) {
+          state.competencies[index].name = payload.name;
+        }
       })
       .addCase(updateCompetency.rejected, (state, { payload }) => {
         state.competencyLoading = false;
@@ -251,8 +319,9 @@ const resourceSlice = createSlice({
       .addCase(deleteCompetency.pending, (state) => {
         state.competencyLoading = true;
       })
-      .addCase(deleteCompetency.fulfilled, (state) => {
+      .addCase(deleteCompetency.fulfilled, (state, { payload }) => {
         state.competencyLoading = false;
+        state.competencies = state.competencies.filter(c => c.publicId !== payload.publicId);
       })
       .addCase(deleteCompetency.rejected, (state, { payload }) => {
         state.competencyLoading = false;
@@ -261,5 +330,11 @@ const resourceSlice = createSlice({
   }
 });
 
-export const { clearError, resetResourceDetails } = resourceSlice.actions;
+export const { 
+  clearError, 
+  resetResourceDetails, 
+  resetCreatedResource,
+  setPage,
+  setPageSize
+} = resourceSlice.actions;
 export default resourceSlice.reducer;

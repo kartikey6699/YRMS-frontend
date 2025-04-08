@@ -47,6 +47,8 @@ export const fetchResources = createAsyncThunk(
       communication,
       certification,
       technology,
+      page = 1, // Added page parameter
+      size = 10 // Added pageSize parameter
     } = {},
     { rejectWithValue }
   ) => {
@@ -69,6 +71,8 @@ export const fetchResources = createAsyncThunk(
         ...(mappedCommunication && { communication: mappedCommunication }),
         ...(certification && { certification }),
         ...(technologyString && { technology: technologyString }),
+        page, // Include page in the request
+        size // Include pageSize in the request
       });
 
       console.log("params log", params.toString());
