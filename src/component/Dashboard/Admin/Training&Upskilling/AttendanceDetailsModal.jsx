@@ -13,6 +13,13 @@ const AttendanceDetailsModal = ({ onClose }) => {
     { id: 4, empId: 'EMP004', name: 'Alice Brown', email: 'alice@example.com', present: false, reason: 'Personal' },
   ]);
 
+  const [isOpen, setIsOpen] = useState(true);
+
+  const handleClose = () => {
+    setIsOpen(false);
+    setTimeout(onClose, 200);
+  };
+
   const handleAttendanceChange = (id, field, value) => {
     setAttendanceData(attendanceData.map(item => 
       item.id === id 
@@ -22,8 +29,11 @@ const AttendanceDetailsModal = ({ onClose }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden">
+    <div className={`fixed inset-0 backdrop-blur-sm flex items-center justify-center z-50 p-4 transition-opacity duration-200 ${isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+      <div 
+        className={`bg-white rounded-lg shadow-xl w-full max-w-5xl max-h-[90vh] overflow-hidden transform transition-all duration-200 ${isOpen ? 'scale-100' : 'scale-95'} border-2 border-purple-200`}
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="flex justify-between items-center bg-gradient-to-r from-purple-600 to-blue-600 p-4 text-white">
           <h3 className="text-xl font-bold">
             <FaUser className="inline mr-2" />
@@ -38,7 +48,7 @@ const AttendanceDetailsModal = ({ onClose }) => {
               dateFormat="MMMM d, yyyy"
             />
             <button 
-              onClick={onClose}
+              onClick={handleClose}
               className="ml-4 text-white hover:text-purple-200 transition-colors"
             >
               <FaTimes />
@@ -50,25 +60,25 @@ const AttendanceDetailsModal = ({ onClose }) => {
           <div className="grid grid-cols-12 gap-2 font-semibold text-sm text-purple-800 border-b pb-2 mb-2">
             <div className="col-span-1">#</div>
             <div className="col-span-2">Emp ID</div>
-            <div className="col-span-3">Name</div>
-            <div className="col-span-3">Email</div>
-            <div className="col-span-2">Status</div>
-            <div className="col-span-1">Action</div>
+            <div className="col-span-2">Name</div>
+            <div className="col-span-2">Email</div>
+            <div className="col-span-1">Status</div>
+            <div className="col-span-4">Reason for Absence</div>
           </div>
           
           {attendanceData.map((emp, index) => (
-            <div key={emp.id} className="grid grid-cols-12 gap-2 items-center py-2 border-b border-gray-100 hover:bg-purple-50">
-              <div className="col-span-1 text-gray-600">{index + 1}</div>
+            <div key={emp.id} className="grid grid-cols-12 gap-2 items-start py-3 border-b border-gray-100 hover:bg-purple-50">
+              <div className="col-span-1 text-gray-600 mt-1">{index + 1}</div>
               <div className="col-span-2 flex items-center">
                 <FaIdCard className="text-purple-600 mr-1" />
                 {emp.empId}
               </div>
-              <div className="col-span-3">{emp.name}</div>
-              <div className="col-span-3 flex items-center">
+              <div className="col-span-2 mt-1">{emp.name}</div>
+              <div className="col-span-2 flex items-center">
                 <FaEnvelope className="text-purple-600 mr-1" />
                 <span className="truncate">{emp.email}</span>
               </div>
-              <div className="col-span-2">
+              <div className="col-span-1 mt-1">
                 <label className="inline-flex items-center">
                   <input
                     type="checkbox"
@@ -79,14 +89,14 @@ const AttendanceDetailsModal = ({ onClose }) => {
                   <span className="ml-2">{emp.present ? 'Present' : 'Absent'}</span>
                 </label>
               </div>
-              <div className="col-span-1">
+              <div className="col-span-4">
                 {!emp.present && (
-                  <input
-                    type="text"
+                  <textarea
                     value={emp.reason}
                     onChange={(e) => handleAttendanceChange(emp.id, 'reason', e.target.value)}
-                    placeholder="Reason"
-                    className="w-full px-2 py-1 border border-purple-300 rounded focus:outline-none focus:ring-1 focus:ring-purple-500 text-sm"
+                    placeholder="Enter detailed reason for absence..."
+                    rows={3}
+                    className="w-full px-3 py-2 border border-purple-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm resize-y min-h-[80px]"
                   />
                 )}
               </div>
@@ -96,17 +106,14 @@ const AttendanceDetailsModal = ({ onClose }) => {
         
         <div className="bg-gray-50 px-4 py-3 flex justify-end space-x-3 border-t">
           <button
-            onClick={onClose}
-            className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"
+            onClick={handleClose}
+            className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-colors"
           >
             Cancel
           </button>
           <button
-            onClick={() => {
-              // Save logic here
-              onClose();
-            }}
-            className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"
+            onClick={handleClose}
+            className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-colors"
           >
             Save Attendance
           </button>
