@@ -114,7 +114,6 @@ const AssignTraining = () => {
       score: 88,
       status: 'hold'
     },
-    // ... other upskilling data
   ]);
 
   const statusOptions = [
@@ -179,7 +178,8 @@ const AssignTraining = () => {
   const columns = [
     { key: 'sno', label: 'S.No', sortable: false },
     { key: 'name', label: 'Program Name', sortable: true },
-    { key: 'dates', label: 'Dates', sortable: false },
+    { key: 'startDate', label: 'Start Date', sortable: true },
+    { key: 'endDate', label: 'End Date', sortable: true },
     { key: 'trainer', label: 'Trainer', sortable: true },
     { key: 'requester', label: 'Requester', sortable: true },
     { key: 'competency', label: 'Competency', sortable: true },
@@ -299,7 +299,8 @@ const AssignTraining = () => {
                     </td>
                     <td className="p-2 text-gray-700 text-sm border-r border-gray-200">
                       <div className="text-sm">{training.startDate}</div>
-                      <div className="text-xs text-gray-500">to</div>
+                    </td>
+                    <td className="p-2 text-gray-700 text-sm border-r border-gray-200">
                       <div className="text-sm">{training.endDate}</div>
                     </td>
                     <td className="p-2 text-gray-700 text-sm border-r border-gray-200">
@@ -460,7 +461,8 @@ const AssignTraining = () => {
                     </td>
                     <td className="p-2 text-gray-700 text-sm border-r border-gray-200">
                       <div className="text-sm">{upskilling.startDate}</div>
-                      <div className="text-xs text-gray-500">to</div>
+                    </td>
+                    <td className="p-2 text-gray-700 text-sm border-r border-gray-200">
                       <div className="text-sm">{upskilling.endDate}</div>
                     </td>
                     <td className="p-2 text-gray-700 text-sm border-r border-gray-200">
