@@ -11,7 +11,7 @@ import ManageResource from './component/Dashboard/Admin/ManageResource';
 import Analytics from './component/Dashboard/Admin/Analytics';
 import ManageBaseline from './component/Dashboard/Admin/ManageBaseline';
 import ManageTrainer from './component/Dashboard/Admin/ManageTrainer';
-import AssignTraining from './component/Dashboard/Admin/AssignTraining';
+import AssignTraining from './component/Dashboard/Admin/Training&Upskilling/AssignTraining';
 import Opportunities from './component/Dashboard/Admin/Opportunity';
 import InternList from './component/Dashboard/Admin/ManageIntern/InternList';
 import AddIntern from './component/Dashboard/Admin/ManageIntern/AddIntern';

@@ -32,7 +32,7 @@ export const COMPETENCY_API = {
 export const OPPORTUNITY_API = {
     CREATE: `${OPPORTUNITY_API_BASE_URL}/opportunity-create`,
     // LIST: `${OPPORTUNITY_API_BASE_URL}/opportunity-list`,
-    LIST: (userId) => `${ADMIN_API_BASE_URL}${userId}/opportunity-list`,
+    LIST: (userId) => `${ADMIN_API_BASE_URL}/${userId}/opportunity-list`,
     DETAIL: `${OPPORTUNITY_API_BASE_URL}/opportunity-detail`,
     UPDATE: `${OPPORTUNITY_API_BASE_URL}/opportunity-update`,
     DELETE: `${OPPORTUNITY_API_BASE_URL}/opportunity-delete`
