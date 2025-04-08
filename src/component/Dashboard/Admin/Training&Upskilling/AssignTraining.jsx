@@ -23,11 +23,19 @@ import {
   FaSortDown
 } from 'react-icons/fa';
 
+import AttendanceDetailsModal from './AttendanceDetailsModal';
+import ViewAttendanceModal from './ViewAttendanceModal';
+
 const AssignTraining = () => {
   const [activeTab, setActiveTab] = useState('training');
   const [searchTerm, setSearchTerm] = useState('');
   const [editingStatus, setEditingStatus] = useState(null);
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'ascending' });
+  
+  // New state variables
+  const [showAttendanceDetails, setShowAttendanceDetails] = useState(false);
+  const [showViewAttendance, setShowViewAttendance] = useState(false);
+  const [selectedTraining, setSelectedTraining] = useState(null);
 
   // Enhanced training data with new columns
   const [trainingData, setTrainingData] = useState([
@@ -134,7 +142,7 @@ const AssignTraining = () => {
     { key: 'requester', label: 'Requester', sortable: true },
     { key: 'competency', label: 'Competency', sortable: true },
     { key: 'participants', label: 'Participants', sortable: true },
-    { key: 'actions', label: 'Actions', sortable: false },
+    { key: 'attendance', label: 'Attendance', sortable: false },
     { key: 'feedback', label: 'Feedback', sortable: true },
     { key: 'status', label: 'Status', sortable: true }
   ];
@@ -273,13 +281,27 @@ const AssignTraining = () => {
                     </td>
                     <td className="p-2 text-gray-700 text-sm border-r border-gray-200">
                       <div className="flex space-x-2 justify-center">
-                        <button className="text-purple-600 hover:text-purple-800 transition-colors">
+                        <button 
+                          onClick={() => {
+                            setSelectedTraining(training);
+                            setShowAttendanceDetails(true);
+                          }}
+                          className="text-purple-600 hover:text-purple-800 transition-colors"
+                          title="Attendance Details"
+                        >
                           <FaEdit />
                         </button>
-                        <button className="text-purple-600 hover:text-purple-800 transition-colors">
+                        <button 
+                          onClick={() => {
+                            setSelectedTraining(training);
+                            setShowViewAttendance(true);
+                          }}
+                          className="text-purple-600 hover:text-purple-800 transition-colors"
+                          title="View Attendance"
+                        >
                           <FaEye />
                         </button>
-                        <button className="text-purple-600 hover:text-purple-800 transition-colors">
+                        <button className="text-purple-600 hover:text-purple-800 transition-colors" title="Download">
                           <FaDownload />
                         </button>
                       </div>
@@ -486,6 +508,22 @@ const AssignTraining = () => {
               </div>
             )}
           </div>
+        )}
+        
+        {/* Attendance Details Modal */}
+        {showAttendanceDetails && (
+          <AttendanceDetailsModal 
+            onClose={() => setShowAttendanceDetails(false)}
+            training={selectedTraining}
+          />
+        )}
+
+        {/* View Attendance Modal */}
+        {showViewAttendance && (
+          <ViewAttendanceModal 
+            onClose={() => setShowViewAttendance(false)}
+            training={selectedTraining}
+          />
         )}
       </div>
     </div>
