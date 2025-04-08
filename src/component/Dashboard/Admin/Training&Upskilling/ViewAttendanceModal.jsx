@@ -1,12 +1,18 @@
 // ViewAttendanceModal.js
 import React, { useState } from 'react';
-import { FaUser, FaEnvelope, FaIdCard, FaCalendarAlt, FaChartPie, FaChevronDown, FaChevronUp, FaTimes } from 'react-icons/fa'; // Added FaTimes import
+import { FaUser, FaEnvelope, FaIdCard, FaCalendarAlt, FaChartPie, FaChevronDown, FaChevronUp, FaTimes } from 'react-icons/fa';
 import AbsentDetailsModal from './AbsentDetailsModal';
 
 const ViewAttendanceModal = ({ onClose }) => {
   const [expandedRow, setExpandedRow] = useState(null);
   const [showAbsentDetails, setShowAbsentDetails] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState(null);
+  const [isOpen, setIsOpen] = useState(true);
+
+  const handleClose = () => {
+    setIsOpen(false);
+    setTimeout(onClose, 300);
+  };
 
   const attendanceData = [
     { 
@@ -64,15 +70,15 @@ const ViewAttendanceModal = ({ onClose }) => {
 
   return (
     <>
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-        <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden">
+      <div className={`fixed inset-0 backdrop-blur-sm flex items-center justify-center z-50 p-4 transition-opacity duration-200 ${isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+        <div className={`bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden transform transition-all duration-300 ${isOpen ? 'scale-100' : 'scale-95'}`}>
           <div className="flex justify-between items-center bg-gradient-to-r from-purple-600 to-blue-600 p-4 text-white">
             <h3 className="text-xl font-bold">
               <FaChartPie className="inline mr-2" />
               View Attendance Summary
             </h3>
             <button 
-              onClick={onClose}
+              onClick={handleClose}
               className="text-white hover:text-purple-200 transition-colors"
             >
               <FaTimes />
@@ -159,7 +165,7 @@ const ViewAttendanceModal = ({ onClose }) => {
           
           <div className="bg-gray-50 px-4 py-3 flex justify-end border-t">
             <button
-              onClick={onClose}
+              onClick={handleClose}
               className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"
             >
               Close
