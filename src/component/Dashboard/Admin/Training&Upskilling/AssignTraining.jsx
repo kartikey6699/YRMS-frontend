@@ -185,8 +185,7 @@ const AssignTraining = () => {
   const columns = [
     { key: 'sno', label: 'S.No', sortable: false },
     { key: 'name', label: 'Program Name', sortable: true },
-    { key: 'startDate', label: 'Start Date', sortable: true },
-    { key: 'endDate', label: 'End Date', sortable: true },
+    { key: 'startDate', label: 'Duration', sortable: true },
     { key: 'trainer', label: 'Trainer', sortable: true },
     { key: 'requester', label: 'Requester', sortable: true },
     { key: 'competency', label: 'Competency', sortable: true },
@@ -308,35 +307,27 @@ const AssignTraining = () => {
                       <div className="font-medium">{training.name}</div>
                     </td>
                     <td className="p-2 text-gray-700 text-sm border-r border-gray-200">
-                      <div className="flex items-center">
-                        {/* Calendar icon container */}
-                        <div className="mr-2 flex flex-col items-center justify-center bg-purple-50 rounded-lg p-1 w-10">
-                          <FaCalendarAlt className="text-purple-500 text-xs" />
-                          <span className="text-xs font-medium text-purple-700">
-                            {new Date(training.startDate).toLocaleString('default', { month: 'short' })}
-                          </span>
+                      <div className="flex items-start">
+                        {/* Calendar icon */}
+                        <div className="mr-2 p-1 text-purple-600">
+                          <FaCalendarAlt />
                         </div>
                         
-                        {/* Date details */}
-                        <div className="flex flex-col">
-                          <div className="flex items-center">
-                            <span className="font-medium text-gray-800">
-                              {new Date(training.startDate).getDate()}
+                        {/* Date range */}
+                        <div>
+                          <div className="flex items-baseline flex-wrap">
+                            <span className="font-medium text-gray-800 mr-1">
+                              {new Date(training.startDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'long' })}
                             </span>
-                            <span className="mx-1 text-gray-400">-</span>
+                            <span className="text-gray-400 mx-1">to</span>
                             <span className="font-medium text-gray-800">
-                              {new Date(training.endDate).getDate()}
-                            </span>
-                            <span className="ml-1 text-gray-500 text-xs">
-                              {new Date(training.endDate).toLocaleString('default', { month: 'short' })}
+                              {new Date(training.endDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: new Date(training.startDate).getFullYear() !== new Date(training.endDate).getFullYear() ? 'numeric' : undefined })}
                             </span>
                           </div>
                           
-                          {/* Year and duration */}
-                          <div className="flex items-center text-xs text-gray-500 mt-0.5">
-                            <span>{new Date(training.startDate).getFullYear()}</span>
-                            <span className="mx-1">•</span>
-                            <span>
+                          {/* Duration badge */}
+                          <div className="mt-1">
+                            <span className="inline-block bg-purple-50 text-purple-700 text-xs px-2 py-0.5 rounded-full">
                               {Math.ceil(
                                 (new Date(training.endDate) - new Date(training.startDate)) / 
                                 (1000 * 60 * 60 * 24)
@@ -503,32 +494,27 @@ const AssignTraining = () => {
                       <div className="font-medium">{upskilling.name}</div>
                     </td>
                     <td className="p-2 text-gray-700 text-sm border-r border-gray-200">
-                      <div className="flex items-center">
-                        <div className="mr-2 flex flex-col items-center justify-center bg-purple-50 rounded-lg p-1 w-10">
-                          <FaCalendarAlt className="text-purple-500 text-xs" />
-                          <span className="text-xs font-medium text-purple-700">
-                            {new Date(upskilling.startDate).toLocaleString('default', { month: 'short' })}
-                          </span>
+                      <div className="flex items-start">
+                        {/* Calendar icon */}
+                        <div className="mr-2 p-1 text-purple-600">
+                          <FaCalendarAlt />
                         </div>
                         
-                        <div className="flex flex-col">
-                          <div className="flex items-center">
-                            <span className="font-medium text-gray-800">
-                              {new Date(upskilling.startDate).getDate()}
+                        {/* Date range */}
+                        <div>
+                          <div className="flex items-baseline flex-wrap">
+                            <span className="font-medium text-gray-800 mr-1">
+                              {new Date(upskilling.startDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'long' })}
                             </span>
-                            <span className="mx-1 text-gray-400">-</span>
+                            <span className="text-gray-400 mx-1">to</span>
                             <span className="font-medium text-gray-800">
-                              {new Date(upskilling.endDate).getDate()}
-                            </span>
-                            <span className="ml-1 text-gray-500 text-xs">
-                              {new Date(upskilling.endDate).toLocaleString('default', { month: 'short' })}
+                              {new Date(upskilling.endDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: new Date(upskilling.startDate).getFullYear() !== new Date(upskilling.endDate).getFullYear() ? 'numeric' : undefined })}
                             </span>
                           </div>
                           
-                          <div className="flex items-center text-xs text-gray-500 mt-0.5">
-                            <span>{new Date(upskilling.startDate).getFullYear()}</span>
-                            <span className="mx-1">•</span>
-                            <span>
+                          {/* Duration badge */}
+                          <div className="mt-1">
+                            <span className="inline-block bg-purple-50 text-purple-700 text-xs px-2 py-0.5 rounded-full">
                               {Math.ceil(
                                 (new Date(upskilling.endDate) - new Date(upskilling.startDate)) / 
                                 (1000 * 60 * 60 * 24)
