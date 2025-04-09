@@ -25,6 +25,11 @@ import {
 
 import AttendanceDetailsModal from './AttendanceDetailsModal';
 import ViewAttendanceModal from './ViewAttendanceModal';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
+import Select from 'react-select';
+import AddTraining from './AddTraining';
+import AddUpskilling from './AddUpskilling';
 import ParticipantDetailsModal from './ParticipantDetailsModal';
 
 const AssignTraining = () => {
@@ -38,6 +43,8 @@ const AssignTraining = () => {
   const [showViewAttendance, setShowViewAttendance] = useState(false);
   const [showParticipantDetails, setShowParticipantDetails] = useState(false);
   const [selectedTraining, setSelectedTraining] = useState(null);
+  const [showAddTraining, setShowAddTraining] = useState(false);
+  const [showAddUpskilling, setShowAddUpskilling] = useState(false);
 
   // Enhanced training data with new columns
   const [trainingData, setTrainingData] = useState([
@@ -178,8 +185,7 @@ const AssignTraining = () => {
   const columns = [
     { key: 'sno', label: 'S.No', sortable: false },
     { key: 'name', label: 'Program Name', sortable: true },
-    { key: 'startDate', label: 'Start Date', sortable: true },
-    { key: 'endDate', label: 'End Date', sortable: true },
+    { key: 'startDate', label: 'Duration', sortable: true },
     { key: 'trainer', label: 'Trainer', sortable: true },
     { key: 'requester', label: 'Requester', sortable: true },
     { key: 'competency', label: 'Competency', sortable: true },
@@ -247,7 +253,10 @@ const AssignTraining = () => {
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          <button className="w-full sm:w-auto inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-colors whitespace-nowrap">
+          <button 
+            onClick={() => setShowAddTraining(true)}
+            className="w-full sm:w-auto inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-colors whitespace-nowrap"
+          >
             <FaPlus className="mr-2" />
             Add New {activeTab === 'training' ? 'Training' : 'Upskilling'}
             <FaArrowRight className="ml-2" />
@@ -298,10 +307,35 @@ const AssignTraining = () => {
                       <div className="font-medium">{training.name}</div>
                     </td>
                     <td className="p-2 text-gray-700 text-sm border-r border-gray-200">
-                      <div className="text-sm">{training.startDate}</div>
-                    </td>
-                    <td className="p-2 text-gray-700 text-sm border-r border-gray-200">
-                      <div className="text-sm">{training.endDate}</div>
+                      <div className="flex items-start">
+                        {/* Calendar icon */}
+                        <div className="mr-2 p-1 text-purple-600">
+                          <FaCalendarAlt />
+                        </div>
+                        
+                        {/* Date range */}
+                        <div>
+                          <div className="flex items-baseline flex-wrap">
+                            <span className="font-medium text-gray-800 mr-1">
+                              {new Date(training.startDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'long' })}
+                            </span>
+                            <span className="text-gray-400 mx-1">to</span>
+                            <span className="font-medium text-gray-800">
+                              {new Date(training.endDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: new Date(training.startDate).getFullYear() !== new Date(training.endDate).getFullYear() ? 'numeric' : undefined })}
+                            </span>
+                          </div>
+                          
+                          {/* Duration badge */}
+                          <div className="mt-1">
+                            <span className="inline-block bg-purple-50 text-purple-700 text-xs px-2 py-0.5 rounded-full">
+                              {Math.ceil(
+                                (new Date(training.endDate) - new Date(training.startDate)) / 
+                                (1000 * 60 * 60 * 24)
+                              ) + 1} days
+                            </span>
+                          </div>
+                        </div>
+                      </div>
                     </td>
                     <td className="p-2 text-gray-700 text-sm border-r border-gray-200">
                       {training.trainer}
@@ -460,10 +494,35 @@ const AssignTraining = () => {
                       <div className="font-medium">{upskilling.name}</div>
                     </td>
                     <td className="p-2 text-gray-700 text-sm border-r border-gray-200">
-                      <div className="text-sm">{upskilling.startDate}</div>
-                    </td>
-                    <td className="p-2 text-gray-700 text-sm border-r border-gray-200">
-                      <div className="text-sm">{upskilling.endDate}</div>
+                      <div className="flex items-start">
+                        {/* Calendar icon */}
+                        <div className="mr-2 p-1 text-purple-600">
+                          <FaCalendarAlt />
+                        </div>
+                        
+                        {/* Date range */}
+                        <div>
+                          <div className="flex items-baseline flex-wrap">
+                            <span className="font-medium text-gray-800 mr-1">
+                              {new Date(upskilling.startDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'long' })}
+                            </span>
+                            <span className="text-gray-400 mx-1">to</span>
+                            <span className="font-medium text-gray-800">
+                              {new Date(upskilling.endDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: new Date(upskilling.startDate).getFullYear() !== new Date(upskilling.endDate).getFullYear() ? 'numeric' : undefined })}
+                            </span>
+                          </div>
+                          
+                          {/* Duration badge */}
+                          <div className="mt-1">
+                            <span className="inline-block bg-purple-50 text-purple-700 text-xs px-2 py-0.5 rounded-full">
+                              {Math.ceil(
+                                (new Date(upskilling.endDate) - new Date(upskilling.startDate)) / 
+                                (1000 * 60 * 60 * 24)
+                              ) + 1} days
+                            </span>
+                          </div>
+                        </div>
+                      </div>
                     </td>
                     <td className="p-2 text-gray-700 text-sm border-r border-gray-200">
                       {upskilling.trainer}
@@ -585,6 +644,40 @@ const AssignTraining = () => {
           <ParticipantDetailsModal 
             onClose={() => setShowParticipantDetails(false)}
             training={selectedTraining}
+          />
+        )}
+
+        {/* Add Training Modal */}
+        {showAddTraining && (
+          <AddTraining
+            onClose={() => setShowAddTraining(false)}
+            onSave={(newTraining) => {
+              // Add the new training to your state
+              setTrainingData(prev => [...prev, {
+                ...newTraining,
+                id: Math.max(...prev.map(t => t.id), 0) + 1,
+                inAttendance: 0,
+                feedback: 0,
+                score: 0
+              }]);
+            }}
+          />
+        )}
+
+        {/* Add Upskilling Modal */}
+        {showAddUpskilling && (
+          <AddUpskilling
+            onClose={() => setShowAddUpskilling(false)}
+            onSave={(newUpskilling) => {
+              // Add the new upskilling to your state
+              setUpskillingData(prev => [...prev, {
+                ...newUpskilling,
+                id: Math.max(...prev.map(u => u.id), 0) + 1,
+                inAttendance: 0,
+                feedback: 0,
+                score: 0
+              }]);
+            }}
           />
         )}
       </div>
