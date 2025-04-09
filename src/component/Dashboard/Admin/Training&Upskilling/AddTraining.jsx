@@ -258,6 +258,13 @@ const AddTraining = ({ onClose, onSave }) => {
                   className={`basic-multi-select ${errors.participants ? 'border-red-500' : ''}`}
                   classNamePrefix="select"
                   placeholder="Select participants..."
+                  styles={{
+                    menu: (provided) => ({
+                      ...provided,
+                      maxHeight: 150, // Limit the height of the dropdown
+                      overflowY: 'auto', // Enable scrolling
+                    }),
+                  }}
                 />
                 {errors.participants && (
                   <p className="mt-1 text-sm text-red-600">{errors.participants}</p>

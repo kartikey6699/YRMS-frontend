@@ -206,7 +206,13 @@ const AddUpskilling = ({ onClose, onSave }) => {
                 className="basic-multi-select"
                 classNamePrefix="select"
                 placeholder="Select participants..."
-                required
+                styles={{
+                  menu: (provided) => ({
+                    ...provided,
+                    maxHeight: 150, // Limit the height of the dropdown
+                    overflowY: 'auto', // Enable scrolling
+                  }),
+                }}
               />
               <p className="mt-1 text-xs text-gray-500">
                 {formData.participants.length} participants selected
