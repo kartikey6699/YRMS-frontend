@@ -31,6 +31,7 @@ import Select from 'react-select';
 import AddTraining from './AddTraining';
 import AddUpskilling from './AddUpskilling';
 import ParticipantDetailsModal from './ParticipantDetailsModal';
+import TrainingFeedback from './TrainingFeedback';
 
 const AssignTraining = () => {
   const [activeTab, setActiveTab] = useState('training');
@@ -38,27 +39,26 @@ const AssignTraining = () => {
   const [editingStatus, setEditingStatus] = useState(null);
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'ascending' });
 
-  // New state variables
   const [showAttendanceDetails, setShowAttendanceDetails] = useState(false);
   const [showViewAttendance, setShowViewAttendance] = useState(false);
   const [showParticipantDetails, setShowParticipantDetails] = useState(false);
+  const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const [selectedTraining, setSelectedTraining] = useState(null);
   const [showAddTraining, setShowAddTraining] = useState(false);
   const [showAddUpskilling, setShowAddUpskilling] = useState(false);
 
-  // Enhanced training data with new columns
   const [trainingData, setTrainingData] = useState([
     {
       id: 1,
       name: 'React Fundamentals',
       startDate: '2023-06-15',
-      endDate: '2023-06-17',
+      endDate: '2023-08-17',
       trainer: 'John Smith',
       requester: 'HR Department',
       competency: 'JavaScript',
       participants: 15,
       inAttendance: 12,
-      feedback: 4.5,
+      feedback: '',
       score: 87,
       status: 'running'
     },
@@ -72,7 +72,7 @@ const AssignTraining = () => {
       competency: 'Backend Development',
       participants: 10,
       inAttendance: 9,
-      feedback: 4.7,
+      feedback: '',
       score: 92,
       status: 'completed'
     },
@@ -86,7 +86,7 @@ const AssignTraining = () => {
       competency: 'Cloud Computing',
       participants: 20,
       inAttendance: 18,
-      feedback: 4.3,
+      feedback: '',
       score: 85,
       status: 'completed'
     },
@@ -100,7 +100,7 @@ const AssignTraining = () => {
       competency: 'Project Management',
       participants: 12,
       inAttendance: 12,
-      feedback: 4.8,
+      feedback: '',
       score: 95,
       status: 'completed'
     }
@@ -111,7 +111,7 @@ const AssignTraining = () => {
       id: 1,
       name: 'Leadership Skills',
       startDate: '2023-06-18',
-      endDate: '2023-06-20',
+      endDate: '2023-08-20',
       trainer: 'Emma Wilson',
       requester: 'Management',
       competency: 'Soft Skills',
@@ -308,12 +308,9 @@ const AssignTraining = () => {
                     </td>
                     <td className="p-2 text-gray-700 text-sm border-r border-gray-200">
                       <div className="flex items-start">
-                        {/* Calendar icon */}
                         <div className="mr-2 p-1 text-purple-600">
                           <FaCalendarAlt />
                         </div>
-                        
-                        {/* Date range */}
                         <div>
                           <div className="flex items-baseline flex-wrap">
                             <span className="font-medium text-gray-800 mr-1">
@@ -324,8 +321,6 @@ const AssignTraining = () => {
                               {new Date(training.endDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: new Date(training.startDate).getFullYear() !== new Date(training.endDate).getFullYear() ? 'numeric' : undefined })}
                             </span>
                           </div>
-                          
-                          {/* Duration badge */}
                           <div className="mt-1">
                             <span className="inline-block bg-purple-50 text-purple-700 text-xs px-2 py-0.5 rounded-full">
                               {Math.ceil(
@@ -389,12 +384,16 @@ const AssignTraining = () => {
                     </td>
                     <td className="p-2 text-gray-700 text-sm border-r border-gray-200 text-center">
                       <div className="flex flex-col items-center">
-                        <button className="text-purple-600 hover:text-purple-800 transition-colors">
+                        <button 
+                          onClick={() => {
+                            setSelectedTraining(training);
+                            setShowFeedbackModal(true);
+                          }}
+                          className="text-purple-600 hover:text-purple-800 transition-colors"
+                        >
                           <FaCommentAlt className="inline mr-1" /> {training.feedback}
                         </button>
-                        <span className="text-xs text-gray-500 mt-1">
-                          {training.score}% score
-                        </span>
+                        {/* Removed score percentage */}
                       </div>
                     </td>
                     <td className="p-2 text-gray-700 text-sm">
@@ -495,12 +494,9 @@ const AssignTraining = () => {
                     </td>
                     <td className="p-2 text-gray-700 text-sm border-r border-gray-200">
                       <div className="flex items-start">
-                        {/* Calendar icon */}
                         <div className="mr-2 p-1 text-purple-600">
                           <FaCalendarAlt />
                         </div>
-                        
-                        {/* Date range */}
                         <div>
                           <div className="flex items-baseline flex-wrap">
                             <span className="font-medium text-gray-800 mr-1">
@@ -511,8 +507,6 @@ const AssignTraining = () => {
                               {new Date(upskilling.endDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: new Date(upskilling.startDate).getFullYear() !== new Date(upskilling.endDate).getFullYear() ? 'numeric' : undefined })}
                             </span>
                           </div>
-                          
-                          {/* Duration badge */}
                           <div className="mt-1">
                             <span className="inline-block bg-purple-50 text-purple-700 text-xs px-2 py-0.5 rounded-full">
                               {Math.ceil(
@@ -562,12 +556,16 @@ const AssignTraining = () => {
                     </td>
                     <td className="p-2 text-gray-700 text-sm border-r border-gray-200 text-center">
                       <div className="flex flex-col items-center">
-                        <button className="text-purple-600 hover:text-purple-800 transition-colors">
+                        <button 
+                          onClick={() => {
+                            setSelectedTraining(upskilling);
+                            setShowFeedbackModal(true);
+                          }}
+                          className="text-purple-600 hover:text-purple-800 transition-colors"
+                        >
                           <FaCommentAlt className="inline mr-1" /> {upskilling.feedback}
                         </button>
-                        <span className="text-xs text-gray-500 mt-1">
-                          {upskilling.score}% score
-                        </span>
+                        {/* Removed score percentage */}
                       </div>
                     </td>
                     <td className="p-2 text-gray-700 text-sm">
@@ -647,12 +645,27 @@ const AssignTraining = () => {
           />
         )}
 
+        {/* Training Feedback Modal */}
+        {showFeedbackModal && (
+          <TrainingFeedback
+            training={selectedTraining}
+            onClose={() => setShowFeedbackModal(false)}
+            onSave={(updatedEmployees, feedbackCols, scoreCols) => {
+              console.log('Saved feedback data:', {
+                employees: updatedEmployees,
+                feedbackColumns: feedbackCols,
+                scoreColumns: scoreCols
+              });
+              setShowFeedbackModal(false);
+            }}
+          />
+        )}
+
         {/* Add Training Modal */}
         {showAddTraining && (
           <AddTraining
             onClose={() => setShowAddTraining(false)}
             onSave={(newTraining) => {
-              // Add the new training to your state
               setTrainingData(prev => [...prev, {
                 ...newTraining,
                 id: Math.max(...prev.map(t => t.id), 0) + 1,
@@ -669,7 +682,6 @@ const AssignTraining = () => {
           <AddUpskilling
             onClose={() => setShowAddUpskilling(false)}
             onSave={(newUpskilling) => {
-              // Add the new upskilling to your state
               setUpskillingData(prev => [...prev, {
                 ...newUpskilling,
                 id: Math.max(...prev.map(u => u.id), 0) + 1,
