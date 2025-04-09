@@ -31,7 +31,7 @@ const TrainingFeedback = ({ training, onClose, onSave }) => {
 
     const ratingOptions = [
         { value: '', label: 'Select rating' },
-        { value: 'bad', label: 'Bad' },
+        { value: 'poor', label: 'poor' },
         { value: 'average', label: 'Average' },
         { value: 'good', label: 'Good' },
         { value: 'excellent', label: 'Excellent' }
@@ -180,7 +180,7 @@ const TrainingFeedback = ({ training, onClose, onSave }) => {
         if (!value) return null;
 
         const ratingMap = {
-            bad: 1,
+            poor: 1,
             average: 2.5,
             good: 4,
             excellent: 5
