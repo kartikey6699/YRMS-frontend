@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { FaUserPlus, FaCalendarAlt, FaUserTie, FaClipboardList, FaUsers, FaTimes, FaCheck } from 'react-icons/fa';
+import React, { useState, useEffect } from 'react';
+import { FaUserPlus, FaCalendarAlt, FaUserTie, FaTimes, FaCheck } from 'react-icons/fa';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import Select from 'react-select';
@@ -9,6 +9,7 @@ const AddUpskilling = ({ onClose, onSave }) => {
     name: '',
     trainer: '',
     startDate: null,
+    duration: '',
     endDate: null,
     requester: '',
     competency: '',
@@ -56,13 +57,37 @@ const AddUpskilling = ({ onClose, onSave }) => {
     setFormData(prev => ({ ...prev, [field]: selectedOptions }));
   };
 
+  const calculateEndDate = (startDate, duration) => {
+    if (!startDate || !duration || duration <= 0) return null;
+
+    const date = new Date(startDate);
+    let businessDays = 0;
+
+    while (businessDays < duration) {
+      date.setDate(date.getDate() + 1);
+      const dayOfWeek = date.getDay();
+      if (dayOfWeek !== 0 && dayOfWeek !== 6) { // Skip weekends
+        businessDays++;
+      }
+    }
+
+    return date.toISOString().split('T')[0];
+  };
+
+  useEffect(() => {
+    if (formData.startDate && formData.duration) {
+      const calculatedEndDate = calculateEndDate(formData.startDate, parseInt(formData.duration));
+      setFormData(prev => ({ ...prev, endDate: calculatedEndDate }));
+    }
+  }, [formData.startDate, formData.duration]);
+
   const handleSubmit = (e) => {
     e.preventDefault();
     // Format the data before saving
     const upskillingToSave = {
       ...formData,
       startDate: formData.startDate.toISOString().split('T')[0],
-      endDate: formData.endDate.toISOString().split('T')[0],
+      endDate: formData.endDate,
       participants: formData.participants.map(p => p.value),
       status: 'pending'
     };
@@ -87,10 +112,10 @@ const AddUpskilling = ({ onClose, onSave }) => {
 
         <form onSubmit={handleSubmit} className="p-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Program Name */}
+            {/* Upskilling Name */}
             <div className="col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Program Name <span className="text-red-500">*</span>
+                Upskilling Name <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
@@ -157,6 +182,23 @@ const AddUpskilling = ({ onClose, onSave }) => {
                   required
                 />
               </div>
+            </div>
+
+            {/* Duration */}
+            <div className="w-28">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Duration <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="number"
+                name="duration"
+                value={formData.duration}
+                onChange={handleChange}
+                min="1"
+                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                placeholder="Days"
+                required
+              />
             </div>
 
             {/* End Date */}

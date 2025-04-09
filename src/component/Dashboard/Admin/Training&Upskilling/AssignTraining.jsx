@@ -22,6 +22,15 @@ import {
   FaSortUp,
   FaSortDown
 } from 'react-icons/fa';
+import { 
+  FiEdit2, 
+  FiEye, 
+  FiDownload,
+  FiCalendar,
+  FiUserCheck,
+  FiClipboard,
+  FiBarChart2
+} from 'react-icons/fi';
 
 import AttendanceDetailsModal from './AttendanceDetailsModal';
 import ViewAttendanceModal from './ViewAttendanceModal';
@@ -272,7 +281,9 @@ const AssignTraining = () => {
                   {columns.map((column) => (
                     <th
                       key={column.key}
-                      className="p-2 text-left font-semibold text-sm border-b border-gray-200"
+                      className={`p-2 text-left font-semibold text-sm border-b border-gray-200 ${
+                        column.key === 'startDate' ? 'w-[180px]' : ''
+                      }`}
                     >
                       <div className="flex items-center justify-between">
                         <span>{column.label}</span>
@@ -307,28 +318,26 @@ const AssignTraining = () => {
                       <div className="font-medium">{training.name}</div>
                     </td>
                     <td className="p-2 text-gray-700 text-sm border-r border-gray-200">
-                      <div className="flex items-start">
-                        <div className="mr-2 p-1 text-purple-600">
-                          <FaCalendarAlt />
+                      <div className="space-y-1.5">
+                        <div className="flex items-center border border-gray-200 rounded px-2 py-1 bg-white">
+                          <span className="text-xs text-gray-500 mr-1.5 whitespace-nowrap">Start:</span>
+                          <span className="text-xs font-medium text-gray-800 truncate">
+                            {new Date(training.startDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+                          </span>
                         </div>
-                        <div>
-                          <div className="flex items-baseline flex-wrap">
-                            <span className="font-medium text-gray-800 mr-1">
-                              {new Date(training.startDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'long' })}
-                            </span>
-                            <span className="text-gray-400 mx-1">to</span>
-                            <span className="font-medium text-gray-800">
-                              {new Date(training.endDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: new Date(training.startDate).getFullYear() !== new Date(training.endDate).getFullYear() ? 'numeric' : undefined })}
-                            </span>
-                          </div>
-                          <div className="mt-1">
-                            <span className="inline-block bg-purple-50 text-purple-700 text-xs px-2 py-0.5 rounded-full">
-                              {Math.ceil(
-                                (new Date(training.endDate) - new Date(training.startDate)) / 
-                                (1000 * 60 * 60 * 24)
-                              ) + 1} days
-                            </span>
-                          </div>
+                        <div className="flex items-center border border-gray-200 rounded px-2 py-1 bg-white">
+                          <span className="text-xs text-gray-500 mr-1.5 whitespace-nowrap">End:</span>
+                          <span className="text-xs font-medium text-gray-800 truncate">
+                            {new Date(training.endDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+                          </span>
+                        </div>
+                        <div className="text-center">
+                          <span className="inline-block bg-purple-50 text-purple-700 text-[11px] px-1.5 py-0.5 rounded-full">
+                            {Math.ceil(
+                              (new Date(training.endDate) - new Date(training.startDate)) / 
+                              (1000 * 60 * 60 * 24)
+                            ) + 1}d
+                          </span>
                         </div>
                       </div>
                     </td>
@@ -356,29 +365,41 @@ const AssignTraining = () => {
                       </div>
                     </td>
                     <td className="p-2 text-gray-700 text-sm border-r border-gray-200">
-                      <div className="flex space-x-2 justify-center">
+                      <div className="flex justify-center space-x-3">
                         <button
                           onClick={() => {
                             setSelectedTraining(training);
                             setShowAttendanceDetails(true);
                           }}
-                          className="text-purple-600 hover:text-purple-800 transition-colors"
+                          className="p-1.5 rounded-lg bg-indigo-50 text-indigo-600 hover:bg-indigo-100 transition-colors group relative"
                           title="Attendance Details"
                         >
-                          <FaEdit />
+                          <FiUserCheck className="w-4 h-4" />
+                          <span className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 text-xs bg-gray-800 text-white px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                            Edit Attendance
+                          </span>
                         </button>
                         <button
                           onClick={() => {
                             setSelectedTraining(training);
                             setShowViewAttendance(true);
                           }}
-                          className="text-purple-600 hover:text-purple-800 transition-colors"
+                          className="p-1.5 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors group relative"
                           title="View Attendance"
                         >
-                          <FaEye />
+                          <FiEye className="w-4 h-4" />
+                          <span className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 text-xs bg-gray-800 text-white px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                            View Attendance
+                          </span>
                         </button>
-                        <button className="text-purple-600 hover:text-purple-800 transition-colors" title="Download">
-                          <FaDownload />
+                        <button 
+                          className="p-1.5 rounded-lg bg-green-50 text-green-600 hover:bg-green-100 transition-colors group relative"
+                          title="Download Report"
+                        >
+                          <FiDownload className="w-4 h-4" />
+                          <span className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 text-xs bg-gray-800 text-white px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                            Download Report
+                          </span>
                         </button>
                       </div>
                     </td>
@@ -393,7 +414,6 @@ const AssignTraining = () => {
                         >
                           <FaCommentAlt className="inline mr-1" /> {training.feedback}
                         </button>
-                        {/* Removed score percentage */}
                       </div>
                     </td>
                     <td className="p-2 text-gray-700 text-sm">
@@ -458,7 +478,9 @@ const AssignTraining = () => {
                   {columns.map((column) => (
                     <th
                       key={column.key}
-                      className="p-2 text-left font-semibold text-sm border-b border-gray-200"
+                      className={`p-2 text-left font-semibold text-sm border-b border-gray-200 ${
+                        column.key === 'startDate' ? 'w-[180px]' : ''
+                      }`}
                     >
                       <div className="flex items-center justify-between">
                         <span>{column.label}</span>
@@ -493,28 +515,26 @@ const AssignTraining = () => {
                       <div className="font-medium">{upskilling.name}</div>
                     </td>
                     <td className="p-2 text-gray-700 text-sm border-r border-gray-200">
-                      <div className="flex items-start">
-                        <div className="mr-2 p-1 text-purple-600">
-                          <FaCalendarAlt />
+                      <div className="space-y-1.5">
+                        <div className="flex items-center border border-gray-200 rounded px-2 py-1 bg-white">
+                          <span className="text-xs text-gray-500 mr-1.5 whitespace-nowrap">Start:</span>
+                          <span className="text-xs font-medium text-gray-800 truncate">
+                            {new Date(upskilling.startDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+                          </span>
                         </div>
-                        <div>
-                          <div className="flex items-baseline flex-wrap">
-                            <span className="font-medium text-gray-800 mr-1">
-                              {new Date(upskilling.startDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'long' })}
-                            </span>
-                            <span className="text-gray-400 mx-1">to</span>
-                            <span className="font-medium text-gray-800">
-                              {new Date(upskilling.endDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: new Date(upskilling.startDate).getFullYear() !== new Date(upskilling.endDate).getFullYear() ? 'numeric' : undefined })}
-                            </span>
-                          </div>
-                          <div className="mt-1">
-                            <span className="inline-block bg-purple-50 text-purple-700 text-xs px-2 py-0.5 rounded-full">
-                              {Math.ceil(
-                                (new Date(upskilling.endDate) - new Date(upskilling.startDate)) / 
-                                (1000 * 60 * 60 * 24)
-                              ) + 1} days
-                            </span>
-                          </div>
+                        <div className="flex items-center border border-gray-200 rounded px-2 py-1 bg-white">
+                          <span className="text-xs text-gray-500 mr-1.5 whitespace-nowrap">End:</span>
+                          <span className="text-xs font-medium text-gray-800 truncate">
+                            {new Date(upskilling.endDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+                          </span>
+                        </div>
+                        <div className="text-center">
+                          <span className="inline-block bg-purple-50 text-purple-700 text-[11px] px-1.5 py-0.5 rounded-full">
+                            {Math.ceil(
+                              (new Date(upskilling.endDate) - new Date(upskilling.startDate)) / 
+                              (1000 * 60 * 60 * 24)
+                            ) + 1}d
+                          </span>
                         </div>
                       </div>
                     </td>
@@ -542,15 +562,41 @@ const AssignTraining = () => {
                       </div>
                     </td>
                     <td className="p-2 text-gray-700 text-sm border-r border-gray-200">
-                      <div className="flex space-x-2 justify-center">
-                        <button className="text-purple-600 hover:text-purple-800 transition-colors">
-                          <FaEdit />
+                      <div className="flex justify-center space-x-3">
+                        <button
+                          onClick={() => {
+                            setSelectedTraining(upskilling);
+                            setShowAttendanceDetails(true);
+                          }}
+                          className="p-1.5 rounded-lg bg-indigo-50 text-indigo-600 hover:bg-indigo-100 transition-colors group relative"
+                          title="Attendance Details"
+                        >
+                          <FiUserCheck className="w-4 h-4" />
+                          <span className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 text-xs bg-gray-800 text-white px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                            Edit Attendance
+                          </span>
                         </button>
-                        <button className="text-purple-600 hover:text-purple-800 transition-colors">
-                          <FaEye />
+                        <button
+                          onClick={() => {
+                            setSelectedTraining(upskilling);
+                            setShowViewAttendance(true);
+                          }}
+                          className="p-1.5 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors group relative"
+                          title="View Attendance"
+                        >
+                          <FiEye className="w-4 h-4" />
+                          <span className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 text-xs bg-gray-800 text-white px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                            View Attendance
+                          </span>
                         </button>
-                        <button className="text-purple-600 hover:text-purple-800 transition-colors">
-                          <FaDownload />
+                        <button 
+                          className="p-1.5 rounded-lg bg-green-50 text-green-600 hover:bg-green-100 transition-colors group relative"
+                          title="Download Report"
+                        >
+                          <FiDownload className="w-4 h-4" />
+                          <span className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 text-xs bg-gray-800 text-white px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                            Download Report
+                          </span>
                         </button>
                       </div>
                     </td>
@@ -565,7 +611,6 @@ const AssignTraining = () => {
                         >
                           <FaCommentAlt className="inline mr-1" /> {upskilling.feedback}
                         </button>
-                        {/* Removed score percentage */}
                       </div>
                     </td>
                     <td className="p-2 text-gray-700 text-sm">
