@@ -2,14 +2,19 @@ import React, { useEffect, useState } from 'react'
 import { FaArrowLeft } from 'react-icons/fa'
 import { useDispatch, useSelector } from 'react-redux';
 import { Link, useNavigate } from 'react-router'
-import { fetchResources } from '../../../../features/resource/resourceAction';
+import { fetchCompetencies, fetchResources } from '../../../../features/resource/resourceAction';
+import { ErrorToast } from '../../../helper/ResourceToast';
+import YRMSLoader from '../../../helper/loader';
+import { createIntern, fetchInterns } from '../../../../features/intern/internAction';
 
 const AddIntern = () => {
     const navigate = useNavigate();
     const dispatch = useDispatch();
 
     const { interns, internDetails, loading, error } = useSelector((state) => state.intern);
-    const { resources } = useSelector(
+    const [toast, setToast] = useState(null);
+    const [offered, setIsOffered] = useState(false);
+    const { resources, competencies } = useSelector(
         (state) => state.resource
     );
 
@@ -21,17 +26,18 @@ const AddIntern = () => {
         phoneNumber: "",
         startDate: "",
         endDate: "",
-        mentor: "",
+        mentorId: "",
         status: "",
-        rating: "",
+        ratting: "",
         feedback: "",
         remark: "",
-        competency: "",
-        offered: "pool",
-    });
+        competencyId: "",
+        isOffered: null,
+});
 
     useEffect(() => {
         dispatch(fetchResources());
+        dispatch(fetchCompetencies());
     }, [dispatch]);
 
     const handleInputChange = (e) => {
@@ -39,26 +45,28 @@ const AddIntern = () => {
         setFormData((prev) => ({ ...prev, [name]: value }));
     };
 
-    console.log("men", resources)
-
+    // const handleSubmit = async (e) => {
+    //     e.preventDefault()
+    //     console.log("form: ", formData)
+    // }
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
             setToast(<YRMSLoader message="Creating intern..." />);
-            
-            const createResult = await dispatch(createResource(formData));
+
+            console.log(formData)
+            const createResult = await dispatch(createIntern(formData));
 
             if (!createResult.payload?.publicId) {
                 throw new Error("Failed to get publicId from response");
             }
 
-            console.log(formData)
             setToast(<SuccessToast message="Intern created successfully!" onClose={() => setToast(null)} />);
 
             setToast(<YRMSLoader message="Refreshing data..." />);
-            dispatch(fetchResources());
+            dispatch(fetchInterns());
 
-            setFormData({
+              setFormData({
                 name: "",
                 gender: "",
                 location: "indore",
@@ -66,13 +74,13 @@ const AddIntern = () => {
                 phoneNumber: "",
                 startDate: "",
                 endDate: "",
-                mentor: "",
+                mentorId: "",
                 status: "",
-                rating: "",
+                ratting: "",
                 feedback: "",
                 remark: "",
-                competency: "",
-                offered: "pool",
+                competencyId: "",
+                isOffered: null
             })
         }
         catch (err) {
@@ -83,6 +91,9 @@ const AddIntern = () => {
 
     return (
         <div className='p-6 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl shadow-lg mb-6'>
+            {loading && <YRMSLoader />}
+            {toast}
+
             <div className="flex justify-between items-center mb-6">
                 <Link
                     className="flex items-center text-blue-600 hover:text-blue-800 transition-colors"
@@ -121,7 +132,8 @@ const AddIntern = () => {
                     <div className="pt-3">
                         <label className="block text-gray-700 font-medium mb-2">Gender</label>
                         <select
-                            name="status"
+                            type="text"
+                            name="gender"
                             onChange={handleInputChange}
                             className="w-full p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 transition-colors"
                             required
@@ -147,13 +159,22 @@ const AddIntern = () => {
                     <div className="pt-3">
                         <label className="block text-gray-700 font-medium mb-2">Mentor</label>
                         <select
+                            type="text"
+                            name='mentorId'
                             onChange={handleInputChange}
                             className="w-full p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 transition-colors"
                             placeholder="Select location"
                             required
                         >
-                            {resources.map((mentor) => (
-                                <option value={mentor.id} selected>{mentor.name}</option>
+                            <option value="" selected>Select type</option>
+                            {resources.map((mentor, index) => (
+                                <option
+                                    value={mentor.publicId}
+                                    key={index}
+                                    selected={mentor.selected}
+                                >
+                                    {mentor.employeeName}
+                                </option>
                             ))}
                         </select>
 
@@ -161,14 +182,22 @@ const AddIntern = () => {
                     <div className="pt-3">
                         <label className="block text-gray-700 font-medium mb-2">Competency</label>
                         <select
-                            name="status"
+                            type="text"
+                            name="competencyId"
                             onChange={handleInputChange}
                             className="w-full p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 transition-colors"
                             required
                         >
                             <option value="" selected>Select type</option>
-                            <option value="runnning">Python</option>
-                            <option value="complete">Java</option>
+                            {competencies.map((competency, index) => (
+                                <option
+                                    value={competency.publicId}
+                                    key={index}
+                                    selected={competency.selected}
+                                >
+                                    {competency.name}
+                                </option>
+                            ))}
                         </select>
                     </div>
                 </div>
@@ -198,6 +227,7 @@ const AddIntern = () => {
                     <div>
                         <label className="block text-gray-700 font-medium mb-2">Status</label>
                         <select
+                            type="text"
                             name="status"
                             onChange={handleInputChange}
                             className="w-full p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 transition-colors"
@@ -212,10 +242,12 @@ const AddIntern = () => {
                         <label className="block text-gray-700 font-medium mb-2">Rating</label>
                         <input
                             type="number"
-                            name="rating"
+                            name="ratting"
                             onChange={handleInputChange}
                             className="w-full p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 transition-colors"
                             placeholder="1-5"
+                            min="1"
+                            max="5"
                             required
                         />
                     </div>
@@ -252,17 +284,19 @@ const AddIntern = () => {
                             required
                         >
                             <option value="" selected>Select location</option>
-                            <option value="provision">Indore</option>
-                            <option value="permanent">Pune</option>
-                            <option value="temporary">Hydrabad</option>
+                            <option value="indore">Indore</option>
+                            <option value="pune">Pune</option>
+                            <option value="hydrabad">Hydrabad</option>
                         </select>
                     </div>
                     <div className='pt-10'>
                         <label className="block text-gray-700 mt-8 font-medium mb-2">
                             <input
                                 type="checkbox"
-                                name="offered"
+                                name="isOffered"
+                                onClick={(obj) => setIsOffered(!obj ? true : false)}
                                 onChange={handleInputChange}
+                                value={offered}
                                 className="mr-2"
                                 required
                             />
@@ -271,13 +305,12 @@ const AddIntern = () => {
                     </div>
                 </div>
                 <div className="md:col-span-2 flex justify-center mt-8">
-                    <button
-                        type="submit"
-                        onSubmit={handleSubmit}
+                    <input
+                        type="button"
+                        value="Submit"
+                        onClick={handleSubmit}
                         className="px-8 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg font-semibold hover:from-blue-700 hover:to-purple-700 transition-all transform hover:scale-105"
-                    >
-                        Submit
-                    </button>
+                    />
                 </div>
             </form>
         </div>
