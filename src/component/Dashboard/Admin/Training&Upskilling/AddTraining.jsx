@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  FaChalkboardTeacher, 
-  FaCalendarAlt, 
-  FaUserTie, 
+import {
+  FaChalkboardTeacher,
+  FaCalendarAlt,
+  FaUserTie,
   FaUsers,
   FaTimes,
   FaCheck,
@@ -116,9 +116,8 @@ const AddTraining = ({ onClose, onSave }) => {
     if (!formData.requester) newErrors.requester = 'Requester is required';
     if (!formData.competency) newErrors.competency = 'Competency is required';
     if (!formData.technology) newErrors.technology = 'Technology is required';
-    if (!formData.project.trim()) newErrors.project = 'Project is required'; // Changed validation for textarea
     if (formData.participants.length === 0) newErrors.participants = 'At least one participant is required';
-    
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -150,7 +149,7 @@ const AddTraining = ({ onClose, onSave }) => {
             <FaTimes />
           </button>
         </div>
-        
+
         <form onSubmit={handleSubmit} className="p-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Training Name */}
@@ -316,28 +315,34 @@ const AddTraining = ({ onClose, onSave }) => {
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Technology <span className="text-red-500">*</span>
               </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-10">
-                  <FaLaptopCode className="text-gray-400" />
-                </div>
-                <Select
-                  options={technologyOptions}
-                  value={formData.technology}
-                  onChange={(selected) => handleSelectChange('technology', selected)}
-                  className={`basic-single pl-10 ${errors.technology ? 'border-red-500' : ''}`}
-                  classNamePrefix="select"
-                  placeholder="Select technology..."
-                />
-                {errors.technology && (
-                  <p className="mt-1 text-sm text-red-600">{errors.technology}</p>
+              <Select
+                options={technologyOptions}
+                value={formData.technology}
+                onChange={(selected) => handleSelectChange('technology', selected)}
+                className={`basic-single ${errors.technology ? 'border-red-500' : ''}`}
+                classNamePrefix="select"
+                placeholder={
+                  <div className="flex items-center">
+                    <FaLaptopCode className="text-gray-400 mr-2" />
+                    <span>Select technology...</span>
+                  </div>
+                }
+                formatOptionLabel={(option) => (
+                  <div className="flex items-center">
+                    <FaLaptopCode className="text-gray-400 mr-2" />
+                    <span>{option.label}</span>
+                  </div>
                 )}
-              </div>
+              />
+              {errors.technology && (
+                <p className="mt-1 text-sm text-red-600">{errors.technology}</p>
+              )}
             </div>
 
             {/* Project Field - Changed to textarea */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Project <span className="text-red-500">*</span>
+                Project
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 pt-3 flex items-start pointer-events-none">
@@ -414,24 +419,24 @@ export default AddTraining;
 // Helper function to calculate end date excluding weekends and holidays
 function calculateEndDate(startDate, duration) {
   if (!startDate || !duration || duration <= 0) return '';
-  
+
   const date = new Date(startDate);
   let daysAdded = 0;
   let businessDays = 0;
-  
+
   while (businessDays < duration) {
     date.setDate(date.getDate() + 1);
     daysAdded++;
-    
+
     const dayOfWeek = date.getDay();
     const dateStr = date.toISOString().split('T')[0];
-    
+
     // Skip weekends (0=Sunday, 6=Saturday) and holidays
     if (dayOfWeek !== 0 && dayOfWeek !== 6 && !isHoliday(dateStr)) {
       businessDays++;
     }
   }
-  
+
   return date.toISOString().split('T')[0];
 }
 
