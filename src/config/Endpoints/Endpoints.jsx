@@ -62,6 +62,7 @@ export const RESUME_API = {
 };
 
 export const INTERN_API = {
+    DETAIL: `${INTERN_API_BASE_URL}/Intern`,
     LIST: `${INTERN_API_BASE_URL}/allIntern`,
     CREATE: `${INTERN_API_BASE_URL}/createIntern`,
     UPDATE: `${INTERN_API_BASE_URL}/updateIntern`,

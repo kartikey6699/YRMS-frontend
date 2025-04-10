@@ -16,7 +16,7 @@ const initialState = {
 
 const isInternDetailsDifferent = (current, incoming) => {
   if (!current || !incoming) return true;
-  const comparableFields = ['publicId', 'name', 'email', 'startDate', 'endDate', 'mentor', 'competency', 'status'];
+  const comparableFields = ["publicId", "name", "email", "startDate", "endDate", "mentor", "status", "competency", "feedback", "remark", "location", "ratting"];
   return comparableFields.some(field => current[field] !== incoming[field]);
 };
 
@@ -102,6 +102,10 @@ const internSlice = createSlice({
             mentor: payload.mentor,
             status: payload.status,
             competency: payload.competency,
+            feedback: payload.feedback,
+            remark: payload.remark,
+            location: payload.location,
+            ratting: payload.ratting,
             };
         }
       })

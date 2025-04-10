@@ -91,7 +91,7 @@ export const fetchInternDetails = createAsyncThunk(
       if (!response.data.success) {
         throw new Error("Failed to fetch intern details");
       }
-      return response.data.data;
+      return response.data.data.interns;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || error.message);
     }

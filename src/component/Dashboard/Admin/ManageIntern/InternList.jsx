@@ -5,6 +5,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { fetchInterns } from '../../../../features/intern/internAction';
 import "react-datepicker/dist/react-datepicker.css";
 import DatePicker from "react-datepicker";
+import InternDetail from './InternDetail';
 
 const InternList = () => {
 
@@ -43,7 +44,7 @@ const InternList = () => {
     const [selectedInterns, setSelectedInterns] = useState(null);
 
     const handleSearchChange = (key, value) => {
-            setSearchTerms(searchTerms => ({ ...searchTerms, [key]: value }));
+        setSearchTerms(searchTerms => ({ ...searchTerms, [key]: value }));
     };
 
     const handleSort = (key) => {
@@ -62,36 +63,36 @@ const InternList = () => {
     };
 
     console.log(">>>>", interns)
-  // Filter interns based on search values
-  const filteredInterns = (interns || []).filter((intern) => {
-    const matchesName = intern.name?.toLowerCase().includes(searchTerms.name.toLowerCase()) ?? true;
-    const matchesMentor = intern.mentor?.toLowerCase().includes(searchTerms.mentor.toLowerCase()) ?? true;
-    const matchesStatus = searchTerms.status ? intern.status?.toLowerCase() === searchTerms.status.toLowerCase() : true;
-    
-    // Date filtering
-    let matchesDate = true;
-    if (searchTerms.startDate) {
-      const internDate = intern.startDate ? new Date(intern.startDate) : null;
-      if (internDate) {
-        matchesDate = 
-          internDate.getDate() === searchTerms.startDate.getDate() &&
-          internDate.getMonth() === searchTerms.startDate.getMonth() &&
-          internDate.getFullYear() === searchTerms.startDate.getFullYear();
-      }
-    }
+    // Filter interns based on search values
+    const filteredInterns = (interns || []).filter((intern) => {
+        const matchesName = intern.name?.toLowerCase().includes(searchTerms.name.toLowerCase()) ?? true;
+        const matchesMentor = intern.mentor?.toLowerCase().includes(searchTerms.mentor.toLowerCase()) ?? true;
+        const matchesStatus = searchTerms.status ? intern.status?.toLowerCase() === searchTerms.status.toLowerCase() : true;
 
-    return matchesName && matchesMentor && matchesStatus && matchesDate;
-  });
+        // Date filtering
+        let matchesDate = true;
+        if (searchTerms.startDate) {
+            const internDate = intern.startDate ? new Date(intern.startDate) : null;
+            if (internDate) {
+                matchesDate =
+                    internDate.getDate() === searchTerms.startDate.getDate() &&
+                    internDate.getMonth() === searchTerms.startDate.getMonth() &&
+                    internDate.getFullYear() === searchTerms.startDate.getFullYear();
+            }
+        }
 
- // Sort filtered resources
- const sortedInterns = [...filteredInterns].sort((a, b) => {
-    if (!sortConfig.key) return 0;
-    const valueA = a[sortConfig.key] || "";
-    const valueB = b[sortConfig.key] || "";
-    return sortConfig.direction === "ascending"
-      ? valueA.localeCompare(valueB)
-      : valueB.localeCompare(valueA);
-  });
+        return matchesName && matchesMentor && matchesStatus && matchesDate;
+    });
+
+    // Sort filtered resources
+    const sortedInterns = [...filteredInterns].sort((a, b) => {
+        if (!sortConfig.key) return 0;
+        const valueA = a[sortConfig.key] || "";
+        const valueB = b[sortConfig.key] || "";
+        return sortConfig.direction === "ascending"
+            ? valueA.localeCompare(valueB)
+            : valueB.localeCompare(valueA);
+    });
 
     const columns = [
         { key: "sno", label: "S.No" },
@@ -197,19 +198,19 @@ const InternList = () => {
                                 className="p-3 text-blue-600 text-sm border-r border-gray-200 cursor-pointer hover:underline"
                                 onClick={() => setSelectedInterns(intern)}
                             >
-                                {intern.name}
+                                {intern.name.charAt(0).toUpperCase() + intern.name.slice(1)}
                             </td>
                             <td className="p-3 text-gray-700 text-sm border-r border-gray-200">
                                 {intern.email}
                             </td>
                             <td className="p-3 text-gray-700 text-sm border-r border-gray-200">
-                                {intern.mentor}
+                                {intern.mentor.charAt(0).toUpperCase() + intern.mentor.slice(1)}
                             </td>
                             <td className="p-3 text-gray-700 text-sm border-r border-gray-200">{new Date(intern.startDate).toLocaleDateString()}</td>
                             <td className="p-3 text-gray-700 text-sm border-r border-gray-200">{new Date(intern.endDate).toLocaleDateString()}</td>
                             <td className="p-3 text-gray-700 text-sm border-r border-gray-200">
-                                <span className={`px-2 py-1 rounded-full text-xs ${intern.status === 'running' ? 'bg-blue-100 text-blue-800' :
-                                    intern.status === 'Completed' ? 'bg-green-100 text-green-800' :
+                                <span className={`px-2 py-1 rounded-full text-xs ${intern.status === 'Running' ? 'bg-blue-100 text-blue-800' :
+                                    intern.status === 'Complete' ? 'bg-green-100 text-green-800' :
                                         'bg-red-100 text-red-800'
                                     }`}>
                                     {!intern.status ? "Running" : intern.status.charAt(0).toUpperCase() + intern.status.slice(1)}
@@ -219,6 +220,13 @@ const InternList = () => {
                     ))}
                 </tbody>
             </table>
+            {selectedInterns && (
+                <InternDetail
+                    key={selectedInterns}
+                    publicId={selectedInterns}
+                    onClose={() => setSelectedInterns(null)}
+                />
+            )}
         </div>
     );
 };

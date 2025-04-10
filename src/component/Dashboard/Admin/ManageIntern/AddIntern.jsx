@@ -3,7 +3,7 @@ import { FaArrowLeft } from 'react-icons/fa'
 import { useDispatch, useSelector } from 'react-redux';
 import { Link, useNavigate } from 'react-router'
 import { fetchCompetencies, fetchResources } from '../../../../features/resource/resourceAction';
-import { ErrorToast } from '../../../helper/ResourceToast';
+import { ErrorToast, SuccessToast } from '../../../helper/ResourceToast';
 import YRMSLoader from '../../../helper/loader';
 import { createIntern, fetchInterns } from '../../../../features/intern/internAction';
 
@@ -45,18 +45,14 @@ const AddIntern = () => {
         setFormData((prev) => ({ ...prev, [name]: value }));
     };
 
-    // const handleSubmit = async (e) => {
-    //     e.preventDefault()
-    //     console.log("form: ", formData)
-    // }
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
             setToast(<YRMSLoader message="Creating intern..." />);
 
-            console.log(formData)
             const createResult = await dispatch(createIntern(formData));
-
+            
+            console.log(formData)
             if (!createResult.payload?.publicId) {
                 throw new Error("Failed to get publicId from response");
             }
@@ -82,6 +78,7 @@ const AddIntern = () => {
                 competencyId: "",
                 isOffered: null
             })
+            navigate('/interns')
         }
         catch (err) {
             setToast(<ErrorToast message={err.message || "Failed to create intern"} onClose={() => setToast(null)} />);
@@ -234,7 +231,7 @@ const AddIntern = () => {
                             required
                         >
                             <option value="" selected>Select type</option>
-                            <option value="runnning">Running</option>
+                            <option value="running">Running</option>
                             <option value="complete">Complete</option>
                         </select>
                     </div>
