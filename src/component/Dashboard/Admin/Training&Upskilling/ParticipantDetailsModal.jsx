@@ -1,41 +1,47 @@
-import React from 'react';
-import { FaTimes, FaSearch, FaUserTie, FaEnvelope, FaCode, FaProjectDiagram, FaMapMarkerAlt, FaUserCheck } from 'react-icons/fa';
+import React, { useState } from 'react';
+import { 
+  FaTimes, FaSearch, FaUserTie, FaEnvelope, FaCode, 
+  FaProjectDiagram, FaMapMarkerAlt, FaUserCheck, FaUserTimes 
+} from 'react-icons/fa';
 
 const ParticipantDetailsModal = ({ onClose, training }) => {
-  // Sample participant data - in a real app, this would come from props or API
-  const participants = [
+  // Sample participant data with state
+  const [participants, setParticipants] = useState([
     {
       empId: 'EMP001',
       name: 'John Doe',
       email: 'john.doe@example.com',
       skill: 'React, Node.js',
-      currentAllocation: '80%',
       project: 'HR Portal',
       currentLocation: 'Bangalore',
-      status: 'Active'
+      status: 'Joined'
     },
     {
       empId: 'EMP002',
       name: 'Jane Smith',
       email: 'jane.smith@example.com',
       skill: 'Angular, Java',
-      currentAllocation: '60%',
       project: 'Customer Dashboard',
       currentLocation: 'Hyderabad',
-      status: 'Active'
+      status: 'Joined'
     },
     {
       empId: 'EMP003',
       name: 'Robert Johnson',
       email: 'robert.j@example.com',
       skill: 'Python, Data Science',
-      currentAllocation: '100%',
       project: 'Analytics Platform',
       currentLocation: 'Pune',
-      status: 'Active'
+      status: 'Joined'
     },
-    // Add more participants as needed
-  ].slice(0, training?.participants || 3); // Show only as many participants as the training has
+  ].slice(0, training?.participants || 3));
+
+  // Handle status change
+  const handleStatusChange = (index, newStatus) => {
+    const updatedParticipants = [...participants];
+    updatedParticipants[index].status = newStatus;
+    setParticipants(updatedParticipants);
+  };
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -79,7 +85,6 @@ const ParticipantDetailsModal = ({ onClose, training }) => {
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Skills</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Allocation</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Project</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Location</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
@@ -87,7 +92,7 @@ const ParticipantDetailsModal = ({ onClose, training }) => {
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {participants.map((participant, index) => (
-                  <tr key={index} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                  <tr key={index} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50 hover:bg-gray-100'}>
                     <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-purple-600">{participant.empId}</td>
                     <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">{participant.name}</td>
                     <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
@@ -103,15 +108,6 @@ const ParticipantDetailsModal = ({ onClose, training }) => {
                       </div>
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
-                      <div className="w-full bg-gray-200 rounded-full h-2">
-                        <div 
-                          className="bg-purple-600 h-2 rounded-full" 
-                          style={{ width: participant.currentAllocation }}
-                        ></div>
-                      </div>
-                      <span className="text-xs mt-1 block">{participant.currentAllocation}</span>
-                    </td>
-                    <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
                       <div className="flex items-center">
                         <FaProjectDiagram className="mr-1 text-gray-400" />
                         {participant.project}
@@ -124,14 +120,27 @@ const ParticipantDetailsModal = ({ onClose, training }) => {
                       </div>
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap">
-                      <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                        participant.status === 'Active' 
-                          ? 'bg-green-100 text-green-800' 
-                          : 'bg-red-100 text-red-800'
-                      }`}>
-                        <FaUserCheck className="mr-1" />
-                        {participant.status}
-                      </span>
+                      <div className="relative">
+                        <select
+                          value={participant.status}
+                          onChange={(e) => handleStatusChange(index, e.target.value)}
+                          className={`appearance-none pl-8 pr-4 py-1 text-xs leading-5 font-semibold rounded-md focus:outline-none focus:ring-1 focus:ring-purple-500 transition-colors cursor-pointer ${
+                            participant.status === 'Joined' 
+                              ? 'bg-green-100 text-green-800 hover:bg-green-200' 
+                              : 'bg-red-100 text-red-800 hover:bg-red-200'
+                          }`}
+                        >
+                          <option value="Joined" className="bg-green-100 text-green-800">Joined</option>
+                          <option value="Not Joined" className="bg-red-100 text-red-800">Not Joined</option>
+                        </select>
+                        <div className="absolute left-2 top-1/2 transform -translate-y-1/2 pointer-events-none">
+                          {participant.status === 'Joined' ? (
+                            <FaUserCheck className="text-green-700" />
+                          ) : (
+                            <FaUserTimes className="text-red-700" />
+                          )}
+                        </div>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -146,13 +155,15 @@ const ParticipantDetailsModal = ({ onClose, training }) => {
             Showing {participants.length} of {training?.participants} participants
           </div>
           <div className="flex space-x-3">
-            <button className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+            <button className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 flex items-center">
+              <FaUserCheck className="mr-2" />
               Export to CSV
             </button>
             <button 
               onClick={onClose}
-              className="px-4 py-2 border border-transparent rounded-md text-sm font-medium text-white bg-purple-600 hover:bg-purple-700"
+              className="px-4 py-2 border border-transparent rounded-md text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 flex items-center"
             >
+              <FaTimes className="mr-2" />
               Close
             </button>
           </div>
