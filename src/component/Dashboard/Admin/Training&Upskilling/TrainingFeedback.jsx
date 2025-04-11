@@ -245,7 +245,7 @@ const TrainingFeedback = ({ training, onClose, onSave }) => {
                     <div className="bg-gradient-to-r from-purple-50 to-blue-50 px-4 py-3 sm:px-6 sm:flex sm:items-center sm:justify-between border-b border-gray-200">
                         <h3 className="text-lg leading-6 font-medium text-purple-800">
                             <FaChartBar className="inline mr-2" />
-                            Feedback for {training?.name || 'Training'}
+                            TPR for {training?.name || 'Training'}
                         </h3>
                         <button
                             onClick={onClose}
