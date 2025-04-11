@@ -13,7 +13,6 @@ const AddIntern = () => {
 
     const { interns, internDetails, loading, error } = useSelector((state) => state.intern);
     const [toast, setToast] = useState(null);
-    const [offered, setIsOffered] = useState(false);
     const { resources, competencies } = useSelector(
         (state) => state.resource
     );
@@ -28,12 +27,8 @@ const AddIntern = () => {
         endDate: "",
         mentorId: "",
         status: "",
-        ratting: "",
-        feedback: "",
-        remark: "",
         competencyId: "",
-        isOffered: null,
-});
+    });
 
     useEffect(() => {
         dispatch(fetchResources());
@@ -62,7 +57,7 @@ const AddIntern = () => {
             setToast(<YRMSLoader message="Refreshing data..." />);
             dispatch(fetchInterns());
 
-              setFormData({
+            setFormData({
                 name: "",
                 gender: "",
                 location: "indore",
@@ -72,11 +67,7 @@ const AddIntern = () => {
                 endDate: "",
                 mentorId: "",
                 status: "",
-                ratting: "",
-                feedback: "",
-                remark: "",
                 competencyId: "",
-                isOffered: null
             })
             navigate('/interns')
         }
@@ -84,7 +75,6 @@ const AddIntern = () => {
             setToast(<ErrorToast message={err.message || "Failed to create intern"} onClose={() => setToast(null)} />);
         }
     }
-
 
     return (
         <div className='p-6 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl shadow-lg mb-6'>
@@ -104,35 +94,34 @@ const AddIntern = () => {
             <form className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Personal Information Section */}
                 <div className="row">
-                    <div>
+                    <div className="mb-4">
                         <label className="block text-gray-700 font-medium mb-2">Name</label>
                         <input
                             type="text"
                             name="name"
                             onChange={handleInputChange}
-                            className="w-full p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 transition-colors"
+                            className="w-full h-12 p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 transition-colors"
                             placeholder="Enter Name"
                             required
                         />
                     </div>
-                    <div>
+                    <div className="mb-4">
                         <label className="block text-gray-700 font-medium mb-2">Email</label>
                         <input
                             type="email"
                             name="email"
                             onChange={handleInputChange}
-                            className="w-full p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 transition-colors"
+                            className="w-full h-12 p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 transition-colors"
                             placeholder="Enter Email"
                             required
                         />
                     </div>
-                    <div className="pt-3">
+                    <div className="mb-4">
                         <label className="block text-gray-700 font-medium mb-2">Gender</label>
                         <select
-                            type="text"
                             name="gender"
                             onChange={handleInputChange}
-                            className="w-full p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 transition-colors"
+                            className="w-full h-12 p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 transition-colors"
                             required
                         >
                             <option value="" selected>Select type</option>
@@ -142,25 +131,23 @@ const AddIntern = () => {
                     </div>
                 </div>
                 <div className="row">
-                    <div className="pt-3">
+                    <div className="mb-4">
                         <label className="block text-gray-700 font-medium mb-2">Phone Number</label>
                         <input
                             type="tel"
                             name="phoneNumber"
                             onChange={handleInputChange}
-                            className="w-full p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 transition-colors"
+                            className="w-full h-12 p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 transition-colors"
                             placeholder="Enter phone number"
                             required
                         />
                     </div>
-                    <div className="pt-3">
+                    <div className="mb-4">
                         <label className="block text-gray-700 font-medium mb-2">Mentor</label>
                         <select
-                            type="text"
                             name='mentorId'
                             onChange={handleInputChange}
-                            className="w-full p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 transition-colors"
-                            placeholder="Select location"
+                            className="w-full h-12 p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 transition-colors"
                             required
                         >
                             <option value="" selected>Select type</option>
@@ -174,15 +161,13 @@ const AddIntern = () => {
                                 </option>
                             ))}
                         </select>
-
                     </div>
-                    <div className="pt-3">
+                    <div className="mb-4">
                         <label className="block text-gray-700 font-medium mb-2">Competency</label>
                         <select
-                            type="text"
                             name="competencyId"
                             onChange={handleInputChange}
-                            className="w-full p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 transition-colors"
+                            className="w-full h-12 p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 transition-colors"
                             required
                         >
                             <option value="" selected>Select type</option>
@@ -199,35 +184,34 @@ const AddIntern = () => {
                     </div>
                 </div>
                 <div className="row">
-                    <div>
+                    <div className="mb-4">
                         <label className="block text-gray-700 font-medium mb-2">Start Date</label>
                         <input
                             type="date"
                             name="startDate"
                             onChange={handleInputChange}
-                            className="w-full p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 transition-colors"
+                            className="w-full h-12 p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 transition-colors"
                             required
                         />
                     </div>
-                    <div>
+                    <div className="mb-4">
                         <label className="block text-gray-700 font-medium mb-2">End Date</label>
                         <input
                             type="date"
                             name="endDate"
                             onChange={handleInputChange}
-                            className="w-full p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 transition-colors"
+                            className="w-full h-12 p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 transition-colors"
                             required
                         />
                     </div>
                 </div>
                 <div className="row">
-                    <div>
+                    <div className="mb-4">
                         <label className="block text-gray-700 font-medium mb-2">Status</label>
                         <select
-                            type="text"
                             name="status"
                             onChange={handleInputChange}
-                            className="w-full p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 transition-colors"
+                            className="w-full h-12 p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 transition-colors"
                             required
                         >
                             <option value="" selected>Select type</option>
@@ -235,49 +219,14 @@ const AddIntern = () => {
                             <option value="complete">Complete</option>
                         </select>
                     </div>
-                    <div>
-                        <label className="block text-gray-700 font-medium mb-2">Rating</label>
-                        <input
-                            type="number"
-                            name="ratting"
-                            onChange={handleInputChange}
-                            className="w-full p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 transition-colors"
-                            placeholder="1-5"
-                            min="1"
-                            max="5"
-                            required
-                        />
-                    </div>
                 </div>
                 <div className="row">
-                    <div>
-                        <label className="block text-gray-700 font-medium mb-2">Feedback</label>
-                        <textarea
-                            name="feedback"
-                            onChange={handleInputChange}
-                            className="w-full p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 transition-colors resize-none"
-                            placeholder="Enter feedback"
-                            required
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-gray-700 font-medium mb-2">remark</label>
-                        <textarea
-                            name="remark"
-                            onChange={handleInputChange}
-                            className="w-full p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 transition-colors resize-none"
-                            placeholder="Enter remark"
-                            rows="3"
-                        />
-                    </div>
-                </div>
-                <div className="row">
-                    <div>
+                    <div className="mb-4">
                         <label className="block text-gray-700 font-medium mb-2">Location</label>
                         <select
                             name="location"
                             onChange={handleInputChange}
-                            className="w-full p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 transition-colors"
+                            className="w-full h-12 p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 transition-colors"
                             required
                         >
                             <option value="" selected>Select location</option>
@@ -285,20 +234,6 @@ const AddIntern = () => {
                             <option value="pune">Pune</option>
                             <option value="hydrabad">Hydrabad</option>
                         </select>
-                    </div>
-                    <div className='pt-10'>
-                        <label className="block text-gray-700 mt-8 font-medium mb-2">
-                            <input
-                                type="checkbox"
-                                name="isOffered"
-                                onClick={(obj) => setIsOffered(!obj ? true : false)}
-                                onChange={handleInputChange}
-                                value={offered}
-                                className="mr-2"
-                                required
-                            />
-                            offered
-                        </label>
                     </div>
                 </div>
                 <div className="md:col-span-2 flex justify-center mt-8">

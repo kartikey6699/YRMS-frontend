@@ -78,6 +78,10 @@ const internSlice = createSlice({
           mentor: intern.mentor,
           status: intern.status,
           competency: intern.competency,
+          location: intern.location,
+          ratting: intern.ratting,
+          feedback: intern.feedback,
+          remark: intern.remark,
           }));
       })
       .addCase(fetchInterns.rejected, (state, { payload }) => {
