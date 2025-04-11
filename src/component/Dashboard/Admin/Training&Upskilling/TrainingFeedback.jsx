@@ -71,7 +71,12 @@ const TrainingFeedback = ({ training, onClose, onSave }) => {
     const addFeedbackColumn = () => {
         if (newColumnName.trim()) {
             const columnId = `feedback_${Date.now()}`;
-            setCustomFeedbackColumns([...customFeedbackColumns, { id: columnId, name: newColumnName }]);
+            const currentDate = new Date().toLocaleDateString();
+            setCustomFeedbackColumns([...customFeedbackColumns, { 
+                id: columnId, 
+                name: newColumnName,
+                createdAt: currentDate
+            }]);
             setEmployees(employees.map(emp => ({
                 ...emp,
                 [columnId]: ''
@@ -365,24 +370,34 @@ const TrainingFeedback = ({ training, onClose, onSave }) => {
                                             Work Quality
                                         </th>
 
+                                        {/* First separator - after standard rating columns */}
+                                        {(customFeedbackColumns.length > 0 || customScoreColumns.length > 0) && (
+                                            <th className="px-1 py-3 border-l-2 border-gray-300"></th>
+                                        )}
+
                                         {/* Feedback Columns */}
                                         {customFeedbackColumns.map((column) => (
                                             <th key={column.id} className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                                 <div className="flex items-center justify-between">
-                                                    <div className="flex items-center">
-                                                        {editingColumn === column.id ? (
-                                                            <input
-                                                                type="text"
-                                                                value={column.name}
-                                                                onChange={(e) => updateColumnName(column.id, e.target.value, true)}
-                                                                onBlur={() => updateColumnName(column.id, column.name, true)}
-                                                                onKeyPress={(e) => e.key === 'Enter' && updateColumnName(column.id, column.name, true)}
-                                                                className="border border-purple-300 rounded px-1 py-0.5 text-xs w-24"
-                                                                autoFocus
-                                                            />
-                                                        ) : (
-                                                            <span>{column.name}</span>
-                                                        )}
+                                                    <div className="flex flex-col">
+                                                        <div className="flex items-center">
+                                                            {editingColumn === column.id ? (
+                                                                <input
+                                                                    type="text"
+                                                                    value={column.name}
+                                                                    onChange={(e) => updateColumnName(column.id, e.target.value, true)}
+                                                                    onBlur={() => updateColumnName(column.id, column.name, true)}
+                                                                    onKeyPress={(e) => e.key === 'Enter' && updateColumnName(column.id, column.name, true)}
+                                                                    className="border border-purple-300 rounded px-1 py-0.5 text-xs w-24"
+                                                                    autoFocus
+                                                                />
+                                                            ) : (
+                                                                <span>{column.name}</span>
+                                                            )}
+                                                        </div>
+                                                        <div className="text-xxs text-gray-400 mt-1">
+                                                            {column.createdAt}
+                                                        </div>
                                                     </div>
                                                     <div className="flex">
                                                         <button
@@ -401,6 +416,11 @@ const TrainingFeedback = ({ training, onClose, onSave }) => {
                                                 </div>
                                             </th>
                                         ))}
+
+                                        {/* Second separator - between feedback and score columns */}
+                                        {customFeedbackColumns.length > 0 && customScoreColumns.length > 0 && (
+                                            <th className="px-1 py-3 border-l-2 border-gray-300"></th>
+                                        )}
 
                                         {/* Score Columns */}
                                         {customScoreColumns.map((column) => (
@@ -477,6 +497,11 @@ const TrainingFeedback = ({ training, onClose, onSave }) => {
                                                 </td>
                                             ))}
 
+                                            {/* First separator in table body */}
+                                            {(customFeedbackColumns.length > 0 || customScoreColumns.length > 0) && (
+                                                <td className="px-1 py-4 border-l-2 border-gray-300"></td>
+                                            )}
+
                                             {/* Custom Feedback Columns */}
                                             {customFeedbackColumns.map((column) => (
                                                 <td key={column.id} className="px-3 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -489,6 +514,11 @@ const TrainingFeedback = ({ training, onClose, onSave }) => {
                                                     />
                                                 </td>
                                             ))}
+
+                                            {/* Second separator in table body */}
+                                            {customFeedbackColumns.length > 0 && customScoreColumns.length > 0 && (
+                                                <td className="px-1 py-4 border-l-2 border-gray-300"></td>
+                                            )}
 
                                             {/* Custom Score Columns */}
                                             {customScoreColumns.map((column) => (

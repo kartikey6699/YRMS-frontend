@@ -331,7 +331,8 @@ const AssignTraining = () => {
                             {new Date(training.endDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
                           </span>
                         </div>
-                        <div className="text-center">
+                        <div className="flex items-center border border-gray-200 rounded px-2 py-1 bg-white">
+                          <span className="text-xs text-gray-500 mr-1.5 whitespace-nowrap">Days:</span>
                           <span className="inline-block bg-purple-50 text-purple-700 text-[11px] px-1.5 py-0.5 rounded-full">
                             {Math.ceil(
                               (new Date(training.endDate) - new Date(training.startDate)) / 
@@ -528,12 +529,13 @@ const AssignTraining = () => {
                             {new Date(upskilling.endDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
                           </span>
                         </div>
-                        <div className="text-center">
+                        <div className="flex items-center border border-gray-200 rounded px-2 py-1 bg-white">
+                          <span className="text-xs text-gray-500 mr-1.5 whitespace-nowrap">Days:</span>
                           <span className="inline-block bg-purple-50 text-purple-700 text-[11px] px-1.5 py-0.5 rounded-full">
                             {Math.ceil(
                               (new Date(upskilling.endDate) - new Date(upskilling.startDate)) / 
-                              (1000 * 60 * 60 * 24)
-                            ) + 1}d
+                              (1000 * 60 * 60 * 24) + 1
+                            )}d
                           </span>
                         </div>
                       </div>
