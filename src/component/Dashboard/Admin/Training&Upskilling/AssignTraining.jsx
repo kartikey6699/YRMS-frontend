@@ -31,7 +31,7 @@ import {
   FiClipboard,
   FiBarChart2
 } from 'react-icons/fi';
- 
+
 import AttendanceDetailsModal from './AttendanceDetailsModal';
 import ViewAttendanceModal from './ViewAttendanceModal';
 import DatePicker from 'react-datepicker';
@@ -41,21 +41,23 @@ import AddTraining from './AddTraining';
 import AddUpskilling from './AddUpskilling';
 import ParticipantDetailsModal from './ParticipantDetailsModal';
 import TrainingFeedback from './TrainingFeedback';
- 
+import UpskillingDetailModal from './UpskillingDetailModal';
+
 const AssignTraining = () => {
   const [activeTab, setActiveTab] = useState('training');
   const [searchTerm, setSearchTerm] = useState('');
   const [editingStatus, setEditingStatus] = useState(null);
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'ascending' });
- 
+
   const [showAttendanceDetails, setShowAttendanceDetails] = useState(false);
   const [showViewAttendance, setShowViewAttendance] = useState(false);
   const [showParticipantDetails, setShowParticipantDetails] = useState(false);
+  const [showUpskillingDetails, setShowUpskillingDetails] = useState(false); // New state for UpskillingDetailModal
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const [selectedTraining, setSelectedTraining] = useState(null);
   const [showAddTraining, setShowAddTraining] = useState(false);
   const [showAddUpskilling, setShowAddUpskilling] = useState(false);
- 
+
   const [trainingData, setTrainingData] = useState([
     {
       id: 1,
@@ -114,7 +116,7 @@ const AssignTraining = () => {
       status: 'completed'
     }
   ]);
- 
+
   const [upskillingData, setUpskillingData] = useState([
     {
       id: 1,
@@ -131,14 +133,14 @@ const AssignTraining = () => {
       status: 'hold'
     },
   ]);
- 
+
   const statusOptions = [
     { value: 'hold', label: 'Hold', icon: <FaPause className="inline mr-1" />, color: 'bg-yellow-100 text-yellow-800' },
     { value: 'pending', label: 'Pending', icon: <FaHourglassHalf className="inline mr-1" />, color: 'bg-red-100 text-red-800' },
     { value: 'running', label: 'Running', icon: <FaArrowRight className="inline mr-1" />, color: 'bg-orange-100 text-orange-800' },
     { value: 'completed', label: 'Completed', icon: <FaCheck className="inline mr-1" />, color: 'bg-green-100 text-green-800' }
   ];
- 
+
   const handleStatusChange = (id, newStatus, isTraining) => {
     if (isTraining) {
       setTrainingData(trainingData.map(item =>
@@ -151,7 +153,7 @@ const AssignTraining = () => {
     }
     setEditingStatus(null);
   };
- 
+
   const handleSort = (key) => {
     let direction = 'ascending';
     if (sortConfig.key === key && sortConfig.direction === 'ascending') {
@@ -159,7 +161,7 @@ const AssignTraining = () => {
     }
     setSortConfig({ key, direction });
   };
- 
+
   const filteredTrainingData = trainingData.filter(item =>
     item.name.toLowerCase().includes(searchTerm.toLowerCase())
   ).sort((a, b) => {
@@ -170,7 +172,7 @@ const AssignTraining = () => {
       ? valueA.localeCompare(valueB)
       : valueB.localeCompare(valueA);
   });
- 
+
   const filteredUpskillingData = upskillingData.filter(item =>
     item.name.toLowerCase().includes(searchTerm.toLowerCase())
   ).sort((a, b) => {
@@ -181,7 +183,7 @@ const AssignTraining = () => {
       ? valueA.localeCompare(valueB)
       : valueB.localeCompare(valueA);
   });
- 
+
   const getStatusBadge = (status) => {
     const statusObj = statusOptions.find(opt => opt.value === status);
     return (
@@ -190,7 +192,7 @@ const AssignTraining = () => {
       </span>
     );
   };
- 
+
   const columns = [
     { key: 'sno', label: 'S.No', sortable: false },
     { key: 'name', label: 'Program Name', sortable: true },
@@ -203,7 +205,7 @@ const AssignTraining = () => {
     { key: 'feedback', label: 'Feedback', sortable: true },
     { key: 'status', label: 'Status', sortable: true }
   ];
- 
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-purple-50 to-white p-4 md:p-8">
       <div className="mx-auto px-2 sm:px-6 lg:px-8 max-w-screen-2xl">
@@ -213,7 +215,7 @@ const AssignTraining = () => {
             Training & Upskilling
           </h2>
         </div>
- 
+
         {/* Tab Buttons */}
         <div className="flex justify-center mb-8">
           <div className="inline-flex rounded-md shadow-sm">
@@ -247,7 +249,7 @@ const AssignTraining = () => {
             </button>
           </div>
         </div>
- 
+
         {/* Search and Add New Button Row */}
         <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
           <div className="relative w-full sm:max-w-md">
@@ -263,7 +265,7 @@ const AssignTraining = () => {
             />
           </div>
           <button
-            onClick={() => setShowAddTraining(true)}
+            onClick={() => activeTab === 'training' ? setShowAddTraining(true) : setShowAddUpskilling(true)}
             className="w-full sm:w-auto inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-colors whitespace-nowrap"
           >
             <FaPlus className="mr-2" />
@@ -271,7 +273,7 @@ const AssignTraining = () => {
             <FaArrowRight className="ml-2" />
           </button>
         </div>
- 
+
         {/* Training Table */}
         {activeTab === 'training' && (
           <div className="overflow-x-auto rounded-lg shadow-lg border border-gray-200">
@@ -469,7 +471,7 @@ const AssignTraining = () => {
             )}
           </div>
         )}
- 
+
         {/* Upskilling Table */}
         {activeTab === 'upskilling' && (
           <div className="overflow-x-auto rounded-lg shadow-lg border border-gray-200">
@@ -553,7 +555,7 @@ const AssignTraining = () => {
                       className="p-2 text-gray-700 text-sm border-r border-gray-200 text-center cursor-pointer hover:bg-purple-50 transition-colors"
                       onClick={() => {
                         setSelectedTraining(upskilling);
-                        setShowParticipantDetails(true);
+                        setShowUpskillingDetails(true); // Open UpskillingDetailModal
                       }}
                     >
                       <span className="font-medium text-purple-600">
@@ -667,7 +669,7 @@ const AssignTraining = () => {
             )}
           </div>
         )}
- 
+
         {/* Attendance Details Modal */}
         {showAttendanceDetails && (
           <AttendanceDetailsModal
@@ -675,7 +677,7 @@ const AssignTraining = () => {
             training={selectedTraining}
           />
         )}
- 
+
         {/* View Attendance Modal */}
         {showViewAttendance && (
           <ViewAttendanceModal
@@ -683,15 +685,23 @@ const AssignTraining = () => {
             training={selectedTraining}
           />
         )}
- 
-        {/* Participant Details Modal */}
+
+        {/* Participant Details Modal (for Training tab) */}
         {showParticipantDetails && (
           <ParticipantDetailsModal
             onClose={() => setShowParticipantDetails(false)}
             training={selectedTraining}
           />
         )}
- 
+
+        {/* Upskilling Details Modal (for Upskilling tab) */}
+        {showUpskillingDetails && (
+          <UpskillingDetailModal
+            onClose={() => setShowUpskillingDetails(false)}
+            training={selectedTraining}
+          />
+        )}
+
         {/* Training Feedback Modal */}
         {showFeedbackModal && (
           <TrainingFeedback
@@ -707,7 +717,7 @@ const AssignTraining = () => {
             }}
           />
         )}
- 
+
         {/* Add Training Modal */}
         {showAddTraining && (
           <AddTraining
@@ -723,7 +733,7 @@ const AssignTraining = () => {
             }}
           />
         )}
- 
+
         {/* Add Upskilling Modal */}
         {showAddUpskilling && (
           <AddUpskilling
@@ -743,5 +753,5 @@ const AssignTraining = () => {
     </div>
   );
 };
- 
+
 export default AssignTraining;
