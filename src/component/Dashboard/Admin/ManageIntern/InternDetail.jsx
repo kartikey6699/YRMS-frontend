@@ -150,10 +150,10 @@ const InternDetail = ({ publicId, onClose }) => {
                     </div>
 
                     <div className="grid grid-cols-1 p-2 md:grid-cols-3">
-                        <div className={`bg-gray-50 rounded-lg p-4 col-span-4 ${isEditing ? 'ring-1 ring-blue-200' : ''}`}>
+                        <div className={`bg-gray-100 rounded-lg p-4 col-span-4 ${isEditing ? 'ring-1 ring-blue-200' : ''}`}>
                             <h4 className="flex justify-left items-center text-md text-base font-medium text-gray-800 mb-3">
                                 <FaBriefcase className="text-blue-500 mr-2 text-sm" />
-                                Employment Details
+                                Intern Details
                             </h4>
                             <div className="space-y-3">
                                 <div className="grid grid-cols-3 gap-3">
@@ -248,17 +248,17 @@ const InternDetail = ({ publicId, onClose }) => {
                                 </div>
                                 <div className="grid grid-cols-3 gap-3">
                                     <div>
-                                        <label className="block text-md text-gray-500 mb-1">Rating</label>
+                                        <label className="block text-md text-gray-500 mb-1">Competency</label>
                                         {isEditing ? (
                                             <input
-                                                name="rating"
-                                                value={formData.rating}
+                                                name="competency"
+                                                value={formData.competency}
                                                 onChange={handleInputChange}
                                                 className="w-full border rounded-md px-2 py-1.5 text-sm focus:ring-1 focus:ring-blue-300"
                                                 disabled={loading}
                                             />
                                         ) : (
-                                            <p className="text-md font-medium text-gray-800">{formData.rating || 'N/A'}</p>
+                                            <p className="text-md font-medium text-gray-800">{formData.competency || 'N/A'}</p>
                                         )}
                                     </div>
                                     <div>
@@ -287,22 +287,6 @@ const InternDetail = ({ publicId, onClose }) => {
                                             />
                                         ) : (
                                             <p className="text-md font-medium text-gray-800">{formData.remark || 'N/A'}</p>
-                                        )}
-                                    </div>
-                                </div>
-                                <div className="grid grid-cols-3 gap-3">
-                                    <div>
-                                        <label className="block text-md text-gray-500 mb-1">Competency</label>
-                                        {isEditing ? (
-                                            <input
-                                                name="competency"
-                                                value={formData.competency}
-                                                onChange={handleInputChange}
-                                                className="w-full border rounded-md px-2 py-1.5 text-sm focus:ring-1 focus:ring-blue-300"
-                                                disabled={loading}
-                                            />
-                                        ) : (
-                                            <p className="text-md font-medium text-gray-800">{formData.competency || 'N/A'}</p>
                                         )}
                                     </div>
                                 </div>
