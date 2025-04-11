@@ -1,15 +1,19 @@
-import React, { useState } from 'react';
-import { 
-  FaChalkboardTeacher, 
-  FaCalendarAlt, 
-  FaUserTie, 
+import React, { useState, useEffect } from 'react';
+import {
+  FaChalkboardTeacher,
+  FaCalendarAlt,
+  FaUserTie,
   FaUsers,
   FaTimes,
   FaCheck,
-  FaPlus
+  FaPlus,
+  FaCalendarDay,
+  FaLaptopCode,
+  FaProjectDiagram
 } from 'react-icons/fa';
 import Select from 'react-select';
 import makeAnimated from 'react-select/animated';
+import { holidays, isHoliday } from '../../../helper/holidays';
 
 const animatedComponents = makeAnimated();
 
@@ -42,18 +46,43 @@ const requesterOptions = [
   { value: 'employee', label: 'Employee Request' },
 ];
 
+// New options for technology
+const technologyOptions = [
+  { value: 'web', label: 'Web Development' },
+  { value: 'mobile', label: 'Mobile Development' },
+  { value: 'cloud', label: 'Cloud Computing' },
+  { value: 'ai', label: 'Artificial Intelligence' },
+  { value: 'data', label: 'Data Science' },
+  { value: 'iot', label: 'IoT' },
+  { value: 'blockchain', label: 'Blockchain' },
+];
+
 const AddTraining = ({ onClose, onSave }) => {
   const [formData, setFormData] = useState({
     programName: '',
     trainerName: '',
     startDate: '',
+    duration: '',
     endDate: '',
     requester: null,
     competency: null,
+    technology: null,
+    project: '', // Changed from null to empty string for textarea
     participants: [],
   });
 
   const [errors, setErrors] = useState({});
+
+  // Calculate end date when start date or duration changes
+  useEffect(() => {
+    if (formData.startDate && formData.duration && formData.duration > 0) {
+      const calculatedEndDate = calculateEndDate(formData.startDate, parseInt(formData.duration));
+      setFormData(prev => ({
+        ...prev,
+        endDate: calculatedEndDate
+      }));
+    }
+  }, [formData.startDate, formData.duration]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -82,11 +111,13 @@ const AddTraining = ({ onClose, onSave }) => {
     if (!formData.programName) newErrors.programName = 'Program name is required';
     if (!formData.trainerName) newErrors.trainerName = 'Trainer name is required';
     if (!formData.startDate) newErrors.startDate = 'Start date is required';
+    if (!formData.duration || formData.duration <= 0) newErrors.duration = 'Valid duration is required';
     if (!formData.endDate) newErrors.endDate = 'End date is required';
     if (!formData.requester) newErrors.requester = 'Requester is required';
     if (!formData.competency) newErrors.competency = 'Competency is required';
+    if (!formData.technology) newErrors.technology = 'Technology is required';
     if (formData.participants.length === 0) newErrors.participants = 'At least one participant is required';
-    
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -98,6 +129,8 @@ const AddTraining = ({ onClose, onSave }) => {
         ...formData,
         requester: formData.requester.label,
         competency: formData.competency.label,
+        technology: formData.technology.label,
+        project: formData.project, // No need for .label since it's a string now
         participants: formData.participants.map(p => p.label)
       });
       onClose();
@@ -106,7 +139,7 @@ const AddTraining = ({ onClose, onSave }) => {
 
   return (
     <div className="fixed inset-0 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-screen overflow-y-auto">
+      <div className="bg-white rounded-lg shadow-xl w-full max-w-3xl max-h-screen overflow-y-auto">
         <div className="bg-gradient-to-r from-purple-600 to-blue-600 p-4 rounded-t-lg flex justify-between items-center">
           <h3 className="text-white text-xl font-bold flex items-center">
             <FaChalkboardTeacher className="mr-2" />
@@ -116,13 +149,13 @@ const AddTraining = ({ onClose, onSave }) => {
             <FaTimes />
           </button>
         </div>
-        
+
         <form onSubmit={handleSubmit} className="p-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Program Name */}
+            {/* Training Name */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Program Name <span className="text-red-500">*</span>
+                Training Name <span className="text-red-500">*</span>
               </label>
               <div className="relative">
                 <input
@@ -162,51 +195,86 @@ const AddTraining = ({ onClose, onSave }) => {
               </div>
             </div>
 
-            {/* Start Date */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Start Date <span className="text-red-500">*</span>
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <FaCalendarAlt className="text-gray-400" />
+            {/* Date Section - Single Row */}
+            <div className="md:col-span-2">
+              <div className="flex items-end space-x-4">
+                {/* Start Date */}
+                <div className="flex-1">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Start Date <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <FaCalendarAlt className="text-gray-400" />
+                    </div>
+                    <input
+                      type="date"
+                      name="startDate"
+                      value={formData.startDate}
+                      onChange={handleChange}
+                      min={formatDate(new Date())}
+                      className={`w-full pl-10 p-2 border rounded-md focus:ring-2 focus:ring-purple-500 focus:border-purple-500 ${errors.startDate ? 'border-red-500' : 'border-gray-300'}`}
+                    />
+                    {errors.startDate && (
+                      <p className="mt-1 text-sm text-red-600">{errors.startDate}</p>
+                    )}
+                  </div>
                 </div>
-                <input
-                  type="date"
-                  name="startDate"
-                  value={formData.startDate}
-                  onChange={handleChange}
-                  className={`w-full pl-10 p-2 border rounded-md focus:ring-2 focus:ring-purple-500 focus:border-purple-500 ${errors.startDate ? 'border-red-500' : 'border-gray-300'}`}
-                />
-                {errors.startDate && (
-                  <p className="mt-1 text-sm text-red-600">{errors.startDate}</p>
-                )}
+
+                {/* Duration */}
+                <div className="w-28">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Duration <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <FaCalendarDay className="text-gray-400" />
+                    </div>
+                    <input
+                      type="number"
+                      name="duration"
+                      value={formData.duration}
+                      onChange={handleChange}
+                      min="1"
+                      className={`w-full pl-10 p-2 border rounded-md focus:ring-2 focus:ring-purple-500 focus:border-purple-500 ${errors.duration ? 'border-red-500' : 'border-gray-300'}`}
+                      placeholder="Days"
+                    />
+                    {errors.duration && (
+                      <p className="mt-1 text-sm text-red-600">{errors.duration}</p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Estimated End Date */}
+                <div className="flex-1 relative">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Estimated End Date <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <FaCalendarAlt className="text-gray-400" />
+                    </div>
+                    <input
+                      type="date"
+                      name="endDate"
+                      value={formData.endDate}
+                      readOnly
+                      className={`w-full pl-10 p-2 border rounded-md bg-gray-100 ${errors.endDate ? 'border-red-500' : 'border-gray-300'}`}
+                    />
+                    {errors.endDate && (
+                      <p className="mt-1 text-sm text-red-600">{errors.endDate}</p>
+                    )}
+                  </div>
+                  {formData.endDate && (
+                    <p className="absolute text-xs text-gray-500 whitespace-nowrap">
+                      Excludes weekends and holidays
+                    </p>
+                  )}
+                </div>
               </div>
             </div>
 
-            {/* End Date */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                End Date <span className="text-red-500">*</span>
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <FaCalendarAlt className="text-gray-400" />
-                </div>
-                <input
-                  type="date"
-                  name="endDate"
-                  value={formData.endDate}
-                  onChange={handleChange}
-                  className={`w-full pl-10 p-2 border rounded-md focus:ring-2 focus:ring-purple-500 focus:border-purple-500 ${errors.endDate ? 'border-red-500' : 'border-gray-300'}`}
-                />
-                {errors.endDate && (
-                  <p className="mt-1 text-sm text-red-600">{errors.endDate}</p>
-                )}
-              </div>
-            </div>
-
-            {/* Requester */}
+            {/* Requester Field */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Requester <span className="text-red-500">*</span>
@@ -242,6 +310,57 @@ const AddTraining = ({ onClose, onSave }) => {
               )}
             </div>
 
+            {/* Technology Field */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Technology <span className="text-red-500">*</span>
+              </label>
+              <Select
+                options={technologyOptions}
+                value={formData.technology}
+                onChange={(selected) => handleSelectChange('technology', selected)}
+                className={`basic-single ${errors.technology ? 'border-red-500' : ''}`}
+                classNamePrefix="select"
+                placeholder={
+                  <div className="flex items-center">
+                    <FaLaptopCode className="text-gray-400 mr-2" />
+                    <span>Select technology...</span>
+                  </div>
+                }
+                formatOptionLabel={(option) => (
+                  <div className="flex items-center">
+                    <FaLaptopCode className="text-gray-400 mr-2" />
+                    <span>{option.label}</span>
+                  </div>
+                )}
+              />
+              {errors.technology && (
+                <p className="mt-1 text-sm text-red-600">{errors.technology}</p>
+              )}
+            </div>
+
+            {/* Project Field - Changed to textarea */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Project
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 pt-3 flex items-start pointer-events-none">
+                  <FaProjectDiagram className="text-gray-400" />
+                </div>
+                <textarea
+                  name="project"
+                  value={formData.project}
+                  onChange={handleChange}
+                  className={`w-full pl-10 p-2 border rounded-md focus:ring-2 focus:ring-purple-500 focus:border-purple-500 min-h-[100px] ${errors.project ? 'border-red-500' : 'border-gray-300'}`}
+                  placeholder="Enter project details..."
+                />
+                {errors.project && (
+                  <p className="mt-1 text-sm text-red-600">{errors.project}</p>
+                )}
+              </div>
+            </div>
+
             {/* Participants */}
             <div className="md:col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -261,8 +380,8 @@ const AddTraining = ({ onClose, onSave }) => {
                   styles={{
                     menu: (provided) => ({
                       ...provided,
-                      maxHeight: 150, // Limit the height of the dropdown
-                      overflowY: 'auto', // Enable scrolling
+                      maxHeight: 150,
+                      overflowY: 'auto',
                     }),
                   }}
                 />
@@ -296,3 +415,37 @@ const AddTraining = ({ onClose, onSave }) => {
 };
 
 export default AddTraining;
+
+// Helper function to calculate end date excluding weekends and holidays
+function calculateEndDate(startDate, duration) {
+  if (!startDate || !duration || duration <= 0) return '';
+
+  const date = new Date(startDate);
+  let daysAdded = 0;
+  let businessDays = 0;
+
+  while (businessDays < duration) {
+    date.setDate(date.getDate() + 1);
+    daysAdded++;
+
+    const dayOfWeek = date.getDay();
+    const dateStr = date.toISOString().split('T')[0];
+
+    // Skip weekends (0=Sunday, 6=Saturday) and holidays
+    if (dayOfWeek !== 0 && dayOfWeek !== 6 && !isHoliday(dateStr)) {
+      businessDays++;
+    }
+  }
+
+  return date.toISOString().split('T')[0];
+}
+
+// Helper function to format date as YYYY-MM-DD
+function formatDate(date) {
+  if (!date) return '';
+  const d = new Date(date);
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}

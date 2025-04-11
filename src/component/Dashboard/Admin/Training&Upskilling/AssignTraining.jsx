@@ -22,7 +22,16 @@ import {
   FaSortUp,
   FaSortDown
 } from 'react-icons/fa';
-
+import {
+  FiEdit2,
+  FiEye,
+  FiDownload,
+  FiCalendar,
+  FiUserCheck,
+  FiClipboard,
+  FiBarChart2
+} from 'react-icons/fi';
+ 
 import AttendanceDetailsModal from './AttendanceDetailsModal';
 import ViewAttendanceModal from './ViewAttendanceModal';
 import DatePicker from 'react-datepicker';
@@ -31,34 +40,34 @@ import Select from 'react-select';
 import AddTraining from './AddTraining';
 import AddUpskilling from './AddUpskilling';
 import ParticipantDetailsModal from './ParticipantDetailsModal';
-
+import TrainingFeedback from './TrainingFeedback';
+ 
 const AssignTraining = () => {
   const [activeTab, setActiveTab] = useState('training');
   const [searchTerm, setSearchTerm] = useState('');
   const [editingStatus, setEditingStatus] = useState(null);
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'ascending' });
-
-  // New state variables
+ 
   const [showAttendanceDetails, setShowAttendanceDetails] = useState(false);
   const [showViewAttendance, setShowViewAttendance] = useState(false);
   const [showParticipantDetails, setShowParticipantDetails] = useState(false);
+  const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const [selectedTraining, setSelectedTraining] = useState(null);
   const [showAddTraining, setShowAddTraining] = useState(false);
   const [showAddUpskilling, setShowAddUpskilling] = useState(false);
-
-  // Enhanced training data with new columns
+ 
   const [trainingData, setTrainingData] = useState([
     {
       id: 1,
       name: 'React Fundamentals',
       startDate: '2023-06-15',
-      endDate: '2023-06-17',
+      endDate: '2023-08-17',
       trainer: 'John Smith',
       requester: 'HR Department',
       competency: 'JavaScript',
       participants: 15,
       inAttendance: 12,
-      feedback: 4.5,
+      feedback: '',
       score: 87,
       status: 'running'
     },
@@ -72,7 +81,7 @@ const AssignTraining = () => {
       competency: 'Backend Development',
       participants: 10,
       inAttendance: 9,
-      feedback: 4.7,
+      feedback: '',
       score: 92,
       status: 'completed'
     },
@@ -86,7 +95,7 @@ const AssignTraining = () => {
       competency: 'Cloud Computing',
       participants: 20,
       inAttendance: 18,
-      feedback: 4.3,
+      feedback: '',
       score: 85,
       status: 'completed'
     },
@@ -100,18 +109,18 @@ const AssignTraining = () => {
       competency: 'Project Management',
       participants: 12,
       inAttendance: 12,
-      feedback: 4.8,
+      feedback: '',
       score: 95,
       status: 'completed'
     }
   ]);
-
+ 
   const [upskillingData, setUpskillingData] = useState([
     {
       id: 1,
       name: 'Leadership Skills',
       startDate: '2023-06-18',
-      endDate: '2023-06-20',
+      endDate: '2023-08-20',
       trainer: 'Emma Wilson',
       requester: 'Management',
       competency: 'Soft Skills',
@@ -122,14 +131,14 @@ const AssignTraining = () => {
       status: 'hold'
     },
   ]);
-
+ 
   const statusOptions = [
     { value: 'hold', label: 'Hold', icon: <FaPause className="inline mr-1" />, color: 'bg-yellow-100 text-yellow-800' },
     { value: 'pending', label: 'Pending', icon: <FaHourglassHalf className="inline mr-1" />, color: 'bg-red-100 text-red-800' },
     { value: 'running', label: 'Running', icon: <FaArrowRight className="inline mr-1" />, color: 'bg-orange-100 text-orange-800' },
     { value: 'completed', label: 'Completed', icon: <FaCheck className="inline mr-1" />, color: 'bg-green-100 text-green-800' }
   ];
-
+ 
   const handleStatusChange = (id, newStatus, isTraining) => {
     if (isTraining) {
       setTrainingData(trainingData.map(item =>
@@ -142,7 +151,7 @@ const AssignTraining = () => {
     }
     setEditingStatus(null);
   };
-
+ 
   const handleSort = (key) => {
     let direction = 'ascending';
     if (sortConfig.key === key && sortConfig.direction === 'ascending') {
@@ -150,7 +159,7 @@ const AssignTraining = () => {
     }
     setSortConfig({ key, direction });
   };
-
+ 
   const filteredTrainingData = trainingData.filter(item =>
     item.name.toLowerCase().includes(searchTerm.toLowerCase())
   ).sort((a, b) => {
@@ -161,7 +170,7 @@ const AssignTraining = () => {
       ? valueA.localeCompare(valueB)
       : valueB.localeCompare(valueA);
   });
-
+ 
   const filteredUpskillingData = upskillingData.filter(item =>
     item.name.toLowerCase().includes(searchTerm.toLowerCase())
   ).sort((a, b) => {
@@ -172,7 +181,7 @@ const AssignTraining = () => {
       ? valueA.localeCompare(valueB)
       : valueB.localeCompare(valueA);
   });
-
+ 
   const getStatusBadge = (status) => {
     const statusObj = statusOptions.find(opt => opt.value === status);
     return (
@@ -181,7 +190,7 @@ const AssignTraining = () => {
       </span>
     );
   };
-
+ 
   const columns = [
     { key: 'sno', label: 'S.No', sortable: false },
     { key: 'name', label: 'Program Name', sortable: true },
@@ -194,7 +203,7 @@ const AssignTraining = () => {
     { key: 'feedback', label: 'Feedback', sortable: true },
     { key: 'status', label: 'Status', sortable: true }
   ];
-
+ 
   return (
     <div className="min-h-screen bg-gradient-to-b from-purple-50 to-white p-4 md:p-8">
       <div className="mx-auto px-2 sm:px-6 lg:px-8 max-w-screen-2xl">
@@ -204,7 +213,7 @@ const AssignTraining = () => {
             Training & Upskilling
           </h2>
         </div>
-
+ 
         {/* Tab Buttons */}
         <div className="flex justify-center mb-8">
           <div className="inline-flex rounded-md shadow-sm">
@@ -238,7 +247,7 @@ const AssignTraining = () => {
             </button>
           </div>
         </div>
-
+ 
         {/* Search and Add New Button Row */}
         <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
           <div className="relative w-full sm:max-w-md">
@@ -253,7 +262,7 @@ const AssignTraining = () => {
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          <button 
+          <button
             onClick={() => setShowAddTraining(true)}
             className="w-full sm:w-auto inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-colors whitespace-nowrap"
           >
@@ -262,7 +271,7 @@ const AssignTraining = () => {
             <FaArrowRight className="ml-2" />
           </button>
         </div>
-
+ 
         {/* Training Table */}
         {activeTab === 'training' && (
           <div className="overflow-x-auto rounded-lg shadow-lg border border-gray-200">
@@ -272,7 +281,9 @@ const AssignTraining = () => {
                   {columns.map((column) => (
                     <th
                       key={column.key}
-                      className="p-2 text-left font-semibold text-sm border-b border-gray-200"
+                      className={`p-2 text-left font-semibold text-sm border-b border-gray-200 ${
+                        column.key === 'startDate' ? 'w-[180px]' : ''
+                      }`}
                     >
                       <div className="flex items-center justify-between">
                         <span>{column.label}</span>
@@ -307,33 +318,27 @@ const AssignTraining = () => {
                       <div className="font-medium">{training.name}</div>
                     </td>
                     <td className="p-2 text-gray-700 text-sm border-r border-gray-200">
-                      <div className="flex items-start">
-                        {/* Calendar icon */}
-                        <div className="mr-2 p-1 text-purple-600">
-                          <FaCalendarAlt />
+                      <div className="space-y-1.5">
+                        <div className="flex items-center border border-gray-200 rounded px-2 py-1 bg-white">
+                          <span className="text-xs text-gray-500 mr-1.5 whitespace-nowrap">Start:</span>
+                          <span className="text-xs font-medium text-gray-800 truncate">
+                            {new Date(training.startDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+                          </span>
                         </div>
-                        
-                        {/* Date range */}
-                        <div>
-                          <div className="flex items-baseline flex-wrap">
-                            <span className="font-medium text-gray-800 mr-1">
-                              {new Date(training.startDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'long' })}
-                            </span>
-                            <span className="text-gray-400 mx-1">to</span>
-                            <span className="font-medium text-gray-800">
-                              {new Date(training.endDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: new Date(training.startDate).getFullYear() !== new Date(training.endDate).getFullYear() ? 'numeric' : undefined })}
-                            </span>
-                          </div>
-                          
-                          {/* Duration badge */}
-                          <div className="mt-1">
-                            <span className="inline-block bg-purple-50 text-purple-700 text-xs px-2 py-0.5 rounded-full">
-                              {Math.ceil(
-                                (new Date(training.endDate) - new Date(training.startDate)) / 
-                                (1000 * 60 * 60 * 24)
-                              ) + 1} days
-                            </span>
-                          </div>
+                        <div className="flex items-center border border-gray-200 rounded px-2 py-1 bg-white">
+                          <span className="text-xs text-gray-500 mr-1.5 whitespace-nowrap">End:</span>
+                          <span className="text-xs font-medium text-gray-800 truncate">
+                            {new Date(training.endDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+                          </span>
+                        </div>
+                        <div className="flex items-center border border-gray-200 rounded px-2 py-1 bg-white">
+                          <span className="text-xs text-gray-500 mr-1.5 whitespace-nowrap">Duration:</span>
+                          <span className="inline-block bg-purple-50 text-purple-700 text-[11px] px-1.5 py-0.5 rounded-full">
+                            {Math.ceil(
+                              (new Date(training.endDate) - new Date(training.startDate)) /
+                              (1000 * 60 * 60 * 24)
+                            ) + 1} Days
+                          </span>
                         </div>
                       </div>
                     </td>
@@ -346,7 +351,7 @@ const AssignTraining = () => {
                     <td className="p-2 text-gray-700 text-sm border-r border-gray-200">
                       {training.competency}
                     </td>
-                    <td 
+                    <td
                       className="p-2 text-gray-700 text-sm border-r border-gray-200 text-center cursor-pointer hover:bg-purple-50 transition-colors"
                       onClick={() => {
                         setSelectedTraining(training);
@@ -361,40 +366,55 @@ const AssignTraining = () => {
                       </div>
                     </td>
                     <td className="p-2 text-gray-700 text-sm border-r border-gray-200">
-                      <div className="flex space-x-2 justify-center">
+                      <div className="flex justify-center space-x-3">
                         <button
                           onClick={() => {
                             setSelectedTraining(training);
                             setShowAttendanceDetails(true);
                           }}
-                          className="text-purple-600 hover:text-purple-800 transition-colors"
+                          className="p-1.5 rounded-lg bg-indigo-50 text-indigo-600 hover:bg-indigo-100 transition-colors group relative"
                           title="Attendance Details"
                         >
-                          <FaEdit />
+                          <FiUserCheck className="w-4 h-4" />
+                          <span className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 text-xs bg-gray-800 text-white px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                            Edit Attendance
+                          </span>
                         </button>
                         <button
                           onClick={() => {
                             setSelectedTraining(training);
                             setShowViewAttendance(true);
                           }}
-                          className="text-purple-600 hover:text-purple-800 transition-colors"
+                          className="p-1.5 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors group relative"
                           title="View Attendance"
                         >
-                          <FaEye />
+                          <FiEye className="w-4 h-4" />
+                          <span className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 text-xs bg-gray-800 text-white px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                            View Attendance
+                          </span>
                         </button>
-                        <button className="text-purple-600 hover:text-purple-800 transition-colors" title="Download">
-                          <FaDownload />
+                        <button
+                          className="p-1.5 rounded-lg bg-green-50 text-green-600 hover:bg-green-100 transition-colors group relative"
+                          title="Download Report"
+                        >
+                          <FiDownload className="w-4 h-4" />
+                          <span className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 text-xs bg-gray-800 text-white px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                            Download Report
+                          </span>
                         </button>
                       </div>
                     </td>
                     <td className="p-2 text-gray-700 text-sm border-r border-gray-200 text-center">
                       <div className="flex flex-col items-center">
-                        <button className="text-purple-600 hover:text-purple-800 transition-colors">
+                        <button
+                          onClick={() => {
+                            setSelectedTraining(training);
+                            setShowFeedbackModal(true);
+                          }}
+                          className="text-purple-600 hover:text-purple-800 transition-colors"
+                        >
                           <FaCommentAlt className="inline mr-1" /> {training.feedback}
                         </button>
-                        <span className="text-xs text-gray-500 mt-1">
-                          {training.score}% score
-                        </span>
                       </div>
                     </td>
                     <td className="p-2 text-gray-700 text-sm">
@@ -449,7 +469,7 @@ const AssignTraining = () => {
             )}
           </div>
         )}
-
+ 
         {/* Upskilling Table */}
         {activeTab === 'upskilling' && (
           <div className="overflow-x-auto rounded-lg shadow-lg border border-gray-200">
@@ -459,7 +479,9 @@ const AssignTraining = () => {
                   {columns.map((column) => (
                     <th
                       key={column.key}
-                      className="p-2 text-left font-semibold text-sm border-b border-gray-200"
+                      className={`p-2 text-left font-semibold text-sm border-b border-gray-200 ${
+                        column.key === 'startDate' ? 'w-[180px]' : ''
+                      }`}
                     >
                       <div className="flex items-center justify-between">
                         <span>{column.label}</span>
@@ -494,33 +516,27 @@ const AssignTraining = () => {
                       <div className="font-medium">{upskilling.name}</div>
                     </td>
                     <td className="p-2 text-gray-700 text-sm border-r border-gray-200">
-                      <div className="flex items-start">
-                        {/* Calendar icon */}
-                        <div className="mr-2 p-1 text-purple-600">
-                          <FaCalendarAlt />
+                      <div className="space-y-1.5">
+                        <div className="flex items-center border border-gray-200 rounded px-2 py-1 bg-white">
+                          <span className="text-xs text-gray-500 mr-1.5 whitespace-nowrap">Start:</span>
+                          <span className="text-xs font-medium text-gray-800 truncate">
+                            {new Date(upskilling.startDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+                          </span>
                         </div>
-                        
-                        {/* Date range */}
-                        <div>
-                          <div className="flex items-baseline flex-wrap">
-                            <span className="font-medium text-gray-800 mr-1">
-                              {new Date(upskilling.startDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'long' })}
-                            </span>
-                            <span className="text-gray-400 mx-1">to</span>
-                            <span className="font-medium text-gray-800">
-                              {new Date(upskilling.endDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: new Date(upskilling.startDate).getFullYear() !== new Date(upskilling.endDate).getFullYear() ? 'numeric' : undefined })}
-                            </span>
-                          </div>
-                          
-                          {/* Duration badge */}
-                          <div className="mt-1">
-                            <span className="inline-block bg-purple-50 text-purple-700 text-xs px-2 py-0.5 rounded-full">
-                              {Math.ceil(
-                                (new Date(upskilling.endDate) - new Date(upskilling.startDate)) / 
-                                (1000 * 60 * 60 * 24)
-                              ) + 1} days
-                            </span>
-                          </div>
+                        <div className="flex items-center border border-gray-200 rounded px-2 py-1 bg-white">
+                          <span className="text-xs text-gray-500 mr-1.5 whitespace-nowrap">End:</span>
+                          <span className="text-xs font-medium text-gray-800 truncate">
+                            {new Date(upskilling.endDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+                          </span>
+                        </div>
+                        <div className="flex items-center border border-gray-200 rounded px-2 py-1 bg-white">
+                          <span className="text-xs text-gray-500 mr-1.5 whitespace-nowrap">Duration:</span>
+                          <span className="inline-block bg-purple-50 text-purple-700 text-[11px] px-1.5 py-0.5 rounded-full">
+                            {Math.ceil(
+                              (new Date(upskilling.endDate) - new Date(upskilling.startDate)) /
+                              (1000 * 60 * 60 * 24) + 1
+                            )} Days
+                          </span>
                         </div>
                       </div>
                     </td>
@@ -548,26 +564,55 @@ const AssignTraining = () => {
                       </div>
                     </td>
                     <td className="p-2 text-gray-700 text-sm border-r border-gray-200">
-                      <div className="flex space-x-2 justify-center">
-                        <button className="text-purple-600 hover:text-purple-800 transition-colors">
-                          <FaEdit />
+                      <div className="flex justify-center space-x-3">
+                        <button
+                          onClick={() => {
+                            setSelectedTraining(upskilling);
+                            setShowAttendanceDetails(true);
+                          }}
+                          className="p-1.5 rounded-lg bg-indigo-50 text-indigo-600 hover:bg-indigo-100 transition-colors group relative"
+                          title="Attendance Details"
+                        >
+                          <FiUserCheck className="w-4 h-4" />
+                          <span className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 text-xs bg-gray-800 text-white px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                            Edit Attendance
+                          </span>
                         </button>
-                        <button className="text-purple-600 hover:text-purple-800 transition-colors">
-                          <FaEye />
+                        <button
+                          onClick={() => {
+                            setSelectedTraining(upskilling);
+                            setShowViewAttendance(true);
+                          }}
+                          className="p-1.5 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors group relative"
+                          title="View Attendance"
+                        >
+                          <FiEye className="w-4 h-4" />
+                          <span className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 text-xs bg-gray-800 text-white px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                            View Attendance
+                          </span>
                         </button>
-                        <button className="text-purple-600 hover:text-purple-800 transition-colors">
-                          <FaDownload />
+                        <button
+                          className="p-1.5 rounded-lg bg-green-50 text-green-600 hover:bg-green-100 transition-colors group relative"
+                          title="Download Report"
+                        >
+                          <FiDownload className="w-4 h-4" />
+                          <span className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 text-xs bg-gray-800 text-white px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                            Download Report
+                          </span>
                         </button>
                       </div>
                     </td>
                     <td className="p-2 text-gray-700 text-sm border-r border-gray-200 text-center">
                       <div className="flex flex-col items-center">
-                        <button className="text-purple-600 hover:text-purple-800 transition-colors">
+                        <button
+                          onClick={() => {
+                            setSelectedTraining(upskilling);
+                            setShowFeedbackModal(true);
+                          }}
+                          className="text-purple-600 hover:text-purple-800 transition-colors"
+                        >
                           <FaCommentAlt className="inline mr-1" /> {upskilling.feedback}
                         </button>
-                        <span className="text-xs text-gray-500 mt-1">
-                          {upskilling.score}% score
-                        </span>
                       </div>
                     </td>
                     <td className="p-2 text-gray-700 text-sm">
@@ -622,7 +667,7 @@ const AssignTraining = () => {
             )}
           </div>
         )}
-
+ 
         {/* Attendance Details Modal */}
         {showAttendanceDetails && (
           <AttendanceDetailsModal
@@ -630,7 +675,7 @@ const AssignTraining = () => {
             training={selectedTraining}
           />
         )}
-
+ 
         {/* View Attendance Modal */}
         {showViewAttendance && (
           <ViewAttendanceModal
@@ -638,21 +683,36 @@ const AssignTraining = () => {
             training={selectedTraining}
           />
         )}
-
+ 
         {/* Participant Details Modal */}
         {showParticipantDetails && (
-          <ParticipantDetailsModal 
+          <ParticipantDetailsModal
             onClose={() => setShowParticipantDetails(false)}
             training={selectedTraining}
           />
         )}
-
+ 
+        {/* Training Feedback Modal */}
+        {showFeedbackModal && (
+          <TrainingFeedback
+            training={selectedTraining}
+            onClose={() => setShowFeedbackModal(false)}
+            onSave={(updatedEmployees, feedbackCols, scoreCols) => {
+              console.log('Saved feedback data:', {
+                employees: updatedEmployees,
+                feedbackColumns: feedbackCols,
+                scoreColumns: scoreCols
+              });
+              setShowFeedbackModal(false);
+            }}
+          />
+        )}
+ 
         {/* Add Training Modal */}
         {showAddTraining && (
           <AddTraining
             onClose={() => setShowAddTraining(false)}
             onSave={(newTraining) => {
-              // Add the new training to your state
               setTrainingData(prev => [...prev, {
                 ...newTraining,
                 id: Math.max(...prev.map(t => t.id), 0) + 1,
@@ -663,13 +723,12 @@ const AssignTraining = () => {
             }}
           />
         )}
-
+ 
         {/* Add Upskilling Modal */}
         {showAddUpskilling && (
           <AddUpskilling
             onClose={() => setShowAddUpskilling(false)}
             onSave={(newUpskilling) => {
-              // Add the new upskilling to your state
               setUpskillingData(prev => [...prev, {
                 ...newUpskilling,
                 id: Math.max(...prev.map(u => u.id), 0) + 1,
@@ -684,5 +743,5 @@ const AssignTraining = () => {
     </div>
   );
 };
-
+ 
 export default AssignTraining;

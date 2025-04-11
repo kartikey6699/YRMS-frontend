@@ -1,10 +1,10 @@
 // AttendanceDetailsModal.js
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FaCalendarAlt, FaUser, FaEnvelope, FaIdCard, FaCheck, FaTimes } from 'react-icons/fa';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 
-const AttendanceDetailsModal = ({ onClose }) => {
+const AttendanceDetailsModal = ({ onClose, training }) => {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [attendanceData, setAttendanceData] = useState([
     { id: 1, empId: 'EMP001', name: 'John Doe', email: 'john@example.com', present: true, reason: '' },
@@ -14,6 +14,41 @@ const AttendanceDetailsModal = ({ onClose }) => {
   ]);
 
   const [isOpen, setIsOpen] = useState(true);
+  const [trainingDates, setTrainingDates] = useState([]);
+  const [holidays, setHolidays] = useState([
+    // Example holidays - format: 'YYYY-MM-DD'
+    // '2025-04-02', // Christmas
+    '2025-04-01', // Independence Day
+    '2025-04-08'
+    // Add more holidays as needed
+  ]);
+
+  useEffect(() => {
+    if (training) {
+      // Generate all dates between start and end date
+      const startDate = new Date(training.startDate);
+      const endDate = new Date(training.endDate);
+      const today = new Date();
+      
+      // Ensure end date doesn't exceed current date
+      const effectiveEndDate = endDate > today ? today : endDate;
+      
+      const dates = [];
+      let currentDate = new Date(startDate);
+      
+      while (currentDate <= effectiveEndDate) {
+        dates.push(new Date(currentDate));
+        currentDate.setDate(currentDate.getDate() + 1);
+      }
+      
+      setTrainingDates(dates);
+      
+      // Set initial selected date to first date if current date is outside range
+      if (selectedDate < startDate || selectedDate > effectiveEndDate) {
+        setSelectedDate(dates[0] || new Date());
+      }
+    }
+  }, [training]);
 
   const handleClose = () => {
     setIsOpen(false);
@@ -28,6 +63,58 @@ const AttendanceDetailsModal = ({ onClose }) => {
     ));
   };
 
+  const isHoliday = (date) => {
+    console.log(date,"OOOOOOOOOOOOOOOOOOOOOo");
+    const dateStr = date.toISOString().split('T')[0]; // Convert the given date to YYYY-MM-DD
+    console.log(dateStr,"PPPPPPPPPPPPP");
+    const holidayStrs = holidays.map(holiday => new Date(holiday).toISOString().split('T')[0]); // Normalize holidays
+    console.log(holidayStrs.includes(dateStr),"<<<<<<<<<<<<<<<<<<<<<",dateStr);
+    return holidayStrs.includes(dateStr);
+  };
+
+  const isWeekend = (date) => {
+    return date.getDay() === 0 || date.getDay() === 6; // Sunday or Saturday
+  };
+
+  // Filter function for date picker
+  const filterTrainingDate = (date) => {
+    return trainingDates.some(d => 
+      d.getDate() === date.getDate() && 
+      d.getMonth() === date.getMonth() && 
+      d.getFullYear() === date.getFullYear()
+    ) && !isWeekend(date) && !isHoliday(date);
+  };
+
+  // Custom day component to highlight dates
+  const DayComponent = ({ date }) => {
+    const weekend = isWeekend(date);
+    const holiday = isHoliday(date);
+    // console.log(holiday,"<<<<<<<<<<<<<<<<<<<<<?????????????????");
+    const isTrainingDate = trainingDates.some(d => 
+      d.getDate() === date.getDate() && 
+      d.getMonth() === date.getMonth() && 
+      d.getFullYear() === date.getFullYear()
+    );
+
+    let dayClass = '';
+    if (isTrainingDate) {
+      if (holiday) {
+        console.log(holiday,"::::::::::::::<<<<<<<?????????????????",isTrainingDate,"LLLLLLLLLL",date);
+        dayClass = 'bg-yellow-100 text-yellow-700 cursor-not-allowed';
+      } else if (weekend) {
+        dayClass = 'bg-gray-200 text-gray-400 cursor-not-allowed';
+      } else {
+        dayClass = 'bg-red-100 text-red-700';
+      }
+    }
+
+    return (
+      <div className={`react-datepicker__day ${dayClass} ${holiday || weekend ? 'opacity-80' : ''}`}>
+        {date.getDate()}
+      </div>
+    );
+  };
+
   return (
     <div className={`fixed inset-0 backdrop-blur-sm flex items-center justify-center z-50 p-4 transition-opacity duration-200 ${isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
       <div 
@@ -37,7 +124,7 @@ const AttendanceDetailsModal = ({ onClose }) => {
         <div className="flex justify-between items-center bg-gradient-to-r from-purple-600 to-blue-600 p-4 text-white">
           <h3 className="text-xl font-bold">
             <FaUser className="inline mr-2" />
-            Attendance Details
+            Attendance Details - {training?.name}
           </h3>
           <div className="flex items-center">
             <FaCalendarAlt className="mr-2" />
@@ -46,6 +133,13 @@ const AttendanceDetailsModal = ({ onClose }) => {
               onChange={date => setSelectedDate(date)}
               className="bg-purple-700 border-none text-white rounded px-2 py-1 focus:outline-none"
               dateFormat="MMMM d, yyyy"
+              filterDate={filterTrainingDate}
+              includeDates={trainingDates}
+              maxDate={new Date()}
+              placeholderText="Select training date"
+              renderDayContents={(day, date) => (
+                <DayComponent date={date} />
+              )}
             />
             <button 
               onClick={handleClose}
@@ -57,6 +151,25 @@ const AttendanceDetailsModal = ({ onClose }) => {
         </div>
         
         <div className="p-4 overflow-y-auto max-h-[70vh]">
+          <div className="mb-4 bg-yellow-50 p-3 rounded-lg border border-yellow-200">
+            <div className="flex items-center text-yellow-800">
+              <FaCalendarAlt className="mr-2" />
+              <span>Training Dates: {new Date(training.startDate).toLocaleDateString()} to {new Date(training.endDate).toLocaleDateString()}</span>
+            </div>
+            <div className="flex items-center text-red-600 mt-1">
+              <div className="w-4 h-4 bg-red-100 mr-2 border border-red-300"></div>
+              <span>Training days (Mon-Fri)</span>
+            </div>
+            <div className="flex items-center text-yellow-600 mt-1">
+              <div className="w-4 h-4 bg-yellow-100 mr-2 border border-yellow-300"></div>
+              <span>Holidays</span>
+            </div>
+            <div className="flex items-center text-gray-600 mt-1">
+              <div className="w-4 h-4 bg-gray-200 mr-2 border border-gray-300"></div>
+              <span>Weekends (Sat-Sun)</span>
+            </div>
+          </div>
+
           <div className="grid grid-cols-12 gap-2 font-semibold text-sm text-purple-800 border-b pb-2 mb-2">
             <div className="col-span-1">#</div>
             <div className="col-span-2">Emp ID</div>
