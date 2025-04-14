@@ -36,12 +36,20 @@ const ParticipantDetailsModal = ({ onClose, training }) => {
     },
   ].slice(0, training?.participants || 3));
 
+  const [searchTerm, setSearchTerm] = useState('');
+
   // Handle status change
   const handleStatusChange = (index, newStatus) => {
     const updatedParticipants = [...participants];
     updatedParticipants[index].status = newStatus;
     setParticipants(updatedParticipants);
   };
+
+  // Filter participants based on search term
+  const filteredParticipants = participants.filter(participant => 
+    participant.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    participant.email.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -71,6 +79,8 @@ const ParticipantDetailsModal = ({ onClose, training }) => {
               <input
                 type="text"
                 placeholder="Search participants..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full pl-8 pr-4 py-2 border border-purple-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
               />
               <FaSearch className="absolute left-3 top-3 text-gray-400" />
@@ -91,7 +101,7 @@ const ParticipantDetailsModal = ({ onClose, training }) => {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {participants.map((participant, index) => (
+                {filteredParticipants.map((participant, index) => (
                   <tr key={index} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50 hover:bg-gray-100'}>
                     <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-purple-600">{participant.empId}</td>
                     <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">{participant.name}</td>
@@ -152,7 +162,7 @@ const ParticipantDetailsModal = ({ onClose, training }) => {
         {/* Modal Footer */}
         <div className="bg-gray-50 px-4 py-3 rounded-b-lg flex justify-between items-center border-t border-gray-200">
           <div className="text-sm text-gray-500">
-            Showing {participants.length} of {training?.participants} participants
+            Showing {filteredParticipants.length} of {training?.participants} participants
           </div>
           <div className="flex space-x-3">
             <button className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 flex items-center">
