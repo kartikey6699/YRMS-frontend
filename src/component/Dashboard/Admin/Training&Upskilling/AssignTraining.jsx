@@ -419,7 +419,7 @@ const AssignTraining = () => {
                         </button>
                       </div>
                     </td>
-                    <td className="p-2 text-gray-700 text-sm">
+                    <td className="p-2 text-gray-700 text-sm w-24">
                       {editingStatus === training.id ? (
                         <select
                           className="border border-purple-300 rounded p-1 text-sm focus:ring-purple-500 focus:border-purple-500 w-full"
@@ -437,7 +437,7 @@ const AssignTraining = () => {
                       ) : (
                         <button
                           onClick={() => setEditingStatus(training.id)}
-                          className="hover:bg-purple-100 rounded p-1 transition-colors w-full text-center"
+                          className="hover:bg-purple-100 rounded p-1 transition-colors w-full text-center truncate"
                         >
                           {getStatusBadge(training.status)}
                         </button>
@@ -617,7 +617,7 @@ const AssignTraining = () => {
                         </button>
                       </div>
                     </td>
-                    <td className="p-2 text-gray-700 text-sm">
+                    <td className="p-2 text-gray-700 text-sm w-24">
                       {editingStatus === upskilling.id ? (
                         <select
                           className="border border-purple-300 rounded p-1 text-sm focus:ring-purple-500 focus:border-purple-500 w-full"
@@ -635,7 +635,7 @@ const AssignTraining = () => {
                       ) : (
                         <button
                           onClick={() => setEditingStatus(upskilling.id)}
-                          className="hover:bg-purple-100 rounded p-1 transition-colors w-full text-center"
+                          className="hover:bg-purple-100 rounded p-1 transition-colors w-full text-center truncate"
                         >
                           {getStatusBadge(upskilling.status)}
                         </button>
