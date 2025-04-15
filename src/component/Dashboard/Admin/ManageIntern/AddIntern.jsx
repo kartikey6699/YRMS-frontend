@@ -264,7 +264,6 @@ const AddIntern = () => {
                         >
                             <option value="indore">Indore</option>
                             <option value="pune">Pune</option>
-                            <option value="hydrabad">Hydrabad</option>
                         </select>
                     </div>
                     

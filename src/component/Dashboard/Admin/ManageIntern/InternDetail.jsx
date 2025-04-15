@@ -231,9 +231,9 @@ const InternDetail = ({ publicId, onClose }) => {
                         disabled={loading}
                       />
                     ) : (
-                    <span className="text-base text-indigo-800 font-medium">
-                      {formData.startDate ? new Date(formData.startDate).toLocaleDateString() : 'N/A'}
-                    </span>
+                      <span className="text-base text-indigo-800 font-medium">
+                        {formData.startDate ? new Date(formData.startDate).toLocaleDateString() : 'N/A'}
+                      </span>
                     )}
                   </div>
 
@@ -249,9 +249,9 @@ const InternDetail = ({ publicId, onClose }) => {
                         disabled={loading}
                       />
                     ) : (
-                    <span className="text-base text-purple-800 font-medium">
-                      {formData.endDate ? new Date(formData.endDate).toLocaleDateString() : 'N/A'}
-                    </span>
+                      <span className="text-base text-purple-800 font-medium">
+                        {formData.endDate ? new Date(formData.endDate).toLocaleDateString() : 'N/A'}
+                      </span>
                     )}
                   </div>
 
@@ -375,17 +375,54 @@ const InternDetail = ({ publicId, onClose }) => {
                       </div>
                     ) : (
                       <div className="flex items-center">
-                        {[1, 2, 3, 4, 5].map((star) => (
-                          <FaStar
-                            key={star}
-                            className={`${star <= formData.rating ? 'text-amber-400' : 'text-amber-200'} w-5 h-5 mr-1`}
-                          />
-                        ))}
-                        <span className="ml-2 text-base font-medium text-amber-800">
-                          ({formData.rating || '0'}/5)
-                        </span>
-                      </div>
-                    )}
+                        {/* Star Rating Input */}
+                        <div className="flex mr-2">
+                          {[1, 2, 3, 4, 5].map((star) => (
+                            <button
+                              key={star}
+                              type="button"
+                              onClick={() => handleInputChange({
+                                target: {
+                                  name: 'rating',
+                                  value: formData.rating === star ? 0 : star // Toggle between star and 0
+                                }
+                              })}
+                              className="focus:outline-none relative"
+                            >
+                              <FaStar
+                                className={`${star <= Math.floor(formData.rating) ? 'text-amber-400' : 'text-amber-200'} w-5 h-5 transition-colors`}
+                              />
+                              {/* Partial star fill for decimal values */}
+                              {formData.rating > star - 1 && formData.rating < star && (
+                                <div
+                                  className="absolute top-0 left-0 overflow-hidden"
+                                  style={{ width: `${(formData.rating - (star - 1)) * 100}%` }}
+                                >
+                                  <FaStar className="text-amber-400 w-5 h-5" />
+                                </div>
+                              )}
+                            </button>
+                          ))}
+                        </div>
+
+                        {/* Numeric Input */}
+                        <input
+                          type="number"
+                          min="0"
+                          max="5"
+                          step="0.1"
+                          value={formData.rating || ''}
+                          onChange={(e) => handleInputChange({
+                            target: {
+                              name: 'rating',
+                              value: parseFloat(e.target.value) || 0
+                            }
+                          })}
+                          className="w-16 border border-amber-200 rounded-md px-2 py-1 text-sm focus:ring-1 focus:ring-amber-300"
+                          disabled={loading}
+                        />
+                        <span className="ml-1 text-sm text-amber-600">/5</span>
+                      </div>)}
                   </div>
 
                   {/* LWD Field */}
