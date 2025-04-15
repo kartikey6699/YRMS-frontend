@@ -406,22 +406,9 @@ const InternDetail = ({ publicId, onClose }) => {
                         </div>
 
                         {/* Numeric Input */}
-                        <input
-                          type="number"
-                          min="0"
-                          max="5"
-                          step="0.1"
-                          value={formData.rating || ''}
-                          onChange={(e) => handleInputChange({
-                            target: {
-                              name: 'rating',
-                              value: parseFloat(e.target.value) || 0
-                            }
-                          })}
-                          className="w-16 border border-amber-200 rounded-md px-2 py-1 text-sm focus:ring-1 focus:ring-amber-300"
-                          disabled={loading}
-                        />
-                        <span className="ml-1 text-sm text-amber-600">/5</span>
+                        <span className="ml-2 text-base font-medium text-amber-800">
+                    ({formData.rating || '0'}/5)
+                  </span>
                       </div>)}
                   </div>
 
