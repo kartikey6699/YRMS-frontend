@@ -1,0 +1,174 @@
+import { createAsyncThunk } from "@reduxjs/toolkit";
+import { FEEDBACK_API, ATTENDANCE_API, PARTICIPANT_TASKS_API } from "../../config/Endpoints/Endpoints";
+import axios from "axios";
+
+const programApiClient = axios.create({
+  headers: {
+    "Content-Type": "application/json",
+  },
+});
+
+programApiClient.interceptors.request.use((config) => {
+  const token = localStorage.getItem("token");
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+// Action to fetch training feedback
+export const fetchTrainingFeedback = createAsyncThunk(
+  "training/fetchFeedback",
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await programApiClient.get(FEEDBACK_API.LIST);
+      if (!response.data.success) {
+        throw new Error("Failed to fetch training feedback");
+      }
+      return response.data.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || error.message);
+    }
+  }
+);
+
+// Action to add training feedback
+export const addTrainingFeedback = createAsyncThunk(
+  "training/addFeedback",
+  async (feedbackData, { rejectWithValue }) => {
+    try {
+      const response = await programApiClient.post(FEEDBACK_API.ADD, feedbackData);
+      if (!response.data.success) {
+        throw new Error("Failed to add training feedback");
+      }
+      return response.data.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || error.message);
+    }
+  }
+);
+
+// Action to update training feedback
+export const updateTrainingFeedback = createAsyncThunk(
+  "training/updateFeedback",
+  async ({ publicId, feedbackData }, { rejectWithValue }) => {
+    try {
+      const response = await programApiClient.patch(FEEDBACK_API.UPDATE(publicId), feedbackData);
+      if (!response.data.success) {
+        throw new Error("Failed to update training feedback");
+      }
+      return response.data.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || error.message);
+    }
+  }
+);
+
+// Action to delete training feedback
+export const deleteTrainingFeedback = createAsyncThunk(
+  "training/deleteFeedback",
+  async (publicId, { rejectWithValue }) => {
+    try {
+      await programApiClient.delete(FEEDBACK_API.DELETE(publicId));
+      return publicId;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || error.message);
+    }
+  }
+);
+
+// Action to create attendance for training
+export const createTrainingAttendance = createAsyncThunk(
+  "attendance/create",
+  async (attendanceData, { rejectWithValue }) => {
+    try {
+      const response = await programApiClient.post(ATTENDANCE_API.CREATE, attendanceData);
+      if (!response.data.success) {
+        throw new Error("Failed to create training attendance");
+      }
+      return response.data.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || error.message);
+    }
+  }
+);
+
+// Action to fetch attendance for a specific program
+export const fetchProgramAttendance = createAsyncThunk(
+  "attendance/fetchProgram",
+  async (programId, { rejectWithValue }) => {
+    try {
+      const response = await programApiClient.get(ATTENDANCE_API.PROGRAM(programId));
+      if (!response.data.success) {
+        throw new Error("Failed to fetch program attendance");
+      }
+      return response.data.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || error.message);
+    }
+  }
+);
+
+// Action to fetch users absent for a specific program
+export const fetchUsersAbsent = createAsyncThunk(
+  "attendance/fetchUsersAbsent",
+  async (programId, { rejectWithValue }) => {
+    try {
+      const response = await programApiClient.get(ATTENDANCE_API.USERS_ABSENT(programId));
+      if (!response.data.success) {
+        throw new Error("Failed to fetch users absent");
+      }
+      return response.data.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || error.message);
+    }
+  }
+);
+
+// Action to post participant tasks
+export const postParticipantTask = createAsyncThunk(
+  "participantTasks/post",
+  async (taskData, { rejectWithValue }) => {
+    try {
+      const response = await programApiClient.post(PARTICIPANT_TASKS_API.POST, taskData);
+      if (!response.data.success) {
+        throw new Error("Failed to post participant task");
+      }
+      return response.data.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || error.message);
+    }
+  }
+);
+
+// Action to get participant tasks
+export const fetchParticipantTasks = createAsyncThunk(
+  "participantTasks/get",
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await programApiClient.get(PARTICIPANT_TASKS_API.GET);
+      if (!response.data.success) {
+        throw new Error("Failed to fetch participant tasks");
+      }
+      return response.data.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || error.message);
+    }
+  }
+);
+
+// Action to get details of a specific participant task
+export const fetchParticipantTaskDetails = createAsyncThunk(
+  "participantTasks/getDetails",
+  async (taskId, { rejectWithValue }) => {
+    try {
+      const response = await programApiClient.get(PARTICIPANT_TASKS_API.DETAIL(taskId));
+      if (!response.data.success) {
+        throw new Error("Failed to fetch participant task details");
+      }
+      return response.data.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || error.message);
+    }
+  }
+)

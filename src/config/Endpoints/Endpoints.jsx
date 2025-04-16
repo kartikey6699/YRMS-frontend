@@ -68,3 +68,22 @@ export const INTERN_API = {
     UPDATE: `${INTERN_API_BASE_URL}/updateIntern`,
     DELETE: `${INTERN_API_BASE_URL}/deleteIntern`
 };
+
+export const FEEDBACK_API = {
+    LIST: `${ADMIN_API_BASE_URL}/feedback-list`,
+    ADD: `${ADMIN_API_BASE_URL}/add-feedback`,
+    UPDATE: (publicId) => `${ADMIN_API_BASE_URL}/update-training-feedback/${publicId}`,
+    DELETE: (publicId) => `${ADMIN_API_BASE_URL}/delete-feedback/${publicId}`
+};
+
+export const ATTENDANCE_API = {
+    PROGRAM: (programId) => `${ADMIN_API_BASE_URL}/attendance/program/${programId}`,
+    CREATE: `${ADMIN_API_BASE_URL}/attendance/create`,
+    USERS_ABSENT: (programId) => `${ADMIN_API_BASE_URL}/attendance/users/absent/${programId}`
+};
+
+export const PARTICIPANT_TASKS_API = {
+    POST: `${ADMIN_API_BASE_URL}/participant-tasks`,
+    GET: `${ADMIN_API_BASE_URL}/participant-tasks`,
+    DETAIL: (taskId) => `${ADMIN_API_BASE_URL}/participant-tasks/${taskId}`
+};
