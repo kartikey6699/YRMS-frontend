@@ -21,7 +21,7 @@ function App() {
   return (
       <Router>
         <Routes>
-          <Route element={<PrivateRoutes />}>
+          {/* <Route element={<PrivateRoutes />}> */}
             <Route element={<HeaderLayout />}>
               <Route path='/dashboard' element={<Dashboard />} />
               <Route path="/manage-resources" element={<ManageResource />} />
@@ -33,7 +33,7 @@ function App() {
               <Route path="/interns" element={<InternList />} />
               <Route path='/interns/add' element={<AddIntern />} />
             </Route>
-          </Route>
+          {/* </Route> */}
           <Route path='/' element={<LandingPage />} />
           <Route path='/login' element={<Login />} />
           <Route path='/forgotpasswordotp' element={<ForgotPasswordOtp />} />

@@ -24,6 +24,10 @@ import {
   fetchCompetencies,
   fetchDesignations,
   createCompetency,
+  fetchTrainingTechnologies,
+  createTrainingTechnology,
+  updateTrainingTechnology,
+  deleteTrainingTechnology,
 } from "../../features/resource/resourceAction";
 
 const AddOptionModal = ({ field, options, onClose, setToast, categoryId }) => {
@@ -55,6 +59,11 @@ const AddOptionModal = ({ field, options, onClose, setToast, categoryId }) => {
           result = await dispatch(createCompetency(newOption.trim())).unwrap();
           dispatch(fetchCompetencies());
           break;
+        case "trainingtechnology":
+          console.log('>>>>>>>>>>>>>>>>>>>>>>')
+          result = await dispatch(createTrainingTechnology(newOption.trim())).unwrap();
+          dispatch(fetchTrainingTechnologies());
+          break;
         case "certification_authority":
           result = await dispatch(createCertificationAuthority(newOption.trim())).unwrap();
           dispatch(fetchCertificationAuthorities());
@@ -78,10 +87,20 @@ const AddOptionModal = ({ field, options, onClose, setToast, categoryId }) => {
         default:
           break;
       }
-      setToast(<SuccessToast message={`${getFieldLabel()} added successfully!`} onClose={() => setToast(null)} />);
+      setToast(
+        <SuccessToast
+          message={`${getFieldLabel()} added successfully!`}
+          onClose={() => setToast(null)}
+        />
+      );
       setNewOption("");
     } catch (error) {
-      setToast(<ErrorToast message={error.message} onClose={() => setToast(null)} />);
+      setToast(
+        <ErrorToast
+          message={error.message}
+          onClose={() => setToast(null)}
+        />
+      );
     } finally {
       setLoading(false);
     }
@@ -111,6 +130,15 @@ const AddOptionModal = ({ field, options, onClose, setToast, categoryId }) => {
             })
           ).unwrap();
           dispatch(fetchCompetencies());
+          break;
+        case "trainingtechnology":
+          result = await dispatch(
+            updateTrainingTechnology({
+              id: editingOption.publicId,
+              name: editValue.trim(),
+            })
+          ).unwrap();
+          dispatch(fetchTrainingTechnologies());
           break;
         case "certification_authority":
           result = await dispatch(
@@ -143,11 +171,21 @@ const AddOptionModal = ({ field, options, onClose, setToast, categoryId }) => {
         default:
           break;
       }
-      setToast(<SuccessToast message={`${getFieldLabel()} updated successfully!`} onClose={() => setToast(null)} />);
+      setToast(
+        <SuccessToast
+          message={`${getFieldLabel()} updated successfully!`}
+          onClose={() => setToast(null)}
+        />
+      );
       setEditingOption(null);
       setEditValue("");
     } catch (error) {
-      setToast(<ErrorToast message={error.message} onClose={() => setToast(null)} />);
+      setToast(
+        <ErrorToast
+          message={error.message}
+          onClose={() => setToast(null)}
+        />
+      );
     } finally {
       setLoading(false);
     }
@@ -165,6 +203,10 @@ const AddOptionModal = ({ field, options, onClose, setToast, categoryId }) => {
           await dispatch(deleteCompetency(option.publicId)).unwrap();
           dispatch(fetchCompetencies());
           break;
+        case "trainingtechnology":
+          await dispatch(deleteTrainingTechnology(option.publicId)).unwrap();
+          dispatch(fetchTrainingTechnologies());
+          break;
         case "certification_authority":
           await dispatch(deleteCertificationAuthority(option.publicId)).unwrap();
           dispatch(fetchCertificationAuthorities());
@@ -180,9 +222,19 @@ const AddOptionModal = ({ field, options, onClose, setToast, categoryId }) => {
         default:
           break;
       }
-      setToast(<SuccessToast message={`${getFieldLabel()} deleted successfully!`} onClose={() => setToast(null)} />);
+      setToast(
+        <SuccessToast
+          message={`${getFieldLabel()} deleted successfully!`}
+          onClose={() => setToast(null)}
+        />
+      );
     } catch (error) {
-      setToast(<ErrorToast message={error.message} onClose={() => setToast(null)} />);
+      setToast(
+        <ErrorToast
+          message={error.message}
+          onClose={() => setToast(null)}
+        />
+      );
     } finally {
       setLoading(false);
     }
@@ -204,6 +256,8 @@ const AddOptionModal = ({ field, options, onClose, setToast, categoryId }) => {
         return "Designation";
       case "competency":
         return "Competency";
+      case "trainingtechnology":
+        return "Training Technology";
       case "certification_authority":
         return "Certification Authority";
       case "technology_category":
