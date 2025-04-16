@@ -102,7 +102,7 @@ export const fetchProgramAttendance = createAsyncThunk(
       if (!response.data.success) {
         throw new Error("Failed to fetch program attendance");
       }
-      return response.data.data;
+      return response.data.data.attendanceRecords;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || error.message);
     }
@@ -118,7 +118,7 @@ export const fetchUsersAbsent = createAsyncThunk(
       if (!response.data.success) {
         throw new Error("Failed to fetch users absent");
       }
-      return response.data.data;
+      return response.data.data.users;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || error.message);
     }
