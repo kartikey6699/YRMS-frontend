@@ -146,7 +146,7 @@ export const fetchParticipantTasks = createAsyncThunk(
   "participantTasks/get",
   async (programId, { rejectWithValue }) => {
     try {
-      const response = await programApiClient.get(PARTICIPANT_TASKS_API.GET);
+      const response = await programApiClient.get(`${PARTICIPANT_TASKS_API.GET}?program_id=${programId}`);
       if (!response.data.success) {
         throw new Error("Failed to fetch participant tasks");
       }
