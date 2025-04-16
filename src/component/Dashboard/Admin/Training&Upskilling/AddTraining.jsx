@@ -143,12 +143,13 @@ const AddTraining = ({ onClose, onSave, isUpskilling = false }) => {
       console.log("formData: ", formData)
       // Prepare the data in the required format
       const programData = {
+        type: isUpskilling ? 2 : 1,
         programName: formData.programName,
         startDate: formData.startDate,
         endDate: formData.endDate,
         duration: formData.duration,
         requester: formData.requester.value,
-        technology: formData.technology,
+        technology: 2,
         projectDescription: formData.projectDescription,
         competencyId: formData.competency.value,
         trainerId: formData.trainerName.value,
