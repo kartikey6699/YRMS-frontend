@@ -38,11 +38,13 @@ const Dropdown = ({
 
   const handleSelect = (option) => {
     if (option === "add-new") {
-      // Pass the field name directly to setModalField
       setModalField(name);
     } else {
       const selectedValue =
-        name === "designation" || name === "competency"
+        name === "designation" ||
+        name === "competency" ||
+        name === "trainingtechnology" ||
+        name === "technology"
           ? typeof option === "object"
             ? option.name
             : option
@@ -64,11 +66,15 @@ const Dropdown = ({
       return tech?.name || value;
     }
 
-    if (name === "designation" || name === "competency") {
-      return value; // Value is already the name
+    if (
+      name === "designation" ||
+      name === "competency" ||
+      name === "trainingtechnology" ||
+      name === "technology"
+    ) {
+      return value;
     }
 
-    // For category or other fields where value is publicId
     const foundOption = options?.find(
       (opt) => (typeof opt === "object" ? opt.publicId : opt) === value
     );

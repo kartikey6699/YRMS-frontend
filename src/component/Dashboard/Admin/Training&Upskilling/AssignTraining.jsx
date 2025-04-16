@@ -38,7 +38,6 @@ import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import Select from 'react-select';
 import AddTraining from './AddTraining';
-import AddUpskilling from './AddUpskilling';
 import ParticipantDetailsModal from './ParticipantDetailsModal';
 import TrainingFeedback from './TrainingFeedback';
 import UpskillingDetailModal from './UpskillingDetailModal';
@@ -226,8 +225,8 @@ const AssignTraining = () => {
                 setSortConfig({ key: null, direction: 'ascending' });
               }}
               className={`px-6 py-3 text-sm font-medium rounded-l-lg focus:outline-none transition-colors ${activeTab === 'training'
-                  ? 'bg-purple-600 text-white shadow-purple'
-                  : 'bg-white text-purple-600 hover:bg-purple-50 border border-purple-200'
+                ? 'bg-purple-600 text-white shadow-purple'
+                : 'bg-white text-purple-600 hover:bg-purple-50 border border-purple-200'
                 }`}
             >
               <FaChalkboardTeacher className="inline mr-2" />
@@ -240,8 +239,8 @@ const AssignTraining = () => {
                 setSortConfig({ key: null, direction: 'ascending' });
               }}
               className={`px-6 py-3 text-sm font-medium rounded-r-lg focus:outline-none transition-colors ${activeTab === 'upskilling'
-                  ? 'bg-purple-600 text-white shadow-purple'
-                  : 'bg-white text-purple-600 hover:bg-purple-50 border border-purple-200'
+                ? 'bg-purple-600 text-white shadow-purple'
+                : 'bg-white text-purple-600 hover:bg-purple-50 border border-purple-200'
                 }`}
             >
               <FaUserPlus className="inline mr-2" />
@@ -283,9 +282,8 @@ const AssignTraining = () => {
                   {columns.map((column) => (
                     <th
                       key={column.key}
-                      className={`p-2 text-left font-semibold text-sm border-b border-gray-200 ${
-                        column.key === 'startDate' ? 'w-[180px]' : ''
-                      }`}
+                      className={`p-2 text-left font-semibold text-sm border-b border-gray-200 ${column.key === 'startDate' ? 'w-[180px]' : ''
+                        }`}
                     >
                       <div className="flex items-center justify-between">
                         <span>{column.label}</span>
@@ -481,9 +479,8 @@ const AssignTraining = () => {
                   {columns.map((column) => (
                     <th
                       key={column.key}
-                      className={`p-2 text-left font-semibold text-sm border-b border-gray-200 ${
-                        column.key === 'startDate' ? 'w-[180px]' : ''
-                      }`}
+                      className={`p-2 text-left font-semibold text-sm border-b border-gray-200 ${column.key === 'startDate' ? 'w-[180px]' : ''
+                        }`}
                     >
                       <div className="flex items-center justify-between">
                         <span>{column.label}</span>
@@ -551,7 +548,7 @@ const AssignTraining = () => {
                     <td className="p-2 text-gray-700 text-sm border-r border-gray-200">
                       {upskilling.competency}
                     </td>
-                    <td 
+                    <td
                       className="p-2 text-gray-700 text-sm border-r border-gray-200 text-center cursor-pointer hover:bg-purple-50 transition-colors"
                       onClick={() => {
                         setSelectedTraining(upskilling);
@@ -721,6 +718,7 @@ const AssignTraining = () => {
         {/* Add Training Modal */}
         {showAddTraining && (
           <AddTraining
+            isUpskilling={false} // Pass prop to indicate this is for training
             onClose={() => setShowAddTraining(false)}
             onSave={(newTraining) => {
               setTrainingData(prev => [...prev, {
@@ -736,7 +734,8 @@ const AssignTraining = () => {
 
         {/* Add Upskilling Modal */}
         {showAddUpskilling && (
-          <AddUpskilling
+          <AddTraining
+            isUpskilling={true} // Pass prop to indicate this is for upskilling
             onClose={() => setShowAddUpskilling(false)}
             onSave={(newUpskilling) => {
               setUpskillingData(prev => [...prev, {

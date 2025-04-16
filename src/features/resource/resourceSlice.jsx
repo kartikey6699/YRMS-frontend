@@ -11,7 +11,11 @@ import {
   createCompetency,
   updateCompetency,
   deleteCompetency,
-  updateResource
+  updateResource,
+  fetchTrainingTechnologies,
+  createTrainingTechnology,
+  updateTrainingTechnology,
+  deleteTrainingTechnology
 } from "./resourceAction";
 
 const initialState = {
@@ -23,6 +27,7 @@ const initialState = {
   competencies: [],
   designationLoading: false,
   competencyLoading: false,
+  trainingTechnologyLoading: false,
   createdResource: null,
   pagination: {
     currentPage: 1,
@@ -325,6 +330,72 @@ const resourceSlice = createSlice({
       })
       .addCase(deleteCompetency.rejected, (state, { payload }) => {
         state.competencyLoading = false;
+        state.error = payload;
+      })
+      // Training Technologies
+      .addCase(fetchTrainingTechnologies.pending, (state) => {
+        state.trainingTechnologyLoading = true;
+      })
+      .addCase(fetchTrainingTechnologies.fulfilled, (state, { payload }) => {
+        state.trainingTechnologyLoading = false;
+        state.trainingTechnologies = payload.Technologies.map((item) => ({
+          publicId: item.publicId,
+          name: item.name,
+          technologyCategoryId: item.technologyCategoryId,
+          technologyCategoryName: item.technologyCategoryName,
+        }));
+      })
+      .addCase(fetchTrainingTechnologies.rejected, (state, { payload }) => {
+        state.trainingTechnologyLoading = false;
+        state.error = payload;
+      })
+
+      .addCase(createTrainingTechnology.pending, (state) => {
+        state.trainingTechnologyLoading = true;
+      })
+      .addCase(createTrainingTechnology.fulfilled, (state, { payload }) => {
+        state.trainingTechnologyLoading = false;
+        state.trainingTechnologies.push({
+          publicId: payload.publicId,
+          name: payload.name,
+          technologyCategoryId: payload.technologyCategoryId,
+          technologyCategoryName: payload.technologyCategoryName,
+        });
+      })
+      .addCase(createTrainingTechnology.rejected, (state, { payload }) => {
+        state.trainingTechnologyLoading = false;
+        state.error = payload;
+      })
+
+      .addCase(updateTrainingTechnology.pending, (state) => {
+        state.trainingTechnologyLoading = true;
+      })
+      .addCase(updateTrainingTechnology.fulfilled, (state, { payload }) => {
+        state.trainingTechnologyLoading = false;
+        const index = state.trainingTechnologies.findIndex((t) => t.publicId === payload.publicId);
+        if (index !== -1) {
+          state.trainingTechnologies[index] = {
+            publicId: payload.publicId,
+            name: payload.name,
+            technologyCategoryId: payload.technologyCategoryId,
+            technologyCategoryName: payload.technologyCategoryName,
+          };
+        }
+      })
+      .addCase(updateTrainingTechnology.rejected, (state, { payload }) => {
+        state.trainingTechnologyLoading = false;
+        state.error = payload;
+      })
+
+      .addCase(deleteTrainingTechnology.pending, (state) => {
+        state.trainingTechnologyLoading = true;
+      })
+      .addCase(deleteTrainingTechnology.fulfilled, (state, { payload }) => {
+        state.trainingTechnologyLoading = false;
+        state.trainingTechnologies = state.trainingTechnologies.filter((t) => t.publicId !== payload);
+      })
+      .addCase(deleteTrainingTechnology.rejected, (state, { payload }) => {
+        state.trainingTechnologyLoading = false;
         state.error = payload;
       });
   }

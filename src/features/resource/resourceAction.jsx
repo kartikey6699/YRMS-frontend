@@ -1,6 +1,6 @@
 import axios from "axios";
 import { createAsyncThunk } from "@reduxjs/toolkit";
-import { RESOURCE_API, DESIGNATION_API, COMPETENCY_API } from "../../config/Endpoints/Endpoints";
+import { RESOURCE_API, DESIGNATION_API, COMPETENCY_API, BASELINE } from "../../config/Endpoints/Endpoints";
 
 
 const resourceApiClient = axios.create({
@@ -231,6 +231,100 @@ export const deleteCompetency = createAsyncThunk(
       return id;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || error.message);
+    }
+  }
+);
+
+export const fetchTrainingTechnologies = createAsyncThunk(
+  "resource/fetchTrainingTechnologies",
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await resourceApiClient.get(
+        BASELINE.TECHNOLOGY_LIST
+      );
+      const { success, data } = response.data;
+
+      if (!success) {
+        throw new Error("Failed to fetch training technologies");
+      }
+
+      return data;
+    } catch (error) {
+      const errorMessage =
+        error.response?.data?.message ||
+        error.message ||
+        "Failed to fetch training technologies";
+      return rejectWithValue(errorMessage);
+    }
+  }
+);
+
+export const createTrainingTechnology = createAsyncThunk(
+  "resource/createTrainingTechnology",
+  async (name, { rejectWithValue }) => {
+    try {
+      console.log('RIshhhh')
+      const tech_payload = {
+        'name' : name,
+        "technology_category": "e5a7c325-4a78-4aa3-9d4c-3084092560f3"
+      }
+      console.log(tech_payload);
+      const response = await resourceApiClient.post(BASELINE.TECHNOLOGY_CREATE, tech_payload);
+      const { success, data } = response.data;
+
+      if (!success) {
+        throw new Error("Failed to create training technology");
+      }
+
+      return data;
+    } catch (error) {
+      const errorMessage =
+        error.response?.data?.message ||
+        error.message ||
+        "Failed to create training technology";
+      return rejectWithValue(errorMessage);
+    }
+  }
+);
+
+export const updateTrainingTechnology = createAsyncThunk(
+  "resource/updateTrainingTechnology",
+  async ({ id, name }, { rejectWithValue }) => {
+    try {
+      const tech_payload = {
+        'name' : name,
+        "technology_category": "e5a7c325-4a78-4aa3-9d4c-3084092560f3"
+      }
+      const response = await resourceApiClient.patch(`${BASELINE.TECHNOLOGY_UPDATE}/${id}`, tech_payload);
+      const { success, data } = response.data;
+
+      if (!success) {
+        throw new Error("Failed to update training technology");
+      }
+
+      return data;
+    } catch (error) {
+      const errorMessage =
+        error.response?.data?.message ||
+        error.message ||
+        "Failed to update training technology";
+      return rejectWithValue(errorMessage);
+    }
+  }
+);
+
+export const deleteTrainingTechnology = createAsyncThunk(
+  "resource/deleteTrainingTechnology",
+  async (id, { rejectWithValue }) => {
+    try {
+      await resourceApiClient.delete(`${BASELINE.TECHNOLOGY_DELETE}/${id}`);
+      return id;
+    } catch (error) {
+      const errorMessage =
+        error.response?.data?.message ||
+        error.message ||
+        "Failed to delete training technology";
+      return rejectWithValue(errorMessage);
     }
   }
 );
