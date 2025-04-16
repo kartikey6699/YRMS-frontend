@@ -1,5 +1,5 @@
 
-import { ADMIN_API_BASE_URL, DESIGNATION_API_BASE_URL, COMPETENCY_API_BASE_URL, OPPORTUNITY_API_BASE_URL, CERTIFICATION_AUTHORITY_API_BASE_URL, BASELINE_API_BASE_URL , CATEGORY_API_BASE_URL , TECHNOLOGY_API_BASE_URL, INTERN_API_BASE_URL} from "./BaseEndpoints";
+import { ADMIN_API_BASE_URL, DESIGNATION_API_BASE_URL, COMPETENCY_API_BASE_URL, OPPORTUNITY_API_BASE_URL, CERTIFICATION_AUTHORITY_API_BASE_URL, BASELINE_API_BASE_URL , CATEGORY_API_BASE_URL , TECHNOLOGY_API_BASE_URL, INTERN_API_BASE_URL, API_BASE_URL} from "./BaseEndpoints";
 
 export const AUTH_API = {
     // ADMIN_LOGIN: `${ADMIN_API_BASE_URL}/user/login`,
@@ -83,7 +83,9 @@ export const ATTENDANCE_API = {
 };
 
 export const PARTICIPANT_TASKS_API = {
-    POST: `${ADMIN_API_BASE_URL}/participant-tasks`,
-    GET: `${ADMIN_API_BASE_URL}/participant-tasks`,
-    DETAIL: (taskId) => `${ADMIN_API_BASE_URL}/participant-tasks/${taskId}`
+    POST: `${API_BASE_URL}participant-tasks`,
+    GET: `${API_BASE_URL}participant-tasks`,
+    UPDATE: (taskId) => `${API_BASE_URL}participant-tasks/${taskId}`,
+    DELETE: (taskId) => `${API_BASE_URL}participant-tasks/${taskId}`
+
 };

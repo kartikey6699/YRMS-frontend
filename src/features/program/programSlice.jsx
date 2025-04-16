@@ -9,21 +9,19 @@ import {
   fetchUsersAbsent,
   postParticipantTask,
   fetchParticipantTasks,
-  fetchParticipantTaskDetails
+  updateParticipantTask,
+  deleteParticipantTask
 } from "./programAction";
 
 const initialState = {
   trainingFeedback: [],
   attendance: [],
-  participantTasks: [],
+  absentUsers: [],
+  participantTasks: {
+    participants: []
+  },
   loading: false,
-  error: null,
-  pagination: {
-    currentPage: 1,
-    totalPages: 1,
-    totalItems: 0,
-    size: 10
-  }
+  error: null
 };
 
 const programSlice = createSlice({
@@ -32,13 +30,6 @@ const programSlice = createSlice({
   reducers: {
     clearError: (state) => {
       state.error = null;
-    },
-    setPage: (state, action) => {
-      state.pagination.currentPage = action.payload;
-    },
-    setPageSize: (state, action) => {
-      state.pagination.size = action.payload;
-      state.pagination.currentPage = 1; // Reset to first page when page size changes
     }
   },
   extraReducers: (builder) => {
@@ -151,7 +142,15 @@ const programSlice = createSlice({
       })
       .addCase(postParticipantTask.fulfilled, (state, { payload }) => {
         state.loading = false;
-        state.participantTasks.push(payload);
+        const participantIndex = state.participantTasks.participants.findIndex(
+          p => p.id === payload.participantId
+        );
+        if (participantIndex !== -1) {
+          if (!state.participantTasks.participants[participantIndex].tasks) {
+            state.participantTasks.participants[participantIndex].tasks = [];
+          }
+          state.participantTasks.participants[participantIndex].tasks.unshift(payload);
+        }
       })
       .addCase(postParticipantTask.rejected, (state, { payload }) => {
         state.loading = false;
@@ -165,31 +164,56 @@ const programSlice = createSlice({
       })
       .addCase(fetchParticipantTasks.fulfilled, (state, { payload }) => {
         state.loading = false;
-        state.participantTasks = payload;
+        state.participantTasks.participants = payload?.data?.participants || [];
       })
       .addCase(fetchParticipantTasks.rejected, (state, { payload }) => {
         state.loading = false;
         state.error = payload;
       })
 
-      // Fetch Participant Task Details
-      .addCase(fetchParticipantTaskDetails.pending, (state) => {
+      // Update Participant Task
+      .addCase(updateParticipantTask.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
-      .addCase(fetchParticipantTaskDetails.fulfilled, (state, { payload }) => {
+      .addCase(updateParticipantTask.fulfilled, (state, { payload }) => {
         state.loading = false;
-        const index = state.participantTasks.findIndex(t => t.publicId === payload.publicId);
-        if (index !== -1) {
-          state.participantTasks[index] = payload;
+        for (const participant of state.participantTasks.participants) {
+          if (participant.tasks) {
+            const taskIndex = participant.tasks.findIndex(
+              t => t.id === payload.id
+            );
+            if (taskIndex !== -1) {
+              participant.tasks[taskIndex] = payload;
+              break;
+            }
+          }
         }
       })
-      .addCase(fetchParticipantTaskDetails.rejected, (state, { payload }) => {
+      .addCase(updateParticipantTask.rejected, (state, { payload }) => {
+        state.loading = false;
+        state.error = payload;
+      })
+
+      // Delete Participant Task
+      .addCase(deleteParticipantTask.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(deleteParticipantTask.fulfilled, (state, { payload }) => {
+        state.loading = false;
+        for (const participant of state.participantTasks.participants) {
+          if (participant.tasks) {
+            participant.tasks = participant.tasks.filter(t => t.id !== payload);
+          }
+        }
+      })
+      .addCase(deleteParticipantTask.rejected, (state, { payload }) => {
         state.loading = false;
         state.error = payload;
       });
   }
 });
 
-export const { clearError, setPage, setPageSize } = programSlice.actions;
+export const { clearError } = programSlice.actions;
 export default programSlice.reducer;

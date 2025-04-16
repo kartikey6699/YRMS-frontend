@@ -1,11 +1,11 @@
 import { configureStore } from '@reduxjs/toolkit'
 import authReducer from './features/auth/authSlice'
 import resourceReducer from "./features/resource/resourceSlice";
-import opportunityReducer from './features/opportunity/opportunitySlice'; 
+import opportunityReducer from './features/opportunity/opportunitySlice';
 import baselineReducer from "./features/baseline/baselineSlice";
 import internReducer from "./features/intern/internSlice";
-
-
+import programReducer from './features/program/programSlice';
+ 
 export const store = configureStore({
     reducer: {
         auth: authReducer,
@@ -13,5 +13,6 @@ export const store = configureStore({
         opportunity: opportunityReducer,
         baseline: baselineReducer,
         intern: internReducer,
+        program: programReducer,
     }
 })

@@ -144,11 +144,27 @@ export const postParticipantTask = createAsyncThunk(
 // Action to get participant tasks
 export const fetchParticipantTasks = createAsyncThunk(
   "participantTasks/get",
-  async (_, { rejectWithValue }) => {
+  async (programId, { rejectWithValue }) => {
     try {
       const response = await programApiClient.get(PARTICIPANT_TASKS_API.GET);
       if (!response.data.success) {
         throw new Error("Failed to fetch participant tasks");
+      }
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || error.message);
+    }
+  }
+);
+
+// Action to update a specific participant task
+export const updateParticipantTask = createAsyncThunk(
+  "participantTasks/updateTask",
+  async ({ taskId, data }, { rejectWithValue }) => {
+    try {
+      const response = await programApiClient.put(PARTICIPANT_TASKS_API.UPDATE(taskId), data);
+      if (!response.data.success) {
+        throw new Error("Failed to update participant task");
       }
       return response.data.data;
     } catch (error) {
@@ -157,18 +173,15 @@ export const fetchParticipantTasks = createAsyncThunk(
   }
 );
 
-// Action to get details of a specific participant task
-export const fetchParticipantTaskDetails = createAsyncThunk(
-  "participantTasks/getDetails",
+// Action to delete a specific participant task
+export const deleteParticipantTask = createAsyncThunk(
+  "participantTasks/deleteTask",
   async (taskId, { rejectWithValue }) => {
     try {
-      const response = await programApiClient.get(PARTICIPANT_TASKS_API.DETAIL(taskId));
-      if (!response.data.success) {
-        throw new Error("Failed to fetch participant task details");
-      }
-      return response.data.data;
+      await programApiClient.delete(PARTICIPANT_TASKS_API.DELETE(taskId));
+      return taskId;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || error.message);
     }
   }
-)
+);
