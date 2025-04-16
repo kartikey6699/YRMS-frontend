@@ -32,6 +32,7 @@ import {
   FiBarChart2
 } from 'react-icons/fi';
 
+import { fetchProgramList } from '../../../../features/program/programAction'; // Adjust path as needed
 import AttendanceDetailsModal from './AttendanceDetailsModal';
 import ViewAttendanceModal from './ViewAttendanceModal';
 import DatePicker from 'react-datepicker';
@@ -41,8 +42,13 @@ import AddTraining from './AddTraining';
 import ParticipantDetailsModal from './ParticipantDetailsModal';
 import TrainingFeedback from './TrainingFeedback';
 import UpskillingDetailModal from './UpskillingDetailModal';
+import { useDispatch, useSelector } from 'react-redux';
+import { useEffect } from 'react';
 
 const AssignTraining = () => {
+  const dispatch = useDispatch();
+  const { programs, loading, error } = useSelector((state) => state.program);
+  
   const [activeTab, setActiveTab] = useState('training');
   const [searchTerm, setSearchTerm] = useState('');
   const [editingStatus, setEditingStatus] = useState(null);
@@ -56,91 +62,38 @@ const AssignTraining = () => {
   const [selectedTraining, setSelectedTraining] = useState(null);
   const [showAddTraining, setShowAddTraining] = useState(false);
   const [showAddUpskilling, setShowAddUpskilling] = useState(false);
-
-  const [trainingData, setTrainingData] = useState([
-    {
-      id: 1,
-      name: 'React Fundamentals',
-      startDate: '2023-06-15',
-      endDate: '2023-08-17',
-      trainer: 'John Smith',
-      requester: 'HR Department',
-      competency: 'JavaScript',
-      participants: 15,
-      inAttendance: 12,
-      feedback: '',
-      score: 87,
-      status: 'running'
-    },
-    {
-      id: 2,
-      name: 'Advanced Node.js',
-      startDate: '2023-07-10',
-      endDate: '2023-07-12',
-      trainer: 'Sarah Johnson',
-      requester: 'Engineering Team',
-      competency: 'Backend Development',
-      participants: 10,
-      inAttendance: 9,
-      feedback: '',
-      score: 92,
-      status: 'completed'
-    },
-    {
-      id: 3,
-      name: 'Cloud Architecture',
-      startDate: '2023-08-05',
-      endDate: '2023-08-09',
-      trainer: 'Michael Chen',
-      requester: 'DevOps Team',
-      competency: 'Cloud Computing',
-      participants: 20,
-      inAttendance: 18,
-      feedback: '',
-      score: 85,
-      status: 'completed'
-    },
-    {
-      id: 4,
-      name: 'Agile Project Management',
-      startDate: '2023-09-12',
-      endDate: '2023-09-14',
-      trainer: 'Emily Wilson',
-      requester: 'Project Management Office',
-      competency: 'Project Management',
-      participants: 12,
-      inAttendance: 12,
-      feedback: '',
-      score: 95,
-      status: 'completed'
-    }
-  ]);
-
-  const [upskillingData, setUpskillingData] = useState([
-    {
-      id: 1,
-      name: 'Leadership Skills',
-      startDate: '2023-06-18',
-      endDate: '2023-08-20',
-      trainer: 'Emma Wilson',
-      requester: 'Management',
-      competency: 'Soft Skills',
-      participants: 12,
-      inAttendance: 10,
-      feedback: 4.3,
-      score: 88,
-      status: 'hold'
-    },
-  ]);
+  const [trainingData, setTrainingData] = useState([]);
+  const [upskillingData, setUpskillingData] = useState([]);
 
   const statusOptions = [
-    { value: 'hold', label: 'Hold', icon: <FaPause className="inline mr-1" />, color: 'bg-yellow-100 text-yellow-800' },
-    { value: 'pending', label: 'Pending', icon: <FaHourglassHalf className="inline mr-1" />, color: 'bg-red-100 text-red-800' },
-    { value: 'running', label: 'Running', icon: <FaArrowRight className="inline mr-1" />, color: 'bg-orange-100 text-orange-800' },
-    { value: 'completed', label: 'Completed', icon: <FaCheck className="inline mr-1" />, color: 'bg-green-100 text-green-800' }
+    { value: 'Hold', label: 'Hold', icon: <FaPause className="inline mr-1" />, color: 'bg-yellow-100 text-yellow-800' },
+    { value: 'Pending', label: 'Pending', icon: <FaHourglassHalf className="inline mr-1" />, color: 'bg-red-100 text-red-800' },
+    { value: 'Running', label: 'Running', icon: <FaArrowRight className="inline mr-1" />, color: 'bg-orange-100 text-orange-800' },
+    { value: 'Completed', label: 'Completed', icon: <FaCheck className="inline mr-1" />, color: 'bg-green-100 text-green-800' }
   ];
 
-  const handleStatusChange = (id, newStatus, isTraining) => {
+  // Add this useEffect to fetch programs on component mount
+  useEffect(() => {
+    dispatch(fetchProgramList());
+  }, [dispatch]);
+
+// Add this useEffect to process the fetched data
+useEffect(() => {
+  if (programs) {
+    const training = programs.filter(p => p.type === 'Training');
+    const upskilling = programs.filter(p => p.type === 'Upskilling');
+    setTrainingData(training);
+    setUpskillingData(upskilling);
+  }
+}, [programs]);
+
+console.log("programs: ", programs)
+const handleStatusChange = async (id, newStatus, isTraining) => {
+  try {
+    // Dispatch an API call to update status if needed
+    // await dispatch(updateProgramStatus({ id, status: newStatus }));
+    
+    // Local state update (temporary until API is implemented)
     if (isTraining) {
       setTrainingData(trainingData.map(item =>
         item.id === id ? { ...item, status: newStatus } : item
@@ -151,7 +104,10 @@ const AssignTraining = () => {
       ));
     }
     setEditingStatus(null);
-  };
+  } catch (err) {
+    console.error('Failed to update status:', err);
+  }
+};
 
   const handleSort = (key) => {
     let direction = 'ascending';
@@ -162,7 +118,7 @@ const AssignTraining = () => {
   };
 
   const filteredTrainingData = trainingData.filter(item =>
-    item.name.toLowerCase().includes(searchTerm.toLowerCase())
+    item.programName.toLowerCase().includes(searchTerm.toLowerCase())
   ).sort((a, b) => {
     if (!sortConfig.key) return 0;
     const valueA = a[sortConfig.key] || "";
@@ -173,7 +129,7 @@ const AssignTraining = () => {
   });
 
   const filteredUpskillingData = upskillingData.filter(item =>
-    item.name.toLowerCase().includes(searchTerm.toLowerCase())
+    item.programName.toLowerCase().includes(searchTerm.toLowerCase())
   ).sort((a, b) => {
     if (!sortConfig.key) return 0;
     const valueA = a[sortConfig.key] || "";
@@ -194,12 +150,12 @@ const AssignTraining = () => {
 
   const columns = [
     { key: 'sno', label: 'S.No', sortable: false },
-    { key: 'name', label: 'Program Name', sortable: true },
+    { key: 'programName', label: 'Program Name', sortable: true },
     { key: 'startDate', label: 'Duration', sortable: true },
-    { key: 'trainer', label: 'Trainer', sortable: true },
+    { key: 'trainerName', label: 'Trainer', sortable: true },
     { key: 'requester', label: 'Requester', sortable: true },
     { key: 'competency', label: 'Competency', sortable: true },
-    { key: 'participants', label: 'Participants', sortable: true },
+    { key: 'participantCount', label: 'Participants', sortable: true },
     { key: 'attendance', label: 'Attendance', sortable: false },
     { key: 'feedback', label: 'Feedback', sortable: true },
     { key: 'status', label: 'Status', sortable: true }
@@ -315,7 +271,7 @@ const AssignTraining = () => {
                       {index + 1}
                     </td>
                     <td className="p-2 text-purple-600 text-sm border-r border-gray-200">
-                      <div className="font-medium">{training.name}</div>
+                      <div className="font-medium">{training.programName}</div>
                     </td>
                     <td className="p-2 text-gray-700 text-sm border-r border-gray-200">
                       <div className="space-y-1.5">
@@ -343,7 +299,7 @@ const AssignTraining = () => {
                       </div>
                     </td>
                     <td className="p-2 text-gray-700 text-sm border-r border-gray-200">
-                      {training.trainer}
+                      {training.trainerName}
                     </td>
                     <td className="p-2 text-gray-700 text-sm border-r border-gray-200">
                       {training.requester}
@@ -359,7 +315,7 @@ const AssignTraining = () => {
                       }}
                     >
                       <span className="font-medium text-purple-600">
-                        {training.participants}
+                        {training.participantCount}
                       </span>
                       <div className="text-xs text-gray-500">
                         ({training.inAttendance} attended)
@@ -512,7 +468,7 @@ const AssignTraining = () => {
                       {index + 1}
                     </td>
                     <td className="p-2 text-purple-600 text-sm border-r border-gray-200">
-                      <div className="font-medium">{upskilling.name}</div>
+                      <div className="font-medium">{upskilling.programName}</div>
                     </td>
                     <td className="p-2 text-gray-700 text-sm border-r border-gray-200">
                       <div className="space-y-1.5">
@@ -540,7 +496,7 @@ const AssignTraining = () => {
                       </div>
                     </td>
                     <td className="p-2 text-gray-700 text-sm border-r border-gray-200">
-                      {upskilling.trainer}
+                      {upskilling.trainerName}
                     </td>
                     <td className="p-2 text-gray-700 text-sm border-r border-gray-200">
                       {upskilling.requester}
@@ -556,7 +512,7 @@ const AssignTraining = () => {
                       }}
                     >
                       <span className="font-medium text-purple-600">
-                        {upskilling.participants}
+                        {upskilling.participantCount}
                       </span>
                       <div className="text-xs text-gray-500">
                         ({upskilling.inAttendance} attended)
