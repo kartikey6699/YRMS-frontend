@@ -679,7 +679,7 @@ const AssignTraining = () => {
         {showViewAttendance && (
           <ViewAttendanceModal
             onClose={() => setShowViewAttendance(false)}
-            training={selectedTraining}
+            trainingId={selectedTraining.id} // Pass training id to ViewAttendanceModal
           />
         )}
 
