@@ -16,7 +16,7 @@ const initialState = {
 
 const isInternDetailsDifferent = (current, incoming) => {
   if (!current || !incoming) return true;
-  const comparableFields = ["publicId", "name", "email", "startDate", "endDate", "mentor", "status", "competency", "feedback", "remark", "location", "ratting"];
+  const comparableFields = ["publicId", "name", "email", "startDate", "endDate", "mentor", "status", "competency", "feedback", "remark", "location", "rating"];
   return comparableFields.some(field => current[field] !== incoming[field]);
 };
 
@@ -44,7 +44,14 @@ const internSlice = createSlice({
         mentor: intern.mentor,
         status: intern.status,
         competency: intern.competency,
-      }));
+        hiredCompetency: intern.hiredCompetency,
+        location: intern.location,
+        rating: intern.rating,
+        feedback: intern.feedback,
+        remark: intern.remark,
+        mentorId: intern.mentorId,
+        competencyId: intern.competencyId,
+    }));
     }
   },
   extraReducers: (builder) => {
@@ -78,11 +85,14 @@ const internSlice = createSlice({
           mentor: intern.mentor,
           status: intern.status,
           competency: intern.competency,
+          hiredCompetency: intern.hiredCompetency,
           location: intern.location,
-          ratting: intern.ratting,
+          rating: intern.rating,
           feedback: intern.feedback,
           remark: intern.remark,
-          }));
+          mentorId: intern.mentorId,
+          competencyId: intern.competencyId,
+        }));
       })
       .addCase(fetchInterns.rejected, (state, { payload }) => {
         state.loading = false;
@@ -106,11 +116,16 @@ const internSlice = createSlice({
             mentor: payload.mentor,
             status: payload.status,
             competency: payload.competency,
+            location: payload.location,
+            rating: payload.rating,
             feedback: payload.feedback,
             remark: payload.remark,
-            location: payload.location,
-            ratting: payload.ratting,
-            };
+            mentorId: payload.mentorId,
+            isOffered: payload.isOffered,
+            lastWorkingDay: payload.lastWorkingDay,
+            hiredCompetency: payload.hiredCompetency,
+            competencyId: payload.competencyId,
+          };
         }
       })
       .addCase(fetchInternDetails.rejected, (state, { payload }) => {
