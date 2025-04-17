@@ -99,3 +99,10 @@ export const PROGRAM_API = {
     CREATE: `${PROGRAM_API_BASE_URL}add-program/`,
     LIST: `${PROGRAM_API_BASE_URL}program-list/`
 };
+
+export const TRAINING_TECHNOLOGY_API = {
+    POST: `${API_BASE_URL}training-technology/addTechnology`,
+    GET: `${API_BASE_URL}training-technology/allTechnologies`,
+    UPDATE: `${API_BASE_URL}training-technology/updateTechnology/`,
+    DELETE: `${API_BASE_URL}training-technology/deleteTechnology/`
+};

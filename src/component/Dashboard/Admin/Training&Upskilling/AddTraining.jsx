@@ -13,14 +13,13 @@ import {
   FaInfoCircle
 } from "react-icons/fa";
 import Select from "react-select";
-import makeAnimated from "react-select/animated";
 import { holidays, isHoliday } from "../../../helper/holidays";
 import { useDispatch, useSelector } from "react-redux";
 import Dropdown from "../../../helper/Dropdown";
 import AddOptionModal from "../../../helper/OptionalModal";
 import { ErrorToast, SuccessToast } from '../../../helper/ResourceToast';
 import YRMSLoader from '../../../helper/loader';
-import { createProgram, fetchProgramList } from '../../../../features/program/programAction'; // Adjust path as needed
+import { createProgram, fetchProgramList } from '../../../../features/program/programAction';
 import { fetchTrainingTechnologies, fetchResources, fetchCompetencies } from "../../../../features/resource/resourceAction";
 
 const AddTraining = ({ onClose, onSave, isUpskilling = false }) => {
@@ -43,18 +42,16 @@ const AddTraining = ({ onClose, onSave, isUpskilling = false }) => {
     { value: 1, label: "HR Department" },
     { value: 2, label: "Engineering_Team" },
     { value: 3, label: "Project_Management_Office" },
-    // { value: "employee", label: "Employee Request" },
   ];
-
 
   const [formData, setFormData] = useState({
     programName: "",
-    trainerId: "",
+    trainerName: null,
     startDate: "",
     duration: "",
     endDate: "",
     requester: null,
-    competencyId: null,
+    competency: null,
     technology: "",
     projectDescription: "",
     purpose: "",
@@ -65,7 +62,7 @@ const AddTraining = ({ onClose, onSave, isUpskilling = false }) => {
   const [modalField, setModalField] = useState(null);
   const [toast, setToast] = useState(null);
 
-  // Fetch training technologies on mount
+  // Fetch training technologies, resources, and competencies on mount
   useEffect(() => {
     dispatch(fetchTrainingTechnologies());
     dispatch(fetchResources());
@@ -119,13 +116,14 @@ const AddTraining = ({ onClose, onSave, isUpskilling = false }) => {
   const validateForm = () => {
     const newErrors = {};
     if (!formData.programName) newErrors.programName = `${isUpskilling ? 'Upskilling' : 'Training'} name is required`;
-    if (!formData.trainerId) newErrors.trainerId = "Trainer name is required";
+    if (!formData.trainerName) newErrors.trainerName = "Trainer name is required";
     if (!formData.startDate) newErrors.startDate = "Start date is required";
     if (!formData.duration || formData.duration <= 0)
       newErrors.duration = "Valid duration is required";
     if (!formData.endDate) newErrors.endDate = "End date is required";
     if (!formData.requester) newErrors.requester = "Requester is required";
-    if (!formData.competencyId) newErrors.competencyId = "Competency is required";
+    if (!formData.competency) newErrors.competency = "Competency is required";
+    if (!formData.purpose) newErrors.purpose = "purpose is required";
     if (!formData.technology)
       newErrors.technology = `${isUpskilling ? 'Upskilling' : 'Training'} technology is required`;
     if (formData.participants.length === 0)
@@ -137,40 +135,37 @@ const AddTraining = ({ onClose, onSave, isUpskilling = false }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!validateForm()) return;
+
     try {
       setToast(<YRMSLoader message="Creating program..." />);
 
-      console.log("formData: ", formData)
-      // Prepare the data in the required format
       const programData = {
         type: isUpskilling ? 2 : 1,
         programName: formData.programName,
         startDate: formData.startDate,
         endDate: formData.endDate,
-        duration: formData.duration,
+        duration: parseInt(formData.duration),
         requester: formData.requester.value,
-        technology: 2,
+        technology: formData.technology,
         projectDescription: formData.projectDescription,
         competencyId: formData.competency.value,
         trainerId: formData.trainerName.value,
+        purpose: formData.purpose,
         participantIds: formData.participants.map((p) => p.value)
       };
-      console.log("programData: ", programData)
 
-      // Dispatch the create action
-      const createResult = await dispatch(createProgram(programData));
+      const createResult = await dispatch(createProgram(programData)).unwrap();
 
-      if (!createResult.payload?.publicId) {
+      if (!createResult.publicId) {
         throw new Error("Failed to get publicId from response");
       }
 
       setToast(<SuccessToast message="Program created successfully!" onClose={() => setToast(null)} />);
 
-      // Refresh programs list
       setToast(<YRMSLoader message="Refreshing programs..." />);
       await dispatch(fetchProgramList());
 
-      // Reset form and close
       onClose();
       setToast(null);
     } catch (err) {
@@ -220,8 +215,7 @@ const AddTraining = ({ onClose, onSave, isUpskilling = false }) => {
                   name="programName"
                   value={formData.programName}
                   onChange={handleChange}
-                  className={`w-full p-2 border rounded-md focus:ring-2 focus:ring-purple-500 focus:border-purple-500 ${errors.programName ? "border-red-500" : "border-gray-300"
-                    }`}
+                  className={`w-full p-2 border rounded-md focus:ring-2 focus:ring-purple-500 focus:border-purple-500 ${errors.programName ? "border-red-500" : "border-gray-300"}`}
                   placeholder={isUpskilling ? "e.g. Leadership Development" : "e.g. React Fundamentals"}
                 />
                 {errors.programName && (
@@ -238,7 +232,7 @@ const AddTraining = ({ onClose, onSave, isUpskilling = false }) => {
                 Trainer Name <span className="text-red-500">*</span>
               </label>
               <Select
-                options={trainerOptions}  // Use the transformed options
+                options={trainerOptions}
                 value={formData.trainerName}
                 onChange={(selected) => handleSelectChange("trainerName", selected)}
                 className={`basic-single ${errors.trainerName ? "border-red-500" : ""}`}
@@ -270,8 +264,7 @@ const AddTraining = ({ onClose, onSave, isUpskilling = false }) => {
                       value={formData.startDate}
                       onChange={handleChange}
                       min={formatDate(new Date())}
-                      className={`w-full pl-10 p-2 border rounded-md focus:ring-2 focus:ring-purple-500 focus:border-purple-500 ${errors.startDate ? "border-red-500" : "border-gray-300"
-                        }`}
+                      className={`w-full pl-10 p-2 border rounded-md focus:ring-2 focus:ring-purple-500 focus:border-purple-500 ${errors.startDate ? "border-red-500" : "border-gray-300"}`}
                     />
                     {errors.startDate && (
                       <p className="mt-1 text-sm text-red-600">
@@ -296,8 +289,7 @@ const AddTraining = ({ onClose, onSave, isUpskilling = false }) => {
                       value={formData.duration}
                       onChange={handleChange}
                       min="1"
-                      className={`w-full pl-10 p-2 border rounded-md focus:ring-2 focus:ring-purple-500 focus:border-purple-500 ${errors.duration ? "border-red-500" : "border-gray-300"
-                        }`}
+                      className={`w-full pl-10 p-2 border rounded-md focus:ring-2 focus:ring-purple-500 focus:border-purple-500 ${errors.duration ? "border-red-500" : "border-gray-300"}`}
                       placeholder="Days"
                     />
                     {errors.duration && (
@@ -322,8 +314,7 @@ const AddTraining = ({ onClose, onSave, isUpskilling = false }) => {
                       name="endDate"
                       value={formData.endDate}
                       readOnly
-                      className={`w-full pl-10 p-2 border rounded-md bg-gray-100 ${errors.endDate ? "border-red-500" : "border-gray-300"
-                        }`}
+                      className={`w-full pl-10 p-2 border rounded-md bg-gray-100 ${errors.endDate ? "border-red-500" : "border-gray-300"}`}
                     />
                     {errors.endDate && (
                       <p className="mt-1 text-sm text-red-600">
@@ -349,8 +340,7 @@ const AddTraining = ({ onClose, onSave, isUpskilling = false }) => {
                 options={requesterOptions}
                 value={formData.requester}
                 onChange={(selected) => handleSelectChange("requester", selected)}
-                className={`basic-single ${errors.requester ? "border-red-500" : ""
-                  }`}
+                className={`basic-single ${errors.requester ? "border-red-500" : ""}`}
                 classNamePrefix="select"
                 placeholder="Select requester..."
               />
@@ -368,12 +358,12 @@ const AddTraining = ({ onClose, onSave, isUpskilling = false }) => {
                 options={competencyOptions}
                 value={formData.competency}
                 onChange={(selected) => handleSelectChange("competency", selected)}
-                className={`basic-single ${errors.competencyId ? "border-red-500" : ""}`}
+                className={`basic-single ${errors.competency ? "border-red-500" : ""}`}
                 classNamePrefix="select"
                 placeholder="Select competency..."
               />
-              {errors.competencyId && (
-                <p className="mt-1 text-sm text-red-600">{errors.competencyId}</p>
+              {errors.competency && (
+                <p className="mt-1 text-sm text-red-600">{errors.competency}</p>
               )}
             </div>
 
@@ -399,7 +389,7 @@ const AddTraining = ({ onClose, onSave, isUpskilling = false }) => {
                 )}
               </div>
 
-              {/* Project Details - Right Side (Converted to Textarea) */}
+              {/* Project Details - Right Side */}
               <div className="flex-1">
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Project Details {!isUpskilling && <span className="text-red-500">*</span>}
@@ -409,20 +399,20 @@ const AddTraining = ({ onClose, onSave, isUpskilling = false }) => {
                     <FaProjectDiagram className="text-gray-400" />
                   </div>
                   <textarea
-                    name="project"
-                    value={formData.project}
+                    name="projectDescription"
+                    value={formData.projectDescription}
                     onChange={handleChange}
                     className={`w-full pl-10 p-2 border rounded-md focus:ring-2 focus:ring-purple-500 focus:border-purple-500 min-h-[100px] ${errors.projectDescription ? "border-red-500" : "border-gray-300"}`}
                     placeholder="Enter project details..."
                   />
-                  {errors.project && (
-                    <p className="mt-1 text-sm text-red-600">{errors.project}</p>
+                  {errors.projectDescription && (
+                    <p className="mt-1 text-sm text-red-600">{errors.projectDescription}</p>
                   )}
                 </div>
               </div>
             </div>
 
-            {/* Purpose/Description Field (Full width below) */}
+            {/* Purpose/Description Field */}
             <div className="md:col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Purpose/Description {isUpskilling && <span className="text-red-500">*</span>}
@@ -459,8 +449,7 @@ const AddTraining = ({ onClose, onSave, isUpskilling = false }) => {
                   isMulti
                   value={formData.participants}
                   onChange={handleMultiSelectChange}
-                  className={`basic-multi-select ${errors.participants ? "border-red-500" : ""
-                    }`}
+                  className={`basic-multi-select ${errors.participants ? "border-red-500" : ""}`}
                   classNamePrefix="select"
                   placeholder="Select participants..."
                   styles={{
@@ -517,7 +506,6 @@ function calculateEndDate(startDate, duration) {
     const dayOfWeek = date.getDay();
     const dateStr = date.toISOString().split("T")[0];
 
-    // Skip weekends (0=Sunday, 6=Saturday) and holidays
     if (dayOfWeek !== 0 && dayOfWeek !== 6 && !isHoliday(dateStr)) {
       businessDays++;
     }
