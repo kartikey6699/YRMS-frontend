@@ -517,8 +517,12 @@ const ManageResource = () => {
                 }`}
                 required
               >
-                <option value="indore">Indore</option>
-                <option value="pune">Pune</option>
+                <option value="indore-yash-it-park-sc-dc">Indore-YASH IT Park-SC-DC</option>
+                <option value="pune-magarpatta-dc-ii">Pune-Magarpatta-DC-II</option>
+                <option value="hyderabad-mindspace-i-dc">Hyderabad-Mindspace I-DC</option>
+                <option value="bangalore-whitefield-dc">Bangalore-Whitefield-DC</option>
+                <option value="indore-crystal-it-park-dc-ii">Indore-Crystal IT Park-DC-II</option>
+                <option value="indore-btc-co">Indore-BTC-CO</option>
               </select>
             </div>
             <div>
@@ -645,8 +649,10 @@ const ManageResource = () => {
                 <option value="" disabled>
                   Select business group
                 </option>
-                <option value="Technology Solutions">Technology Solutions</option>
-                <option value="Management Team">Management Team</option>
+                <option value="BG4-BU5">BG4-BU5</option>
+                <option value="BG5-BU5">BG5-BU5</option>
+                <option value="BG4-BU4">BG4-BU4</option>
+                <option value="SSG1-SSU1">SSG1-SSU1</option>
               </select>
             </div>
             <div>
