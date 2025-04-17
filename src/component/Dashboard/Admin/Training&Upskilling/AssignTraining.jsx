@@ -87,7 +87,6 @@ useEffect(() => {
   }
 }, [programs]);
 
-console.log("programs: ", programs)
 const handleStatusChange = async (id, newStatus, isTraining) => {
   try {
     // Dispatch an API call to update status if needed
@@ -635,7 +634,7 @@ const handleStatusChange = async (id, newStatus, isTraining) => {
         {showViewAttendance && (
           <ViewAttendanceModal
             onClose={() => setShowViewAttendance(false)}
-            training={selectedTraining}
+            trainingId={selectedTraining.id} // Pass training id to ViewAttendanceModal
           />
         )}
 
