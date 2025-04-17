@@ -649,10 +649,10 @@ const ManageResource = () => {
                 <option value="" disabled>
                   Select business group
                 </option>
-                <option value="BG4-BU5">BG4-BU5</option>
-                <option value="BG5-BU5">BG5-BU5</option>
-                <option value="BG4-BU4">BG4-BU4</option>
-                <option value="SSG1-SSU1">SSG1-SSU1</option>
+                <option value="BG4">BG4</option>
+                <option value="BG5">BG5</option>
+                <option value="BG4">BG4</option>
+                <option value="SSG1">SSG1</option>
               </select>
             </div>
             <div>
@@ -669,8 +669,9 @@ const ManageResource = () => {
                 <option value="" disabled>
                   Select business unit
                 </option>
-                <option value="Development Team">Development Team</option>
-                <option value="Management Team">Management Team</option>
+                <option value="BU5">BU5</option>
+                <option value="BU4">BU4</option>
+                <option value="SSU1">SSU1</option>
               </select>
             </div>
             <div>
