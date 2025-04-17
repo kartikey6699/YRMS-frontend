@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { StarIcon } from "@heroicons/react/20/solid";
 import { FaInfoCircle } from "react-icons/fa";
 
-export const BaselineHistories = ({ histories, employeeName, competency, gender }) => {
+export const BaselineHistories = ({ histories, employeeName, competency, gender, profileImage }) => {
     const [selectedBaseline, setSelectedBaseline] = useState(null);
     const [isPopupOpen, setIsPopupOpen] = useState(false);
 
@@ -116,11 +116,21 @@ export const BaselineHistories = ({ histories, employeeName, competency, gender 
                         >
                             <div className="flex justify-between items-center">
                                 <div className="flex items-center space-x-4">
-                                    <div className="w-12 h-12 rounded-full bg-gray-300 flex items-center justify-center overflow-hidden">
-                                        <span className="text-gray-600 text-xl font-semibold">
-                                            {employeeName ? employeeName[0] : "N/A"}
-                                        </span>
-                                    </div>
+                                    {profileImage ? (
+                                        <div className="relative">
+                                            <img 
+                                                src={`data:image/png;base64,${profileImage}`} 
+                                                alt="Profile" 
+                                                className="w-12 h-12 rounded-full border-2 border-white"
+                                            />
+                                        </div>
+                                    ) : (
+                                        <div className="w-12 h-12 rounded-full bg-gray-300 flex items-center justify-center overflow-hidden">
+                                            <span className="text-gray-600 text-xl font-semibold">
+                                                {employeeName ? employeeName[0] : "N/A"}
+                                            </span>
+                                        </div>
+                                    )}
                                     <div>
                                         <h3 className="text-xl font-bold text-gray-800">
                                             {employeeName || "Unknown Employee"}
