@@ -97,7 +97,8 @@ export const PARTICIPANT_DETAIL_API = {
 
 export const PROGRAM_API = {
     CREATE: `${PROGRAM_API_BASE_URL}add-program/`,
-    LIST: `${PROGRAM_API_BASE_URL}program-list/`
+    LIST: `${PROGRAM_API_BASE_URL}program-list/`,
+    UPDATE_STATUS: `${PROGRAM_API_BASE_URL}program/`
 };
 
 export const TRAINING_TECHNOLOGY_API = {
