@@ -9,11 +9,15 @@ import {
   fetchUsersAbsent,
   postParticipantTask,
   fetchParticipantTasks,
+  // fetchParticipantTaskDetails,
+  createProgram,
+  fetchProgramList,
   updateParticipantTask,
   deleteParticipantTask
 } from "./programAction";
 
 const initialState = {
+  programs: [],
   trainingFeedback: [],
   attendance: [],
   absentUsers: [],
@@ -209,6 +213,34 @@ const programSlice = createSlice({
         }
       })
       .addCase(deleteParticipantTask.rejected, (state, { payload }) => {
+        state.loading = false;
+        state.error = payload;
+      })
+
+      // Create Program
+      .addCase(createProgram.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(createProgram.fulfilled, (state, { payload }) => {
+        state.loading = false;
+        state.programs.push(payload);
+      })
+      .addCase(createProgram.rejected, (state, { payload }) => {
+        state.loading = false;
+        state.error = payload;
+      })
+
+      // Fetch Programs
+      .addCase(fetchProgramList.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchProgramList.fulfilled, (state, { payload }) => {
+        state.loading = false;
+        state.programs = payload.programs;
+      })
+      .addCase(fetchProgramList.rejected, (state, { payload }) => {
         state.loading = false;
         state.error = payload;
       });

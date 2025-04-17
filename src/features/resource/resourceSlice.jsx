@@ -25,6 +25,7 @@ const initialState = {
   error: null,
   designations: [],
   competencies: [],
+  trainingTechnologies: [],
   designationLoading: false,
   competencyLoading: false,
   trainingTechnologyLoading: false,
