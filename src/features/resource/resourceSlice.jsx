@@ -15,7 +15,8 @@ import {
   fetchTrainingTechnologies,
   createTrainingTechnology,
   updateTrainingTechnology,
-  deleteTrainingTechnology
+  deleteTrainingTechnology,
+  fetchTechnologies
 } from "./resourceAction";
 
 const initialState = {
@@ -26,9 +27,11 @@ const initialState = {
   designations: [],
   competencies: [],
   trainingTechnologies: [],
+  technologies: [],
   designationLoading: false,
   competencyLoading: false,
   trainingTechnologyLoading: false,
+  technologyLoading: false, 
   createdResource: null,
   pagination: {
     currentPage: 1,
@@ -119,7 +122,7 @@ const resourceSlice = createSlice({
           businessGroup: user.businessGroup,
           businessUnit: user.businessUnit,
           competency: user.competency,
-          technologies: user.technologies ? user.technologies.split(',') : [],
+          techSkill: user.techSkill || [],
           experience: user.experience || 0,
           certifications: user.certification || "",
           communication: user.communication || "",
@@ -201,7 +204,7 @@ const resourceSlice = createSlice({
             grade: payload.grade,
             experience: payload.experience || 0,
             competency: payload.competency,
-            technologies: payload.technologies ? payload.technologies.split(',') : [],
+            techSkill: payload.techSkill || [],
             certifications: payload.certification || "",
             communication: payload.communication || "",
             profileImage: payload.profileImage
@@ -387,6 +390,23 @@ const resourceSlice = createSlice({
       })
       .addCase(deleteTrainingTechnology.rejected, (state, { payload }) => {
         state.trainingTechnologyLoading = false;
+        state.error = payload;
+      })
+
+      // Fetch Technologies (New)
+      .addCase(fetchTechnologies.pending, (state) => {
+        state.technologyLoading = true;
+        state.error = null;
+      })
+      .addCase(fetchTechnologies.fulfilled, (state, { payload }) => {
+        state.technologyLoading = false;
+        state.technologies = payload.Technologies.map((item) => ({
+          publicId: item.publicId,
+          name: item.name
+        }));
+      })
+      .addCase(fetchTechnologies.rejected, (state, { payload }) => {
+        state.technologyLoading = false;
         state.error = payload;
       });
   }

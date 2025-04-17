@@ -6,6 +6,18 @@ import { resetResourceDetails } from '../../../features/resource/resourceSlice';
 import { SuccessToast, ErrorToast } from '../../helper/ResourceToast';
 import { RESUME_API } from '../../../config/Endpoints/Endpoints';
 
+// Color palette for skill tags
+const skillColors = [
+  'bg-blue-100 text-blue-800',
+  'bg-green-100 text-green-800',
+  'bg-yellow-100 text-yellow-800',
+  'bg-purple-100 text-purple-800',
+  'bg-pink-100 text-pink-800',
+  'bg-indigo-100 text-indigo-800',
+  'bg-red-100 text-red-800',
+  'bg-teal-100 text-teal-800'
+];
+
 const EmployeeDetail = ({ publicId, onClose }) => {
   const dispatch = useDispatch();
   const { resourceDetails, loading, designations } = useSelector((state) => state.resource);
@@ -31,7 +43,7 @@ const EmployeeDetail = ({ publicId, onClose }) => {
     if (!initialLoadDone.current && (!resourceDetails || resourceDetails.publicId !== publicId)) {
       initialLoadDone.current = true;
       dispatch(fetchResourceDetails(publicId));
-      dispatch(fetchDesignations()); // Fetch designations when component mounts
+      dispatch(fetchDesignations());
     }
   }, [publicId, resourceDetails, dispatch]);
 
@@ -45,7 +57,8 @@ const EmployeeDetail = ({ publicId, onClose }) => {
         joiningDate: resourceDetails.joiningDate || '',
         experience: resourceDetails.experience || '',
         status: resourceDetails.status || 'pool',
-        profileImage: resourceDetails.profileImage || null
+        profileImage: resourceDetails.profileImage || null,
+        techSkill: resourceDetails.techSkill || []
       });
     }
   }, [resourceDetails, publicId]);
@@ -166,6 +179,11 @@ const EmployeeDetail = ({ publicId, onClose }) => {
       });
       console.error('Error downloading resume:', error);
     }
+  };
+
+  // Function to get random color class for skill tags
+  const getRandomSkillColor = (index) => {
+    return skillColors[index % skillColors.length];
   };
 
   if (!formData) {
@@ -364,12 +382,25 @@ const EmployeeDetail = ({ publicId, onClose }) => {
             <div className="bg-gray-50 rounded-lg p-4">
               <h4 className="flex items-center text-base font-medium text-gray-800 mb-3">
                 <FaCode className="text-blue-500 mr-2 text-sm" />
-                Technologies
+                Technical Skills
               </h4>
-              <div className="bg-white/50 rounded-md p-3 flex flex-col items-center justify-center border border-dashed border-gray-300 text-center">
-                <FaCode className="text-gray-400 text-2xl mb-2" />
-                <p className="text-gray-500 text-sm">No technologies assigned yet</p>
-              </div>
+              {formData.techSkill?.length > 0 ? (
+                <div className="flex flex-wrap gap-2">
+                  {formData.techSkill.map((skill, index) => (
+                    <span 
+                      key={index}
+                      className={`px-3 py-1 rounded-full text-xs font-medium ${getRandomSkillColor(index)} hover:scale-105 transition-transform`}
+                    >
+                      {skill}
+                    </span>
+                  ))}
+                </div>
+              ) : (
+                <div className="bg-white/50 rounded-md p-3 flex flex-col items-center justify-center border border-dashed border-gray-300 text-center">
+                  <FaCode className="text-gray-400 text-2xl mb-2" />
+                  <p className="text-gray-500 text-sm">No skills added yet</p>
+                </div>
+              )}
             </div>
           </div>
 

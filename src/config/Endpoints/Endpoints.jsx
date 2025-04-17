@@ -107,3 +107,7 @@ export const TRAINING_TECHNOLOGY_API = {
     UPDATE: `${API_BASE_URL}training-technology/updateTechnology/`,
     DELETE: `${API_BASE_URL}training-technology/deleteTechnology/`
 };
+
+export const TECHNOLOGY_BASELINE_API = {
+    GET: `${API_BASE_URL}technology/allTechnology`
+};
