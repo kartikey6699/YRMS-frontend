@@ -90,3 +90,7 @@ export const PARTICIPANT_TASKS_API = {
 
 };
 
+export const PARTICIPANT_DETAIL_API = {
+    GET: `${API_BASE_URL}programs/`
+};
+

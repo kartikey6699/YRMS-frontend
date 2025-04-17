@@ -1,5 +1,5 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
-import { FEEDBACK_API, ATTENDANCE_API, PARTICIPANT_TASKS_API } from "../../config/Endpoints/Endpoints";
+import { FEEDBACK_API, ATTENDANCE_API, PARTICIPANT_TASKS_API, PARTICIPANT_DETAIL_API } from "../../config/Endpoints/Endpoints";
 import axios from "axios";
 
 const programApiClient = axios.create({
@@ -180,6 +180,22 @@ export const deleteParticipantTask = createAsyncThunk(
     try {
       await programApiClient.delete(PARTICIPANT_TASKS_API.DELETE(taskId));
       return taskId;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || error.message);
+    }
+  }
+);
+
+
+export const fetchParticipantsDetails = createAsyncThunk(
+  "participantDetails/get",
+  async (programId, { rejectWithValue }) => {
+    try {
+      const response = await programApiClient.get(`${PARTICIPANT_DETAIL_API.GET}${programId}/participants`);
+      if (!response.data.success) {
+        throw new Error("Failed to fetch participant tasks");
+      }
+      return response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || error.message);
     }
