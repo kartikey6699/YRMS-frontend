@@ -9,9 +9,8 @@ import InternDetail from './InternDetail';
 
 const InternList = () => {
 
-    const navigate = useNavigate();
     const dispatch = useDispatch();
-    const { interns, internDetails, loading, error } = useSelector((state) => state.intern);
+    const { interns } = useSelector((state) => state.intern);
 
 
     const [filterData, setFilterData] = useState({
@@ -20,7 +19,7 @@ const InternList = () => {
         status: "",
     });
 
-    const statusOptions = ["Running", "Complete"];
+    const statusOptions = ["Complete", "Running", "Pending", "Hold"];
 
     useEffect(() => {
         dispatch(fetchInterns({
@@ -62,7 +61,6 @@ const InternList = () => {
         });
     };
 
-    console.log(">>>>", interns)
     // Filter interns based on search values
     const filteredInterns = (interns || []).filter((intern) => {
         const matchesName = intern.name?.toLowerCase().includes(searchTerms.name.toLowerCase()) ?? true;
@@ -224,7 +222,10 @@ const InternList = () => {
                 <InternDetail
                     key={selectedInterns}
                     publicId={selectedInterns}
-                    onClose={() => setSelectedInterns(null)}
+                    onClose={() => {
+                        dispatch(fetchInterns()); // Refresh intern list
+                        setSelectedInterns(null)
+                    }}
                 />
             )}
         </div>

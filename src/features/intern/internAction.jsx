@@ -60,8 +60,6 @@ export const fetchInterns = createAsyncThunk(
         size // Include pageSize in the request
       });
 
-      console.log("params log", params.toString());
-
       const response = await internApiClient.get(
         `${INTERN_API.LIST}?${params.toString()}`
       );
@@ -100,9 +98,9 @@ export const fetchInternDetails = createAsyncThunk(
 
 export const updateIntern = createAsyncThunk(
   "intern/updateIntern",
-  async ({ id, internData }, { rejectWithValue }) => {
+  async ({ publicId, internData }, { rejectWithValue }) => {
     try {
-      const response = await internApiClient.patch(`${INTERN_API.UPDATE}/${id}`, internData);
+      const response = await internApiClient.patch(`${INTERN_API.UPDATE}/${publicId}`, internData);
       return response.data.data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || error.message);
