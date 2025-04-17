@@ -18,55 +18,45 @@ import { holidays, isHoliday } from "../../../helper/holidays";
 import { useDispatch, useSelector } from "react-redux";
 import Dropdown from "../../../helper/Dropdown";
 import AddOptionModal from "../../../helper/OptionalModal";
-import { fetchTrainingTechnologies } from "../../../../features/resource/resourceAction";
-
-const animatedComponents = makeAnimated();
-
-// Static list of resources for demonstration
-const resourceOptions = [
-  { value: 1, label: "John Doe", role: "Developer" },
-  { value: 2, label: "Jane Smith", role: "Designer" },
-  { value: 3, label: "Mike Johnson", role: "Manager" },
-  { value: 4, label: "Sarah Williams", role: "QA Engineer" },
-  { value: 5, label: "David Brown", role: "DevOps" },
-  { value: 6, label: "Emily Davis", role: "Frontend Developer" },
-  { value: 7, label: "Robert Wilson", role: "Backend Developer" },
-  { value: 8, label: "Lisa Taylor", role: "Product Manager" },
-];
-
-const competencyOptions = [
-  { value: "react", label: "React" },
-  { value: "javascript", label: "JavaScript" },
-  { value: "nodejs", label: "Node.js" },
-  { value: "python", label: "Python" },
-  { value: "java", label: "Java" },
-  { value: "devops", label: "DevOps" },
-  { value: "ux", label: "UX Design" },
-];
-
-const requesterOptions = [
-  { value: "hr", label: "HR Department" },
-  { value: "management", label: "Management" },
-  { value: "team_lead", label: "Team Lead" },
-  { value: "employee", label: "Employee Request" },
-];
+import { ErrorToast, SuccessToast } from '../../../helper/ResourceToast';
+import YRMSLoader from '../../../helper/loader';
+import { createProgram, fetchProgramList } from '../../../../features/program/programAction'; // Adjust path as needed
+import { fetchTrainingTechnologies, fetchResources, fetchCompetencies } from "../../../../features/resource/resourceAction";
 
 const AddTraining = ({ onClose, onSave, isUpskilling = false }) => {
   const dispatch = useDispatch();
-  const { trainingTechnologies, trainingTechnologyLoading } = useSelector(
+  const { resources, competencies, trainingTechnologies, trainingTechnologyLoading } = useSelector(
     (state) => state.resource
   );
 
+  const trainerOptions = resources.map(resource => ({
+    value: resource.publicId,
+    label: resource.employeeName,
+  }));
+
+  const competencyOptions = competencies.map(competency => ({
+    value: competency.publicId,
+    label: competency.name,
+  }));
+
+  const requesterOptions = [
+    { value: 1, label: "HR Department" },
+    { value: 2, label: "Engineering_Team" },
+    { value: 3, label: "Project_Management_Office" },
+    // { value: "employee", label: "Employee Request" },
+  ];
+
+
   const [formData, setFormData] = useState({
     programName: "",
-    trainerName: "",
+    trainerId: "",
     startDate: "",
     duration: "",
     endDate: "",
     requester: null,
-    competency: null,
-    trainingtechnology: "",
-    project: "",
+    competencyId: null,
+    technology: "",
+    projectDescription: "",
     purpose: "",
     participants: [],
   });
@@ -78,6 +68,8 @@ const AddTraining = ({ onClose, onSave, isUpskilling = false }) => {
   // Fetch training technologies on mount
   useEffect(() => {
     dispatch(fetchTrainingTechnologies());
+    dispatch(fetchResources());
+    dispatch(fetchCompetencies());
   }, [dispatch]);
 
   // Calculate end date when start date or duration changes
@@ -127,15 +119,15 @@ const AddTraining = ({ onClose, onSave, isUpskilling = false }) => {
   const validateForm = () => {
     const newErrors = {};
     if (!formData.programName) newErrors.programName = `${isUpskilling ? 'Upskilling' : 'Training'} name is required`;
-    if (!formData.trainerName) newErrors.trainerName = "Trainer name is required";
+    if (!formData.trainerId) newErrors.trainerId = "Trainer name is required";
     if (!formData.startDate) newErrors.startDate = "Start date is required";
     if (!formData.duration || formData.duration <= 0)
       newErrors.duration = "Valid duration is required";
     if (!formData.endDate) newErrors.endDate = "End date is required";
     if (!formData.requester) newErrors.requester = "Requester is required";
-    if (!formData.competency) newErrors.competency = "Competency is required";
-    if (!formData.trainingtechnology)
-      newErrors.trainingtechnology = `${isUpskilling ? 'Upskilling' : 'Training'} technology is required`;
+    if (!formData.competencyId) newErrors.competencyId = "Competency is required";
+    if (!formData.technology)
+      newErrors.technology = `${isUpskilling ? 'Upskilling' : 'Training'} technology is required`;
     if (formData.participants.length === 0)
       newErrors.participants = "At least one participant is required";
 
@@ -143,19 +135,46 @@ const AddTraining = ({ onClose, onSave, isUpskilling = false }) => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (validateForm()) {
-      onSave({
-        ...formData,
-        requester: formData.requester.label,
-        competency: formData.competency.label,
-        trainingtechnology: formData.trainingtechnology,
-        project: formData.project,
-        purpose: formData.purpose,
-        participants: formData.participants.map((p) => p.label),
-      });
+    try {
+      setToast(<YRMSLoader message="Creating program..." />);
+
+      console.log("formData: ", formData)
+      // Prepare the data in the required format
+      const programData = {
+        type: isUpskilling ? 2 : 1,
+        programName: formData.programName,
+        startDate: formData.startDate,
+        endDate: formData.endDate,
+        duration: formData.duration,
+        requester: formData.requester.value,
+        technology: 2,
+        projectDescription: formData.projectDescription,
+        competencyId: formData.competency.value,
+        trainerId: formData.trainerName.value,
+        participantIds: formData.participants.map((p) => p.value)
+      };
+      console.log("programData: ", programData)
+
+      // Dispatch the create action
+      const createResult = await dispatch(createProgram(programData));
+
+      if (!createResult.payload?.publicId) {
+        throw new Error("Failed to get publicId from response");
+      }
+
+      setToast(<SuccessToast message="Program created successfully!" onClose={() => setToast(null)} />);
+
+      // Refresh programs list
+      setToast(<YRMSLoader message="Refreshing programs..." />);
+      await dispatch(fetchProgramList());
+
+      // Reset form and close
       onClose();
+      setToast(null);
+    } catch (err) {
+      setToast(<ErrorToast message={err.message || "Failed to create program"} onClose={() => setToast(null)} />);
     }
   };
 
@@ -218,25 +237,19 @@ const AddTraining = ({ onClose, onSave, isUpskilling = false }) => {
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Trainer Name <span className="text-red-500">*</span>
               </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <FaUserTie className="text-gray-400" />
-                </div>
-                <input
-                  type="text"
-                  name="trainerName"
-                  value={formData.trainerName}
-                  onChange={handleChange}
-                  className={`w-full pl-10 p-2 border rounded-md focus:ring-2 focus:ring-purple-500 focus:border-purple-500 ${errors.trainerName ? "border-red-500" : "border-gray-300"
-                    }`}
-                  placeholder="e.g. John Smith"
-                />
-                {errors.trainerName && (
-                  <p className="mt-1 text-sm text-red-600">
-                    {errors.trainerName}
-                  </p>
-                )}
-              </div>
+              <Select
+                options={trainerOptions}  // Use the transformed options
+                value={formData.trainerName}
+                onChange={(selected) => handleSelectChange("trainerName", selected)}
+                className={`basic-single ${errors.trainerName ? "border-red-500" : ""}`}
+                placeholder="Select trainer..."
+                required
+              />
+              {errors.trainerName && (
+                <p className="mt-1 text-sm text-red-600">
+                  {errors.trainerName}
+                </p>
+              )}
             </div>
 
             {/* Date Section - Single Row */}
@@ -355,13 +368,12 @@ const AddTraining = ({ onClose, onSave, isUpskilling = false }) => {
                 options={competencyOptions}
                 value={formData.competency}
                 onChange={(selected) => handleSelectChange("competency", selected)}
-                className={`basic-single ${errors.competency ? "border-red-500" : ""
-                  }`}
+                className={`basic-single ${errors.competencyId ? "border-red-500" : ""}`}
                 classNamePrefix="select"
                 placeholder="Select competency..."
               />
-              {errors.competency && (
-                <p className="mt-1 text-sm text-red-600">{errors.competency}</p>
+              {errors.competencyId && (
+                <p className="mt-1 text-sm text-red-600">{errors.competencyId}</p>
               )}
             </div>
 
@@ -373,16 +385,16 @@ const AddTraining = ({ onClose, onSave, isUpskilling = false }) => {
                   {isUpskilling ? 'Upskilling Technology' : 'Training Technology'} <span className="text-red-500">*</span>
                 </label>
                 <Dropdown
-                  name="trainingtechnology"
-                  value={formData.trainingtechnology}
+                  name="technology"
+                  value={formData.technology}
                   options={trainingTechnologies}
                   onChange={handleDropdownChange}
                   setModalField={setModalField}
                   loading={trainingTechnologyLoading}
                 />
-                {errors.trainingtechnology && (
+                {errors.technology && (
                   <p className="mt-1 text-sm text-red-600">
-                    {errors.trainingtechnology}
+                    {errors.technology}
                   </p>
                 )}
               </div>
@@ -400,7 +412,7 @@ const AddTraining = ({ onClose, onSave, isUpskilling = false }) => {
                     name="project"
                     value={formData.project}
                     onChange={handleChange}
-                    className={`w-full pl-10 p-2 border rounded-md focus:ring-2 focus:ring-purple-500 focus:border-purple-500 min-h-[100px] ${errors.project ? "border-red-500" : "border-gray-300"}`}
+                    className={`w-full pl-10 p-2 border rounded-md focus:ring-2 focus:ring-purple-500 focus:border-purple-500 min-h-[100px] ${errors.projectDescription ? "border-red-500" : "border-gray-300"}`}
                     placeholder="Enter project details..."
                   />
                   {errors.project && (
@@ -443,10 +455,8 @@ const AddTraining = ({ onClose, onSave, isUpskilling = false }) => {
               </label>
               <div className="relative">
                 <Select
-                  closeMenuOnSelect={false}
-                  components={animatedComponents}
+                  options={trainerOptions}
                   isMulti
-                  options={resourceOptions}
                   value={formData.participants}
                   onChange={handleMultiSelectChange}
                   className={`basic-multi-select ${errors.participants ? "border-red-500" : ""

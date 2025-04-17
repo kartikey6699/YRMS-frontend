@@ -1,5 +1,5 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
-import { FEEDBACK_API, ATTENDANCE_API, PARTICIPANT_TASKS_API, PARTICIPANT_DETAIL_API } from "../../config/Endpoints/Endpoints";
+import { FEEDBACK_API, ATTENDANCE_API, PARTICIPANT_TASKS_API, PARTICIPANT_DETAIL_API, PROGRAM_API } from "../../config/Endpoints/Endpoints";
 import axios from "axios";
 
 const programApiClient = axios.create({
@@ -184,7 +184,41 @@ export const deleteParticipantTask = createAsyncThunk(
       return rejectWithValue(error.response?.data?.message || error.message);
     }
   }
+)
+
+// Action to create training/upscaling program
+export const createProgram = createAsyncThunk(
+  "program/create",
+  async (programData, { rejectWithValue }) => {
+    try {
+      const response = await programApiClient.post(PROGRAM_API.CREATE, programData);
+      if (!response.data.success) {
+        throw new Error("Failed to create Training/Upscaling Program");
+      }
+      console.log("response.data.data: ",response.data.data)
+      return response.data.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || error.message);
+    }
+  }
 );
+
+// Action to get list of training/upscaling programs
+export const fetchProgramList = createAsyncThunk(
+  "programList/get",
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await programApiClient.get(PROGRAM_API.LIST);
+      if (!response.data.success) {
+        throw new Error("Failed to fetch Program list");
+      }
+      return response.data.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || error.message);
+    }
+  }
+);
+
 
 
 export const fetchParticipantsDetails = createAsyncThunk(
