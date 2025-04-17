@@ -64,7 +64,7 @@ const resourceSlice = createSlice({
     },
     setPageSize: (state, action) => {
       state.pagination.size = action.payload;
-      state.pagination.currentPage = 1; // Reset to first page when page size changes
+      state.pagination.currentPage = 1;
     }
   },
   extraReducers: (builder) => {
@@ -77,7 +77,6 @@ const resourceSlice = createSlice({
       .addCase(createResource.fulfilled, (state, { payload }) => {
         state.loading = false;
         state.createdResource = payload;
-        // Add the new resource to the beginning of the list
         state.resources.unshift({
           publicId: payload.publicId,
           employeeName: payload.employeeName,
@@ -91,9 +90,8 @@ const resourceSlice = createSlice({
           businessGroup: payload.businessGroup,
           businessUnit: payload.businessUnit,
           competency: payload.competency,
-          profileImage: payload.profileImage // Added profileImage
+          profileImage: payload.profileImage
         });
-        // Update total items count
         state.pagination.totalItems += 1;
       })
       .addCase(createResource.rejected, (state, { payload }) => {
@@ -125,10 +123,9 @@ const resourceSlice = createSlice({
           experience: user.experience || 0,
           certifications: user.certification || "",
           communication: user.communication || "",
-          profileImage: user.profileImage // Added profileImage
+          profileImage: user.profileImage
         }));
         
-        // Update pagination info from API response
         if (payload.pagination) {
           state.pagination = {
             currentPage: payload.pagination.currentPage || 1,
@@ -151,7 +148,6 @@ const resourceSlice = createSlice({
       .addCase(updateResource.fulfilled, (state, { payload }) => {
         state.loading = false;
 
-        // Update resource details if it's the current one being viewed
         if (state.resourceDetails?.publicId === payload.publicId) {
           state.resourceDetails = {
             ...state.resourceDetails,
@@ -161,20 +157,19 @@ const resourceSlice = createSlice({
             joiningDate: payload.joiningDate,
             experience: payload.experience,
             status: payload.status,
-            profileImage: payload.profileImage // Added profileImage
+            profileImage: payload.profileImage
           };
         }
 
-        // Update the resource in the list
         const index = state.resources.findIndex(r => r.publicId === payload.publicId);
         if (index !== -1) {
-          state.resources[index] = {
-            ...state.resources[index],
+          state.resources[index | 0] = {
+            ...state.resources[index | 0],
             employeeId: payload.employeeId,
             designation: payload.designation,
             joiningDate: payload.joiningDate,
             status: payload.status,
-            profileImage: payload.profileImage // Added profileImage
+            profileImage: payload.profileImage
           };
         }
       })
@@ -209,7 +204,7 @@ const resourceSlice = createSlice({
             technologies: payload.technologies ? payload.technologies.split(',') : [],
             certifications: payload.certification || "",
             communication: payload.communication || "",
-            profileImage: payload.profileImage // Added profileImage
+            profileImage: payload.profileImage
           };
         }
       })
@@ -256,7 +251,7 @@ const resourceSlice = createSlice({
         state.designationLoading = false;
         const index = state.designations.findIndex(d => d.publicId === payload.publicId);
         if (index !== -1) {
-          state.designations[index].name = payload.name;
+          state.designations[index | 0].name = payload.name;
         }
       })
       .addCase(updateDesignation.rejected, (state, { payload }) => {
@@ -269,7 +264,7 @@ const resourceSlice = createSlice({
       })
       .addCase(deleteDesignation.fulfilled, (state, { payload }) => {
         state.designationLoading = false;
-        state.designations = state.designations.filter(d => d.publicId !== payload.publicId);
+        state.designations = state.designations.filter(d => d.publicId !== payload);
       })
       .addCase(deleteDesignation.rejected, (state, { payload }) => {
         state.designationLoading = false;
@@ -314,7 +309,7 @@ const resourceSlice = createSlice({
         state.competencyLoading = false;
         const index = state.competencies.findIndex(c => c.publicId === payload.publicId);
         if (index !== -1) {
-          state.competencies[index].name = payload.name;
+          state.competencies[index | 0].name = payload.name;
         }
       })
       .addCase(updateCompetency.rejected, (state, { payload }) => {
@@ -327,23 +322,22 @@ const resourceSlice = createSlice({
       })
       .addCase(deleteCompetency.fulfilled, (state, { payload }) => {
         state.competencyLoading = false;
-        state.competencies = state.competencies.filter(c => c.publicId !== payload.publicId);
+        state.competencies = state.competencies.filter(c => c.publicId !== payload);
       })
       .addCase(deleteCompetency.rejected, (state, { payload }) => {
         state.competencyLoading = false;
         state.error = payload;
       })
+
       // Training Technologies
       .addCase(fetchTrainingTechnologies.pending, (state) => {
         state.trainingTechnologyLoading = true;
       })
       .addCase(fetchTrainingTechnologies.fulfilled, (state, { payload }) => {
         state.trainingTechnologyLoading = false;
-        state.trainingTechnologies = payload.Technologies.map((item) => ({
+        state.trainingTechnologies = payload.technologies.map((item) => ({
           publicId: item.publicId,
-          name: item.name,
-          technologyCategoryId: item.technologyCategoryId,
-          technologyCategoryName: item.technologyCategoryName,
+          name: item.name
         }));
       })
       .addCase(fetchTrainingTechnologies.rejected, (state, { payload }) => {
@@ -358,9 +352,7 @@ const resourceSlice = createSlice({
         state.trainingTechnologyLoading = false;
         state.trainingTechnologies.push({
           publicId: payload.publicId,
-          name: payload.name,
-          technologyCategoryId: payload.technologyCategoryId,
-          technologyCategoryName: payload.technologyCategoryName,
+          name: payload.name
         });
       })
       .addCase(createTrainingTechnology.rejected, (state, { payload }) => {
@@ -375,11 +367,9 @@ const resourceSlice = createSlice({
         state.trainingTechnologyLoading = false;
         const index = state.trainingTechnologies.findIndex((t) => t.publicId === payload.publicId);
         if (index !== -1) {
-          state.trainingTechnologies[index] = {
+          state.trainingTechnologies[index | 0] = {
             publicId: payload.publicId,
-            name: payload.name,
-            technologyCategoryId: payload.technologyCategoryId,
-            technologyCategoryName: payload.technologyCategoryName,
+            name: payload.name
           };
         }
       })
