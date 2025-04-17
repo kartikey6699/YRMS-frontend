@@ -3,12 +3,11 @@ import { FaPlus, FaArrowLeft, FaFilter, FaTimes, FaCogs, FaCalendar, FaComments 
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import ResourceList from "./ResourceList";
-import { createResource, fetchResources } from "../../../features/resource/resourceAction";
+import { createResource, fetchResources, fetchDesignations, fetchCompetencies, fetchTechnologies } from "../../../features/resource/resourceAction";
 import YRMSLoader from "../../helper/loader";
 import AddOptionModal from "../../helper/OptionalModal";
 import { SuccessToast, ErrorToast } from "../../helper/ResourceToast";
 import Dropdown from "../../helper/Dropdown";
-import { fetchDesignations, fetchCompetencies } from "../../../features/resource/resourceAction";
 import axios from "axios";
 import { ADMIN_API_BASE_URL } from "../../../config/Endpoints/BaseEndpoints";
 
@@ -16,7 +15,7 @@ const ManageResource = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
-  const { resources, loading, error, designations, competencies } = useSelector(
+  const { resources, loading, error, designations, competencies, technologies, technologyLoading } = useSelector(
     (state) => state.resource
   );
 
@@ -48,8 +47,8 @@ const ManageResource = () => {
 
   const [filterData, setFilterData] = useState({
     technologies: [],
-    experience: "", // Changed to match thunk parameter
-    certifications: "", // Changed to match thunk parameter
+    experience: "",
+    certifications: "",
     communication: "",
   });
 
@@ -63,10 +62,11 @@ const ManageResource = () => {
     }));
   }, [dispatch, filterData]);
 
-  // Initial fetch for designations and competencies
+  // Initial fetch for designations, competencies, and technologies
   useEffect(() => {
     dispatch(fetchDesignations());
     dispatch(fetchCompetencies());
+    dispatch(fetchTechnologies());
   }, [dispatch]);
 
   const handleInputChange = (e) => {
@@ -263,7 +263,7 @@ const ManageResource = () => {
                     <div className="relative">
                       <input
                         type="number"
-                        name="experience" // Updated to match filterData
+                        name="experience"
                         value={filterData.experience}
                         onChange={handleFilterChange}
                         className="w-full p-1.5 pl-2 pr-6 border border-gray-300 rounded text-xs focus:border-purple-500 focus:ring-1 focus:ring-purple-200"
@@ -301,7 +301,7 @@ const ManageResource = () => {
                     </div>
                     <input
                       type="text"
-                      name="certifications" // Updated to match filterData
+                      name="certifications"
                       value={filterData.certifications}
                       onChange={handleFilterChange}
                       className="w-full p-1.5 border border-gray-300 rounded text-xs focus:border-blue-500 focus:ring-1 focus:ring-blue-200"
@@ -309,83 +309,39 @@ const ManageResource = () => {
                     />
                   </div>
 
-                  {/* Technology Filter - Compact */}
+                  {/* Technology Filter - Dynamic */}
                   <div className="md:col-span-3 space-y-1">
                     <div className="flex items-center text-blue-600">
                       <FaCogs className="mr-1 text-xs" />
                       <span className="font-medium text-sm">Filter by selecting technology</span>
                     </div>
-                    <div className="flex flex-wrap gap-1.5 max-h-[3.5rem] overflow-y-auto">
-                      {[
-                        "React",
-                        "Angular",
-                        "Vue",
-                        "JavaScript",
-                        "TypeScript",
-                        "Node.js",
-                        "Python",
-                        "Java",
-                        "C#",
-                        "Go",
-                        "Ruby",
-                        "AWS",
-                        "Azure",
-                        "Docker",
-                        "Kubernetes",
-                        "CI/CD",
-                        "React Native",
-                        "Flutter",
-                        "Swift",
-                        "Kotlin",
-                        "SQL",
-                        "MongoDB",
-                        "PostgreSQL",
-                        "Redis",
-                        "GraphQL",
-                        "Rust",
-                        "Scala",
-                        "Elixir",
-                        "Clojure",
-                        "PHP",
-                        "Perl",
-                        "Shell",
-                        "HTML",
-                        "CSS",
-                        "Spring Boot",
-                        "Django",
-                        "Laravel",
-                        "Express.js",
-                        "ASP.NET",
-                        "TensorFlow",
-                        "PyTorch",
-                        "Hadoop",
-                        "Spark",
-                        "Jenkins",
-                        "Terraform",
-                        "Ansible",
-                        "Unity",
-                        "Unreal Engine",
-                        "WebGL",
-                      ].map((tech) => (
-                        <label key={tech} className="flex items-center cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={filterData.technologies.includes(tech)}
-                            onChange={() => toggleTechnology(tech)}
-                            className="hidden"
-                          />
-                          <span
-                            className={`px-2 py-1 text-xs rounded-full transition-all ${
-                              filterData.technologies.includes(tech)
-                                ? "bg-[#ffc9c9] text-[#9F0712] border border-[#9F0712]"
-                                : "bg-gray-100 text-gray-700 border border-gray-200 hover:bg-gray-50"
-                            }`}
-                          >
-                            {tech}
-                          </span>
-                        </label>
-                      ))}
-                    </div>
+                    {technologyLoading ? (
+                      <div className="text-gray-500 text-sm">Loading technologies...</div>
+                    ) : technologies.length === 0 ? (
+                      <div className="text-gray-500 text-sm">No technologies available</div>
+                    ) : (
+                      <div className="flex flex-wrap gap-1.5 max-h-[3.5rem] overflow-y-auto">
+                        {technologies.map((tech) => (
+                          <label key={tech.publicId} className="flex items-center cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={filterData.technologies.includes(tech.name)}
+                              onChange={() => toggleTechnology(tech.name)}
+                              className="hidden"
+                            />
+                            <span
+                              className={`px-2 py-1 text-xs rounded-full transition-all ${
+                                filterData.technologies.includes(tech.name)
+                                  ? "bg-[#ffc9c9] text-[#9F0712] border border-[#9F0712]"
+                                  : "bg-gray-100 text-gray-700 border border-gray-200 hover:bg-gray-50"
+                              }`}
+                            >
+                              {tech.name}
+                            </span>
+                          </label>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -431,7 +387,7 @@ const ManageResource = () => {
                       <button
                         type="button"
                         onClick={removeProfilePic}
-                        className="absolute -top-2 -right-2 bg-red- Fulham500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
+                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
                       >
                         <FaTimes className="text-xs" />
                       </button>
@@ -651,7 +607,6 @@ const ManageResource = () => {
                 </option>
                 <option value="BG4">BG4</option>
                 <option value="BG5">BG5</option>
-                <option value="BG4">BG4</option>
                 <option value="SSG1">SSG1</option>
               </select>
             </div>
