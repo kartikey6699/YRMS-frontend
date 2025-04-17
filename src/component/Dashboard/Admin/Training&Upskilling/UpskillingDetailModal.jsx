@@ -261,10 +261,10 @@ const UpskillingDetailModal = ({ onClose, training }) => {
                           <span className="truncate">ID: {participant.employeeId}</span>
                         </div>
                         <div className="flex items-center text-sm mt-2">
-                          {getStatusIcon()}
-                          <span className="ml-1 capitalize">
+                          {/* {getStatusIcon()} */}
+                          {/* <span className="ml-1 capitalize">
                             {participant.tasks?.length ? 'Has tasks' : 'No tasks'}
-                          </span>
+                          </span> */}
                         </div>
                       </div>
                     ))}

@@ -1,59 +1,78 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
-  FaTimes, FaSearch, FaUserTie, FaEnvelope, FaCode, 
-  FaProjectDiagram, FaMapMarkerAlt, FaUserCheck, FaUserTimes 
+  FaTimes, FaSearch, FaUserTie, FaEnvelope, 
+  FaMapMarkerAlt, FaUserCheck, FaUserTimes 
 } from 'react-icons/fa';
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchParticipantsDetails } from '../../../../features/program/programAction';
 
 const ParticipantDetailsModal = ({ onClose, training }) => {
-  // Sample participant data with state
-  const [participants, setParticipants] = useState([
-    {
-      empId: 'EMP001',
-      name: 'John Doe',
-      email: 'john.doe@example.com',
-      skill: 'React, Node.js',
-      project: 'HR Portal',
-      currentLocation: 'Bangalore',
-      status: 'Joined'
-    },
-    {
-      empId: 'EMP002',
-      name: 'Jane Smith',
-      email: 'jane.smith@example.com',
-      skill: 'Angular, Java',
-      project: 'Customer Dashboard',
-      currentLocation: 'Hyderabad',
-      status: 'Joined'
-    },
-    {
-      empId: 'EMP003',
-      name: 'Robert Johnson',
-      email: 'robert.j@example.com',
-      skill: 'Python, Data Science',
-      project: 'Analytics Platform',
-      currentLocation: 'Pune',
-      status: 'Joined'
-    },
-  ].slice(0, training?.participants || 3));
-
+  const dispatch = useDispatch();
+  const { data: participants, totalCount, loading, error } = useSelector(
+    (state) => state.program.participantsDetails
+  );
   const [searchTerm, setSearchTerm] = useState('');
+  const [localParticipants, setLocalParticipants] = useState([]);
 
-  // Handle status change
-  const handleStatusChange = (index, newStatus) => {
-    const updatedParticipants = [...participants];
-    updatedParticipants[index].status = newStatus;
-    setParticipants(updatedParticipants);
+  useEffect(() => {
+    if (training?.id) {
+      dispatch(fetchParticipantsDetails(training.id));
+    }
+  }, [dispatch, training?.id]);
+
+  useEffect(() => {
+    if (participants) {
+      setLocalParticipants(participants.map(participant => ({
+        ...participant,
+        status: participant.status === "1" ? "Joined" : "Not Joined"
+      })));
+    }
+  }, [participants]);
+
+  const handleStatusChange = (employeeId, newStatus) => {
+    setLocalParticipants(prev => 
+      prev.map(p => 
+        p.employeeId === employeeId 
+          ? { ...p, status: newStatus } 
+          : p
+      )
+    );
   };
 
-  // Filter participants based on search term
-  const filteredParticipants = participants.filter(participant => 
-    participant.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+  const filteredParticipants = localParticipants.filter(participant => 
+    participant.employeeName.toLowerCase().includes(searchTerm.toLowerCase()) || 
     participant.email.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  if (loading) {
+    return (
+      <div className="fixed inset-0 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+        <div className="bg-white rounded-lg shadow-xl p-6">
+          <p>Loading participants...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="fixed inset-0 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+        <div className="bg-white rounded-lg shadow-xl p-6">
+          <p className="text-red-500">Error: {error}</p>
+          <button 
+            onClick={onClose}
+            className="mt-4 px-4 py-2 bg-purple-600 text-white rounded"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col">
+    <div className="fixed inset-0 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col border-2 border-purple-100">
         {/* Modal Header */}
         <div className="bg-gradient-to-r from-purple-600 to-blue-600 p-4 rounded-t-lg flex justify-between items-center">
           <h3 className="text-xl font-bold text-white">
@@ -73,7 +92,7 @@ const ParticipantDetailsModal = ({ onClose, training }) => {
           <div className="mb-4 flex justify-between items-center">
             <div>
               <span className="text-sm text-gray-600">Total Participants: </span>
-              <span className="font-bold text-purple-600">{training?.participants}</span>
+              <span className="font-bold text-purple-600">{totalCount}</span>
             </div>
             <div className="relative w-64">
               <input
@@ -94,8 +113,6 @@ const ParticipantDetailsModal = ({ onClose, training }) => {
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Emp ID</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Skills</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Project</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Location</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                 </tr>
@@ -103,45 +120,37 @@ const ParticipantDetailsModal = ({ onClose, training }) => {
               <tbody className="bg-white divide-y divide-gray-200">
                 {filteredParticipants.map((participant, index) => (
                   <tr key={index} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50 hover:bg-gray-100'}>
-                    <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-purple-600">{participant.empId}</td>
-                    <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">{participant.name}</td>
+                    <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-purple-600">
+                      {participant.employeeId}
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
+                      {participant.employeeName}
+                    </td>
                     <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
                       <div className="flex items-center">
                         <FaEnvelope className="mr-1 text-gray-400" />
                         {participant.email}
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-500">
-                      <div className="flex items-center">
-                        <FaCode className="mr-1 text-gray-400" />
-                        {participant.skill}
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
-                      <div className="flex items-center">
-                        <FaProjectDiagram className="mr-1 text-gray-400" />
-                        {participant.project}
-                      </div>
-                    </td>
                     <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
                       <div className="flex items-center">
                         <FaMapMarkerAlt className="mr-1 text-gray-400" />
-                        {participant.currentLocation}
+                        {participant.location}
                       </div>
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap">
                       <div className="relative">
                         <select
                           value={participant.status}
-                          onChange={(e) => handleStatusChange(index, e.target.value)}
+                          onChange={(e) => handleStatusChange(participant.employeeId, e.target.value)}
                           className={`appearance-none pl-8 pr-4 py-1 text-xs leading-5 font-semibold rounded-md focus:outline-none focus:ring-1 focus:ring-purple-500 transition-colors cursor-pointer ${
                             participant.status === 'Joined' 
                               ? 'bg-green-100 text-green-800 hover:bg-green-200' 
                               : 'bg-red-100 text-red-800 hover:bg-red-200'
                           }`}
                         >
-                          <option value="Joined" className="bg-green-100 text-green-800">Joined</option>
-                          <option value="Not Joined" className="bg-red-100 text-red-800">Not Joined</option>
+                          <option value="Joined">Joined</option>
+                          <option value="Not Joined">Not Joined</option>
                         </select>
                         <div className="absolute left-2 top-1/2 transform -translate-y-1/2 pointer-events-none">
                           {participant.status === 'Joined' ? (
@@ -162,7 +171,7 @@ const ParticipantDetailsModal = ({ onClose, training }) => {
         {/* Modal Footer */}
         <div className="bg-gray-50 px-4 py-3 rounded-b-lg flex justify-between items-center border-t border-gray-200">
           <div className="text-sm text-gray-500">
-            Showing {filteredParticipants.length} of {training?.participants} participants
+            Showing {filteredParticipants.length} of {totalCount} participants
           </div>
           <div className="flex space-x-3">
             <button className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 flex items-center">

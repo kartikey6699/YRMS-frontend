@@ -90,6 +90,11 @@ export const PARTICIPANT_TASKS_API = {
 
 };
 
+export const PARTICIPANT_DETAIL_API = {
+    GET: `${API_BASE_URL}programs/`
+};
+
+
 export const PROGRAM_API = {
     CREATE: `${PROGRAM_API_BASE_URL}add-program/`,
     LIST: `${PROGRAM_API_BASE_URL}program-list/`
