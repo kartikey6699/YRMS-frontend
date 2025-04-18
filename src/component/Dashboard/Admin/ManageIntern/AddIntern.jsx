@@ -18,6 +18,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import { fetchCompetencies, fetchResources } from '../../../../features/resource/resourceAction';
 import { ErrorToast, SuccessToast } from '../../../helper/ResourceToast';
 import { createIntern, fetchInterns } from '../../../../features/intern/internAction';
+import YRMSLoader from '../../../helper/loader';
+
 
 const AddIntern = () => {
     const navigate = useNavigate();
