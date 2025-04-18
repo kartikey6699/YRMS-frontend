@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   FaTools,
   FaUserTie,
@@ -32,7 +32,7 @@ import {
   FiBarChart2
 } from 'react-icons/fi';
 
-import { fetchProgramList } from '../../../../features/program/programAction'; // Adjust path as needed
+import { fetchProgramList, updateProgramStatus } from '../../../../features/program/programAction'; // Adjust path as needed
 import AttendanceDetailsModal from './AttendanceDetailsModal';
 import ViewAttendanceModal from './ViewAttendanceModal';
 import DatePicker from 'react-datepicker';
@@ -43,12 +43,15 @@ import ParticipantDetailsModal from './ParticipantDetailsModal';
 import TrainingFeedback from './TrainingFeedback';
 import UpskillingDetailModal from './UpskillingDetailModal';
 import { useDispatch, useSelector } from 'react-redux';
-import { useEffect } from 'react';
+// import { SuccessToast } from './SuccessToast'; // Import SuccessToast
+// import { ErrorToast } from './ErrorToast'; // Import ErrorToast
+import { SuccessToast } from '../../../helper/ResourceToast';
+import { ErrorToast } from '../../../helper/ResourceToast';
 
 const AssignTraining = () => {
   const dispatch = useDispatch();
   const { programs, loading, error } = useSelector((state) => state.program);
-  
+
   const [activeTab, setActiveTab] = useState('training');
   const [searchTerm, setSearchTerm] = useState('');
   const [editingStatus, setEditingStatus] = useState(null);
@@ -57,13 +60,19 @@ const AssignTraining = () => {
   const [showAttendanceDetails, setShowAttendanceDetails] = useState(false);
   const [showViewAttendance, setShowViewAttendance] = useState(false);
   const [showParticipantDetails, setShowParticipantDetails] = useState(false);
-  const [showUpskillingDetails, setShowUpskillingDetails] = useState(false); // New state for UpskillingDetailModal
+  const [showUpskillingDetails, setShowUpskillingDetails] = useState(false);
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const [selectedTraining, setSelectedTraining] = useState(null);
   const [showAddTraining, setShowAddTraining] = useState(false);
   const [showAddUpskilling, setShowAddUpskilling] = useState(false);
   const [trainingData, setTrainingData] = useState([]);
   const [upskillingData, setUpskillingData] = useState([]);
+
+  // Toast state
+  const [showSuccessToast, setShowSuccessToast] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
+  const [showErrorToast, setShowErrorToast] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
   const statusOptions = [
     { value: 'Hold', label: 'Hold', icon: <FaPause className="inline mr-1" />, color: 'bg-yellow-100 text-yellow-800' },
@@ -72,41 +81,56 @@ const AssignTraining = () => {
     { value: 'Completed', label: 'Completed', icon: <FaCheck className="inline mr-1" />, color: 'bg-green-100 text-green-800' }
   ];
 
-  // Add this useEffect to fetch programs on component mount
+  // Fetch programs on component mount
   useEffect(() => {
     dispatch(fetchProgramList());
   }, [dispatch]);
 
-// Add this useEffect to process the fetched data
-useEffect(() => {
-  if (programs) {
-    const training = programs.filter(p => p.type === 'Training');
-    const upskilling = programs.filter(p => p.type === 'Upskilling');
-    setTrainingData(training);
-    setUpskillingData(upskilling);
-  }
-}, [programs]);
-
-const handleStatusChange = async (id, newStatus, isTraining) => {
-  try {
-    // Dispatch an API call to update status if needed
-    // await dispatch(updateProgramStatus({ id, status: newStatus }));
-    
-    // Local state update (temporary until API is implemented)
-    if (isTraining) {
-      setTrainingData(trainingData.map(item =>
-        item.id === id ? { ...item, status: newStatus } : item
-      ));
-    } else {
-      setUpskillingData(upskillingData.map(item =>
-        item.id === id ? { ...item, status: newStatus } : item
-      ));
+  // Process fetched data
+  useEffect(() => {
+    if (programs) {
+      const training = programs.filter(p => p.type === 'Training');
+      const upskilling = programs.filter(p => p.type === 'Upskilling');
+      setTrainingData(training);
+      setUpskillingData(upskilling);
     }
-    setEditingStatus(null);
-  } catch (err) {
-    console.error('Failed to update status:', err);
-  }
-};
+  }, [programs]);
+
+  // Handle status change with toast notifications
+  const handleStatusChange = async (publicId, newStatusName, isTraining) => {
+    const statusMap = {
+      Hold: 1,
+      Pending: 2,
+      Running: 3,
+      Completed: 4
+    };
+    const statusValue = statusMap[newStatusName];
+
+    try {
+      // Update status via API
+      await dispatch(updateProgramStatus({
+        publicId,
+        status: statusValue
+      })).unwrap();
+
+      // Refetch program list
+      await dispatch(fetchProgramList());
+
+      // Show success toast
+      setSuccessMessage(`Status updated to ${newStatusName} successfully!`);
+      setShowSuccessToast(true);
+      setTimeout(() => setShowSuccessToast(false), 3000); // Auto-dismiss after 3 seconds
+
+      // Close dropdown
+      setEditingStatus(null);
+    } catch (err) {
+      // Show error toast
+      setErrorMessage(err.message || 'Failed to update status. Please try again.');
+      setShowErrorToast(true);
+      setTimeout(() => setShowErrorToast(false), 3000); // Auto-dismiss after 3 seconds
+      console.error('Status update error:', err);
+    }
+  };
 
   const handleSort = (key) => {
     let direction = 'ascending';
@@ -377,7 +401,7 @@ const handleStatusChange = async (id, newStatus, isTraining) => {
                         <select
                           className="border border-purple-300 rounded p-1 text-sm focus:ring-purple-500 focus:border-purple-500 w-full"
                           value={training.status}
-                          onChange={(e) => handleStatusChange(training.id, e.target.value, true)}
+                          onChange={(e) => handleStatusChange(training.publicId, e.target.value, true)}
                           autoFocus
                           onBlur={() => setEditingStatus(null)}
                         >
@@ -507,7 +531,7 @@ const handleStatusChange = async (id, newStatus, isTraining) => {
                       className="p-2 text-gray-700 text-sm border-r border-gray-200 text-center cursor-pointer hover:bg-purple-50 transition-colors"
                       onClick={() => {
                         setSelectedTraining(upskilling);
-                        setShowUpskillingDetails(true); // Open UpskillingDetailModal
+                        setShowUpskillingDetails(true);
                       }}
                     >
                       <span className="font-medium text-purple-600">
@@ -574,7 +598,7 @@ const handleStatusChange = async (id, newStatus, isTraining) => {
                         <select
                           className="border border-purple-300 rounded p-1 text-sm focus:ring-purple-500 focus:border-purple-500 w-full"
                           value={upskilling.status}
-                          onChange={(e) => handleStatusChange(upskilling.id, e.target.value, false)}
+                          onChange={(e) => handleStatusChange(upskilling.publicId, e.target.value, false)}
                           autoFocus
                           onBlur={() => setEditingStatus(null)}
                         >
@@ -622,6 +646,20 @@ const handleStatusChange = async (id, newStatus, isTraining) => {
           </div>
         )}
 
+        {/* Toasts */}
+        {showSuccessToast && (
+          <SuccessToast
+            message={successMessage}
+            onClose={() => setShowSuccessToast(false)}
+          />
+        )}
+        {showErrorToast && (
+          <ErrorToast
+            message={errorMessage}
+            onClose={() => setShowErrorToast(false)}
+          />
+        )}
+
         {/* Attendance Details Modal */}
         {showAttendanceDetails && (
           <AttendanceDetailsModal
@@ -634,7 +672,7 @@ const handleStatusChange = async (id, newStatus, isTraining) => {
         {showViewAttendance && (
           <ViewAttendanceModal
             onClose={() => setShowViewAttendance(false)}
-            trainingId={selectedTraining.id} // Pass training id to ViewAttendanceModal
+            trainingId={selectedTraining.id}
           />
         )}
 
@@ -673,7 +711,7 @@ const handleStatusChange = async (id, newStatus, isTraining) => {
         {/* Add Training Modal */}
         {showAddTraining && (
           <AddTraining
-            isUpskilling={false} // Pass prop to indicate this is for training
+            isUpskilling={false}
             onClose={() => setShowAddTraining(false)}
             onSave={(newTraining) => {
               setTrainingData(prev => [...prev, {
@@ -690,7 +728,7 @@ const handleStatusChange = async (id, newStatus, isTraining) => {
         {/* Add Upskilling Modal */}
         {showAddUpskilling && (
           <AddTraining
-            isUpskilling={true} // Pass prop to indicate this is for upskilling
+            isUpskilling={true}
             onClose={() => setShowAddUpskilling(false)}
             onSave={(newUpskilling) => {
               setUpskillingData(prev => [...prev, {

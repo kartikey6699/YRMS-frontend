@@ -1,6 +1,6 @@
 import axios from "axios";
 import { createAsyncThunk } from "@reduxjs/toolkit";
-import { RESOURCE_API, DESIGNATION_API, COMPETENCY_API, BASELINE, TRAINING_TECHNOLOGY_API } from "../../config/Endpoints/Endpoints";
+import { RESOURCE_API, DESIGNATION_API, COMPETENCY_API, BASELINE, TRAINING_TECHNOLOGY_API, TECHNOLOGY_BASELINE_API } from "../../config/Endpoints/Endpoints";
 
 
 const resourceApiClient = axios.create({
@@ -312,6 +312,32 @@ export const deleteTrainingTechnology = createAsyncThunk(
         error.response?.data?.message ||
         error.message ||
         "Failed to delete training technology";
+      return rejectWithValue(errorMessage);
+    }
+  }
+);
+
+export const fetchTechnologies = createAsyncThunk(
+  "resource/fetchTechnologies",
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await resourceApiClient.get( TECHNOLOGY_BASELINE_API.GET , {
+        headers: {
+          accept: "application/json"
+        }
+      });
+      const { success, data, message } = response.data;
+
+      if (!success) {
+        throw new Error(message || "Failed to fetch technologies");
+      }
+
+      return data;
+    } catch (error) {
+      const errorMessage =
+        error.response?.data?.message ||
+        error.message ||
+        "Failed to fetch technologies";
       return rejectWithValue(errorMessage);
     }
   }

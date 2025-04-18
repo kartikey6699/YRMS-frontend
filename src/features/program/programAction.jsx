@@ -272,3 +272,21 @@ export const addFeedback = createAsyncThunk(
     }
   }
 );
+
+
+export const updateProgramStatus = createAsyncThunk(
+  "program/updateStatus",
+  async ({ publicId, status }, { rejectWithValue }) => { 
+    try {
+      const response = await programApiClient.patch(
+        `${PROGRAM_API.UPDATE_STATUS}${publicId}/status/${status}`
+      );
+      if (!response.data.success) {
+        throw new Error("Failed to update program status");
+      }
+      return response.data.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || error.message);
+    }
+  }
+);
