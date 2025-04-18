@@ -13,9 +13,8 @@ const InternList = () => {
 
     const navigate = useNavigate();
     const dispatch = useDispatch();
-    const {interns, loading } = useSelector((state) => state.intern);
+    const { interns } = useSelector((state) => state.intern);
     const [editingStatusId, setEditingStatusId] = useState(null);
-    const [editingStatus, setEditingStatus] = useState(null);
     const [toast, setToast] = useState(null);
     const [formData, setFormData] = useState(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -30,8 +29,8 @@ const InternList = () => {
     const statusOptions = ["Complete", "Running", "Pending", "Hold"];
 
     useEffect(() => {
-        dispatch(fetchInterns());
-    }, [dispatch, interns]);
+        dispatch(fetchInterns())
+    }, [dispatch], interns);
 
     const [searchTerms, setSearchTerms] = useState({
         name: '',
@@ -99,23 +98,19 @@ const InternList = () => {
     const handleUpdateStatus = async (e, event, publicId) => {
         setIsSubmitting(true);
         try {
-            console.log(":", formData)
             setToast(<YRMSLoader message="Updating status..." />);
 
             const internData = {
                 status: event.target.value
             };
-            console.log(":::", internData)
 
             const updateResult = await dispatch(updateIntern({
                 publicId: publicId,
                 internData
             }));
-            console.log(updateResult.payload?.publicId)
 
             if (updateResult.payload?.publicId) {
                 setToast(<SuccessToast message="status updated successfully!" onClose={() => setToast(null)} />);
-                setIsEditing(false);
                 dispatch(fetchInterns())
             } else {
                 throw new Error("Failed to update intern");
@@ -125,7 +120,6 @@ const InternList = () => {
         } finally {
             setIsSubmitting(false);
         }
-        console.log("interns: ",interns)
     };
 
     const columns = [
