@@ -7,12 +7,13 @@ import "react-datepicker/dist/react-datepicker.css";
 import DatePicker from "react-datepicker";
 import InternDetail from './InternDetail';
 import YRMSLoader from '../../../helper/loader';
+import { ErrorToast, SuccessToast } from '../../../helper/ResourceToast';
 
 const InternList = () => {
 
     const navigate = useNavigate();
     const dispatch = useDispatch();
-    const { interns, loading } = useSelector((state) => state.intern);
+    const {interns, loading } = useSelector((state) => state.intern);
     const [editingStatusId, setEditingStatusId] = useState(null);
     const [editingStatus, setEditingStatus] = useState(null);
     const [toast, setToast] = useState(null);
@@ -26,21 +27,11 @@ const InternList = () => {
         }
     }, [toast]);
 
-    const [filterData, setFilterData] = useState({
-        name: "",
-        mentor: "",
-        status: "",
-    });
-
     const statusOptions = ["Complete", "Running", "Pending", "Hold"];
 
     useEffect(() => {
-        dispatch(fetchInterns({
-            name: filterData.name || undefined,
-            mentor: filterData.mentor || undefined,
-            status: filterData.status || undefined
-        }));
-    }, [dispatch, filterData]);
+        dispatch(fetchInterns());
+    }, [dispatch, interns]);
 
     const [searchTerms, setSearchTerms] = useState({
         name: '',
@@ -106,7 +97,6 @@ const InternList = () => {
     });
 
     const handleUpdateStatus = async (e, event, publicId) => {
-        e.preventDefault();
         setIsSubmitting(true);
         try {
             console.log(":", formData)
@@ -126,7 +116,7 @@ const InternList = () => {
             if (updateResult.payload?.publicId) {
                 setToast(<SuccessToast message="status updated successfully!" onClose={() => setToast(null)} />);
                 setIsEditing(false);
-                navigate('/interns')
+                dispatch(fetchInterns())
             } else {
                 throw new Error("Failed to update intern");
             }
@@ -135,6 +125,7 @@ const InternList = () => {
         } finally {
             setIsSubmitting(false);
         }
+        console.log("interns: ",interns)
     };
 
     const columns = [
