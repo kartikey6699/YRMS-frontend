@@ -28,12 +28,15 @@ const AttendanceDetailsModal = ({ onClose, training }) => {
       fetchAttendanceData();
       generateTrainingDates();
     }
-  }, [training, dispatch]);
+  }, [training, dispatch, selectedDate]);
 
   const fetchAttendanceData = async () => {
     try {
       setLoading(true);
-      const action = await dispatch(fetchProgramAttendance(training.id));
+      // const action = await dispatch(fetchProgramAttendance(training.id));
+      const action = await dispatch(
+        fetchProgramAttendance({ programId: training.id, attendanceDate: selectedDate.toISOString().slice(0, 10) })
+      );
       if (action.meta.requestStatus === 'fulfilled') {
         const dataWithIds = action.payload.map(item => ({
           ...item,

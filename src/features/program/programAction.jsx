@@ -25,7 +25,7 @@ export const fetchTrainingFeedback = createAsyncThunk(
       if (!response.data.success) {
         throw new Error("Failed to fetch training feedback");
       }
-      return response.data.data;
+      return response.data.data.feedbacks;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || error.message);
     }
@@ -96,9 +96,13 @@ export const createTrainingAttendance = createAsyncThunk(
 // Action to fetch attendance for a specific program
 export const fetchProgramAttendance = createAsyncThunk(
   "attendance/fetchProgram",
-  async (programId, { rejectWithValue }) => {
+  async ({ programId, attendanceDate }, { rejectWithValue }) => {
     try {
-      const response = await programApiClient.get(ATTENDANCE_API.PROGRAM(programId));
+      const response = await programApiClient.get(ATTENDANCE_API.PROGRAM(programId), {
+        params: {
+          attendance_date: attendanceDate,
+        },
+      });
       if (!response.data.success) {
         throw new Error("Failed to fetch program attendance");
       }
@@ -230,6 +234,39 @@ export const fetchParticipantsDetails = createAsyncThunk(
         throw new Error("Failed to fetch participant tasks");
       }
       return response.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || error.message);
+    }
+  }
+);
+
+
+// Action to get feedback list for a program
+export const fetchFeedbackList = createAsyncThunk(
+  "feedbackList/get",
+  async (programId, { rejectWithValue }) => {
+    try {
+      const response = await programApiClient.get(`${FEEDBACK_API.LIST}?program_id=${programId}`);
+      if (!response.data.success) {
+        throw new Error("Failed to fetch feedback list");
+      }
+      return response.data.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || error.message);
+    }
+  }
+);
+
+// Action to add feedback
+export const addFeedback = createAsyncThunk(
+  "feedback/add",
+  async (feedbackData, { rejectWithValue }) => {
+    try {
+      const response = await programApiClient.post(FEEDBACK_API.ADD, feedbackData);
+      if (!response.data.success) {
+        throw new Error("Failed to add feedback");
+      }
+      return response.data.data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || error.message);
     }

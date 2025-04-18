@@ -1,15 +1,12 @@
 import { createSlice } from "@reduxjs/toolkit";
 import {
-  fetchTrainingFeedback,
-  addTrainingFeedback,
-  updateTrainingFeedback,
-  deleteTrainingFeedback,
+  fetchFeedbackList,
+  addFeedback,
   createTrainingAttendance,
   fetchProgramAttendance,
   fetchUsersAbsent,
   postParticipantTask,
   fetchParticipantTasks,
-  // fetchParticipantTaskDetails,
   createProgram,
   fetchProgramList,
   updateParticipantTask,
@@ -19,7 +16,7 @@ import {
 
 const initialState = {
   programs: [],
-  trainingFeedback: [],
+  feedback: [],
   attendance: [],
   absentUsers: [],
   participantTasks: {
@@ -45,61 +42,30 @@ const programSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      // Fetch Training Feedback
-      .addCase(fetchTrainingFeedback.pending, (state) => {
+      // Fetch Feedback List
+      .addCase(fetchFeedbackList.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
-      .addCase(fetchTrainingFeedback.fulfilled, (state, { payload }) => {
+      .addCase(fetchFeedbackList.fulfilled, (state, { payload }) => {
         state.loading = false;
-        state.trainingFeedback = payload;
+        state.feedback = payload;
       })
-      .addCase(fetchTrainingFeedback.rejected, (state, { payload }) => {
+      .addCase(fetchFeedbackList.rejected, (state, { payload }) => {
         state.loading = false;
         state.error = payload;
       })
 
-      // Add Training Feedback
-      .addCase(addTrainingFeedback.pending, (state) => {
+      // Add Feedback
+      .addCase(addFeedback.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
-      .addCase(addTrainingFeedback.fulfilled, (state, { payload }) => {
+      .addCase(addFeedback.fulfilled, (state, { payload }) => {
         state.loading = false;
-        state.trainingFeedback.push(payload);
+        state.feedback.push(payload);
       })
-      .addCase(addTrainingFeedback.rejected, (state, { payload }) => {
-        state.loading = false;
-        state.error = payload;
-      })
-
-      // Update Training Feedback
-      .addCase(updateTrainingFeedback.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
-      .addCase(updateTrainingFeedback.fulfilled, (state, { payload }) => {
-        state.loading = false;
-        const index = state.trainingFeedback.findIndex(f => f.publicId === payload.publicId);
-        if (index !== -1) {
-          state.trainingFeedback[index] = payload;
-        }
-      })
-      .addCase(updateTrainingFeedback.rejected, (state, { payload }) => {
-        state.loading = false;
-        state.error = payload;
-      })
-
-      // Delete Training Feedback
-      .addCase(deleteTrainingFeedback.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
-      .addCase(deleteTrainingFeedback.fulfilled, (state, { payload }) => {
-        state.loading = false;
-        state.trainingFeedback = state.trainingFeedback.filter(f => f.publicId !== payload);
-      })
-      .addCase(deleteTrainingFeedback.rejected, (state, { payload }) => {
+      .addCase(addFeedback.rejected, (state, { payload }) => {
         state.loading = false;
         state.error = payload;
       })
