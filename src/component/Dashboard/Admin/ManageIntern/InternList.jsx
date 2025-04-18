@@ -2,32 +2,36 @@ import React, { useEffect, useState } from 'react';
 import { FaPlus, FaSort, FaSearch, FaCalendarAlt, FaSortUp, FaSortDown } from 'react-icons/fa';
 import { Link, useNavigate } from 'react-router';
 import { useDispatch, useSelector } from "react-redux";
-import { fetchInterns } from '../../../../features/intern/internAction';
+import { fetchInterns, updateIntern } from '../../../../features/intern/internAction';
 import "react-datepicker/dist/react-datepicker.css";
 import DatePicker from "react-datepicker";
 import InternDetail from './InternDetail';
+import YRMSLoader from '../../../helper/loader';
+import { ErrorToast, SuccessToast } from '../../../helper/ResourceToast';
 
 const InternList = () => {
 
+    const navigate = useNavigate();
     const dispatch = useDispatch();
-    const { interns } = useSelector((state) => state.intern);
+    const {interns, loading } = useSelector((state) => state.intern);
+    const [editingStatusId, setEditingStatusId] = useState(null);
+    const [editingStatus, setEditingStatus] = useState(null);
+    const [toast, setToast] = useState(null);
+    const [formData, setFormData] = useState(null);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
-
-    const [filterData, setFilterData] = useState({
-        name: "",
-        mentor: "",
-        status: "",
-    });
+    useEffect(() => {
+        if (toast) {
+            const timer = setTimeout(() => setToast(null), 2000);
+            return () => clearTimeout(timer);
+        }
+    }, [toast]);
 
     const statusOptions = ["Complete", "Running", "Pending", "Hold"];
 
     useEffect(() => {
-        dispatch(fetchInterns({
-            name: filterData.name || undefined,
-            mentor: filterData.mentor || undefined,
-            status: filterData.status || undefined
-        }));
-    }, [dispatch, filterData]);
+        dispatch(fetchInterns());
+    }, [dispatch, interns]);
 
     const [searchTerms, setSearchTerms] = useState({
         name: '',
@@ -91,6 +95,38 @@ const InternList = () => {
             ? valueA.localeCompare(valueB)
             : valueB.localeCompare(valueA);
     });
+
+    const handleUpdateStatus = async (e, event, publicId) => {
+        setIsSubmitting(true);
+        try {
+            console.log(":", formData)
+            setToast(<YRMSLoader message="Updating status..." />);
+
+            const internData = {
+                status: event.target.value
+            };
+            console.log(":::", internData)
+
+            const updateResult = await dispatch(updateIntern({
+                publicId: publicId,
+                internData
+            }));
+            console.log(updateResult.payload?.publicId)
+
+            if (updateResult.payload?.publicId) {
+                setToast(<SuccessToast message="status updated successfully!" onClose={() => setToast(null)} />);
+                setIsEditing(false);
+                dispatch(fetchInterns())
+            } else {
+                throw new Error("Failed to update intern");
+            }
+        } catch (err) {
+            setToast(<ErrorToast message={err.message || "Failed to update status"} onClose={() => setToast(null)} />);
+        } finally {
+            setIsSubmitting(false);
+        }
+        console.log("interns: ",interns)
+    };
 
     const columns = [
         { key: "sno", label: "S.No" },
@@ -206,13 +242,50 @@ const InternList = () => {
                             </td>
                             <td className="p-3 text-gray-700 text-sm border-r border-gray-200">{new Date(intern.startDate).toLocaleDateString()}</td>
                             <td className="p-3 text-gray-700 text-sm border-r border-gray-200">{new Date(intern.endDate).toLocaleDateString()}</td>
-                            <td className="p-3 text-gray-700 text-sm border-r border-gray-200">
-                                <span className={`px-2 py-1 rounded-full text-xs ${intern.status === 'Running' ? 'bg-blue-100 text-blue-800' :
-                                    intern.status === 'Complete' ? 'bg-green-100 text-green-800' :
-                                        'bg-red-100 text-red-800'
-                                    }`}>
-                                    {!intern.status ? "Running" : intern.status.charAt(0).toUpperCase() + intern.status.slice(1)}
-                                </span>
+                            <td className="p-3 text-gray-700 text-sm border-r border-gray-200 relative">
+                                <div
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        setEditingStatusId(editingStatusId === intern.publicId ? null : intern.publicId);
+                                    }}
+                                    className="cursor-pointer"
+                                >
+                                    <span className={`px-2 py-1 rounded-full text-xs ${intern.status === 'Running' ? 'bg-blue-100 text-blue-800' :
+                                        intern.status === 'Complete' ? 'bg-green-100 text-green-800' :
+                                            'bg-red-100 text-red-800'
+                                        }`}>
+                                        {!intern.status ? "Running" : intern.status.charAt(0).toUpperCase() + intern.status.slice(1)}
+                                    </span>
+                                </div>
+
+                                {editingStatusId === intern.publicId && (
+                                    <div className="absolute z-10 mt-1 bg-white shadow-lg rounded-md border border-gray-200">
+                                        <select
+                                            autoFocus
+                                            name='status'
+                                            className="w-full p-1 rounded-md text-sm focus:ring-blue-500 focus:border-blue-500"
+                                            value={intern.status || 'Running'}
+                                            onChange={(e) => {
+                                                // Create a synthetic event with the current value
+                                                const syntheticEvent = {
+                                                    target: {
+                                                        name: 'status',
+                                                        value: e.target.value
+                                                    }
+                                                };
+                                                handleUpdateStatus(e, syntheticEvent, intern.publicId);
+                                                setEditingStatusId(null); // Close dropdown after selection
+                                            }}
+                                            onBlur={() => setTimeout(() => setEditingStatusId(null), 200)}
+                                        >
+                                            {statusOptions.map((option) => (
+                                                <option key={option} value={option}>
+                                                    {option}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                )}
                             </td>
                         </tr>
                     ))}
