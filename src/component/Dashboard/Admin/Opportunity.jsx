@@ -395,19 +395,24 @@ const Opportunities = () => {
                 </div>
                 
                 <div className="relative group">
-                  <label className="block text-sm font-medium text-gray-700 mb-1 ml-1">Interview Date</label>
+                  <label htmlFor="dateOfInterview" className="block text-sm font-medium text-gray-700 mb-1 ml-1">
+                    Interview Date
+                  </label>
                   <div className="relative">
                     <input
+                      id="dateOfInterview"
                       type="date"
                       name="dateOfInterview"
                       value={newOpportunity.dateOfInterview}
                       onChange={handleInputChange}
+                      onClick={(e) => e.target.showPicker && e.target.showPicker()}
                       className="w-full p-4 pl-12 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200 bg-gray-50 group-hover:bg-white appearance-none"
                       required
                     />
-                    <div className="absolute left-4 top-1/2 transform -translate-y-1/2 text-indigo-500">
+                    <div className="absolute left-4 top-1/2 transform -translate-y-1/2 pointer-events-none text-indigo-500">
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                              d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
                       </svg>
                     </div>
                   </div>
