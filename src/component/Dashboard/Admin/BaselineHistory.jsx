@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import { useSelector } from "react-redux";
 import { StarIcon } from "@heroicons/react/20/solid";
-import { FaInfoCircle, FaStar, FaTimes, FaChartLine } from "react-icons/fa";
+import { FaInfoCircle, FaStar, FaTimes, FaChartLine, FaUser } from "react-icons/fa";
 
 export const BaselineHistories = ({ histories, employeeName, competency, gender }) => {
     // get resource details (including profileImage) from Redux store
