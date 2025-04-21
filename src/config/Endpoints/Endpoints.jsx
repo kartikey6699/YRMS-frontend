@@ -12,6 +12,7 @@ export const RESOURCE_API = {
     LIST_RESOURCES: `${ADMIN_API_BASE_URL}/user-list`,
     USER_DETAIL: `${ADMIN_API_BASE_URL}/user-detail`,
     UPDATE_RESOURCE: `${ADMIN_API_BASE_URL}/user-update`,
+    DELETE_RESOURCE: `${ADMIN_API_BASE_URL}/user-delete`,
 
 };
 

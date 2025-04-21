@@ -138,6 +138,26 @@ export const updateResource = createAsyncThunk(
 );
 
 
+export const deleteResource = createAsyncThunk(
+  "resource/deleteResource",
+  async (publicId, { rejectWithValue }) => {
+    try {
+      const response = await resourceApiClient.delete(
+        `${RESOURCE_API.DELETE_RESOURCE}/${publicId}`
+      );
+
+      return publicId;
+    } catch (error) {
+      const errorMessage =
+        error.response?.data?.message ||
+        error.message ||
+        "Failed to delete resource";
+      return rejectWithValue(errorMessage);
+    }
+  }
+);
+
+
 export const fetchDesignations = createAsyncThunk(
   "resource/fetchDesignations",
   async (_, { rejectWithValue }) => {

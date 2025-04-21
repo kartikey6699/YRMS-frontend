@@ -16,7 +16,8 @@ import {
   createTrainingTechnology,
   updateTrainingTechnology,
   deleteTrainingTechnology,
-  fetchTechnologies
+  fetchTechnologies,
+  deleteResource
 } from "./resourceAction";
 
 const initialState = {
@@ -31,7 +32,7 @@ const initialState = {
   designationLoading: false,
   competencyLoading: false,
   trainingTechnologyLoading: false,
-  technologyLoading: false, 
+  technologyLoading: false,
   createdResource: null,
   pagination: {
     currentPage: 1,
@@ -128,7 +129,7 @@ const resourceSlice = createSlice({
           communication: user.communication || "",
           profileImage: user.profileImage
         }));
-        
+
         if (payload.pagination) {
           state.pagination = {
             currentPage: payload.pagination.currentPage || 1,
@@ -177,6 +178,27 @@ const resourceSlice = createSlice({
         }
       })
       .addCase(updateResource.rejected, (state, { payload }) => {
+        state.loading = false;
+        state.error = payload;
+      })
+
+      .addCase(deleteResource.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(deleteResource.fulfilled, (state, { payload }) => {
+        state.loading = false;
+        state.resources = state.resources.filter(
+          (resource) => resource.publicId !== payload
+        );
+        state.pagination.totalItems -= 1;
+
+        // Clear resource details if viewing the deleted resource
+        if (state.resourceDetails?.publicId === payload) {
+          state.resourceDetails = null;
+        }
+      })
+      .addCase(deleteResource.rejected, (state, { payload }) => {
         state.loading = false;
         state.error = payload;
       })
@@ -412,9 +434,9 @@ const resourceSlice = createSlice({
   }
 });
 
-export const { 
-  clearError, 
-  resetResourceDetails, 
+export const {
+  clearError,
+  resetResourceDetails,
   resetCreatedResource,
   setPage,
   setPageSize
