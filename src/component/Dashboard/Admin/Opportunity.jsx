@@ -310,9 +310,17 @@ const Opportunities = () => {
           <div className="flex justify-between items-center">
             <div className="flex items-center space-x-4">
               <div className="w-14 h-14 rounded-full bg-white/20 flex items-center justify-center overflow-hidden backdrop-blur-sm border-2 border-white/30">
-                <span className="text-white text-2xl font-semibold">
-                  {resource?.employeeName?.[0] || "N/A"}
-                </span>
+                {resource?.profileImage ? (
+                  <img
+                    src={`data:image/png;base64,${resource.profileImage}`}
+                    alt="Profile"
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <span className="text-white text-2xl font-semibold">
+                    {resource?.employeeName?.[0] || "N/A"}
+                  </span>
+                )}
               </div>
               <div>
                 <h3 className="text-2xl font-bold text-white">
