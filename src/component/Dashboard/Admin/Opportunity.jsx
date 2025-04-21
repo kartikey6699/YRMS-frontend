@@ -15,6 +15,7 @@ const Opportunities = () => {
   const userId = window.location.pathname.split('/').pop(); 
 
   const [resource, setResource] = useState(null);
+  const [isEditing, setIsEditing] = useState(false);
 
   useEffect(() => {
     if (userId) {
@@ -100,6 +101,26 @@ const Opportunities = () => {
         clientFeedback: '',
         userId: userId // Reset userId in the new opportunity
       });
+      setShowForm(false);
+    }
+  };
+
+  const handleEditOpportunity = async (e) => {
+    e.preventDefault();
+    setToast(<YRMSLoader message="Updating opportunity..." />);
+    try {
+      const result = await dispatch(updateOpportunity(selectedOpportunity)); 
+      if (updateOpportunity.fulfilled.match(result)) {
+        setToast(<SuccessToast message="Opportunity updated successfully!" onClose={() => setToast(null)} />);
+        dispatch(fetchOpportunities(userId));
+      } else {
+        const errorMessage = result.error.message || "Failed to update opportunity";
+        setToast(<ErrorToast message={errorMessage} onClose={() => setToast(null)} />);
+        throw new Error(errorMessage);
+      }
+    } catch (err) {
+      setToast(<ErrorToast message={err.message || "Failed to update opportunity"} onClose={() => setToast(null)} />);
+    } finally {
       setShowForm(false);
     }
   };
@@ -281,13 +302,12 @@ const Opportunities = () => {
                   </div>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <p className="text-lg font-semibold text-gray-800">
-                    Date: {new Date(selectedOpportunity.dateOfInterview).toLocaleDateString('en-US', {
-                      year: 'numeric',
-                      month: 'short',
-                      day: 'numeric'
-                    })}
-                  </p>
+                  <button
+                    onClick={() => setIsEditing(!isEditing)}
+                    className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors duration-200"
+                  >
+                    {isEditing ? 'Cancel' : 'Edit'}
+                  </button>
                   <button 
                     onClick={closeOpportunityDetails}
                     className="text-gray-500 hover:text-gray-700 text-xl cursor-pointer transition-colors duration-200"
@@ -302,46 +322,119 @@ const Opportunities = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <h4 className="text-sm font-medium text-gray-500">Client Name</h4>
-                  <p className="mt-1 text-gray-800 p-3 bg-gray-50 rounded-lg">
-                    {selectedOpportunity.clientName}
-                  </p>
+                  {isEditing ? (
+                    <input
+                      type="text"
+                      value={selectedOpportunity.clientName}
+                      onChange={(e) => setSelectedOpportunity({...selectedOpportunity, clientName: e.target.value})}
+                      className="mt-1 w-full p-3 bg-gray-50 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  ) : (
+                    <p className="mt-1 text-gray-800 p-3 bg-gray-50 rounded-lg">
+                      {selectedOpportunity.clientName}
+                    </p>
+                  )}
                 </div>
                 <div className="md:col-span-2">
                   <h4 className="text-sm font-medium text-gray-500">Job Description</h4>
-                  <p className="mt-1 text-gray-800 p-3 bg-gray-50 rounded-lg">
-                    {selectedOpportunity.jobDescription}
-                  </p>
+                  {isEditing ? (
+                    <textarea
+                      value={selectedOpportunity.jobDescription}
+                      onChange={(e) => setSelectedOpportunity({...selectedOpportunity, jobDescription: e.target.value})}
+                      className="mt-1 w-full p-3 bg-gray-50 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      rows="3"
+                    />
+                  ) : (
+                    <p className="mt-1 text-gray-800 p-3 bg-gray-50 rounded-lg">
+                      {selectedOpportunity.jobDescription}
+                    </p>
+                  )}
                 </div>
                 <div>
                   <h4 className="text-sm font-medium text-gray-500">Final Result</h4>
-                  <p className={`mt-1 inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border-2 ${getStatusStyles(selectedOpportunity.finalResult).bg} ${getStatusStyles(selectedOpportunity.finalResult).text} ${getStatusStyles(selectedOpportunity.finalResult).border}`}>
-                    {getStatusStyles(selectedOpportunity.finalResult).icon}
-                    {selectedOpportunity.finalResult}
-                  </p>
+                  {isEditing ? (
+                    <select
+                      value={selectedOpportunity.finalResult}
+                      onChange={(e) => setSelectedOpportunity({...selectedOpportunity, finalResult: e.target.value})}
+                      className={`mt-1 w-full p-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 ${getStatusStyles(selectedOpportunity.finalResult).bg} ${getStatusStyles(selectedOpportunity.finalResult).text}`}
+                    >
+                      <option value="Pending">Pending</option>
+                      <option value="Selected">Selected</option>
+                      <option value="Rejected">Rejected</option>
+                    </select>
+                  ) : (
+                    <p className={`mt-1 inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border-2 ${getStatusStyles(selectedOpportunity.finalResult).bg} ${getStatusStyles(selectedOpportunity.finalResult).text} ${getStatusStyles(selectedOpportunity.finalResult).border}`}>
+                      {getStatusStyles(selectedOpportunity.finalResult).icon}
+                      {selectedOpportunity.finalResult}
+                    </p>
+                  )}
                 </div>
                 <div>
                   <h4 className="text-sm font-medium text-gray-500">Interview Rounds</h4>
                   <div className="mt-1">
-                    <div className="flex items-center">
-                      <div className="w-full bg-gray-200 rounded-full h-2.5 mr-2">
-                        <div 
-                          className={`h-2.5 rounded-full ${getStatusStyles(selectedOpportunity.finalResult).bg}`}
-                          style={{ width: `${(selectedOpportunity.clearedRounds / selectedOpportunity.totalRounds) * 100}%` }}
-                        ></div>
+                    {isEditing ? (
+                      <div className="flex items-center space-x-4">
+                        <div className="flex-1">
+                          <input
+                            type="number"
+                            value={selectedOpportunity.totalRounds}
+                            onChange={(e) => setSelectedOpportunity({...selectedOpportunity, totalRounds: e.target.value})}
+                            className="w-full p-2 bg-gray-50 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            placeholder="Total Rounds"
+                          />
+                        </div>
+                        <span className="text-gray-400">/</span>
+                        <div className="flex-1">
+                          <input
+                            type="number"
+                            value={selectedOpportunity.clearedRounds}
+                            onChange={(e) => setSelectedOpportunity({...selectedOpportunity, clearedRounds: e.target.value})}
+                            className="w-full p-2 bg-gray-50 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            placeholder="Cleared Rounds"
+                          />
+                        </div>
                       </div>
-                      <span className="text-sm font-medium">
-                        {selectedOpportunity.clearedRounds}/{selectedOpportunity.totalRounds}
-                      </span>
-                    </div>
+                    ) : (
+                      <div className="flex items-center">
+                        <div className="w-full bg-gray-200 rounded-full h-2.5 mr-2">
+                          <div 
+                            className={`h-2.5 rounded-full ${getStatusStyles(selectedOpportunity.finalResult).bg}`}
+                            style={{ width: `${(selectedOpportunity.clearedRounds / selectedOpportunity.totalRounds) * 100}%` }}
+                          ></div>
+                        </div>
+                        <span className="text-sm font-medium">
+                          {selectedOpportunity.clearedRounds}/{selectedOpportunity.totalRounds}
+                        </span>
+                      </div>
+                    )}
                   </div>
                 </div>
                 <div className="md:col-span-2">
                   <h4 className="text-sm font-medium text-gray-500">Client Feedback</h4>
-                  <p className="mt-1 text-gray-800 p-3 bg-gray-50 rounded-lg italic">
-                    "{selectedOpportunity.clientFeedback}"
-                  </p>
+                  {isEditing ? (
+                    <textarea
+                      value={selectedOpportunity.clientFeedback}
+                      onChange={(e) => setSelectedOpportunity({...selectedOpportunity, clientFeedback: e.target.value})}
+                      className="mt-1 w-full p-3 bg-gray-50 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      rows="3"
+                    />
+                  ) : (
+                    <p className="mt-1 text-gray-800 p-3 bg-gray-50 rounded-lg italic">
+                      "{selectedOpportunity.clientFeedback}"
+                    </p>
+                  )}
                 </div>
               </div>
+              {isEditing && (
+                <div className="flex justify-end mt-6">
+                  <button
+                    onClick={handleEditOpportunity}
+                    className="px-6 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors duration-200"
+                  >
+                    Save Changes
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>
