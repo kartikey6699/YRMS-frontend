@@ -241,7 +241,7 @@ const ManageResource = () => {
                   }`}
                 >
                   <FaFilter className="mr-1" />
-                  {showFilters ? "Hide" : "Filters"}
+                  {showFilters ? "Hide" : "Adv. Filters"}
                 </button>
               </div>
             </div>

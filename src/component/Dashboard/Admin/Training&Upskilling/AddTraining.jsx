@@ -375,7 +375,7 @@ const AddTraining = ({ onClose, onSave, isUpskilling = false }) => {
                   {isUpskilling ? 'Upskilling Technology' : 'Training Technology'} <span className="text-red-500">*</span>
                 </label>
                 <Dropdown
-                  name="technology"
+                  name="trainingtechnology"
                   value={formData.technology}
                   options={trainingTechnologies}
                   onChange={handleDropdownChange}

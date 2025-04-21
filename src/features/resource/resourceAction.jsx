@@ -283,7 +283,7 @@ export const updateTrainingTechnology = createAsyncThunk(
   "resource/updateTrainingTechnology",
   async ({ id, name }, { rejectWithValue }) => {
     try {
-      const response = await resourceApiClient.patch(`${TRAINING_TECHNOLOGY_API.UPDATE}/${id}`, { name });
+      const response = await resourceApiClient.patch(`${TRAINING_TECHNOLOGY_API.UPDATE}${id}`, { name });
       const { success, data } = response.data;
 
       if (!success) {
@@ -305,7 +305,7 @@ export const deleteTrainingTechnology = createAsyncThunk(
   "resource/deleteTrainingTechnology",
   async (id, { rejectWithValue }) => {
     try {
-      await resourceApiClient.delete(`${TRAINING_TECHNOLOGY_API.DELETE}/${id}`);
+      await resourceApiClient.delete(`${TRAINING_TECHNOLOGY_API.DELETE}${id}`);
       return id;
     } catch (error) {
       const errorMessage =
