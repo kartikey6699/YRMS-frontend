@@ -247,41 +247,50 @@ const ResourceList = ({ handleBaselineClick, handleOpportunitiesClick }) => {
                   </span>
                 </td>
                 <td className="p-1 text-gray-700 text-sm">
-                  <div className="flex space-x-1">
-                    <button
-                      className={`flex items-center justify-center w-7 h-7 bg-teal-500 text-white rounded-lg hover:bg-teal-600 transition-colors relative group cursor-pointer ${
-                        loadingBaselineId === resource.publicId ? "opacity-75" : ""
-                      }`}
-                      onClick={() => handleBaselineClickWithLoading(resource)}
-                      disabled={loadingBaselineId === resource.publicId}
-                    >
-                      {loadingBaselineId === resource.publicId ? (
-                        <FaSpinner className="animate-spin" />
-                      ) : (
-                        <FaChartLine />
-                      )}
-                      <span className="absolute bottom-full mb-1 w-max px-1 py-0.5 bg-gray-800 text-white text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="flex space-x-1 relative">
+                    <div className="relative group">
+                      <button
+                        className={`flex items-center justify-center w-7 h-7 bg-teal-500 text-white rounded-lg hover:bg-teal-600 transition-colors cursor-pointer ${
+                          loadingBaselineId === resource.publicId ? "opacity-75" : ""
+                        }`}
+                        onClick={() => handleBaselineClickWithLoading(resource)}
+                        disabled={loadingBaselineId === resource.publicId}
+                      >
+                        {loadingBaselineId === resource.publicId ? (
+                          <FaSpinner className="animate-spin" />
+                        ) : (
+                          <FaChartLine />
+                        )}
+                      </button>
+                      <span className="absolute -top-8 left-1/2 -translate-x-1/2 w-max px-2 py-1 bg-gray-800 text-white text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
                         Baseline
+                        <div className="absolute left-1/2 -translate-x-1/2 w-2 h-2 bg-gray-800 rotate-45 -bottom-1"></div>
                       </span>
-                    </button>
-                    <button
-                      className="flex items-center justify-center w-7 h-7 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors relative group cursor-pointer"
-                      onClick={() => handleOpportunitiesClick(resource)}
-                    >
-                      <FaLightbulb />
-                      <span className="absolute bottom-full mb-1 w-max px-1 py-0.5 bg-gray-800 text-white text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity">
+                    </div>
+                    <div className="relative group">
+                      <button
+                        className="flex items-center justify-center w-7 h-7 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors cursor-pointer"
+                        onClick={() => handleOpportunitiesClick(resource)}
+                      >
+                        <FaLightbulb />
+                      </button>
+                      <span className="absolute -top-8 left-1/2 -translate-x-1/2 w-max px-2 py-1 bg-gray-800 text-white text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
                         Opportunities
+                        <div className="absolute left-1/2 -translate-x-1/2 w-2 h-2 bg-gray-800 rotate-45 -bottom-1"></div>
                       </span>
-                    </button>
-                    <button
-                      className="flex items-center justify-center w-7 h-7 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors relative group cursor-pointer"
-                      onClick={() => handleDeleteClick(resource)}
-                    >
-                      <FaTrash size={12} />
-                      <span className="absolute bottom-full mb-1 w-max px-1 py-0.5 bg-gray-800 text-white text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity">
+                    </div>
+                    <div className="relative group">
+                      <button
+                        className="flex items-center justify-center w-7 h-7 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors cursor-pointer"
+                        onClick={() => handleDeleteClick(resource)}
+                      >
+                        <FaTrash size={12} />
+                      </button>
+                      <span className="absolute -top-8 left-1/2 -translate-x-1/2 w-max px-2 py-1 bg-gray-800 text-white text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
                         Delete
+                        <div className="absolute left-1/2 -translate-x-1/2 w-2 h-2 bg-gray-800 rotate-45 -bottom-1"></div>
                       </span>
-                    </button>
+                    </div>
                   </div>
                 </td>
               </tr>
