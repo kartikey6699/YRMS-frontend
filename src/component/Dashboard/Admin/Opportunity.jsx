@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { FaPlus, FaArrowLeft, FaCheck, FaTimes, FaInfoCircle, FaClock, FaSearch, FaChevronDown } from 'react-icons/fa';
 import ProfileCard from '../../helper/ProfileCard';
-import { createOpportunity, fetchOpportunities } from '../../../features/opportunity/opportunityAction';
+import { createOpportunity, fetchOpportunities, updateOpportunity } from '../../../features/opportunity/opportunityAction';
 import { fetchResourceDetails } from '../../../features/resource/resourceAction';
 import { useDispatch, useSelector } from 'react-redux';
 import YRMSLoader from '../../helper/loader';
@@ -51,13 +51,14 @@ const Opportunities = () => {
   const [toast, setToast] = useState(null);
 
   const filteredOpportunities = opportunities.filter(opportunity => {
-    const matchesSearch = opportunity.clientName.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = opportunity.clientName.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                         opportunity.jobDescription.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === 'All' || opportunity.finalResult === statusFilter;
     return matchesSearch && matchesStatus;
   });
 
   const sortedOpportunities = [...filteredOpportunities].sort((a, b) => 
-    new Date(a.date_of_interview) - new Date(b.date_of_interview)
+    new Date(b.dateOfInterview) - new Date(a.dateOfInterview)
   );
 
   const handleInputChange = (e) => {
@@ -108,11 +109,16 @@ const Opportunities = () => {
   const handleEditOpportunity = async (e) => {
     e.preventDefault();
     setToast(<YRMSLoader message="Updating opportunity..." />);
+    selectedOpportunity.userId = userId;
     try {
-      const result = await dispatch(updateOpportunity(selectedOpportunity)); 
+      const result = await dispatch(updateOpportunity({
+        id: selectedOpportunity.publicId, // Changed to use userId as the identifier
+        opportunityData: selectedOpportunity
+      })); 
       if (updateOpportunity.fulfilled.match(result)) {
         setToast(<SuccessToast message="Opportunity updated successfully!" onClose={() => setToast(null)} />);
         dispatch(fetchOpportunities(userId));
+        setIsEditing(false);
       } else {
         const errorMessage = result.error.message || "Failed to update opportunity";
         setToast(<ErrorToast message={errorMessage} onClose={() => setToast(null)} />);
@@ -120,18 +126,26 @@ const Opportunities = () => {
       }
     } catch (err) {
       setToast(<ErrorToast message={err.message || "Failed to update opportunity"} onClose={() => setToast(null)} />);
-    } finally {
-      setShowForm(false);
     }
+  };
+
+  const handleEditInputChange = (e) => {
+    const { name, value } = e.target;
+    setSelectedOpportunity(prev => ({
+      ...prev,
+      [name]: value
+    }));
   };
 
   const openOpportunityDetails = (opportunity) => {
     setSelectedOpportunity(opportunity);
     setIsPopupOpen(true);
+    setIsEditing(false);
   };
 
   const closeOpportunityDetails = () => {
     setIsPopupOpen(false);
+    setIsEditing(false);
     setTimeout(() => setSelectedOpportunity(null), 300);
   };
 
@@ -140,7 +154,7 @@ const Opportunities = () => {
 
   const getStatusStyles = (status) => {
     switch(status) {
-      case 'Cleared':
+      case 'Selected':
         return { bg: 'bg-green-100', text: 'text-green-800', border: 'border-green-700', icon: <FaCheck className="mr-1" /> };
       case 'Rejected':
         return { bg: 'bg-red-100', text: 'text-red-800', border: 'border-red-700', icon: <FaTimes className="mr-1" /> };
@@ -164,7 +178,7 @@ const Opportunities = () => {
 
       {resource && (
         <ProfileCard
-        publicId={userId}
+          publicId={userId}
         />
       )}
 
@@ -196,10 +210,10 @@ const Opportunities = () => {
               All
             </button>
             <button
-              onClick={() => setStatusFilter('Cleared')}
-              className={`px-3 py-1 text-xs font-medium rounded-full transition-colors duration-200 flex items-center ${statusFilter === 'Cleared' ? 'bg-green-600 text-white' : 'bg-green-100 text-green-800 hover:bg-green-200'}`}
+              onClick={() => setStatusFilter('Selected')}
+              className={`px-3 py-1 text-xs font-medium rounded-full transition-colors duration-200 flex items-center ${statusFilter === 'Selected' ? 'bg-green-600 text-white' : 'bg-green-100 text-green-800 hover:bg-green-200'}`}
             >
-              <FaCheck className="mr-1" /> Cleared
+              <FaCheck className="mr-1" /> Selected
             </button>
             <button
               onClick={() => setStatusFilter('Rejected')}
@@ -225,14 +239,14 @@ const Opportunities = () => {
             
             return (
               <div 
-                key={opportunity.publicId} // Changed to use a unique identifier
+                key={opportunity.publicId}
                 onClick={() => openOpportunityDetails(opportunity)}
                 className={`relative rounded-xl shadow-lg overflow-hidden cursor-pointer transition-all duration-300 h-48 flex flex-col ${statusStyles.bg} border-l-4 ${statusStyles.border} hover:shadow-xl hover:translate-y-[-4px]`}
               >
                 <div className="p-4 flex-1 flex flex-col">
                   <div className="mb-2 flex justify-between items-center">
                     <h3 className="text-lg font-semibold text-gray-800 break-words">
-                      Opportunity-{index + 1}
+                      {opportunity.clientName}
                     </h3>
                     <p className="text-sm text-gray-600">
                       {new Date(opportunity.dateOfInterview).toLocaleDateString('en-US', {
@@ -243,8 +257,8 @@ const Opportunities = () => {
                     </p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-600 mt-1">
-                      {opportunity.clientName}
+                    <p className="text-sm text-gray-600 mt-1 line-clamp-2">
+                      {opportunity.jobDescription}
                     </p>
                   </div>
                   <div className="mt-auto flex justify-between items-center">
@@ -261,9 +275,11 @@ const Opportunities = () => {
               </div>
             );
           })
-        ) : null
-        }
-
+        ) : (
+          <div className="col-span-full text-center py-10">
+            <p className="text-gray-500">No opportunities found</p>
+          </div>
+        )}
 
         {/* Add New Opportunity Card */}
         <div 
@@ -281,164 +297,310 @@ const Opportunities = () => {
       </div>
 
       {/* Opportunity Detail Popup */}
-      {selectedOpportunity && (
-        <div className={`fixed inset-0 bg-gray-900/30 backdrop-blur-sm flex items-center justify-center p-4 z-50 transition-opacity duration-300 ${isPopupOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
-          <div className={`bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto transform transition-all duration-300 ${isPopupOpen ? 'scale-100' : 'scale-95'}`}>
-            <div className={`p-6 ${getStatusStyles(selectedOpportunity.finalResult).bg} rounded-t-xl`}>
-              <div className="flex justify-between items-center">
-                <div className="flex items-center space-x-4">
-                  <div className="w-12 h-12 rounded-full bg-gray-300 flex items-center justify-center overflow-hidden">
-                    <span className="text-gray-600 text-xl font-semibold">
-                      {resource.employeeName ? resource.employeeName[0] : "N/A"}
-                    </span>
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-bold text-gray-800">
-                      {resource.employeeName || "Unknown Employee"}
-                    </h3>
-                    <p className="text-gray-600 text-sm">
-                      {resource.designation || "Position N/A"}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <button
-                    onClick={() => setIsEditing(!isEditing)}
-                    className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors duration-200"
-                  >
-                    {isEditing ? 'Cancel' : 'Edit'}
-                  </button>
-                  <button 
-                    onClick={closeOpportunityDetails}
-                    className="text-gray-500 hover:text-gray-700 text-xl cursor-pointer transition-colors duration-200"
-                  >
-                    ✕
-                  </button>
-                </div>
+{selectedOpportunity && (
+  <div className={`fixed inset-0 bg-gray-900/30 backdrop-blur-sm flex items-center justify-center p-4 z-50 transition-opacity duration-300 ${isPopupOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+    <div className={`bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto transform transition-all duration-300 ${isPopupOpen ? 'scale-100' : 'scale-95'}`}>
+      {/* Header with gradient background */}
+      <div className={`bg-gradient-to-r ${selectedOpportunity.finalResult === 'Selected' ? 'from-green-500 to-green-600' : selectedOpportunity.finalResult === 'Rejected' ? 'from-red-500 to-red-600' : 'from-yellow-500 to-yellow-600'} p-6 rounded-t-2xl relative overflow-hidden`}>
+        {/* Decorative elements */}
+        <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full transform translate-x-16 -translate-y-16"></div>
+        <div className="absolute bottom-0 left-0 w-40 h-40 bg-white/10 rounded-full transform -translate-x-20 translate-y-20"></div>
+        
+        <div className="relative z-10">
+          <div className="flex justify-between items-center">
+            <div className="flex items-center space-x-4">
+              <div className="w-14 h-14 rounded-full bg-white/20 flex items-center justify-center overflow-hidden backdrop-blur-sm border-2 border-white/30">
+                <span className="text-white text-2xl font-semibold">
+                  {resource?.employeeName?.[0] || "N/A"}
+                </span>
+              </div>
+              <div>
+                <h3 className="text-2xl font-bold text-white">
+                  {resource?.employeeName || "Unknown Employee"}
+                </h3>
+                <p className="text-white/90 text-sm">
+                  {resource?.designation || "Position N/A"}
+                </p>
               </div>
             </div>
-            
-            <div className="p-6 space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <h4 className="text-sm font-medium text-gray-500">Client Name</h4>
-                  {isEditing ? (
-                    <input
-                      type="text"
-                      value={selectedOpportunity.clientName}
-                      onChange={(e) => setSelectedOpportunity({...selectedOpportunity, clientName: e.target.value})}
-                      className="mt-1 w-full p-3 bg-gray-50 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  ) : (
-                    <p className="mt-1 text-gray-800 p-3 bg-gray-50 rounded-lg">
-                      {selectedOpportunity.clientName}
-                    </p>
-                  )}
-                </div>
-                <div className="md:col-span-2">
-                  <h4 className="text-sm font-medium text-gray-500">Job Description</h4>
-                  {isEditing ? (
-                    <textarea
-                      value={selectedOpportunity.jobDescription}
-                      onChange={(e) => setSelectedOpportunity({...selectedOpportunity, jobDescription: e.target.value})}
-                      className="mt-1 w-full p-3 bg-gray-50 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      rows="3"
-                    />
-                  ) : (
-                    <p className="mt-1 text-gray-800 p-3 bg-gray-50 rounded-lg">
-                      {selectedOpportunity.jobDescription}
-                    </p>
-                  )}
-                </div>
-                <div>
-                  <h4 className="text-sm font-medium text-gray-500">Final Result</h4>
-                  {isEditing ? (
-                    <select
-                      value={selectedOpportunity.finalResult}
-                      onChange={(e) => setSelectedOpportunity({...selectedOpportunity, finalResult: e.target.value})}
-                      className={`mt-1 w-full p-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 ${getStatusStyles(selectedOpportunity.finalResult).bg} ${getStatusStyles(selectedOpportunity.finalResult).text}`}
-                    >
-                      <option value="Pending">Pending</option>
-                      <option value="Selected">Selected</option>
-                      <option value="Rejected">Rejected</option>
-                    </select>
-                  ) : (
-                    <p className={`mt-1 inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border-2 ${getStatusStyles(selectedOpportunity.finalResult).bg} ${getStatusStyles(selectedOpportunity.finalResult).text} ${getStatusStyles(selectedOpportunity.finalResult).border}`}>
-                      {getStatusStyles(selectedOpportunity.finalResult).icon}
-                      {selectedOpportunity.finalResult}
-                    </p>
-                  )}
-                </div>
-                <div>
-                  <h4 className="text-sm font-medium text-gray-500">Interview Rounds</h4>
-                  <div className="mt-1">
-                    {isEditing ? (
-                      <div className="flex items-center space-x-4">
-                        <div className="flex-1">
-                          <input
-                            type="number"
-                            value={selectedOpportunity.totalRounds}
-                            onChange={(e) => setSelectedOpportunity({...selectedOpportunity, totalRounds: e.target.value})}
-                            className="w-full p-2 bg-gray-50 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            placeholder="Total Rounds"
-                          />
-                        </div>
-                        <span className="text-gray-400">/</span>
-                        <div className="flex-1">
-                          <input
-                            type="number"
-                            value={selectedOpportunity.clearedRounds}
-                            onChange={(e) => setSelectedOpportunity({...selectedOpportunity, clearedRounds: e.target.value})}
-                            className="w-full p-2 bg-gray-50 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            placeholder="Cleared Rounds"
-                          />
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="flex items-center">
-                        <div className="w-full bg-gray-200 rounded-full h-2.5 mr-2">
-                          <div 
-                            className={`h-2.5 rounded-full ${getStatusStyles(selectedOpportunity.finalResult).bg}`}
-                            style={{ width: `${(selectedOpportunity.clearedRounds / selectedOpportunity.totalRounds) * 100}%` }}
-                          ></div>
-                        </div>
-                        <span className="text-sm font-medium">
-                          {selectedOpportunity.clearedRounds}/{selectedOpportunity.totalRounds}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-                <div className="md:col-span-2">
-                  <h4 className="text-sm font-medium text-gray-500">Client Feedback</h4>
-                  {isEditing ? (
-                    <textarea
-                      value={selectedOpportunity.clientFeedback}
-                      onChange={(e) => setSelectedOpportunity({...selectedOpportunity, clientFeedback: e.target.value})}
-                      className="mt-1 w-full p-3 bg-gray-50 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      rows="3"
-                    />
-                  ) : (
-                    <p className="mt-1 text-gray-800 p-3 bg-gray-50 rounded-lg italic">
-                      "{selectedOpportunity.clientFeedback}"
-                    </p>
-                  )}
-                </div>
-              </div>
-              {isEditing && (
-                <div className="flex justify-end mt-6">
-                  <button
-                    onClick={handleEditOpportunity}
-                    className="px-6 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors duration-200"
-                  >
-                    Save Changes
-                  </button>
-                </div>
-              )}
+            <div className="flex items-center space-x-3">
+              <button
+                onClick={() => setIsEditing(!isEditing)}
+                className={`px-5 py-2.5 rounded-xl transition-all duration-200 flex items-center space-x-2 shadow-lg ${
+                  isEditing 
+                    ? 'bg-white/20 text-white hover:bg-white/30'
+                    : 'bg-white text-blue-600 hover:bg-white/90'
+                }`}
+              >
+                {isEditing ? (
+                  <>
+                    <FaTimes className="text-sm" />
+                    <span>Cancel</span>
+                  </>
+                ) : (
+                  <>
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                    <span>Edit</span>
+                  </>
+                )}
+              </button>
+              <button 
+                onClick={closeOpportunityDetails}
+                className="w-10 h-10 flex items-center justify-center bg-white/20 rounded-full text-white hover:bg-white/30 transition-colors duration-200"
+              >
+                <FaTimes className="text-lg" />
+              </button>
             </div>
           </div>
         </div>
-      )}
+      </div>
+      
+      {/* Content area */}
+      <div className="p-6 space-y-6">
+        {/* Client and Date */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="bg-gradient-to-br from-blue-50 to-purple-50 p-5 rounded-xl border border-blue-100">
+            <h4 className="text-xs font-semibold text-blue-600 uppercase tracking-wider mb-2">Client Name</h4>
+            {isEditing ? (
+              <input
+                type="text"
+                name="clientName"
+                value={selectedOpportunity.clientName}
+                onChange={handleEditInputChange}
+                className="w-full p-3 bg-white rounded-lg border border-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-transparent transition-all"
+              />
+            ) : (
+              <p className="text-lg font-medium text-gray-800">
+                {selectedOpportunity.clientName}
+              </p>
+            )}
+          </div>
+          
+          <div className="bg-gradient-to-br from-blue-50 to-purple-50 p-5 rounded-xl border border-blue-100">
+            <h4 className="text-xs font-semibold text-blue-600 uppercase tracking-wider mb-2">Interview Date</h4>
+            {isEditing ? (
+              <div className="relative">
+                <input
+                  type="date"
+                  name="dateOfInterview"
+                  value={selectedOpportunity.dateOfInterview}
+                  onChange={handleEditInputChange}
+                  className="w-full p-3 bg-white rounded-lg border border-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-transparent transition-all appearance-none"
+                  onClick={(e) => e.target.showPicker()}
+                />
+                <div 
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-blue-500 cursor-pointer"
+                  onClick={(e) => e.target.previousElementSibling.showPicker()}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
+                  </svg>
+                </div>
+              </div>
+            ) : (
+              <p className="text-lg font-medium text-gray-800">
+                {new Date(selectedOpportunity.dateOfInterview).toLocaleDateString('en-US', {
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric'
+                })}
+              </p>
+            )}
+          </div>
+        </div>
+        
+        {/* Job Description */}
+        <div className="bg-gradient-to-br from-blue-50 to-purple-50 p-5 rounded-xl border border-blue-100">
+          <h4 className="text-xs font-semibold text-blue-600 uppercase tracking-wider mb-2">Job Description</h4>
+          {isEditing ? (
+            <textarea
+              name="jobDescription"
+              value={selectedOpportunity.jobDescription}
+              onChange={handleEditInputChange}
+              className="w-full p-4 bg-white rounded-lg border border-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-transparent transition-all min-h-[120px]"
+              rows="3"
+            />
+          ) : (
+            <p className="text-gray-700 whitespace-pre-line">
+              {selectedOpportunity.jobDescription}
+            </p>
+          )}
+        </div>
+        
+        {/* Status and Rounds */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="bg-gradient-to-br from-blue-50 to-purple-50 p-5 rounded-xl border border-blue-100">
+            <h4 className="text-xs font-semibold text-blue-600 uppercase tracking-wider mb-2">Final Result</h4>
+            {isEditing ? (
+              <select
+                name="finalResult"
+                value={selectedOpportunity.finalResult}
+                onChange={handleEditInputChange}
+                className={`w-full p-3 rounded-lg border focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-transparent transition-all ${
+                  selectedOpportunity.finalResult === 'Selected' ? 'bg-green-100 border-green-200 text-green-800' :
+                  selectedOpportunity.finalResult === 'Rejected' ? 'bg-red-100 border-red-200 text-red-800' :
+                  'bg-yellow-100 border-yellow-200 text-yellow-800'
+                }`}
+              >
+                <option value="Pending" className="bg-yellow-100 text-yellow-800">Pending</option>
+                <option value="Selected" className="bg-green-100 text-green-800">Selected</option>
+                <option value="Rejected" className="bg-red-100 text-red-800">Rejected</option>
+              </select>
+            ) : (
+              <div className={`inline-flex items-center px-4 py-2 rounded-full text-sm font-semibold ${
+                selectedOpportunity.finalResult === 'Selected' ? 'bg-green-100 text-green-800 border border-green-200' :
+                selectedOpportunity.finalResult === 'Rejected' ? 'bg-red-100 text-red-800 border border-red-200' :
+                'bg-yellow-100 text-yellow-800 border border-yellow-200'
+              }`}>
+                {selectedOpportunity.finalResult === 'Selected' ? (
+                  <FaCheck className="mr-2" />
+                ) : selectedOpportunity.finalResult === 'Rejected' ? (
+                  <FaTimes className="mr-2" />
+                ) : (
+                  <FaClock className="mr-2" />
+                )}
+                {selectedOpportunity.finalResult}
+              </div>
+            )}
+          </div>
+          
+          <div className="bg-gradient-to-br from-blue-50 to-purple-50 p-5 rounded-xl border border-blue-100">
+            <h4 className="text-xs font-semibold text-blue-600 uppercase tracking-wider mb-2">Interview Rounds</h4>
+            {isEditing ? (
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-sm text-gray-600 mb-1">Total Rounds</label>
+                  <input
+                    type="number"
+                    name="totalRounds"
+                    value={selectedOpportunity.totalRounds}
+                    onChange={(e) => {
+                      const newTotal = parseInt(e.target.value);
+                      if (newTotal < selectedOpportunity.clearedRounds) {
+                        return;
+                      }
+                      handleEditInputChange(e);
+                    }}
+                    className="w-full p-3 bg-white rounded-lg border border-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-transparent"
+                    min={selectedOpportunity.clearedRounds || 1}
+                  />
+                  {selectedOpportunity.totalRounds < selectedOpportunity.clearedRounds && (
+                    <p className="text-xs text-red-500 mt-1">Total rounds cannot be less than cleared rounds</p>
+                  )}
+                </div>
+                <div>
+                  <label className="block text-sm text-gray-600 mb-1">Cleared Rounds</label>
+                  <input
+                    type="number"
+                    name="clearedRounds"
+                    value={selectedOpportunity.clearedRounds}
+                    onChange={(e) => {
+                      const cleared = parseInt(e.target.value);
+                      if (cleared > selectedOpportunity.totalRounds) {
+                        return;
+                      }
+                      handleEditInputChange(e);
+                    }}
+                    className="w-full p-3 bg-white rounded-lg border border-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-transparent"
+                    min="0"
+                    max={selectedOpportunity.totalRounds}
+                  />
+                  {selectedOpportunity.clearedRounds > selectedOpportunity.totalRounds && (
+                    <p className="text-xs text-red-500 mt-1">Cleared rounds cannot be greater than total rounds</p>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium text-gray-600">Progress</span>
+                  <span className="text-sm font-bold text-blue-600">
+                    {selectedOpportunity.clearedRounds}/{selectedOpportunity.totalRounds} rounds
+                  </span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-2.5">
+                  <div 
+                    className={`h-2.5 rounded-full ${
+                      selectedOpportunity.finalResult === 'Selected' ? 'bg-green-400' :
+                      selectedOpportunity.finalResult === 'Rejected' ? 'bg-red-400' :
+                      'bg-yellow-400'
+                    }`}
+                    style={{ width: `${Math.min(100, (selectedOpportunity.clearedRounds / selectedOpportunity.totalRounds) * 100)}%` }}
+                  ></div>
+                </div>
+                <div className="text-xs text-gray-500 text-right">
+                  {Math.round((selectedOpportunity.clearedRounds / selectedOpportunity.totalRounds) * 100)}% completed
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+        
+        {/* Client Feedback */}
+        <div className="bg-gradient-to-br from-blue-50 to-purple-50 p-5 rounded-xl border border-blue-100">
+          <div className="flex items-center space-x-2 mb-2">
+            <div className="text-blue-400">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+              </svg>
+            </div>
+            <h4 className="text-xs font-semibold text-blue-600 uppercase tracking-wider">Client Feedback</h4>
+          </div>
+          {isEditing ? (
+            <textarea
+              name="clientFeedback"
+              value={selectedOpportunity.clientFeedback}
+              onChange={handleEditInputChange}
+              className="w-full p-4 bg-white rounded-lg border border-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-transparent transition-all min-h-[100px]"
+              placeholder="Enter client feedback..."
+            />
+          ) : (
+            <p className="text-gray-700 italic">
+              {selectedOpportunity.clientFeedback || "No feedback provided"}
+            </p>
+          )}
+        </div>
+        
+        {/* Edit Mode Actions */}
+        {isEditing && (
+          <div className="flex justify-end space-x-4 pt-4 border-t border-gray-200">
+            <button
+              type="button"
+              onClick={() => setIsEditing(false)}
+              className="px-6 py-3 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-colors duration-200 font-medium flex items-center space-x-2"
+            >
+              <FaTimes />
+              <span>Discard Changes</span>
+            </button>
+            <button
+              type="button"
+              onClick={handleEditOpportunity}
+              className="px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-xl hover:from-blue-600 hover:to-purple-600 transition-all duration-200 font-medium flex items-center space-x-2 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={loading || (selectedOpportunity.clearedRounds > selectedOpportunity.totalRounds)}
+            >
+              {loading ? (
+                <>
+                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  <span>Saving...</span>
+                </>
+              ) : (
+                <>
+                  <FaCheck />
+                  <span>Save Changes</span>
+                </>
+              )}
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  </div>
+)}
 
       {/* Add Opportunity Form Popup */}
       {showForm && (
