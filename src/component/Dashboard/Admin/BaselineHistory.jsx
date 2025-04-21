@@ -1,9 +1,14 @@
 // BaselineHistories.jsx
 import React, { useState } from "react";
+import { useSelector } from "react-redux";
 import { StarIcon } from "@heroicons/react/20/solid";
 import { FaInfoCircle } from "react-icons/fa";
 
-export const BaselineHistories = ({ histories, employeeName, competency, gender, profileImage }) => {
+export const BaselineHistories = ({ histories, employeeName, competency, gender }) => {
+    // get resource details (including profileImage) from Redux store
+    const { resourceDetails } = useSelector((state) => state.resource);
+    const profileImage = resourceDetails?.profileImage;
+
     const [selectedBaseline, setSelectedBaseline] = useState(null);
     const [isPopupOpen, setIsPopupOpen] = useState(false);
 
