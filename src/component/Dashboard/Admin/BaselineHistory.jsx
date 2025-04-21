@@ -111,13 +111,14 @@ export const BaselineHistories = ({ histories, employeeName, competency, gender 
 
             {selectedBaseline && (
                 <div
-                    className={`fixed inset-0 bg-gray-900/30 backdrop-blur-sm flex items-center justify-center p-4 z-50 transition-opacity duration-300 ${isPopupOpen ? "opacity-100" : "opacity-0 pointer-events-none"}`}
+                    className={`fixed inset-0 bg-gray-800/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 transition-opacity duration-300 ${isPopupOpen ? "opacity-100" : "opacity-0 pointer-events-none"}`}
                 >
                     <div
-                        className={`bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto transform transition-all duration-300 ${isPopupOpen ? "scale-100" : "scale-95"}`}
+                        className={`bg-gray-100 rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col transform transition-all duration-300 ${isPopupOpen ? "scale-100" : "scale-95"}`}
                     >
+                        {/* Fixed Header with Rating-based Gradient */}
                         <div
-                            className={`p-6 ${getStatusStyles(selectedBaseline.rating || calculateOverallRating(selectedBaseline.technicalSkills)).bg} rounded-t-xl`}
+                            className={`p-6 ${getStatusStyles(selectedBaseline.rating || calculateOverallRating(selectedBaseline.technicalSkills)).bg} rounded-t-xl sticky top-0 z-10`}
                         >
                             <div className="flex justify-between items-center">
                                 <div className="flex items-center space-x-4">
@@ -126,32 +127,34 @@ export const BaselineHistories = ({ histories, employeeName, competency, gender 
                                             <img 
                                                 src={`data:image/png;base64,${profileImage}`} 
                                                 alt="Profile" 
-                                                className="w-12 h-12 rounded-full border-2 border-white"
+                                                className="w-12 h-12 rounded-full border-2 border-white shadow-md"
                                             />
                                         </div>
                                     ) : (
-                                        <div className="w-12 h-12 rounded-full bg-gray-300 flex items-center justify-center overflow-hidden">
-                                            <span className="text-gray-600 text-xl font-semibold">
+                                        <div className="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden shadow-md">
+                                            <span className={`text-xl font-semibold ${getStatusStyles(selectedBaseline.rating || calculateOverallRating(selectedBaseline.technicalSkills)).text}`}>
                                                 {employeeName ? employeeName[0] : "N/A"}
                                             </span>
                                         </div>
                                     )}
                                     <div>
-                                        <h3 className="text-xl font-bold text-gray-800">
+                                        <h3 className={`text-xl font-bold ${getStatusStyles(selectedBaseline.rating || calculateOverallRating(selectedBaseline.technicalSkills)).text}`}>
                                             {employeeName || "Unknown Employee"}
                                         </h3>
-                                        <p className="text-gray-600 text-sm">
+                                        <p className={`text-sm ${getStatusStyles(selectedBaseline.rating || calculateOverallRating(selectedBaseline.technicalSkills)).text}`}>
                                             {competency || "N/A"}
                                         </p>
                                     </div>
                                 </div>
-                                <div className="flex items-center space-x-4 bg-gray-50 rounded-lg p-2">
-                                    <h3 className="text-lg font-semibold text-gray-800 flex-grow">
-                                        Baseline - {formatDate(selectedBaseline.timestamp)}
-                                    </h3>
+                                <div className="flex items-center space-x-4">
+                                    <div className={`bg-white/20 p-2 px-3 rounded-lg ${getStatusStyles(selectedBaseline.rating || calculateOverallRating(selectedBaseline.technicalSkills)).text}`}>
+                                        <h3 className={`text-sm font-semibold ${getStatusStyles(selectedBaseline.rating || calculateOverallRating(selectedBaseline.technicalSkills)).text}`}>
+                                            Baseline - {formatDate(selectedBaseline.timestamp)}
+                                        </h3>
+                                    </div>
                                     <button
                                         onClick={closeBaselineDetails}
-                                        className="text-gray-600 text-xl font-medium bg-white w-6 h-6 flex items-center justify-center rounded-full shadow-sm"
+                                        className="text-white hover:text-red-300 text-xl font-medium bg-red-600 w-8 h-8 flex items-center justify-center rounded-full shadow-sm hover:bg-red-700 transition-all duration-200 cursor-pointer"
                                     >
                                         ✕
                                     </button>
@@ -159,112 +162,122 @@ export const BaselineHistories = ({ histories, employeeName, competency, gender 
                             </div>
                         </div>
 
-                        <div className="p-6 space-y-4">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                {/* Experience */}
-                                <div className="md:col-span-2">
-                                    <h4 className="text-sm font-medium text-gray-500">Technology Experience</h4>
-                                    <div className="mt-2 space-y-2">
-                                        {selectedBaseline.technologyExperience?.map((exp, expIndex) => (
-                                            <div key={expIndex} className="flex justify-between bg-gray-50 p-3 rounded-lg">
-                                                <span className="text-gray-800 font-medium">{exp.technology}</span>
-                                                <span className="text-gray-600">{exp.years} years</span>
+                        {/* Scrollable Content */}
+                        <div className="p-6 space-y-6 overflow-y-auto flex-1">
+                            {/* Technology Experience - Blue Theme */}
+                            <div className="bg-gradient-to-br from-blue-200 to-blue-300 p-4 rounded-lg border border-blue-400">
+                                <h4 className="text-sm font-medium text-blue-800 mb-3">Technology Experience</h4>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                    {selectedBaseline.technologyExperience?.map((exp, expIndex) => (
+                                        <div key={expIndex} className="bg-white p-3 rounded-lg shadow-sm hover:shadow-md transition-shadow border border-blue-200">
+                                            <div className="flex items-center justify-between">
+                                                <span className="text-blue-900 font-medium">{exp.technology}</span>
+                                                <span className="text-blue-700 bg-blue-200 px-2 py-1 rounded-full text-sm">{exp.years} years</span>
                                             </div>
-                                        ))}
-                                        {(!selectedBaseline.technologyExperience || selectedBaseline.technologyExperience.length === 0) && (
-                                            <p className="text-gray-500 italic">No experience recorded</p>
-                                        )}
-                                    </div>
+                                        </div>
+                                    ))}
+                                    {(!selectedBaseline.technologyExperience || selectedBaseline.technologyExperience.length === 0) && (
+                                        <p className="text-blue-500 italic col-span-full">No experience recorded</p>
+                                    )}
                                 </div>
+                            </div>
 
-                                {/* Certifications */}
-                                <div className="md:col-span-2">
-                                    <h4 className="text-sm font-medium text-gray-500">Certifications</h4>
-                                    <div className="mt-2 space-y-2">
-                                        {selectedBaseline.certification?.map((cert, certIndex) => (
-                                            <div key={certIndex} className="flex justify-between bg-gray-50 p-3 rounded-lg">
-                                                <span className="text-gray-800 font-medium">{cert.title}</span>
-                                                <span className="text-gray-600">{cert.technology}</span>
+                            {/* Certifications - Purple Theme */}
+                            <div className="bg-gradient-to-br from-purple-200 to-purple-300 p-4 rounded-lg border border-purple-400">
+                                <h4 className="text-sm font-medium text-purple-800 mb-3">Certifications</h4>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                    {selectedBaseline.certification?.map((cert, certIndex) => (
+                                        <div key={certIndex} className="bg-white p-3 rounded-lg shadow-sm hover:shadow-md transition-shadow border border-purple-200">
+                                            <div className="flex items-center justify-between">
+                                                <span className="text-purple-900 font-medium">{cert.title}</span>
+                                                <span className="text-purple-700 bg-purple-200 px-2 py-1 rounded-full text-sm">{cert.technology}</span>
                                             </div>
-                                        ))}
-                                        {(!selectedBaseline.certification || selectedBaseline.certification.length === 0) && (
-                                            <p className="text-gray-500 italic">No certifications recorded</p>
-                                        )}
-                                    </div>
+                                        </div>
+                                    ))}
+                                    {(!selectedBaseline.certification || selectedBaseline.certification.length === 0) && (
+                                        <p className="text-purple-500 italic col-span-full">No certifications recorded</p>
+                                    )}
                                 </div>
+                            </div>
 
-                                {/* Total Experience */}
-                                <div>
-                                    <h4 className="text-sm font-medium text-gray-500">Total Experience</h4>
-                                    <p className="mt-1 text-gray-800">
+                            {/* Stats Grid */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                {/* Total Experience - Teal Theme */}
+                                <div className="bg-gradient-to-br from-teal-200 to-teal-300 p-4 rounded-lg border border-teal-400">
+                                    <h4 className="text-sm font-medium text-teal-800">Total Experience</h4>
+                                    <p className="mt-1 text-2xl font-bold text-teal-900">
                                         {selectedBaseline.totalExperience || 0} years
                                     </p>
                                 </div>
 
-                                {/* Communication */}
-                                <div>
-                                    <h4 className="text-sm font-medium text-gray-500">Communication</h4>
-                                    <p className="mt-1 text-gray-800">
+                                {/* Communication - Indigo Theme */}
+                                <div className="bg-gradient-to-br from-indigo-200 to-indigo-300 p-4 rounded-lg border border-indigo-400">
+                                    <h4 className="text-sm font-medium text-indigo-800">Communication</h4>
+                                    <p className="mt-1 text-2xl font-bold text-indigo-900">
                                         {selectedBaseline.communication}
                                     </p>
                                 </div>
 
-                                {/* Overall Rating */}
-                                <div>
-                                    <h4 className="text-sm font-medium text-gray-500">Overall Rating</h4>
-                                    <p
-                                        className={`mt-1 inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border-2 ${getStatusStyles(selectedBaseline.rating || calculateOverallRating(selectedBaseline.technicalSkills)).bg} ${getStatusStyles(selectedBaseline.rating || calculateOverallRating(selectedBaseline.technicalSkills)).text} ${getStatusStyles(selectedBaseline.rating || calculateOverallRating(selectedBaseline.technicalSkills)).border}`}
-                                    >
+                                {/* Overall Rating - Rating-based Theme */}
+                                <div className={`p-4 rounded-lg ${getStatusStyles(selectedBaseline.rating || calculateOverallRating(selectedBaseline.technicalSkills)).bg}`}>
+                                    <h4 className={`text-sm font-medium ${getStatusStyles(selectedBaseline.rating || calculateOverallRating(selectedBaseline.technicalSkills)).text}`}>Overall Rating</h4>
+                                    <p className={`mt-1 text-2xl font-bold ${getStatusStyles(selectedBaseline.rating || calculateOverallRating(selectedBaseline.technicalSkills)).text}`}>
                                         {selectedBaseline.rating || calculateOverallRating(selectedBaseline.technicalSkills)}/5
                                     </p>
                                 </div>
+                            </div>
 
-                                {/* Feedback */}
-                                <div className="md:col-span-2">
-                                    <h4 className="text-sm font-medium text-gray-500">Feedback</h4>
-                                    <p className="mt-1 text-gray-800 p-3 bg-gray-50 rounded-lg italic">
+                            {/* Feedback - Yellow Theme */}
+                            <div className="bg-gradient-to-br from-yellow-200 to-yellow-300 p-4 rounded-lg border border-yellow-400">
+                                <h4 className="text-sm font-medium text-yellow-800 mb-3">Feedback</h4>
+                                <div className="bg-white p-4 rounded-lg border border-yellow-200">
+                                    <p className="text-yellow-900 italic">
                                         "{selectedBaseline.feedback || "No feedback provided"}"
                                     </p>
                                 </div>
+                            </div>
 
-                                {/* Upskill Suggestion */}
-                                {selectedBaseline.upskillSuggestion && (
-                                    <div className="md:col-span-2">
-                                        <h4 className="text-sm font-medium text-gray-500">Upskill Suggestion</h4>
-                                        <p className="mt-1 text-gray-800 p-3 bg-gray-50 rounded-lg">
+                            {/* Upskill Suggestion - Green Theme */}
+                            {selectedBaseline.upskillSuggestion && (
+                                <div className="bg-gradient-to-br from-green-200 to-green-300 p-4 rounded-lg border border-green-400">
+                                    <h4 className="text-sm font-medium text-green-800 mb-3">Upskill Suggestion</h4>
+                                    <div className="bg-white p-4 rounded-lg border border-green-200">
+                                        <p className="text-green-900">
                                             {selectedBaseline.upskillSuggestion}
                                         </p>
                                     </div>
-                                )}
+                                </div>
+                            )}
 
-                                {/* Technical Skills */}
-                                <div className="md:col-span-2">
-                                    <h4 className="text-sm font-medium text-gray-500">Technical Skills</h4>
-                                    <div className="mt-2 space-y-3">
-                                        {selectedBaseline.technicalSkills?.map((skill, skillIndex) => (
-                                            <div
-                                                key={skillIndex}
-                                                className="flex items-center justify-between bg-gray-50 p-3 rounded-lg"
-                                            >
+                            {/* Technical Skills - Gradient Theme */}
+                            <div className="bg-gradient-to-br from-blue-200 to-purple-200 p-4 rounded-lg border border-blue-400">
+                                <h4 className="text-sm font-medium text-blue-800 mb-3">Technical Skills</h4>
+                                <div className="space-y-3">
+                                    {selectedBaseline.technicalSkills?.map((skill, skillIndex) => (
+                                        <div
+                                            key={skillIndex}
+                                            className="bg-white p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow border border-blue-200"
+                                        >
+                                            <div className="flex items-center justify-between">
                                                 <div>
-                                                    <span className="text-gray-800 font-medium">{skill.technology}</span>
-                                                    <span className="text-gray-500 text-sm block">{skill.category}</span>
+                                                    <span className="text-blue-900 font-medium">{skill.technology}</span>
+                                                    <span className="text-blue-600 text-sm block">{skill.category}</span>
                                                 </div>
                                                 <div className="flex items-center space-x-1">
                                                     {[...Array(5)].map((_, starIndex) => (
                                                         <StarIcon
                                                             key={starIndex}
-                                                            className={`w-5 h-5 ${starIndex < (skill.rating || 0) ? "text-yellow-400" : "text-gray-300"}`}
+                                                            className={`w-5 h-5 ${starIndex < (skill.rating || 0) ? "text-yellow-400" : "text-blue-300"}`}
                                                         />
                                                     ))}
-                                                    <span className="text-sm text-gray-600 ml-2">({skill.rating || 0}/5)</span>
+                                                    <span className="text-sm text-blue-700 ml-2">({skill.rating || 0}/5)</span>
                                                 </div>
                                             </div>
-                                        ))}
-                                        {(!selectedBaseline.technicalSkills || selectedBaseline.technicalSkills.length === 0) && (
-                                            <p className="text-gray-500 italic">No technical skills recorded</p>
-                                        )}
-                                    </div>
+                                        </div>
+                                    ))}
+                                    {(!selectedBaseline.technicalSkills || selectedBaseline.technicalSkills.length === 0) && (
+                                        <p className="text-gray-600 italic">No technical skills recorded</p>
+                                    )}
                                 </div>
                             </div>
                         </div>
