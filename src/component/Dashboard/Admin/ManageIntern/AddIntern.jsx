@@ -268,7 +268,7 @@ const AddIntern = () => {
                             <option value="hyderabad-mindspace-i-dc">Hyderabad-Mindspace I-DC</option>
                             <option value="bangalore-whitefield-dc">Bangalore-Whitefield-DC</option>
                             <option value="indore-crystal-it-park-dc-ii">Indore-Crystal IT Park-DC-II</option>
-                            <option value="indore-btc-co">Indore-BTC-CO</option>
+                            <option value="indore-btc-co">Pune-Hinjewadi III-DC</option>
                         </select>
                     </div>
                     
@@ -338,8 +338,7 @@ const AddIntern = () => {
                                 name="endDate"
                                 value={formData.endDate}
                                 onChange={handleInputChange}
-                                className="w-full h-12 p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 transition-colors bg-gray-100"
-                                disabled
+                                className="w-full h-12 p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 transition-colors"
                                 required
                             />
                         </div>
