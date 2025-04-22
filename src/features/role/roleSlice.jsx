@@ -1,7 +1,7 @@
 import { createSlice } from "@reduxjs/toolkit";
 import {
   fetchRoles
-} from "../resource/resourceAction";
+} from "./roleAction";
 import { fetchFeatures } from "./roleAction";
 
 const initialState = {
@@ -23,8 +23,8 @@ const isResourceDetailsDifferent = (current, incoming) => {
   return comparableFields.some(field => current[field] !== incoming[field]);
 };
 
-const resourceSlice = createSlice({
-  name: "resource",
+const roleSlice = createSlice({
+  name: "role",
   initialState,
   reducers: {
     clearError: (state) => {
@@ -48,35 +48,6 @@ const resourceSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      // Create Resource
-      .addCase(createResource.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
-      .addCase(createResource.fulfilled, (state, { payload }) => {
-        state.loading = false;
-        state.createdResource = payload;
-        state.resources.unshift({
-          publicId: payload.publicId,
-          employeeName: payload.employeeName,
-          joiningDate: payload.joiningDate,
-          designation: payload.designation,
-          status: payload.status || "pool",
-          email: payload.email,
-          phoneNumber: payload.phoneNumber,
-          gender: payload.gender,
-          location: payload.location,
-          businessGroup: payload.businessGroup,
-          businessUnit: payload.businessUnit,
-          competency: payload.competency,
-          profileImage: payload.profileImage
-        });
-        state.pagination.totalItems += 1;
-      })
-      .addCase(createResource.rejected, (state, { payload }) => {
-        state.loading = false;
-        state.error = payload;
-      })
 
       // Fetch Roles (New)
       .addCase(fetchRoles.pending, (state) => {
@@ -87,7 +58,8 @@ const resourceSlice = createSlice({
         state.roleLoading = false;
         state.roles = payload.map(item => ({
           id: item?.id,
-          role: item?.role
+          role: item?.role,
+          features: item?.permission
         }));
       })
       .addCase(fetchRoles.rejected, (state, { payload }) => {
@@ -118,9 +90,9 @@ const resourceSlice = createSlice({
 
 export const {
   clearError,
-  resetResourceDetails,
-  resetCreatedResource,
+  resetRoleDetails,
+  resetCreatedRole,
   setPage,
   setPageSize
-} = resourceSlice.actions;
-export default resourceSlice.reducer;
+} = roleSlice.actions;
+export default roleSlice.reducer;

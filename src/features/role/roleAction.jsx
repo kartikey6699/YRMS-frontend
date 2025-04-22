@@ -14,7 +14,7 @@ export const fetchRoles = createAsyncThunk(
   "resource/fetchRoles",
   async (_, { rejectWithValue }) => {
     try {
-      const response = await resourceApiClient.get( ROLE_API.LIST , {
+      const response = await rolesApiClient.get(ROLE_API.LIST, {
         headers: {
           accept: "application/json"
         }
@@ -24,7 +24,6 @@ export const fetchRoles = createAsyncThunk(
       if (!success) {
         throw new Error(message || "Failed to fetch technologies");
       }
-
       return data;
     } catch (error) {
       const errorMessage =
@@ -39,19 +38,20 @@ export const fetchFeatures = createAsyncThunk(
   "resource/fetchFeatures",
   async (_, { rejectWithValue }) => {
     try {
-      const response = await rolesApiClient.get( FEATURE_API.LIST , {
+      const response = await rolesApiClient.get(FEATURE_API.LIST, {
         headers: {
           accept: "application/json"
         }
       });
-      const { success, data, message } = response;
-      console.log(data, ">>>>>>>>>>>>>>>>>>>>>>")
+      const { success, data, message } = response.data;
 
       if (!success) {
         throw new Error(message || "Failed to fetch technologies");
       }
 
-      return data?.data;
+      console.log(data, "dsf")
+
+      return data;
     } catch (error) {
       const errorMessage =
         error.response?.data?.message ||

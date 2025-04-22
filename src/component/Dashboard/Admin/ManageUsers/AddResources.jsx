@@ -26,8 +26,12 @@ const AddResource = ({setActiveSection}) => {
     const navigate = useNavigate();
     const dispatch = useDispatch();
 
-    const { resources, loading, roles, designations, competencies, technologies, technologyLoading } = useSelector(
+    const { resources, loading, designations, competencies, technologies, technologyLoading } = useSelector(
         (state) => state.resource
+    );
+
+    const { roles } = useSelector(
+        (state) => state.role
     );
 
     const [modalField, setModalField] = useState(null);
@@ -79,6 +83,8 @@ const AddResource = ({setActiveSection}) => {
         dispatch(fetchCompetencies());
         dispatch(fetchTechnologies());
     }, [dispatch]);
+
+    console.log(roles, "<<<<<<>>>>>>>>")
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
