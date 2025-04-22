@@ -398,6 +398,16 @@ const UpskillingDetailModal = ({ onClose, training }) => {
                                 <div className="flex justify-between items-start">
                                   <div className="flex-1">
                                     <div className="font-medium text-gray-800">{task.task}</div>
+                                    <div className="mt-1 flex items-center space-x-2">
+                                      <div className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full flex items-center">
+                                        <span className="mr-1">📅</span>
+                                        <span>{new Date(task.createdAt).toLocaleDateString('en-US', {
+                                          year: 'numeric',
+                                          month: 'short',
+                                          day: 'numeric'
+                                        })}</span>
+                                      </div>
+                                    </div>
                                     {task.feedback ? (
                                       <div className="mt-2 text-sm text-gray-600 bg-blue-50 p-2 rounded">
                                         <span className="font-medium">Feedback:</span> {task.feedback}
