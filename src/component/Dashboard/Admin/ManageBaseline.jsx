@@ -337,21 +337,21 @@ const ManageBaseline = () => {
         }));
 
       const technicalSkills = formData.techSkills
-        .flatMap(skill => 
+        .flatMap(skill =>
           skill.category && skill.technologies.length > 0
             ? skill.technologies
-                .filter(tech => tech.technology && tech.rating)
-                .map(tech => {
-                  const categoryObj = technologyCategoriesWithTech.find(
-                    cat => cat.publicId === skill.category
-                  );
-                  const categoryName = categoryObj?.name || skill.category;
-                  return {
-                    category: categoryName,
-                    technology: tech.name,
-                    rating: parseInt(tech.rating) || 0
-                  };
-                })
+              .filter(tech => tech.technology && tech.rating)
+              .map(tech => {
+                const categoryObj = technologyCategoriesWithTech.find(
+                  cat => cat.publicId === skill.category
+                );
+                const categoryName = categoryObj?.name || skill.category;
+                return {
+                  category: categoryName,
+                  technology: tech.name,
+                  rating: parseInt(tech.rating) || 0
+                };
+              })
             : []
         );
 
@@ -480,29 +480,35 @@ const ManageBaseline = () => {
               {formStep === 1 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Experience</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Tech Experience</label>
                     {formData.experience.map((exp, index) => (
                       <div key={index} className="flex items-center space-x-2 mb-2">
-                        <input
-                          type="text"
-                          value={exp.technology}
-                          onChange={(e) => handleExpChange(index, "technology", e.target.value)}
-                          className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          placeholder="Technology"
-                        />
-                        <input
-                          type="number"
-                          value={exp.years}
-                          onChange={(e) => handleExpChange(index, "years", e.target.value)}
-                          className="w-1/4 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          placeholder="Years"
-                          min="0"
-                        />
+                        <div className="w-full">
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Technology</label>
+                          <input
+                            type="text"
+                            value={exp.technology}
+                            onChange={(e) => handleExpChange(index, "technology", e.target.value)}
+                            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            placeholder="Enter technology"
+                          />
+                        </div>
+                        <div className="w-1/4">
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Years</label>
+                          <input
+                            type="number"
+                            value={exp.years}
+                            onChange={(e) => handleExpChange(index, "years", e.target.value)}
+                            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            placeholder="0"
+                            min="0"
+                          />
+                        </div>
                         {formData.experience.length > 1 && (
                           <button
                             type="button"
                             onClick={() => removeExperience(index)}
-                            className="text-red-500 hover:text-red-700"
+                            className="text-red-500 hover:text-red-700 mt-6"
                           >
                             <FaTrash className="w-4 h-4" />
                           </button>
@@ -514,47 +520,53 @@ const ManageBaseline = () => {
                       onClick={addExperience}
                       className="mt-2 px-3 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors duration-200 text-sm"
                     >
-                      Add Experience
+                      Add Tech Experience
                     </button>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Certification</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Certification Details</label>
                     {formData.certification.map((cert, index) => (
                       <div key={index} className="flex items-center space-x-2 mb-2">
-                        <input
-                          type="text"
-                          value={cert.name}
-                          onChange={(e) => handleCertChange(index, "name", e.target.value)}
-                          className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          placeholder="Certification Name"
-                        />
-                        <select
-                          value={cert.issuingAuthority}
-                          onChange={(e) => {
-                            if (e.target.value === "add_authority") {
-                              setModalField("certification_authority");
-                            } else {
-                              handleCertChange(index, "issuingAuthority", e.target.value);
-                            }
-                          }}
-                          className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        >
-                          <option value="">Select Authority</option>
-                          {certificationAuthorities.map((auth) => (
-                            <option key={auth.publicId} value={auth.publicId}>
-                              {auth.name}
+                        <div className="w-full">
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                          <input
+                            type="text"
+                            value={cert.name}
+                            onChange={(e) => handleCertChange(index, "name", e.target.value)}
+                            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            placeholder="Enter certification name"
+                          />
+                        </div>
+                        <div className="w-full">
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Authority Name</label>
+                          <select
+                            value={cert.issuingAuthority}
+                            onChange={(e) => {
+                              if (e.target.value === "add_authority") {
+                                setModalField("certification_authority");
+                              } else {
+                                handleCertChange(index, "issuingAuthority", e.target.value);
+                              }
+                            }}
+                            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          >
+                            <option value="">Select Certification Authority</option>
+                            {certificationAuthorities.map((auth) => (
+                              <option key={auth.publicId} value={auth.publicId}>
+                                {auth.name}
+                              </option>
+                            ))}
+                            <option value="add_authority" className="font-semibold text-blue-600">
+                              + Add New Authority
                             </option>
-                          ))}
-                          <option value="add_authority" className="font-semibold text-blue-600">
-                            + Add New Authority
-                          </option>
-                        </select>
+                          </select>
+                        </div>
                         {formData.certification.length > 1 && (
                           <button
                             type="button"
                             onClick={() => removeCertification(index)}
-                            className="text-red-500 hover:text-red-700"
+                            className="text-red-500 hover:text-red-700 mt-6"
                           >
                             <FaTrash className="w-4 h-4" />
                           </button>
