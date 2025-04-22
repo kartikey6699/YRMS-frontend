@@ -12,6 +12,7 @@ export const RESOURCE_API = {
     LIST_RESOURCES: `${ADMIN_API_BASE_URL}/user-list`,
     USER_DETAIL: `${ADMIN_API_BASE_URL}/user-detail`,
     UPDATE_RESOURCE: `${ADMIN_API_BASE_URL}/user-update`,
+    DELETE_RESOURCE: `${ADMIN_API_BASE_URL}/user-delete`,
 
 };
 
@@ -98,7 +99,8 @@ export const PARTICIPANT_DETAIL_API = {
 export const PROGRAM_API = {
     CREATE: `${PROGRAM_API_BASE_URL}add-program/`,
     LIST: `${PROGRAM_API_BASE_URL}program-list/`,
-    UPDATE_STATUS: `${PROGRAM_API_BASE_URL}program/`
+    UPDATE_STATUS: `${PROGRAM_API_BASE_URL}program/`,
+    DETAILS: `${PROGRAM_API_BASE_URL}program-detail/`
 };
 
 export const TRAINING_TECHNOLOGY_API = {
