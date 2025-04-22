@@ -127,7 +127,8 @@ const resourceSlice = createSlice({
           experience: user.experience || 0,
           certifications: user.certification || "",
           communication: user.communication || "",
-          profileImage: user.profileImage
+          profileImage: user.profileImage,
+          programs: user.programs || []
         }));
 
         if (payload.pagination) {
@@ -229,7 +230,8 @@ const resourceSlice = createSlice({
             techSkill: payload.techSkill || [],
             certifications: payload.certification || "",
             communication: payload.communication || "",
-            profileImage: payload.profileImage
+            profileImage: payload.profileImage,
+            resumeFile: payload.resumeFile
           };
         }
       })
