@@ -352,11 +352,10 @@ const AssignTraining = () => {
                             setShowAttendanceDetails(true);
                           }}
                           className="p-1.5 rounded-lg bg-indigo-50 text-indigo-600 hover:bg-indigo-100 transition-colors group relative"
-                          title="Attendance Details"
                         >
                           <FiUserCheck className="w-4 h-4" />
                           <span className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 text-xs bg-gray-800 text-white px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-                            Edit Attendance
+                            Mark Attendance
                           </span>
                         </button>
                         <button
@@ -365,7 +364,6 @@ const AssignTraining = () => {
                             setShowViewAttendance(true);
                           }}
                           className="p-1.5 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors group relative"
-                          title="View Attendance"
                         >
                           <FiEye className="w-4 h-4" />
                           <span className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 text-xs bg-gray-800 text-white px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
@@ -374,7 +372,6 @@ const AssignTraining = () => {
                         </button>
                         <button
                           className="p-1.5 rounded-lg bg-green-50 text-green-600 hover:bg-green-100 transition-colors group relative"
-                          title="Download Report"
                         >
                           <FiDownload className="w-4 h-4" />
                           <span className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 text-xs bg-gray-800 text-white px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
