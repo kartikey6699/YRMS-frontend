@@ -43,8 +43,6 @@ import ParticipantDetailsModal from './ParticipantDetailsModal';
 import TrainingFeedback from './TrainingFeedback';
 import UpskillingDetailModal from './UpskillingDetailModal';
 import { useDispatch, useSelector } from 'react-redux';
-// import { SuccessToast } from './SuccessToast'; // Import SuccessToast
-// import { ErrorToast } from './ErrorToast'; // Import ErrorToast
 import { SuccessToast } from '../../../helper/ResourceToast';
 import { ErrorToast } from '../../../helper/ResourceToast';
 
@@ -334,7 +332,7 @@ const AssignTraining = () => {
                       className="p-2 text-gray-700 text-sm border-r border-gray-200 text-center cursor-pointer hover:bg-purple-50 transition-colors"
                       onClick={() => {
                         setSelectedTraining(training);
-                        setShowParticipantDetails(true);
+                        setShowUpskillingDetails(true); 
                       }}
                     >
                       <span className="font-medium text-purple-600">
