@@ -306,3 +306,32 @@ export const fetchProgramDetails = createAsyncThunk(
     }
   }
 );
+
+
+export const deleteProgram = createAsyncThunk(
+  "training/deleteProgram",
+  async (publicId, { rejectWithValue }) => {
+    try {
+      await programApiClient.delete(FEEDBACK_API.DELETE(publicId));
+      return publicId;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || error.message);
+    }
+  }
+);
+
+
+export const updateProgramDetails = createAsyncThunk(
+  "training/updateProgramDetails",
+  async ({ publicId, feedbackData }, { rejectWithValue }) => {
+    try {
+      const response = await programApiClient.patch(FEEDBACK_API.UPDATE(publicId), feedbackData);
+      if (!response.data.success) {
+        throw new Error("Failed to update program");
+      }
+      return response.data.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || error.message);
+    }
+  }
+);
