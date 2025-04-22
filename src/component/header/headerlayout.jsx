@@ -20,9 +20,6 @@ const HeaderLayout = () => {
   // Calculate main content margin
   const getMainContentMargin = () => {
     if (isLandingPage) return 'ml-0';
-    if (adminPanelOpen) {
-      return isOpen ? 'ml-[28rem]' : 'ml-[18rem]'; // 16rem + 12rem when collapsed
-    }
     return isOpen ? 'ml-64' : 'ml-16';
   };
 

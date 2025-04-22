@@ -1,6 +1,6 @@
 import axios from "axios";
 import { createAsyncThunk } from "@reduxjs/toolkit";
-import { RESOURCE_API, DESIGNATION_API, COMPETENCY_API, BASELINE, TRAINING_TECHNOLOGY_API, TECHNOLOGY_BASELINE_API } from "../../config/Endpoints/Endpoints";
+import { RESOURCE_API, DESIGNATION_API, COMPETENCY_API, BASELINE, TRAINING_TECHNOLOGY_API, TECHNOLOGY_BASELINE_API, ROLE_API } from "../../config/Endpoints/Endpoints";
 
 
 const resourceApiClient = axios.create({

@@ -113,3 +113,11 @@ export const TRAINING_TECHNOLOGY_API = {
 export const TECHNOLOGY_BASELINE_API = {
     GET: `${API_BASE_URL}technology/allTechnology`
 };
+
+export const ROLE_API = {
+    LIST: `${API_BASE_URL}roles-list`
+};
+
+export const FEATURE_API = {
+    LIST: `${API_BASE_URL}feature-list`
+};

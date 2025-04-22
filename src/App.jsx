@@ -18,6 +18,8 @@ import AddIntern from './component/Dashboard/Admin/ManageIntern/AddIntern';
 import PrivateRoutes from './component/helper/PrivateRoutes'; // Import PrivateRoutes
 import UserList from './component/Dashboard/Admin/ManageUsers/UserList';
 import TrainingDetail from './component/Dashboard/Admin/Training&Upskilling/TrainingDetail';
+import AddResource from './component/Dashboard/Admin/ManageUsers/AddResources';
+import AdminDashboard from './component/Dashboard/Admin/AdminDashboard';
 
 function App() {
   return (
@@ -26,7 +28,9 @@ function App() {
           <Route element={<PrivateRoutes />}>
             <Route element={<HeaderLayout />}>
               <Route path='/dashboard' element={<Dashboard />} />
+              <Route path='/admin-dashboard' element={<AdminDashboard />} />
               <Route path="/manage-resources" element={<ManageResource />} />
+              <Route path="/add-resources" element={<AddResource />} />
               <Route path="/manage-trainers" element={<ManageTrainer />} />
               <Route path="/manage-baseline/:publicId" element={<ManageBaseline />} />
               <Route path="/opportunities/:publicId" element={<Opportunities />} />

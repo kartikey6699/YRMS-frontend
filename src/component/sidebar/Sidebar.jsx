@@ -24,7 +24,7 @@ const Sidebar = ({ isOpen, toggleSidebar, adminPanelOpen, setAdminPanelOpen }) =
     { name: 'Analytics', icon: <FaChartBar />, path: '/analytics' },
     { name: 'Training', icon: <FaChalkboardTeacher />, path: '/manage-training' },
     { name: 'Interns', icon: <FaUsersCog />, path: '/interns'},
-    { name: 'Admin Panel', icon: <FaUserShield />, path: null, isAdmin: true },
+    { name: 'Admin Panel', icon: <FaUserShield />, path: '/admin-dashboard'},
   ];
 
   const adminMenuItems = [
