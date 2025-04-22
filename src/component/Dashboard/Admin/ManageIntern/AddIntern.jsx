@@ -263,8 +263,12 @@ const AddIntern = () => {
                             className="w-full h-12 p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 transition-colors"
                             required
                         >
-                            <option value="indore">Indore</option>
-                            <option value="pune">Pune</option>
+                            <option value="indore-yash-it-park-sc-dc">Indore-YASH IT Park-SC-DC</option>
+                            <option value="pune-magarpatta-dc-ii">Pune-Magarpatta-DC-II</option>
+                            <option value="hyderabad-mindspace-i-dc">Hyderabad-Mindspace I-DC</option>
+                            <option value="bangalore-whitefield-dc">Bangalore-Whitefield-DC</option>
+                            <option value="indore-crystal-it-park-dc-ii">Indore-Crystal IT Park-DC-II</option>
+                            <option value="indore-btc-co">Indore-BTC-CO</option>
                         </select>
                     </div>
                     
