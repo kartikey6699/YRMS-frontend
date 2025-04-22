@@ -2,9 +2,8 @@ import React, { useState, useEffect } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import ProfileCard from "../../helper/ProfileCard";
-import { FaArrowLeft, FaInfoCircle, FaTrash } from "react-icons/fa";
+import { FaArrowLeft, FaInfoCircle, FaTrash, FaPlusCircle, FaEdit, FaCheckCircle, FaTimes, FaPlus, FaChevronDown, FaChevronUp } from "react-icons/fa";
 import { BaselineHistories } from "./BaselineHistory";
-import Dropdown from "../../helper/Dropdown";
 import AddOptionModal from "../../helper/OptionalModal";
 import {
   fetchCertificationAuthorities,
@@ -14,13 +13,214 @@ import {
 } from "../../../features/baseline/baselineAction";
 import { SuccessToast, ErrorToast } from "../../helper/ResourceToast";
 
+const TechSkillSelector = ({ techSkills, setTechSkills, technologyCategoriesWithTech, loading, setModalField, setSelectedCategoryId }) => {
+  const [openTechDropdowns, setOpenTechDropdowns] = useState({}); // Track open/closed state for each section
+
+  const handleCategoryChange = (categoryId, cardIndex) => {
+    const updatedTechSkills = [...techSkills];
+    updatedTechSkills[cardIndex] = { ...updatedTechSkills[cardIndex], category: categoryId, technologies: [] };
+    setTechSkills(updatedTechSkills);
+  };
+
+  const handleTechToggle = (techId, techName, cardIndex) => {
+    const updatedTechSkills = [...techSkills];
+    const card = updatedTechSkills[cardIndex];
+    const existingTech = card.technologies.find(t => t.technology === techId);
+
+    if (existingTech) {
+      card.technologies = card.technologies.filter(t => t.technology !== techId);
+    } else {
+      card.technologies.push({ technology: techId, name: techName, rating: "" });
+    }
+
+    setTechSkills(updatedTechSkills);
+  };
+
+  const handleRatingChange = (techId, rating, cardIndex) => {
+    const value = Math.min(parseInt(rating) || 0, 5); // Restrict to max 5
+    const updatedTechSkills = [...techSkills];
+    const card = updatedTechSkills[cardIndex];
+    const tech = card.technologies.find(t => t.technology === techId);
+    if (tech) {
+      tech.rating = value.toString();
+    }
+    setTechSkills(updatedTechSkills);
+  };
+
+  const handleDeleteTech = (techId, cardIndex) => {
+    const updatedTechSkills = [...techSkills];
+    const card = updatedTechSkills[cardIndex];
+    card.technologies = card.technologies.filter(t => t.technology !== techId);
+    setTechSkills(updatedTechSkills);
+  };
+
+  const addCategorySection = () => {
+    setTechSkills([...techSkills, { category: "", technologies: [] }]);
+  };
+
+  const removeCategorySection = (cardIndex) => {
+    setTechSkills(techSkills.filter((_, i) => i !== cardIndex));
+  };
+
+  const openTechModal = (categoryId) => {
+    setModalField("technology_stack");
+    setSelectedCategoryId(categoryId);
+  };
+
+  const toggleTechDropdown = (cardIndex) => {
+    setOpenTechDropdowns((prev) => ({
+      ...prev,
+      [cardIndex]: !prev[cardIndex],
+    }));
+  };
+
+  return (
+    <div className="space-y-4">
+      {techSkills.map((card, cardIndex) => (
+        <div
+          key={cardIndex}
+          className="relative bg-white p-4 rounded-xl shadow-md border border-gray-100 max-w-3xl transition-all duration-300 hover:shadow-lg"
+        >
+          {techSkills.length > 1 && (
+            <button
+              onClick={() => removeCategorySection(cardIndex)}
+              className="absolute top-2 right-2 text-red-500 hover:text-red-700 transition-colors duration-200"
+              title="Remove Section"
+            >
+              <FaTimes className="w-4 h-4" />
+            </button>
+          )}
+          <div className="flex flex-col lg:flex-row lg:items-start gap-4">
+            {/* Category Dropdown */}
+            <div className="relative w-full lg:w-1/4">
+              <select
+                value={card.category}
+                onChange={(e) => {
+                  if (e.target.value === "add_category") {
+                    setModalField("technology_category");
+                  } else {
+                    handleCategoryChange(e.target.value, cardIndex);
+                  }
+                }}
+                className="w-full p-2 pl-8 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 bg-gradient-to-r from-blue-50 to-purple-50 text-sm text-gray-700 max-h-40 overflow-y-auto appearance-none transition-all duration-200 hover:border-blue-300 scrollbar-thin scrollbar-thumb-blue-400 scrollbar-track-gray-100"
+                disabled={loading}
+              >
+                <option value="">Select Category</option>
+                {technologyCategoriesWithTech.map((cat) => (
+                  <option key={cat.publicId} value={cat.publicId}>
+                    {cat.name}
+                  </option>
+                ))}
+                <option value="add_category" className="font-semibold text-blue-600 text-sm">
+                  + Add New Category
+                </option>
+              </select>
+              <FaEdit className="absolute left-2 top-2.5 text-blue-500 w-4 h-4" />
+            </div>
+
+            {/* Technology Dropdown (Collapsible) */}
+            {card.category && (
+              <div className="w-full lg:w-1/3">
+                <button
+                  onClick={() => toggleTechDropdown(cardIndex)}
+                  className="w-full flex items-center justify-between p-2 bg-gradient-to-r from-blue-50 to-purple-50 border border-gray-200 rounded-lg text-sm font-semibold text-gray-700 hover:bg-blue-100 transition-colors duration-200"
+                >
+                  <span>Select Technologies</span>
+                  {openTechDropdowns[cardIndex] ? (
+                    <FaChevronUp className="w-4 h-4 text-blue-500" />
+                  ) : (
+                    <FaChevronDown className="w-4 h-4 text-blue-500" />
+                  )}
+                </button>
+                {openTechDropdowns[cardIndex] && (
+                  <div className="mt-1 bg-gray-50 p-3 rounded-lg max-h-40 overflow-y-auto border border-gray-200 transition-all duration-300 ease-in-out">
+                    {technologyCategoriesWithTech
+                      .find((cat) => cat.publicId === card.category)?.technologies
+                      .map((tech) => (
+                        <div key={tech.publicId} className="flex items-center space-x-2 mb-2">
+                          <input
+                            type="checkbox"
+                            checked={card.technologies.some((t) => t.technology === tech.publicId)}
+                            onChange={() => handleTechToggle(tech.publicId, tech.name, cardIndex)}
+                            className="h-4 w-4 text-blue-600 rounded focus:ring-blue-400"
+                          />
+                          <span className="text-sm text-gray-700 font-medium">{tech.name}</span>
+                          {card.technologies.some((t) => t.technology === tech.publicId) && (
+                            <div className="flex items-center">
+                              <input
+                                type="number"
+                                value={card.technologies.find((t) => t.technology === tech.publicId)?.rating || ""}
+                                onChange={(e) => handleRatingChange(tech.publicId, e.target.value, cardIndex)}
+                                className="w-12 p-1 border border-gray-200 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm"
+                                placeholder="0-5"
+                                min="0"
+                                max="5"
+                              />
+                              <span className="px-1 py-1 bg-gray-200 text-gray-600 text-xs font-medium rounded-r-lg border border-l-0 border-gray-200">
+                                /5
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    <button
+                      onClick={() => openTechModal(card.category)}
+                      className="flex items-center w-full mt-2 px-2 py-1 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors duration-200 text-sm"
+                    >
+                      <FaPlusCircle className="mr-1 w-3 h-3" />
+                      Add New Technology
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Selected Technology Tags */}
+            {card.technologies.length > 0 && (
+              <div className="w-full lg:w-auto">
+                <h4 className="text-sm font-semibold text-gray-700 mb-2 border-b border-gray-200 pb-1">
+                  Selected Technologies
+                </h4>
+                <div className="bg-gray-50 p-2 rounded-lg border border-gray-200 min-h-[60px] flex flex-wrap gap-1">
+                  {card.technologies.map((tech) => (
+                    <div
+                      key={tech.technology}
+                      className="flex items-center bg-blue-600 text-white px-2 py-0.5 rounded-full text-xs font-medium transition-all duration-200 hover:bg-blue-700 hover:scale-105 cursor-pointer"
+                    >
+                      <FaCheckCircle className="mr-1 w-2.5 h-2.5" />
+                      <span>{tech.name} {tech.rating ? `(${tech.rating}/5)` : "(No rating)"}</span>
+                      <button
+                        onClick={() => handleDeleteTech(tech.technology, cardIndex)}
+                        className="ml-1 text-white hover:text-red-300 transition-colors duration-200"
+                        title="Remove Technology"
+                      >
+                        <FaTrash className="w-2.5 h-2.5" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      ))}
+      <button
+        onClick={addCategorySection}
+        className="flex items-center px-3 py-1.5 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-200 text-sm font-medium"
+      >
+        <FaPlus className="mr-1 w-3 h-3" />
+        Add Category Section
+      </button>
+    </div>
+  );
+};
+
 const ManageBaseline = () => {
   const { publicId } = useParams();
   const { state } = useLocation();
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
-  // Redux state selectors
   const {
     certificationAuthorities = [],
     technologyCategoriesWithTech = [],
@@ -35,10 +235,9 @@ const ManageBaseline = () => {
     state.resource.resourceDetails
   );
 
-  // Local state
   const [activeSection, setActiveSection] = useState("view");
   const [modalField, setModalField] = useState(null);
-  const [selectedCategoryId, setSelectedCategoryId] = useState(null); // New state to track category for modal
+  const [selectedCategoryId, setSelectedCategoryId] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [formStep, setFormStep] = useState(1);
   const [toast, setToast] = useState(null);
@@ -48,14 +247,13 @@ const ManageBaseline = () => {
     experience: [{ technology: "", years: "" }],
     totalExperience: "",
     communication: "",
-    techSkills: [{ category: "", technology: "", rating: "" }],
+    techSkills: [{ category: "", technologies: [] }],
     certification: [{ name: "", issuingAuthority: "" }],
     rating: "",
     feedback: "",
     upskillSuggestion: "",
   });
 
-  // Fetch initial data
   useEffect(() => {
     if (!hasFetchedInitialData) {
       dispatch(fetchCertificationAuthorities());
@@ -65,7 +263,6 @@ const ManageBaseline = () => {
     }
   }, [dispatch, hasFetchedInitialData, publicId]);
 
-  // Form handlers
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -111,31 +308,6 @@ const ManageBaseline = () => {
     }));
   };
 
-  const handleTechSkillChange = (index, field, value) => {
-    const updatedTechSkills = [...formData.techSkills];
-    updatedTechSkills[index][field] = value;
-
-    if (field === "category") {
-      updatedTechSkills[index].technology = ""; // Reset technology when category changes
-    }
-
-    setFormData(prev => ({ ...prev, techSkills: updatedTechSkills }));
-  };
-
-  const addTechSkill = () => {
-    setFormData((prev) => ({
-      ...prev,
-      techSkills: [...prev.techSkills, { category: "", technology: "", rating: "" }],
-    }));
-  };
-
-  const removeTechSkill = (index) => {
-    setFormData((prev) => ({
-      ...prev,
-      techSkills: prev.techSkills.filter((_, i) => i !== index),
-    }));
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.communication || !formData.feedback || !formData.rating) {
@@ -144,22 +316,19 @@ const ManageBaseline = () => {
     }
 
     try {
-      // Helper function to find name by publicId
       const getNameById = (publicId, collection) => {
         if (!publicId) return '';
         const item = collection?.find(item => item.publicId === publicId);
-        return item?.name || publicId; // Fallback to publicId if not found
+        return item?.name || publicId;
       };
 
-      // For technologyExperience (simple technologies)
       const technologyExperience = formData.experience
         .filter(exp => exp.technology && exp.years)
         .map(exp => ({
-          technology: exp.technology, // Already using name
+          technology: exp.technology,
           years: parseInt(exp.years) || 0
         }));
 
-      // For certification
       const certification = formData.certification
         .filter(cert => cert.name && cert.issuingAuthority)
         .map(cert => ({
@@ -167,31 +336,24 @@ const ManageBaseline = () => {
           technology: getNameById(cert.issuingAuthority, certificationAuthorities)
         }));
 
-      // For technicalSkills
       const technicalSkills = formData.techSkills
-        .filter(skill => skill.category && skill.technology && skill.rating)
-        .map(skill => {
-          // Find the category name
-          const categoryObj = technologyCategoriesWithTech.find(
-            cat => cat.publicId === skill.category
-          );
-          const categoryName = categoryObj?.name || skill.category;
-
-          // Find the technology name
-          let technologyName = skill.technology;
-          if (categoryObj) {
-            const techObj = categoryObj.technologies.find(
-              tech => tech.publicId === skill.technology
-            );
-            if (techObj) technologyName = techObj.name;
-          }
-
-          return {
-            category: categoryName,
-            technology: technologyName,
-            rating: parseInt(skill.rating) || 0
-          };
-        });
+        .flatMap(skill => 
+          skill.category && skill.technologies.length > 0
+            ? skill.technologies
+                .filter(tech => tech.technology && tech.rating)
+                .map(tech => {
+                  const categoryObj = technologyCategoriesWithTech.find(
+                    cat => cat.publicId === skill.category
+                  );
+                  const categoryName = categoryObj?.name || skill.category;
+                  return {
+                    category: categoryName,
+                    technology: tech.name,
+                    rating: parseInt(tech.rating) || 0
+                  };
+                })
+            : []
+        );
 
       const baselineData = {
         technologyExperience,
@@ -205,16 +367,13 @@ const ManageBaseline = () => {
         userId: publicId
       };
 
-      console.log("Submitting baseline data:", baselineData); // For debugging
-
       await dispatch(createBaseline({ userId: publicId, baselineData })).unwrap();
 
-      // Reset form and show success
       setFormData({
         experience: [{ technology: "", years: "" }],
         totalExperience: "",
         communication: "",
-        techSkills: [{ category: "", technology: "", rating: "" }],
+        techSkills: [{ category: "", technologies: [] }],
         certification: [{ name: "", issuingAuthority: "" }],
         rating: "",
         feedback: "",
@@ -233,23 +392,15 @@ const ManageBaseline = () => {
 
   const getModalOptions = (fieldName) => {
     switch (fieldName) {
-      case "designation":
-        return designations;
-      case "competency":
-        return competencies;
       case "certification_authority":
         return certificationAuthorities;
       case "technology_category":
         return technologyCategoriesWithTech;
       case "technology_stack":
-        if (!selectedCategoryId) {
-          console.warn("No category ID selected for technology stack");
-          return [];
-        }
+        if (!selectedCategoryId) return [];
         const category = technologyCategoriesWithTech?.find(
           cat => cat.publicId === selectedCategoryId
         );
-        console.log("Found category:", category);
         return category?.technologies || [];
       default:
         return [];
@@ -263,12 +414,6 @@ const ManageBaseline = () => {
   };
   const nextStep = () => setFormStep(2);
   const prevStep = () => setFormStep(1);
-
-  // Function to set modal field and category ID
-  const openModalWithCategory = (field, categoryId) => {
-    setModalField(field);
-    setSelectedCategoryId(categoryId);
-  };
 
   return (
     <div className="p-6 bg-gradient-to-b from-blue-50 to-purple-50 min-h-screen">
@@ -384,14 +529,27 @@ const ManageBaseline = () => {
                           className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                           placeholder="Certification Name"
                         />
-                        <Dropdown
-                          name="certification_authority"
+                        <select
                           value={cert.issuingAuthority}
-                          options={certificationAuthorities}
-                          onChange={(e) => handleCertChange(index, "issuingAuthority", e.target.value)}
-                          setModalField={() => openModalWithCategory("certification_authority", null)}
-                          loading={certificationAuthorityLoading}
-                        />
+                          onChange={(e) => {
+                            if (e.target.value === "add_authority") {
+                              setModalField("certification_authority");
+                            } else {
+                              handleCertChange(index, "issuingAuthority", e.target.value);
+                            }
+                          }}
+                          className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                          <option value="">Select Authority</option>
+                          {certificationAuthorities.map((auth) => (
+                            <option key={auth.publicId} value={auth.publicId}>
+                              {auth.name}
+                            </option>
+                          ))}
+                          <option value="add_authority" className="font-semibold text-blue-600">
+                            + Add New Authority
+                          </option>
+                        </select>
                         {formData.certification.length > 1 && (
                           <button
                             type="button"
@@ -446,65 +604,14 @@ const ManageBaseline = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="md:col-span-2">
                     <label className="block text-sm font-medium text-gray-700 mb-1">Tech Skills*</label>
-                    <div className="space-y-3">
-                      {formData.techSkills.map((skill, index) => (
-                        <div key={index} className="flex items-center space-x-3 bg-gray-50 p-3 rounded-lg shadow-sm border border-gray-200">
-                          <Dropdown
-                            name="Category"
-                            value={skill.category}
-                            options={technologyCategoriesWithTech}
-                            onChange={(e) => handleTechSkillChange(index, "category", e.target.value)}
-                            setModalField={() => setModalField("technology_category")}  // Set modalField correctly
-                            loading={technologyCategoriesStackLoading}
-                          />
-                          <Dropdown
-                            name="Technology"
-                            value={skill.technology}
-                            options={
-                              technologyCategoriesWithTech.find(cat => cat.publicId === skill.category)?.technologies || []
-                            }
-                            onChange={(e) => handleTechSkillChange(index, "technology", e.target.value)}
-                            setModalField={() => {
-                              setModalField("technology_stack");
-                              setSelectedCategoryId(skill.category); // Set the category ID here
-                            }}
-                            dependentValue={skill.category}
-                            loading={technologyCategoriesStackLoading}
-                          />
-                          {skill.technology && (
-                            <div className="flex items-center">
-                              <input
-                                type="number"
-                                value={skill.rating}
-                                onChange={(e) => handleTechSkillChange(index, "rating", e.target.value)}
-                                className="w-16 p-2 border border-gray-300 rounded-l-lg border-r-0 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                placeholder="0-5"
-                                min="0"
-                                max="5"
-                                required
-                              />
-                              <span className="px-2 py-2 bg-gray-200 text-gray-700 text-sm font-medium rounded-r-lg border border-l-0 border-gray-300">
-                                /5
-                              </span>
-                            </div>
-                          )}
-                          <button
-                            type="button"
-                            onClick={() => removeTechSkill(index)}
-                            className="text-red-500 hover:text-red-700"
-                          >
-                            <FaTrash className="w-4 h-4" />
-                          </button>
-                        </div>
-                      ))}
-                      <button
-                        type="button"
-                        onClick={addTechSkill}
-                        className="mt-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200"
-                      >
-                        Add Tech Skill
-                      </button>
-                    </div>
+                    <TechSkillSelector
+                      techSkills={formData.techSkills}
+                      setTechSkills={(newTechSkills) => setFormData(prev => ({ ...prev, techSkills: newTechSkills }))}
+                      technologyCategoriesWithTech={technologyCategoriesWithTech}
+                      loading={technologyCategoriesStackLoading}
+                      setModalField={setModalField}
+                      setSelectedCategoryId={setSelectedCategoryId}
+                    />
                   </div>
 
                   <div>
@@ -599,7 +706,7 @@ const ManageBaseline = () => {
             setSelectedCategoryId(null);
           }}
           setToast={setToast}
-          categoryId={selectedCategoryId} // Pass the dynamically selected category ID
+          categoryId={selectedCategoryId}
         />
       )}
     </div>

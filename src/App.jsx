@@ -17,6 +17,7 @@ import InternList from './component/Dashboard/Admin/ManageIntern/InternList';
 import AddIntern from './component/Dashboard/Admin/ManageIntern/AddIntern';
 import PrivateRoutes from './component/helper/PrivateRoutes'; // Import PrivateRoutes
 import UserList from './component/Dashboard/Admin/ManageUsers/UserList';
+import TrainingDetail from './component/Dashboard/Admin/Training&Upskilling/TrainingDetail';
 
 function App() {
   return (
@@ -34,6 +35,7 @@ function App() {
               <Route path="/interns" element={<InternList />} />
               <Route path="/admin/resources" element={<UserList />} />
               <Route path='/interns/add' element={<AddIntern />} />
+              <Route path='/training-detail/:id' element={<TrainingDetail />} />
             </Route>
           </Route>
           <Route path='/' element={<LandingPage />} />

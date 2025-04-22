@@ -16,9 +16,12 @@ import "react-datepicker/dist/react-datepicker.css";
 import DeleteConfirmationModal from "../../helper/DeleteConfirmationModal";
 import { deleteResource } from "../../../features/resource/resourceAction";
 import { SuccessToast } from "../../helper/ResourceToast";
-import EmployeeDetail from './EmployeDetail'
+import EmployeeDetail from "./EmployeDetail";
+import { useNavigate } from "react-router-dom";
+
 const ResourceList = ({ handleBaselineClick, handleOpportunitiesClick }) => {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const { resources, loading, error } = useSelector((state) => state.resource);
   const [sortConfig, setSortConfig] = useState({
     key: null,
@@ -31,6 +34,7 @@ const ResourceList = ({ handleBaselineClick, handleOpportunitiesClick }) => {
     joiningDate: null,
     designation: "",
     status: "",
+    assignedPrograms: ""
   });
   const [deleteModal, setDeleteModal] = useState({
     isOpen: false,
@@ -86,10 +90,20 @@ const ResourceList = ({ handleBaselineClick, handleOpportunitiesClick }) => {
     }
   };
 
+  const handleProgramClick = (programId) => {
+    console.log()
+    navigate(`/training-detail/${programId}`);
+  };
+
   const filteredResources = (resources || []).filter((resource) => {
     const matchesName = resource.employeeName?.toLowerCase().includes(searchValues.employeeName.toLowerCase()) ?? true;
     const matchesDesignation = resource.designation?.toLowerCase().includes(searchValues.designation.toLowerCase()) ?? true;
     const matchesStatus = searchValues.status ? resource.status?.toLowerCase() === searchValues.status.toLowerCase() : true;
+    const matchesPrograms = searchValues.assignedPrograms 
+      ? (resource.programs || []).some(p => 
+          p.name.toLowerCase().includes(searchValues.assignedPrograms.toLowerCase())
+        )
+      : true;
     
     let matchesDate = true;
     if (searchValues.joiningDate) {
@@ -102,11 +116,21 @@ const ResourceList = ({ handleBaselineClick, handleOpportunitiesClick }) => {
       }
     }
 
-    return matchesName && matchesDesignation && matchesStatus && matchesDate;
+    return matchesName && matchesDesignation && matchesStatus && matchesDate && matchesPrograms;
   });
 
   const sortedResources = [...filteredResources].sort((a, b) => {
     if (!sortConfig.key) return 0;
+    
+    // Special sorting for programs
+    if (sortConfig.key === 'assignedPrograms') {
+      const aPrograms = (a.programs || []).map(p => p.name).join(', ');
+      const bPrograms = (b.programs || []).map(p => p.name).join(', ');
+      return sortConfig.direction === "ascending"
+        ? aPrograms.localeCompare(bPrograms)
+        : bPrograms.localeCompare(aPrograms);
+    }
+    
     const valueA = a[sortConfig.key] || "";
     const valueB = b[sortConfig.key] || "";
     return sortConfig.direction === "ascending"
@@ -128,6 +152,7 @@ const ResourceList = ({ handleBaselineClick, handleOpportunitiesClick }) => {
     { key: "employeeName", label: "Employee Name" },
     { key: "joiningDate", label: "Joining Date" },
     { key: "designation", label: "Designation" },
+    { key: "assignedPrograms", label: "Assigned Programs" },
     { key: "status", label: "Status" },
   ];
 
@@ -192,6 +217,17 @@ const ResourceList = ({ handleBaselineClick, handleOpportunitiesClick }) => {
                             </option>
                           ))}
                         </select>
+                      ) : column.key === "assignedPrograms" ? (
+                        <div className="relative">
+                          <input
+                            type="text"
+                            placeholder="Search programs"
+                            value={searchValues.assignedPrograms || ""}
+                            onChange={(e) => handleSearchChange("assignedPrograms", e.target.value)}
+                            className="w-full px-2 py-1 pr-6 text-xs border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                          />
+                          <FaSearch className="absolute right-2 top-2 text-gray-400 text-xs" />
+                        </div>
                       ) : (
                         <div className="relative">
                           <input
@@ -229,6 +265,23 @@ const ResourceList = ({ handleBaselineClick, handleOpportunitiesClick }) => {
                 </td>
                 <td className="p-1 text-gray-700 text-sm border-r border-gray-200">
                   {resource.designation || "N/A"}
+                </td>
+                <td className="p-1 text-gray-700 text-sm border-r border-gray-200 max-w-xs truncate">
+                  <div className="flex flex-wrap gap-1">
+                    {(resource.programs || []).map(program => (
+                      <span 
+                        key={program.id}
+                        className="px-2 py-0.5 bg-blue-100 text-blue-800 text-xs rounded-full cursor-pointer hover:bg-blue-200"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleProgramClick(program.id);
+                        }}
+                      >
+                        {program.name}
+                      </span>
+                    ))}
+                    {(!resource.programs || resource.programs.length === 0) && "N/A"}
+                  </div>
                 </td>
                 <td className="p-1 text-gray-700 text-sm border-r border-gray-200">
                   <span
@@ -300,7 +353,6 @@ const ResourceList = ({ handleBaselineClick, handleOpportunitiesClick }) => {
 
         {selectedResource && (
           <EmployeeDetail
-            key={selectedResource}
             publicId={selectedResource}
             onClose={() => setSelectedResource(null)}
           />

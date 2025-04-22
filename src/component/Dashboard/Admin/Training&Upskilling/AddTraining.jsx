@@ -18,9 +18,9 @@ import { useDispatch, useSelector } from "react-redux";
 import Dropdown from "../../../helper/Dropdown";
 import AddOptionModal from "../../../helper/OptionalModal";
 import { ErrorToast, SuccessToast } from '../../../helper/ResourceToast';
-import YRMSLoader from '../../../helper/loader';
 import { createProgram, fetchProgramList } from '../../../../features/program/programAction';
 import { fetchTrainingTechnologies, fetchResources, fetchCompetencies } from "../../../../features/resource/resourceAction";
+import YRMSLoader from "../../../helper/Loader";
 
 const AddTraining = ({ onClose, onSave, isUpskilling = false }) => {
   const dispatch = useDispatch();
@@ -124,8 +124,8 @@ const AddTraining = ({ onClose, onSave, isUpskilling = false }) => {
     if (!formData.requester) newErrors.requester = "Requester is required";
     if (!formData.competency) newErrors.competency = "Competency is required";
     if (!formData.purpose) newErrors.purpose = "purpose is required";
-    if (!formData.technology)
-      newErrors.technology = `${isUpskilling ? 'Upskilling' : 'Training'} technology is required`;
+    // if (!formData.technology)
+    //   newErrors.technology = `${isUpskilling ? 'Upskilling' : 'Training'} technology is required`;
     if (formData.participants.length === 0)
       newErrors.participants = "At least one participant is required";
 

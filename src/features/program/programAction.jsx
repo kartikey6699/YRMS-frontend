@@ -290,3 +290,19 @@ export const updateProgramStatus = createAsyncThunk(
     }
   }
 );
+
+// Action to fetch program details by ID
+export const fetchProgramDetails = createAsyncThunk(
+  "program/fetchDetails",
+  async (programId, { rejectWithValue }) => {
+    try {
+      const response = await programApiClient.get(`${PROGRAM_API.DETAILS}${programId}`);
+      if (!response.data.success) {
+        throw new Error("Failed to fetch program details");
+      }
+      return response.data.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || error.message);
+    }
+  }
+);

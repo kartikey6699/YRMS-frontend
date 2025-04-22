@@ -23,8 +23,8 @@ const EmployeeDetail = ({ publicId, onClose }) => {
   const { resourceDetails, loading, designations } = useSelector((state) => state.resource);
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState(null);
-  const [resumeFile, setResumeFile] = useState(null);
   const [toast, setToast] = useState(null);
+  const [isUploading, setIsUploading] = useState(false);
   const initialLoadDone = useRef(false);
 
   // Grade options
@@ -32,7 +32,7 @@ const EmployeeDetail = ({ publicId, onClose }) => {
 
   useEffect(() => {
     if (toast) {
-      const timer = setTimeout(() => setToast(null), 2000);
+      const timer = setTimeout(() => setToast(null), 3000);
       return () => clearTimeout(timer);
     }
   }, [toast]);
@@ -43,23 +43,24 @@ const EmployeeDetail = ({ publicId, onClose }) => {
     if (!initialLoadDone.current && (!resourceDetails || resourceDetails.publicId !== publicId)) {
       initialLoadDone.current = true;
       dispatch(fetchResourceDetails(publicId));
-      dispatch(fetchDesignations());
     }
-  }, [publicId, resourceDetails, dispatch]);
+  }, [publicId, dispatch]);
 
   useEffect(() => {
     if (resourceDetails && resourceDetails.publicId === publicId) {
-      setFormData({
-        employeeName: resourceDetails.employeeName || '',
-        employeeId: resourceDetails.employeeId || '',
-        designation: resourceDetails.designation || '',
-        grade: resourceDetails.grade || '',
-        joiningDate: resourceDetails.joiningDate || '',
-        experience: resourceDetails.experience || '',
-        status: resourceDetails.status || 'pool',
-        profileImage: resourceDetails.profileImage || null,
-        techSkill: resourceDetails.techSkill || []
-      });
+      setFormData(prev => ({
+        ...prev,
+        employeeName: resourceDetails.employeeName || prev?.employeeName || '',
+        employeeId: resourceDetails.employeeId || prev?.employeeId || '',
+        designation: resourceDetails.designation || prev?.designation || '',
+        grade: resourceDetails.grade || prev?.grade || '',
+        joiningDate: resourceDetails.joiningDate || prev?.joiningDate || '',
+        experience: resourceDetails.experience || prev?.experience || '',
+        status: resourceDetails.status || prev?.status || 'pool',
+        profileImage: resourceDetails.profileImage || prev?.profileImage || null,
+        techSkill: resourceDetails.techSkill || prev?.techSkill || [],
+        resumeFile: prev?.resumeFile || resourceDetails.resumeFile || null // Preserve local resumeFile if set
+      }));
     }
   }, [resourceDetails, publicId]);
 
@@ -108,41 +109,79 @@ const EmployeeDetail = ({ publicId, onClose }) => {
 
   const handleResumeUpload = async (e) => {
     const file = e.target.files[0];
-    if (file) {
-      setResumeFile(file);
-      const formData = new FormData();
-      formData.append('file', file);
-      try {
-        const response = await fetch(RESUME_API.UPLOAD_RESUME(publicId), {
-          method: 'POST',
-          headers: {
-            'accept': 'application/json',
-          },
-          body: formData,
-        });
+    if (!file) return;
+
+    // Check file type (PDF or DOC/DOCX)
+    const validTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+    if (!validTypes.includes(file.type)) {
+      setToast({
+        type: 'error',
+        message: 'Please upload a PDF or Word document'
+      });
+      return;
+    }
+
+    // Check file size (5MB max)
+    if (file.size > 5 * 1024 * 1024) {
+      setToast({
+        type: 'error',
+        message: 'File size should be less than 5MB'
+      });
+      return;
+    }
+
+    setIsUploading(true);
+    const uploadFormData = new FormData();
+    uploadFormData.append('file', file);
+    
+    try {
+      const response = await fetch(RESUME_API.UPLOAD_RESUME(publicId), {
+        method: 'POST',
+        headers: {
+          'accept': 'application/json',
+        },
+        body: uploadFormData,
+      });
+      
+      if (response.ok) {
+        const responseData = await response.json();
+        const newResumeFileName = responseData.fileName || file.name;
+
+        // Update formData to show download button immediately
+        setFormData(prev => ({
+          ...prev,
+          resumeFile: newResumeFileName
+        }));
+
+        // Fetch updated details to sync with backend
+        await dispatch(fetchResourceDetails(publicId)).unwrap();
         
-        if (response.ok) {
-          setToast({
-            type: 'success',
-            message: 'Resume uploaded successfully!'
-          });
-        } else {
-          setToast({
-            type: 'error',
-            message: 'Failed to upload resume'
-          });
-        }
-      } catch (error) {
+        setToast({
+          type: 'success',
+          message: 'Resume uploaded successfully!'
+        });
+      } else {
+        const errorData = await response.json();
         setToast({
           type: 'error',
-          message: 'Error uploading resume'
+          message: errorData.message || 'Failed to upload resume'
         });
-        console.error('Error uploading resume:', error);
       }
+    } catch (error) {
+      setToast({
+        type: 'error',
+        message: 'Error uploading resume'
+      });
+      console.error('Error uploading resume:', error);
+    } finally {
+      setIsUploading(false);
+      e.target.value = ''; // Reset file input
     }
   };
 
   const handleResumeDownload = async () => {
+    if (!formData.resumeFile) return;
+
     try {
       const response = await fetch(RESUME_API.DOWNLOAD_RESUME(publicId), {
         method: 'GET',
@@ -156,7 +195,7 @@ const EmployeeDetail = ({ publicId, onClose }) => {
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `${formData.employeeId}_resume.pdf`;
+        a.download = formData.resumeFile || `${formData.employeeId}_resume.pdf`;
         document.body.appendChild(a);
         a.click();
         a.remove();
@@ -166,11 +205,11 @@ const EmployeeDetail = ({ publicId, onClose }) => {
           message: 'Resume download started!'
         });
       } else {
+        const errorData = await response.json();
         setToast({
           type: 'error',
-          message: 'Failed to download resume'
+          message: errorData.message || 'Failed to download resume'
         });
-        console.error('Error downloading resume:', response.statusText);
       }
     } catch (error) {
       setToast({
@@ -405,32 +444,41 @@ const EmployeeDetail = ({ publicId, onClose }) => {
           </div>
 
           <div className="mt-4 flex justify-between items-center">
-            <div className="flex gap-2">
-              <label className="flex items-center px-3 py-1.5 bg-blue-50 text-blue-700 rounded-md hover:bg-blue-100 text-sm cursor-pointer">
+            <div className="flex gap-2 items-start">
+              <label className={`flex items-center px-3 py-1.5 rounded-md text-sm cursor-pointer transition-all h-[34px]
+                ${isUploading ? 'bg-gray-100 text-gray-500' : 'bg-blue-50 text-blue-700 hover:bg-blue-100 active:scale-95'}`}>
                 <FaUpload className="mr-1 text-xs" />
-                Upload Resume
+                {isUploading ? 'Uploading...' : 'Upload Resume'}
                 <input
                   type="file"
                   onChange={handleResumeUpload}
                   className="hidden"
-                  accept=".pdf,.doc,.docx"
-                  disabled={loading}
+                  accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                  disabled={isUploading || loading}
                 />
               </label>
-              <button
-                onClick={handleResumeDownload}
-                className="flex items-center px-3 py-1.5 bg-green-50 text-green-700 rounded-md hover:bg-green-100 text-sm"
-                disabled={loading}
-              >
-                <FaDownload className="mr-1 text-xs" />
-                Download Resume
-              </button>
+              
+              {formData.resumeFile && (
+                <div className="flex flex-col items-start">
+                  <button
+                    onClick={handleResumeDownload}
+                    className="flex items-center px-3 py-1.5 bg-green-50 text-green-700 rounded-md text-sm transition-all hover:bg-green-100 active:scale-95 h-[34px]"
+                    disabled={loading}
+                  >
+                    <FaDownload className="mr-1 text-xs animate-pulse group-hover:animate-none" />
+                    Download Resume
+                  </button>
+                  <span className="mt-1 text-xs text-gray-600 font-medium truncate max-w-[200px] hover:text-gray-800 transition-colors">
+                    {formData.resumeFile}
+                  </span>
+                </div>
+              )}
             </div>
 
             <button
-              className="flex items-center px-4 py-1.5 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm font-medium disabled:bg-blue-400"
+              className="flex items-center px-4 py-1.5 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm font-medium disabled:bg-blue-400 transition-colors"
               onClick={isEditing ? handleSubmit : onClose}
-              disabled={loading}
+              disabled={loading || isUploading}
             >
               {isEditing ? (
                 <>
