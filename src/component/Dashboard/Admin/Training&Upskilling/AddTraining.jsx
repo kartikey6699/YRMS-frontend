@@ -197,8 +197,8 @@ const AddTraining = ({ onClose, onSave, isUpskilling = false }) => {
         endDate: formData.endDate,
         duration: parseInt(formData.duration),
         requester: formData.requester.value,
-        technology: formData.technologies.map(t => t.label), // Combine technologies into a string
-        // technology: formData.technologies.map(t => t.label).join(", "), // Combine technologies into a string
+        // technology: formData.technologies.map(t => t.label), // Combine technologies into a string
+        technology: formData.technologies.map(t => t.label).join(", "), // Combine technologies into a string
         projectDescription: formData.projectDescription,
         competencyId: formData.competency.value,
         trainerId: formData.trainerName.value,

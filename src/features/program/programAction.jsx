@@ -312,7 +312,7 @@ export const deleteProgram = createAsyncThunk(
   "training/deleteProgram",
   async (publicId, { rejectWithValue }) => {
     try {
-      await programApiClient.delete(FEEDBACK_API.DELETE(publicId));
+      await programApiClient.delete(`${PROGRAM_API.DELETE}${publicId}`);
       return publicId;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || error.message);
@@ -322,12 +322,12 @@ export const deleteProgram = createAsyncThunk(
 
 
 export const updateProgramDetails = createAsyncThunk(
-  "training/updateProgramDetails",
-  async ({ publicId, feedbackData }, { rejectWithValue }) => {
+  "program/updateDetails",
+  async (programData, { rejectWithValue }) => {
     try {
-      const response = await programApiClient.patch(FEEDBACK_API.UPDATE(publicId), feedbackData);
+      const response = await programApiClient.post(PROGRAM_API.UPDATE, programData);
       if (!response.data.success) {
-        throw new Error("Failed to update program");
+        throw new Error("Failed to update program details");
       }
       return response.data.data;
     } catch (error) {
