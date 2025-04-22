@@ -310,6 +310,7 @@ const AddIntern = () => {
                                 onChange={handleDateChange}
                                 className="w-full h-12 p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 transition-colors"
                                 required
+                                onClick={(e) => e.target.showPicker()} // Open date picker on input click
                             />
                         </div>
                         
@@ -340,6 +341,7 @@ const AddIntern = () => {
                                 onChange={handleInputChange}
                                 className="w-full h-12 p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 transition-colors"
                                 required
+                                onClick={(e) => e.target.showPicker()} // Open date picker on input click
                             />
                         </div>
                     </div>
