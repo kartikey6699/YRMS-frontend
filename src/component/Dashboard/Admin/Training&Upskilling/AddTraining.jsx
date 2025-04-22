@@ -265,6 +265,7 @@ const AddTraining = ({ onClose, onSave, isUpskilling = false }) => {
                       onChange={handleChange}
                       min={formatDate(new Date())}
                       className={`w-full pl-10 p-2 border rounded-md focus:ring-2 focus:ring-purple-500 focus:border-purple-500 ${errors.startDate ? "border-red-500" : "border-gray-300"}`}
+                      onClick={(e) => e.target.showPicker()} // Open datepicker on input click
                     />
                     {errors.startDate && (
                       <p className="mt-1 text-sm text-red-600">
@@ -313,8 +314,9 @@ const AddTraining = ({ onClose, onSave, isUpskilling = false }) => {
                       type="date"
                       name="endDate"
                       value={formData.endDate}
-                      readOnly
-                      className={`w-full pl-10 p-2 border rounded-md bg-gray-100 ${errors.endDate ? "border-red-500" : "border-gray-300"}`}
+                      onChange={handleChange} // Make the field editable
+                      className={`w-full pl-10 p-2 border rounded-md focus:ring-2 focus:ring-purple-500 focus:border-purple-500 ${errors.endDate ? "border-red-500" : "border-gray-300"}`}
+                      onClick={(e) => e.target.showPicker()} // Open datepicker on input click
                     />
                     {errors.endDate && (
                       <p className="mt-1 text-sm text-red-600">
