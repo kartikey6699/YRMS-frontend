@@ -79,137 +79,153 @@ const TechSkillSelector = ({ techSkills, setTechSkills, technologyCategoriesWith
       {techSkills.map((card, cardIndex) => (
         <div
           key={cardIndex}
-          className="relative bg-white p-4 rounded-xl shadow-md border border-gray-100 max-w-3xl transition-all duration-300 hover:shadow-lg"
+          className="relative bg-white p-4 rounded-xl shadow-sm border border-gray-200 transition-all duration-300 hover:shadow-md"
         >
           {techSkills.length > 1 && (
             <button
               onClick={() => removeCategorySection(cardIndex)}
-              className="absolute top-2 right-2 text-red-500 hover:text-red-700 transition-colors duration-200"
+              className="absolute top-3 right-3 text-gray-400 hover:text-red-500 transition-colors"
               title="Remove Section"
             >
               <FaTimes className="w-4 h-4" />
             </button>
           )}
-          <div className="flex flex-col lg:flex-row lg:items-start gap-4">
-            {/* Category Dropdown */}
-            <div className="relative w-full lg:w-1/4">
-              <select
-                value={card.category}
-                onChange={(e) => {
-                  if (e.target.value === "add_category") {
-                    setModalField("technology_category");
-                  } else {
-                    handleCategoryChange(e.target.value, cardIndex);
-                  }
-                }}
-                className="w-full p-2 pl-8 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 bg-gradient-to-r from-blue-50 to-purple-50 text-sm text-gray-700 max-h-40 overflow-y-auto appearance-none transition-all duration-200 hover:border-blue-300 scrollbar-thin scrollbar-thumb-blue-400 scrollbar-track-gray-100"
-                disabled={loading}
-              >
-                <option value="">Select Category</option>
-                {technologyCategoriesWithTech.map((cat) => (
-                  <option key={cat.publicId} value={cat.publicId}>
-                    {cat.name}
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-start">
+            {/* Category Selector - Equal Width Column */}
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700">Category</label>
+              <div className="relative">
+                <select
+                  value={card.category}
+                  onChange={(e) => {
+                    if (e.target.value === "add_category") {
+                      setModalField("technology_category");
+                    } else {
+                      handleCategoryChange(e.target.value, cardIndex);
+                    }
+                  }}
+                  className="w-full p-2.5 pl-9 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm bg-white"
+                  disabled={loading}
+                >
+                  <option value="">Select Category</option>
+                  {technologyCategoriesWithTech.map((cat) => (
+                    <option key={cat.publicId} value={cat.publicId}>
+                      {cat.name}
+                    </option>
+                  ))}
+                  <option value="add_category" className="text-blue-600 font-medium">
+                    + Add New Category
                   </option>
-                ))}
-                <option value="add_category" className="font-semibold text-blue-600 text-sm">
-                  + Add New Category
-                </option>
-              </select>
-              <FaEdit className="absolute left-2 top-2.5 text-blue-500 w-4 h-4" />
+                </select>
+                <FaEdit className="absolute left-3 top-3.5 text-gray-400 w-4 h-4" />
+              </div>
             </div>
 
-            {/* Technology Dropdown (Collapsible) */}
-            {card.category && (
-              <div className="w-full lg:w-1/3">
-                <button
-                  onClick={() => toggleTechDropdown(cardIndex)}
-                  className="w-full flex items-center justify-between p-2 bg-gradient-to-r from-blue-50 to-purple-50 border border-gray-200 rounded-lg text-sm font-semibold text-gray-700 hover:bg-blue-100 transition-colors duration-200"
-                >
-                  <span>Select Technologies</span>
-                  {openTechDropdowns[cardIndex] ? (
-                    <FaChevronUp className="w-4 h-4 text-blue-500" />
-                  ) : (
-                    <FaChevronDown className="w-4 h-4 text-blue-500" />
-                  )}
-                </button>
-                {openTechDropdowns[cardIndex] && (
-                  <div className="mt-1 bg-gray-50 p-3 rounded-lg max-h-40 overflow-y-auto border border-gray-200 transition-all duration-300 ease-in-out">
+            {/* Technology Dropdown - Equal Width Column */}
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700">Technologies</label>
+              <button
+                onClick={() => toggleTechDropdown(cardIndex)}
+                disabled={!card.category}
+                className={`w-full flex items-center justify-between p-2.5 border rounded-lg text-sm ${card.category
+                    ? "border-gray-300 bg-white hover:bg-gray-50 text-gray-700"
+                    : "border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed"
+                  }`}
+              >
+                <span>Select Technologies</span>
+                {openTechDropdowns[cardIndex] ? (
+                  <FaChevronUp className="w-4 h-4 text-gray-500" />
+                ) : (
+                  <FaChevronDown className="w-4 h-4 text-gray-500" />
+                )}
+              </button>
+
+              {/* Dropdown Content */}
+              {openTechDropdowns[cardIndex] && card.category && (
+                <div className="mt-1 p-3 bg-white border border-gray-200 rounded-lg shadow-lg z-10">
+                  <div className="space-y-2 max-h-60 overflow-y-auto">
                     {technologyCategoriesWithTech
-                      .find((cat) => cat.publicId === card.category)?.technologies
-                      .map((tech) => (
-                        <div key={tech.publicId} className="flex items-center space-x-2 mb-2">
-                          <input
-                            type="checkbox"
-                            checked={card.technologies.some((t) => t.technology === tech.publicId)}
-                            onChange={() => handleTechToggle(tech.publicId, tech.name, cardIndex)}
-                            className="h-4 w-4 text-blue-600 rounded focus:ring-blue-400"
-                          />
-                          <span className="text-sm text-gray-700 font-medium">{tech.name}</span>
+                      .find((cat) => cat.publicId === card.category)
+                      ?.technologies.map((tech) => (
+                        <div key={tech.publicId} className="flex items-center justify-between">
+                          <label className="flex items-center space-x-2 w-full">
+                            <input
+                              type="checkbox"
+                              checked={card.technologies.some((t) => t.technology === tech.publicId)}
+                              onChange={() => handleTechToggle(tech.publicId, tech.name, cardIndex)}
+                              className="h-4 w-4 text-blue-600 rounded focus:ring-blue-500"
+                            />
+                            <span className="text-sm text-gray-700">{tech.name}</span>
+                          </label>
                           {card.technologies.some((t) => t.technology === tech.publicId) && (
-                            <div className="flex items-center">
-                              <input
-                                type="number"
-                                value={card.technologies.find((t) => t.technology === tech.publicId)?.rating || ""}
-                                onChange={(e) => handleRatingChange(tech.publicId, e.target.value, cardIndex)}
-                                className="w-12 p-1 border border-gray-200 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm"
-                                placeholder="0-5"
-                                min="0"
-                                max="5"
-                              />
-                              <span className="px-1 py-1 bg-gray-200 text-gray-600 text-xs font-medium rounded-r-lg border border-l-0 border-gray-200">
-                                /5
-                              </span>
-                            </div>
+                            <input
+                              type="number"
+                              value={card.technologies.find((t) => t.technology === tech.publicId)?.rating || ""}
+                              onChange={(e) => handleRatingChange(tech.publicId, e.target.value, cardIndex)}
+                              className="w-12 p-1 text-sm border border-gray-300 rounded focus:ring-blue-500 focus:border-blue-500"
+                              min="0"
+                              max="5"
+                              placeholder="0-5"
+                            />
                           )}
                         </div>
                       ))}
-                    <button
-                      onClick={() => openTechModal(card.category)}
-                      className="flex items-center w-full mt-2 px-2 py-1 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors duration-200 text-sm"
-                    >
-                      <FaPlusCircle className="mr-1 w-3 h-3" />
-                      Add New Technology
-                    </button>
                   </div>
+                  <button
+                    onClick={() => openTechModal(card.category)}
+                    className="mt-2 w-full flex items-center justify-center px-2 py-1.5 text-xs text-blue-600 hover:text-blue-800"
+                  >
+                    <FaPlusCircle className="mr-1.5 w-3 h-3" />
+                    Add New Technology
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Selected Technologies - Equal Width Column */}
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700">
+                Selected ({card.technologies.length})
+              </label>
+              <div className="min-h-[42px] p-2 bg-gray-50 border border-gray-200 rounded-lg">
+                {card.technologies.length > 0 ? (
+                  <div className="flex flex-wrap gap-2">
+                    {card.technologies.map((tech) => (
+                      <div
+                        key={tech.technology}
+                        className="flex items-center bg-white px-2.5 py-1 rounded-full border border-blue-100 shadow-xs text-xs"
+                      >
+                        <span className="text-gray-700 mr-1">{tech.name}</span>
+                        {tech.rating && (
+                          <span className="bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded-full">
+                            {tech.rating}/5
+                          </span>
+                        )}
+                        <button
+                          onClick={() => handleDeleteTech(tech.technology, cardIndex)}
+                          className="ml-1 text-gray-400 hover:text-red-500"
+                        >
+                          <FaTimes className="w-3 h-3" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-gray-400 italic">No technologies selected</p>
                 )}
               </div>
-            )}
-
-            {/* Selected Technology Tags */}
-            {card.technologies.length > 0 && (
-              <div className="w-full lg:w-auto">
-                <h4 className="text-sm font-semibold text-gray-700 mb-2 border-b border-gray-200 pb-1">
-                  Selected Technologies
-                </h4>
-                <div className="bg-gray-50 p-2 rounded-lg border border-gray-200 min-h-[60px] flex flex-wrap gap-1">
-                  {card.technologies.map((tech) => (
-                    <div
-                      key={tech.technology}
-                      className="flex items-center bg-blue-600 text-white px-2 py-0.5 rounded-full text-xs font-medium transition-all duration-200 hover:bg-blue-700 hover:scale-105 cursor-pointer"
-                    >
-                      <FaCheckCircle className="mr-1 w-2.5 h-2.5" />
-                      <span>{tech.name} {tech.rating ? `(${tech.rating}/5)` : "(No rating)"}</span>
-                      <button
-                        onClick={() => handleDeleteTech(tech.technology, cardIndex)}
-                        className="ml-1 text-white hover:text-red-300 transition-colors duration-200"
-                        title="Remove Technology"
-                      >
-                        <FaTrash className="w-2.5 h-2.5" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
+            </div>
           </div>
         </div>
       ))}
+
       <button
         onClick={addCategorySection}
-        className="flex items-center px-3 py-1.5 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-200 text-sm font-medium"
+        className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
       >
-        <FaPlus className="mr-1 w-3 h-3" />
-        Add Category Section
+        <FaPlus className="mr-2 w-3 h-3" />
+        Add Another Category
       </button>
     </div>
   );
@@ -337,21 +353,21 @@ const ManageBaseline = () => {
         }));
 
       const technicalSkills = formData.techSkills
-        .flatMap(skill => 
+        .flatMap(skill =>
           skill.category && skill.technologies.length > 0
             ? skill.technologies
-                .filter(tech => tech.technology && tech.rating)
-                .map(tech => {
-                  const categoryObj = technologyCategoriesWithTech.find(
-                    cat => cat.publicId === skill.category
-                  );
-                  const categoryName = categoryObj?.name || skill.category;
-                  return {
-                    category: categoryName,
-                    technology: tech.name,
-                    rating: parseInt(tech.rating) || 0
-                  };
-                })
+              .filter(tech => tech.technology && tech.rating)
+              .map(tech => {
+                const categoryObj = technologyCategoriesWithTech.find(
+                  cat => cat.publicId === skill.category
+                );
+                const categoryName = categoryObj?.name || skill.category;
+                return {
+                  category: categoryName,
+                  technology: tech.name,
+                  rating: parseInt(tech.rating) || 0
+                };
+              })
             : []
         );
 
@@ -480,29 +496,35 @@ const ManageBaseline = () => {
               {formStep === 1 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Experience</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Tech Experience</label>
                     {formData.experience.map((exp, index) => (
                       <div key={index} className="flex items-center space-x-2 mb-2">
-                        <input
-                          type="text"
-                          value={exp.technology}
-                          onChange={(e) => handleExpChange(index, "technology", e.target.value)}
-                          className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          placeholder="Technology"
-                        />
-                        <input
-                          type="number"
-                          value={exp.years}
-                          onChange={(e) => handleExpChange(index, "years", e.target.value)}
-                          className="w-1/4 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          placeholder="Years"
-                          min="0"
-                        />
+                        <div className="w-full">
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Technology</label>
+                          <input
+                            type="text"
+                            value={exp.technology}
+                            onChange={(e) => handleExpChange(index, "technology", e.target.value)}
+                            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            placeholder="Enter technology"
+                          />
+                        </div>
+                        <div className="w-1/4">
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Years</label>
+                          <input
+                            type="number"
+                            value={exp.years}
+                            onChange={(e) => handleExpChange(index, "years", e.target.value)}
+                            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            placeholder="0"
+                            min="0"
+                          />
+                        </div>
                         {formData.experience.length > 1 && (
                           <button
                             type="button"
                             onClick={() => removeExperience(index)}
-                            className="text-red-500 hover:text-red-700"
+                            className="text-red-500 hover:text-red-700 mt-6"
                           >
                             <FaTrash className="w-4 h-4" />
                           </button>
@@ -514,47 +536,53 @@ const ManageBaseline = () => {
                       onClick={addExperience}
                       className="mt-2 px-3 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors duration-200 text-sm"
                     >
-                      Add Experience
+                      Add Tech Experience
                     </button>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Certification</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Certification Details</label>
                     {formData.certification.map((cert, index) => (
                       <div key={index} className="flex items-center space-x-2 mb-2">
-                        <input
-                          type="text"
-                          value={cert.name}
-                          onChange={(e) => handleCertChange(index, "name", e.target.value)}
-                          className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          placeholder="Certification Name"
-                        />
-                        <select
-                          value={cert.issuingAuthority}
-                          onChange={(e) => {
-                            if (e.target.value === "add_authority") {
-                              setModalField("certification_authority");
-                            } else {
-                              handleCertChange(index, "issuingAuthority", e.target.value);
-                            }
-                          }}
-                          className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        >
-                          <option value="">Select Authority</option>
-                          {certificationAuthorities.map((auth) => (
-                            <option key={auth.publicId} value={auth.publicId}>
-                              {auth.name}
+                        <div className="w-full">
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                          <input
+                            type="text"
+                            value={cert.name}
+                            onChange={(e) => handleCertChange(index, "name", e.target.value)}
+                            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            placeholder="Enter certification name"
+                          />
+                        </div>
+                        <div className="w-full">
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Authority Name</label>
+                          <select
+                            value={cert.issuingAuthority}
+                            onChange={(e) => {
+                              if (e.target.value === "add_authority") {
+                                setModalField("certification_authority");
+                              } else {
+                                handleCertChange(index, "issuingAuthority", e.target.value);
+                              }
+                            }}
+                            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          >
+                            <option value="">Select Certification Authority</option>
+                            {certificationAuthorities.map((auth) => (
+                              <option key={auth.publicId} value={auth.publicId}>
+                                {auth.name}
+                              </option>
+                            ))}
+                            <option value="add_authority" className="font-semibold text-blue-600">
+                              + Add New Authority
                             </option>
-                          ))}
-                          <option value="add_authority" className="font-semibold text-blue-600">
-                            + Add New Authority
-                          </option>
-                        </select>
+                          </select>
+                        </div>
                         {formData.certification.length > 1 && (
                           <button
                             type="button"
                             onClick={() => removeCertification(index)}
-                            className="text-red-500 hover:text-red-700"
+                            className="text-red-500 hover:text-red-700 mt-6"
                           >
                             <FaTrash className="w-4 h-4" />
                           </button>

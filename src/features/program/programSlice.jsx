@@ -13,7 +13,8 @@ import {
   deleteParticipantTask,
   fetchParticipantsDetails,
   updateProgramStatus,
-  fetchProgramDetails
+  fetchProgramDetails,
+  updateProgramDetails
 } from "./programAction";
 
 const initialState = {
@@ -263,6 +264,19 @@ const programSlice = createSlice({
         state.programDetails.data = payload;
       })
       .addCase(fetchProgramDetails.rejected, (state, { payload }) => {
+        state.programDetails.loading = false;
+        state.programDetails.error = payload;
+      })
+
+      .addCase(updateProgramDetails.pending, (state) => {
+        state.programDetails.loading = true;
+        state.programDetails.error = null;
+      })
+      .addCase(updateProgramDetails.fulfilled, (state, { payload }) => {
+        state.programDetails.loading = false;
+        state.programDetails.data = payload;
+      })
+      .addCase(updateProgramDetails.rejected, (state, { payload }) => {
         state.programDetails.loading = false;
         state.programDetails.error = payload;
       });

@@ -9,7 +9,7 @@ const programApiClient = axios.create({
 });
 
 programApiClient.interceptors.request.use((config) => {
-  const token = localStorage.getItem("token");
+  const token = sessionStorage.getItem("token");
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -299,6 +299,35 @@ export const fetchProgramDetails = createAsyncThunk(
       const response = await programApiClient.get(`${PROGRAM_API.DETAILS}${programId}`);
       if (!response.data.success) {
         throw new Error("Failed to fetch program details");
+      }
+      return response.data.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || error.message);
+    }
+  }
+);
+
+
+export const deleteProgram = createAsyncThunk(
+  "training/deleteProgram",
+  async (publicId, { rejectWithValue }) => {
+    try {
+      await programApiClient.delete(`${PROGRAM_API.DELETE}${publicId}`);
+      return publicId;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || error.message);
+    }
+  }
+);
+
+
+export const updateProgramDetails = createAsyncThunk(
+  "program/updateDetails",
+  async (programData, { rejectWithValue }) => {
+    try {
+      const response = await programApiClient.post(PROGRAM_API.UPDATE, programData);
+      if (!response.data.success) {
+        throw new Error("Failed to update program details");
       }
       return response.data.data;
     } catch (error) {

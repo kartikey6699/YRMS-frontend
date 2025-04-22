@@ -9,7 +9,7 @@ const baselineApiClient = axios.create({
 });
 
 baselineApiClient.interceptors.request.use((config) => {
-  const token = localStorage.getItem("token");
+  const token = sessionStorage.getItem("token"); // Changed from localStorage to sessionStorage
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }

@@ -42,7 +42,7 @@ const ManageResource = () => {
     businessGroup: "",
     businessUnit: "",
     competency: "",
-    status: "pool",
+    status: "",
   });
 
   const [filterData, setFilterData] = useState({
@@ -479,6 +479,7 @@ const ManageResource = () => {
                 <option value="bangalore-whitefield-dc">Bangalore-Whitefield-DC</option>
                 <option value="indore-crystal-it-park-dc-ii">Indore-Crystal IT Park-DC-II</option>
                 <option value="indore-btc-co">Indore-BTC-CO</option>
+                <option value="indore-btc-co">Pune-Hinjewadi III-DC</option>
               </select>
             </div>
             <div>
@@ -519,6 +520,7 @@ const ManageResource = () => {
                 onChange={handleInputChange}
                 className="w-full p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 transition-colors"
                 required
+                onClick={(e) => e.target.showPicker()} // This line allows the date picker to open on input click
               />
             </div>
             <div>
@@ -583,8 +585,8 @@ const ManageResource = () => {
                 className={`w-full p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 transition-colors ${
                   formData.status ? "text-black" : "text-gray-500"
                 }`}
-                required
               >
+                <option value="" disabled>Select status</option>
                 <option value="pool">Pool</option>
                 <option value="deployed">Deployed</option>
                 <option value="pip">PIP</option>

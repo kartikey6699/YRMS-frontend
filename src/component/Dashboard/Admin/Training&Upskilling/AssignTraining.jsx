@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   FaTools,
   FaUserTie,
@@ -20,7 +21,8 @@ import {
   FaChartBar,
   FaSort,
   FaSortUp,
-  FaSortDown
+  FaSortDown,
+  FaTrash
 } from 'react-icons/fa';
 import {
   FiEdit2,
@@ -32,7 +34,7 @@ import {
   FiBarChart2
 } from 'react-icons/fi';
 
-import { fetchProgramList, updateProgramStatus } from '../../../../features/program/programAction'; // Adjust path as needed
+import { fetchProgramList, updateProgramStatus, deleteProgram } from '../../../../features/program/programAction';
 import AttendanceDetailsModal from './AttendanceDetailsModal';
 import ViewAttendanceModal from './ViewAttendanceModal';
 import DatePicker from 'react-datepicker';
@@ -43,20 +45,19 @@ import ParticipantDetailsModal from './ParticipantDetailsModal';
 import TrainingFeedback from './TrainingFeedback';
 import UpskillingDetailModal from './UpskillingDetailModal';
 import { useDispatch, useSelector } from 'react-redux';
-// import { SuccessToast } from './SuccessToast'; // Import SuccessToast
-// import { ErrorToast } from './ErrorToast'; // Import ErrorToast
 import { SuccessToast } from '../../../helper/ResourceToast';
 import { ErrorToast } from '../../../helper/ResourceToast';
 
 const AssignTraining = () => {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const { programs, loading, error } = useSelector((state) => state.program);
 
   const [activeTab, setActiveTab] = useState('training');
   const [searchTerm, setSearchTerm] = useState('');
   const [editingStatus, setEditingStatus] = useState(null);
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'ascending' });
-
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(null);
   const [showAttendanceDetails, setShowAttendanceDetails] = useState(false);
   const [showViewAttendance, setShowViewAttendance] = useState(false);
   const [showParticipantDetails, setShowParticipantDetails] = useState(false);
@@ -67,8 +68,6 @@ const AssignTraining = () => {
   const [showAddUpskilling, setShowAddUpskilling] = useState(false);
   const [trainingData, setTrainingData] = useState([]);
   const [upskillingData, setUpskillingData] = useState([]);
-
-  // Toast state
   const [showSuccessToast, setShowSuccessToast] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
   const [showErrorToast, setShowErrorToast] = useState(false);
@@ -81,12 +80,10 @@ const AssignTraining = () => {
     { value: 'Completed', label: 'Completed', icon: <FaCheck className="inline mr-1" />, color: 'bg-green-100 text-green-800' }
   ];
 
-  // Fetch programs on component mount
   useEffect(() => {
     dispatch(fetchProgramList());
   }, [dispatch]);
 
-  // Process fetched data
   useEffect(() => {
     if (programs) {
       const training = programs.filter(p => p.type === 'Training');
@@ -96,7 +93,6 @@ const AssignTraining = () => {
     }
   }, [programs]);
 
-  // Handle status change with toast notifications
   const handleStatusChange = async (publicId, newStatusName, isTraining) => {
     const statusMap = {
       Hold: 1,
@@ -107,28 +103,37 @@ const AssignTraining = () => {
     const statusValue = statusMap[newStatusName];
 
     try {
-      // Update status via API
       await dispatch(updateProgramStatus({
         publicId,
         status: statusValue
       })).unwrap();
 
-      // Refetch program list
       await dispatch(fetchProgramList());
 
-      // Show success toast
       setSuccessMessage(`Status updated to ${newStatusName} successfully!`);
       setShowSuccessToast(true);
-      setTimeout(() => setShowSuccessToast(false), 3000); // Auto-dismiss after 3 seconds
-
-      // Close dropdown
+      setTimeout(() => setShowSuccessToast(false), 3000);
       setEditingStatus(null);
     } catch (err) {
-      // Show error toast
       setErrorMessage(err.message || 'Failed to update status. Please try again.');
       setShowErrorToast(true);
-      setTimeout(() => setShowErrorToast(false), 3000); // Auto-dismiss after 3 seconds
+      setTimeout(() => setShowErrorToast(false), 3000);
       console.error('Status update error:', err);
+    }
+  };
+
+  const handleDelete = async (publicId) => {
+    try {
+      await dispatch(deleteProgram(publicId)).unwrap();
+      await dispatch(fetchProgramList());
+      
+      setSuccessMessage('Program deleted successfully!');
+      setShowSuccessToast(true);
+      setTimeout(() => setShowSuccessToast(false), 3000);
+    } catch (err) {
+      setErrorMessage(err.message || 'Failed to delete program');
+      setShowErrorToast(true);
+      setTimeout(() => setShowErrorToast(false), 3000);
     }
   };
 
@@ -181,7 +186,8 @@ const AssignTraining = () => {
     { key: 'participantCount', label: 'Participants', sortable: true },
     { key: 'attendance', label: 'Attendance', sortable: false },
     { key: 'feedback', label: 'Feedback', sortable: true },
-    { key: 'status', label: 'Status', sortable: true }
+    { key: 'status', label: 'Status', sortable: true },
+    { key: 'actions', label: 'Actions', sortable: false }
   ];
 
   return (
@@ -194,7 +200,6 @@ const AssignTraining = () => {
           </h2>
         </div>
 
-        {/* Tab Buttons */}
         <div className="flex justify-center mb-8">
           <div className="inline-flex rounded-md shadow-sm">
             <button
@@ -203,10 +208,11 @@ const AssignTraining = () => {
                 setSearchTerm('');
                 setSortConfig({ key: null, direction: 'ascending' });
               }}
-              className={`px-6 py-3 text-sm font-medium rounded-l-lg focus:outline-none transition-colors ${activeTab === 'training'
-                ? 'bg-purple-600 text-white shadow-purple'
-                : 'bg-white text-purple-600 hover:bg-purple-50 border border-purple-200'
-                }`}
+              className={`px-6 py-3 text-sm font-medium rounded-l-lg focus:outline-none transition-colors ${
+                activeTab === 'training'
+                  ? 'bg-purple-600 text-white shadow-purple'
+                  : 'bg-white text-purple-600 hover:bg-purple-50 border border-purple-200'
+              }`}
             >
               <FaChalkboardTeacher className="inline mr-2" />
               Training Programs
@@ -217,10 +223,11 @@ const AssignTraining = () => {
                 setSearchTerm('');
                 setSortConfig({ key: null, direction: 'ascending' });
               }}
-              className={`px-6 py-3 text-sm font-medium rounded-r-lg focus:outline-none transition-colors ${activeTab === 'upskilling'
-                ? 'bg-purple-600 text-white shadow-purple'
-                : 'bg-white text-purple-600 hover:bg-purple-50 border border-purple-200'
-                }`}
+              className={`px-6 py-3 text-sm font-medium rounded-r-lg focus:outline-none transition-colors ${
+                activeTab === 'upskilling'
+                  ? 'bg-purple-600 text-white shadow-purple'
+                  : 'bg-white text-purple-600 hover:bg-purple-50 border border-purple-200'
+              }`}
             >
               <FaUserPlus className="inline mr-2" />
               Upskilling Programs
@@ -228,7 +235,6 @@ const AssignTraining = () => {
           </div>
         </div>
 
-        {/* Search and Add New Button Row */}
         <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
           <div className="relative w-full sm:max-w-md">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -252,7 +258,6 @@ const AssignTraining = () => {
           </button>
         </div>
 
-        {/* Training Table */}
         {activeTab === 'training' && (
           <div className="overflow-x-auto rounded-lg shadow-lg border border-gray-200">
             <table className="min-w-full border-collapse">
@@ -261,8 +266,9 @@ const AssignTraining = () => {
                   {columns.map((column) => (
                     <th
                       key={column.key}
-                      className={`p-2 text-left font-semibold text-sm border-b border-gray-200 ${column.key === 'startDate' ? 'w-[180px]' : ''
-                        }`}
+                      className={`p-2 text-left font-semibold text-sm border-b border-gray-200 ${
+                        column.key === 'startDate' ? 'w-[180px]' : ''
+                      }`}
                     >
                       <div className="flex items-center justify-between">
                         <span>{column.label}</span>
@@ -294,7 +300,12 @@ const AssignTraining = () => {
                       {index + 1}
                     </td>
                     <td className="p-2 text-purple-600 text-sm border-r border-gray-200">
-                      <div className="font-medium">{training.programName}</div>
+                      <button 
+                        onClick={() => navigate(`/training-detail/${training.id}`)}
+                        className="font-medium hover:underline cursor-pointer"
+                      >
+                        {training.programName}
+                      </button>
                     </td>
                     <td className="p-2 text-gray-700 text-sm border-r border-gray-200">
                       <div className="space-y-1.5">
@@ -334,7 +345,7 @@ const AssignTraining = () => {
                       className="p-2 text-gray-700 text-sm border-r border-gray-200 text-center cursor-pointer hover:bg-purple-50 transition-colors"
                       onClick={() => {
                         setSelectedTraining(training);
-                        setShowParticipantDetails(true);
+                        setShowUpskillingDetails(true); 
                       }}
                     >
                       <span className="font-medium text-purple-600">
@@ -352,11 +363,10 @@ const AssignTraining = () => {
                             setShowAttendanceDetails(true);
                           }}
                           className="p-1.5 rounded-lg bg-indigo-50 text-indigo-600 hover:bg-indigo-100 transition-colors group relative"
-                          title="Attendance Details"
                         >
                           <FiUserCheck className="w-4 h-4" />
                           <span className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 text-xs bg-gray-800 text-white px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-                            Edit Attendance
+                            Mark Attendance
                           </span>
                         </button>
                         <button
@@ -365,7 +375,6 @@ const AssignTraining = () => {
                             setShowViewAttendance(true);
                           }}
                           className="p-1.5 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors group relative"
-                          title="View Attendance"
                         >
                           <FiEye className="w-4 h-4" />
                           <span className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 text-xs bg-gray-800 text-white px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
@@ -374,7 +383,6 @@ const AssignTraining = () => {
                         </button>
                         <button
                           className="p-1.5 rounded-lg bg-green-50 text-green-600 hover:bg-green-100 transition-colors group relative"
-                          title="Download Report"
                         >
                           <FiDownload className="w-4 h-4" />
                           <span className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 text-xs bg-gray-800 text-white px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
@@ -420,6 +428,49 @@ const AssignTraining = () => {
                         </button>
                       )}
                     </td>
+                    <td className="p-2 text-gray-700 text-sm border-r border-gray-200">
+                      <div className="flex justify-center space-x-2">
+                        {/* <button
+                          onClick={() => {
+                            setSelectedTraining(training);
+                            setShowAddTraining(true);
+                          }}
+                          className="p-1.5 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors"
+                          title="Edit"
+                        >
+                          <FiEdit2 className="w-4 h-4" />
+                        </button> */}
+                        <button
+                          onClick={() => setShowDeleteConfirm(training.publicId)}
+                          className="p-1.5 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition-colors"
+                          title="Delete"
+                        >
+                          <FaTrash className="w-4 h-4" />
+                        </button>
+                      </div>
+                      {showDeleteConfirm === training.publicId && (
+                        <div className="absolute z-10 mt-1 bg-white shadow-lg rounded-md p-2 border border-red-200">
+                          <p className="text-sm mb-2">Delete this program?</p>
+                          <div className="flex justify-end space-x-2">
+                            <button
+                              onClick={() => setShowDeleteConfirm(null)}
+                              className="text-xs px-2 py-1 bg-gray-100 rounded"
+                            >
+                              Cancel
+                            </button>
+                            <button
+                              onClick={() => {
+                                handleDelete(training.publicId);
+                                setShowDeleteConfirm(null);
+                              }}
+                              className="text-xs px-2 py-1 bg-red-100 text-red-600 rounded"
+                            >
+                              Confirm
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -449,7 +500,6 @@ const AssignTraining = () => {
           </div>
         )}
 
-        {/* Upskilling Table */}
         {activeTab === 'upskilling' && (
           <div className="overflow-x-auto rounded-lg shadow-lg border border-gray-200">
             <table className="min-w-full border-collapse">
@@ -458,8 +508,9 @@ const AssignTraining = () => {
                   {columns.map((column) => (
                     <th
                       key={column.key}
-                      className={`p-2 text-left font-semibold text-sm border-b border-gray-200 ${column.key === 'startDate' ? 'w-[180px]' : ''
-                        }`}
+                      className={`p-2 text-left font-semibold text-sm border-b border-gray-200 ${
+                        column.key === 'startDate' ? 'w-[180px]' : ''
+                      }`}
                     >
                       <div className="flex items-center justify-between">
                         <span>{column.label}</span>
@@ -491,7 +542,12 @@ const AssignTraining = () => {
                       {index + 1}
                     </td>
                     <td className="p-2 text-purple-600 text-sm border-r border-gray-200">
-                      <div className="font-medium">{upskilling.programName}</div>
+                      <button 
+                        onClick={() => navigate(`/training-detail/${upskilling.publicId}`)}
+                        className="font-medium hover:underline cursor-pointer"
+                      >
+                        {upskilling.programName}
+                      </button>
                     </td>
                     <td className="p-2 text-gray-700 text-sm border-r border-gray-200">
                       <div className="space-y-1.5">
@@ -617,6 +673,49 @@ const AssignTraining = () => {
                         </button>
                       )}
                     </td>
+                    <td className="p-2 text-gray-700 text-sm border-r border-gray-200">
+                      <div className="flex justify-center space-x-2">
+                        {/* <button
+                          onClick={() => {
+                            setSelectedTraining(upskilling);
+                            setShowAddUpskilling(true);
+                          }}
+                          className="p-1.5 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors"
+                          title="Edit"
+                        >
+                          <FiEdit2 className="w-4 h-4" />
+                        </button> */}
+                        <button
+                          onClick={() => setShowDeleteConfirm(upskilling.publicId)}
+                          className="p-1.5 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition-colors"
+                          title="Delete"
+                        >
+                          <FaTrash className="w-4 h-4" />
+                        </button>
+                      </div>
+                      {showDeleteConfirm === upskilling.publicId && (
+                        <div className="absolute z-10 mt-1 bg-white shadow-lg rounded-md p-2 border border-red-200">
+                          <p className="text-sm mb-2">Delete this program?</p>
+                          <div className="flex justify-end space-x-2">
+                            <button
+                              onClick={() => setShowDeleteConfirm(null)}
+                              className="text-xs px-2 py-1 bg-gray-100 rounded"
+                            >
+                              Cancel
+                            </button>
+                            <button
+                              onClick={() => {
+                                handleDelete(upskilling.publicId);
+                                setShowDeleteConfirm(null);
+                              }}
+                              className="text-xs px-2 py-1 bg-red-100 text-red-600 rounded"
+                            >
+                              Confirm
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -646,7 +745,6 @@ const AssignTraining = () => {
           </div>
         )}
 
-        {/* Toasts */}
         {showSuccessToast && (
           <SuccessToast
             message={successMessage}
@@ -660,7 +758,6 @@ const AssignTraining = () => {
           />
         )}
 
-        {/* Attendance Details Modal */}
         {showAttendanceDetails && (
           <AttendanceDetailsModal
             onClose={() => setShowAttendanceDetails(false)}
@@ -668,7 +765,6 @@ const AssignTraining = () => {
           />
         )}
 
-        {/* View Attendance Modal */}
         {showViewAttendance && (
           <ViewAttendanceModal
             onClose={() => setShowViewAttendance(false)}
@@ -676,7 +772,6 @@ const AssignTraining = () => {
           />
         )}
 
-        {/* Participant Details Modal (for Training tab) */}
         {showParticipantDetails && (
           <ParticipantDetailsModal
             onClose={() => setShowParticipantDetails(false)}
@@ -684,7 +779,6 @@ const AssignTraining = () => {
           />
         )}
 
-        {/* Upskilling Details Modal (for Upskilling tab) */}
         {showUpskillingDetails && (
           <UpskillingDetailModal
             onClose={() => setShowUpskillingDetails(false)}
@@ -692,7 +786,6 @@ const AssignTraining = () => {
           />
         )}
 
-        {/* Training Feedback Modal */}
         {showFeedbackModal && (
           <TrainingFeedback
             training={selectedTraining}
@@ -708,7 +801,6 @@ const AssignTraining = () => {
           />
         )}
 
-        {/* Add Training Modal */}
         {showAddTraining && (
           <AddTraining
             isUpskilling={false}
@@ -722,10 +814,10 @@ const AssignTraining = () => {
                 score: 0
               }]);
             }}
+            initialData={selectedTraining}
           />
         )}
 
-        {/* Add Upskilling Modal */}
         {showAddUpskilling && (
           <AddTraining
             isUpskilling={true}
@@ -739,6 +831,7 @@ const AssignTraining = () => {
                 score: 0
               }]);
             }}
+            initialData={selectedTraining}
           />
         )}
       </div>

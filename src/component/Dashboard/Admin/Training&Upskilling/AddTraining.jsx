@@ -6,7 +6,6 @@ import {
   FaUsers,
   FaTimes,
   FaCheck,
-  FaPlus,
   FaCalendarDay,
   FaProjectDiagram,
   FaUserPlus,
@@ -15,12 +14,66 @@ import {
 import Select from "react-select";
 import { holidays, isHoliday } from "../../../helper/holidays";
 import { useDispatch, useSelector } from "react-redux";
-import Dropdown from "../../../helper/Dropdown";
 import AddOptionModal from "../../../helper/OptionalModal";
 import { ErrorToast, SuccessToast } from '../../../helper/ResourceToast';
 import { createProgram, fetchProgramList } from '../../../../features/program/programAction';
 import { fetchTrainingTechnologies, fetchResources, fetchCompetencies } from "../../../../features/resource/resourceAction";
 import YRMSLoader from "../../../helper/Loader";
+
+const MultiSelectTechnology = ({ value, onChange, setModalField, loading, options }) => {
+  const handleAddNew = () => {
+    setModalField("trainingtechnology");
+  };
+
+  // Custom dropdown menu with sticky "Add" button at the bottom
+  const MenuList = (props) => {
+    return (
+      <div>
+        {props.children}
+        <div style={{
+          position: "sticky",
+          bottom: 0,
+          background: "white",
+          borderTop: "1px solid #eee",
+          padding: "8px",
+          zIndex: 1,
+        }}>
+          <button
+            type="button"
+            onClick={handleAddNew}
+            className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center justify-center text-sm"
+          >
+            Add Training Technology
+          </button>
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <div className="flex flex-col">
+      <Select
+        options={options}
+        isMulti
+        value={value}
+        onChange={onChange}
+        className="basic-multi-select"
+        classNamePrefix="select"
+        placeholder="Select technologies..."
+        isLoading={loading}
+        components={{ MenuList }} // Inject custom MenuList
+        styles={{
+          menu: (provided) => ({
+            ...provided,
+            maxHeight: 200,
+            overflowY: "auto",
+          }),
+        }}
+      />
+
+    </div>
+  );
+};
 
 const AddTraining = ({ onClose, onSave, isUpskilling = false }) => {
   const dispatch = useDispatch();
@@ -44,6 +97,11 @@ const AddTraining = ({ onClose, onSave, isUpskilling = false }) => {
     { value: 3, label: "Project_Management_Office" },
   ];
 
+  const technologyOptions = trainingTechnologies.map(tech => ({
+    value: tech.publicId,
+    label: tech.name,
+  }));
+
   const [formData, setFormData] = useState({
     programName: "",
     trainerName: null,
@@ -52,7 +110,7 @@ const AddTraining = ({ onClose, onSave, isUpskilling = false }) => {
     endDate: "",
     requester: null,
     competency: null,
-    technology: "",
+    technologies: [],
     projectDescription: "",
     purpose: "",
     participants: [],
@@ -98,18 +156,10 @@ const AddTraining = ({ onClose, onSave, isUpskilling = false }) => {
     });
   };
 
-  const handleMultiSelectChange = (selectedOptions) => {
+  const handleMultiSelectChange = (name, selectedOptions) => {
     setFormData({
       ...formData,
-      participants: selectedOptions,
-    });
-  };
-
-  const handleDropdownChange = (e) => {
-    const { name, value } = e.target;
-    setFormData({
-      ...formData,
-      [name]: value,
+      [name]: selectedOptions,
     });
   };
 
@@ -123,9 +173,9 @@ const AddTraining = ({ onClose, onSave, isUpskilling = false }) => {
     if (!formData.endDate) newErrors.endDate = "End date is required";
     if (!formData.requester) newErrors.requester = "Requester is required";
     if (!formData.competency) newErrors.competency = "Competency is required";
-    if (!formData.purpose) newErrors.purpose = "purpose is required";
-    // if (!formData.technology)
-    //   newErrors.technology = `${isUpskilling ? 'Upskilling' : 'Training'} technology is required`;
+    if (!formData.purpose) newErrors.purpose = "Purpose is required";
+    if (formData.technologies.length === 0)
+      newErrors.technologies = "At least one technology is required";
     if (formData.participants.length === 0)
       newErrors.participants = "At least one participant is required";
 
@@ -147,13 +197,16 @@ const AddTraining = ({ onClose, onSave, isUpskilling = false }) => {
         endDate: formData.endDate,
         duration: parseInt(formData.duration),
         requester: formData.requester.value,
-        technology: formData.technology,
+        // technology: formData.technologies.map(t => t.label), // Combine technologies into a string
+        technology: formData.technologies.map(t => t.label).join(", "), // Combine technologies into a string
         projectDescription: formData.projectDescription,
         competencyId: formData.competency.value,
         trainerId: formData.trainerName.value,
         purpose: formData.purpose,
         participantIds: formData.participants.map((p) => p.value)
       };
+
+      console.log('payload >>>' , programData);
 
       const createResult = await dispatch(createProgram(programData)).unwrap();
 
@@ -265,6 +318,7 @@ const AddTraining = ({ onClose, onSave, isUpskilling = false }) => {
                       onChange={handleChange}
                       min={formatDate(new Date())}
                       className={`w-full pl-10 p-2 border rounded-md focus:ring-2 focus:ring-purple-500 focus:border-purple-500 ${errors.startDate ? "border-red-500" : "border-gray-300"}`}
+                      onClick={(e) => e.target.showPicker()}
                     />
                     {errors.startDate && (
                       <p className="mt-1 text-sm text-red-600">
@@ -313,8 +367,9 @@ const AddTraining = ({ onClose, onSave, isUpskilling = false }) => {
                       type="date"
                       name="endDate"
                       value={formData.endDate}
-                      readOnly
-                      className={`w-full pl-10 p-2 border rounded-md bg-gray-100 ${errors.endDate ? "border-red-500" : "border-gray-300"}`}
+                      onChange={handleChange}
+                      className={`w-full pl-10 p-2 border rounded-md focus:ring-2 focus:ring-purple-500 focus:border-purple-500 ${errors.endDate ? "border-red-500" : "border-gray-300"}`}
+                      onClick={(e) => e.target.showPicker()}
                     />
                     {errors.endDate && (
                       <p className="mt-1 text-sm text-red-600">
@@ -367,29 +422,28 @@ const AddTraining = ({ onClose, onSave, isUpskilling = false }) => {
               )}
             </div>
 
-            {/* Training Technology Field */}
+            {/* Training Technology and Project Details */}
             <div className="flex flex-col md:flex-row md:col-span-2 gap-6">
-              {/* Technology Dropdown - Left Side */}
+              {/* Multi-Select Technology */}
               <div className="flex-1">
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  {isUpskilling ? 'Upskilling Technology' : 'Training Technology'} <span className="text-red-500">*</span>
+                  {isUpskilling ? 'Upskilling Technologies' : 'Training Technologies'} <span className="text-red-500">*</span>
                 </label>
-                <Dropdown
-                  name="trainingtechnology"
-                  value={formData.technology}
-                  options={trainingTechnologies}
-                  onChange={handleDropdownChange}
+                <MultiSelectTechnology
+                  value={formData.technologies}
+                  onChange={(selected) => handleMultiSelectChange("technologies", selected)}
                   setModalField={setModalField}
                   loading={trainingTechnologyLoading}
+                  options={technologyOptions}
                 />
-                {errors.technology && (
+                {errors.technologies && (
                   <p className="mt-1 text-sm text-red-600">
-                    {errors.technology}
+                    {errors.technologies}
                   </p>
                 )}
               </div>
 
-              {/* Project Details - Right Side */}
+              {/* Project Details */}
               <div className="flex-1">
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Project Details {!isUpskilling && <span className="text-red-500">*</span>}
@@ -448,7 +502,7 @@ const AddTraining = ({ onClose, onSave, isUpskilling = false }) => {
                   options={trainerOptions}
                   isMulti
                   value={formData.participants}
-                  onChange={handleMultiSelectChange}
+                  onChange={(selected) => handleMultiSelectChange("participants", selected)}
                   className={`basic-multi-select ${errors.participants ? "border-red-500" : ""}`}
                   classNamePrefix="select"
                   placeholder="Select participants..."
