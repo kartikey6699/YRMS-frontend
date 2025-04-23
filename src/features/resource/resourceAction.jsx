@@ -49,7 +49,7 @@ export const fetchResources = createAsyncThunk(
       technology,
       role_id, // New optional parameter
       page = 1,
-      size = 10
+      size = 1000
     } = {},
     { rejectWithValue }
   ) => {
