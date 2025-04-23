@@ -6,7 +6,7 @@ import EmployeeDetailPage from './UserDetails';
 import { useDispatch, useSelector } from "react-redux";
 import { fetchResources } from '../../../../features/resource/resourceAction';
 
-const UserList = ({setActiveSection}) => {
+const UserList = ({ setActiveSection }) => {
 
   const dispatch = useDispatch();
   const { resources } = useSelector((state) => state.resource);
@@ -19,6 +19,29 @@ const UserList = ({setActiveSection}) => {
     competency: null
   });
 
+  const getRoleName = (roleIds) => {
+    console.log(roleIds, "fjsioif")
+    if (!roleIds) return "N/A";
+  
+    // Get roles from sessionStorage (expecting a stringified array of roles)
+    const storedRoles = sessionStorage.getItem('role');
+    if (!storedRoles) return "N/A";
+  
+    try {
+      const roles = JSON.parse(storedRoles); // Parse the stored string into an array
+  
+      // Handle both single ID and array of IDs
+      const roleNames = Array.isArray(roleIds) 
+        ? roleIds.map(id => roles.find(r => r.id === id)?.role || "Unknown") 
+        : [roles.find(r => r.id === roleIds)?.role || "Unknown"];
+  
+      return roleNames.join(", "); // Combine names if multiple IDs
+    } catch (e) {
+      console.error("Error parsing roles:", e);
+      return "N/A";
+    }
+  };
+  
   useEffect(() => {
     dispatch(fetchResources())
   }, [dispatch], resources);
@@ -64,6 +87,7 @@ const UserList = ({setActiveSection}) => {
     { key: 'designation', label: 'Designation' },
     { key: 'competency', label: 'Competency' },
     { key: 'joiningDate', label: 'Joining Date' },
+    { key: 'roleIds', label: 'Role' },
     { key: 'status', label: 'Status' }
   ];
 
@@ -74,7 +98,7 @@ const UserList = ({setActiveSection}) => {
           <h2 className="text-3xl font-bold text-blue-800">All Users</h2>
           <button
             className="btn px-6 py-3 rounded-lg font-semibold text-lg flex items-center bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 transition-all transform hover:scale-105"
-            onClick={() => {setActiveSection('add')}}
+            onClick={() => { setActiveSection('add') }}
           >
             <FaPlus className="mr-2" />
             Add User
@@ -196,6 +220,9 @@ const UserList = ({setActiveSection}) => {
                 {resource.competency.charAt(0).toUpperCase() + resource.competency.slice(1)}
               </td>
               <td className="p-3 text-gray-700 text-sm border-r border-gray-200">{new Date(resource.joiningDate).toLocaleDateString()}</td>
+              <td className="p-3 text-gray-700 text-sm border-r border-gray-200">
+                {getRoleName(resource.roleIds)}
+              </td>
               <td className="p-3 text-gray-700 text-sm border-r border-gray-200 relative">
                 <span className={`px-2 py-1 rounded-full text-xs ${resource.status === 'Active' ? 'bg-blue-100 text-blue-800' :
                   resource.status === 'Inactive' ? 'bg-red-100 text-red-800' :

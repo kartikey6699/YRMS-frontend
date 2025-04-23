@@ -10,7 +10,7 @@ import {
   FaSitemap,
   FaLightbulb,
   FaIdBadge,
-  FaCalendarAlt,
+  FaChevronDown,
   FaEdit,
   FaTimes,
   FaSave,
@@ -18,22 +18,64 @@ import {
   FaUserTie,
   FaChartLine
 } from 'react-icons/fa';
-import { fetchResourceDetails, updateResource } from '../../../../features/resource/resourceAction';
+import { fetchCompetencies, fetchDesignations, fetchResourceDetails, updateResource } from '../../../../features/resource/resourceAction';
 
 const EmployeeDetailPage = ({ publicId, onClose }) => {
   const dispatch = useDispatch();
-  const { resourceDetails, loading, error } = useSelector((state) => state.resource);
+  const { resourceDetails, loading, competencies, designations, error } = useSelector((state) => state.resource);
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({});
   const [toast, setToast] = useState(null);
   const [showAdditionalInfo, setShowAdditionalInfo] = useState(false);
+  const [isRolesOpen, setIsRolesOpen] = useState(false);
 
-  // Fetch resource details when component mounts or publicId changes
+  const handleRoleToggle = (roleId) => {
+    setFormData(prev => ({
+      ...prev,
+      roleIds: prev.roleIds.includes(roleId)
+        ? prev.roleIds.filter(id => id !== roleId)
+        : [...prev.roleIds, roleId]
+    }));
+  };
+
   useEffect(() => {
-    if (publicId) {
+    if (!resourceDetails || resourceDetails.publicId !== publicId) {
       dispatch(fetchResourceDetails(publicId));
+      dispatch(fetchCompetencies());
+      dispatch(fetchDesignations());
     }
-  }, [dispatch, resourceDetails]);
+  }, [dispatch]);
+
+
+  // Get roles from sessionStorage (expecting a stringified array of roles)
+  const storedRoles = sessionStorage.getItem('role');
+
+  const roles = JSON.parse(storedRoles); // Parse the stored string into an array
+
+  const getRoleName = (roleIds) => {
+    console.log(roleIds, "Input role IDs");
+    if (!roleIds) return { names: "N/A", ids: "N/A" };
+
+    if (!storedRoles) return { names: "N/A", ids: "N/A" };
+
+    try {
+      // Handle both single ID and array of IDs
+      const result = Array.isArray(roleIds)
+        ? {
+          names: roleIds.map(id => roles.find(r => r.id === id)?.role || "Unknown").join(", "),
+          ids: roleIds.join(", ")
+        }
+        : {
+          names: roles.find(r => r.id === roleIds)?.role || "Unknown",
+          ids: roleIds
+        };
+
+      return result;
+    } catch (e) {
+      console.error("Error parsing roles:", e);
+      return { names: "N/A", ids: "N/A" };
+    }
+  };
 
   // Initialize form data when resourceDetails changes
   useEffect(() => {
@@ -67,13 +109,13 @@ const EmployeeDetailPage = ({ publicId, onClose }) => {
         publicId: publicId,
         updatedData: formData
       })).unwrap();
-      
+
       setToast({ type: 'success', message: 'Employee details updated successfully!' });
       setIsEditing(false);
     } catch (error) {
-      setToast({ 
-        type: 'error', 
-        message: error.message || 'Failed to update employee details' 
+      setToast({
+        type: 'error',
+        message: error.message || 'Failed to update employee details'
       });
     }
   };
@@ -86,7 +128,7 @@ const EmployeeDetailPage = ({ publicId, onClose }) => {
     setIsEditing(false);
   };
 
-  console.log("resourceDetails: ",resourceDetails)
+  console.log("resourceDetails: ", resourceDetails)
 
   if (!resourceDetails) {
     return (
@@ -164,11 +206,10 @@ const EmployeeDetailPage = ({ publicId, onClose }) => {
                 {/* Status */}
                 <div className="bg-gradient-to-r from-indigo-50 to-blue-50 px-3 py-2 rounded-lg shadow-xs flex items-center gap-2 border border-indigo-100">
                   <span className="text-sm text-indigo-600 font-medium">Status:</span>
-                  <div className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                    formData.status === 'Active' ? 'bg-green-100 text-green-800' :
+                  <div className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${formData.status === 'Active' ? 'bg-green-100 text-green-800' :
                     formData.status === 'Inactive' ? 'bg-red-100 text-red-800' :
-                    'bg-yellow-100 text-yellow-800'
-                  }`}>
+                      'bg-yellow-100 text-yellow-800'
+                    }`}>
                     {formData.status || 'Not specified'}
                   </div>
                 </div>
@@ -192,7 +233,7 @@ const EmployeeDetailPage = ({ publicId, onClose }) => {
                       </span>
                     )}
                   </div>
-                  </div>
+                </div>
 
               </div>
             </div>
@@ -233,7 +274,7 @@ const EmployeeDetailPage = ({ publicId, onClose }) => {
                 <FaUser className="text-indigo-500 mr-2 text-sm" />
                 Personal Information
               </h4>
-              
+
               <div className="space-y-4">
                 {/* Email */}
                 <div className="bg-indigo-50/50 p-3 rounded-lg border border-indigo-100">
@@ -310,28 +351,74 @@ const EmployeeDetailPage = ({ publicId, onClose }) => {
                 <FaBriefcase className="text-indigo-500 mr-2 text-sm" />
                 Employment Details
               </h4>
-              
+
               <div className="space-y-4">
-                {/* Joining Date */}
+                {/* Role */}
                 <div className="bg-indigo-50/50 p-3 rounded-lg border border-indigo-100">
                   <label className="block text-xs text-indigo-600 mb-1 font-semibold flex items-center">
                     <FaVenusMars className="mr-2" /> Role
                   </label>
                   {isEditing ? (
-                    <select
-                      name="role"
-                      value={formData.role}
-                      onChange={handleInputChange}
-                      className="w-full bg-white border border-indigo-200 rounded-md px-2 py-1.5 text-sm focus:ring-1 focus:ring-indigo-300"
-                      disabled={loading}
-                    >
-                      <option value="">Select Role</option>
-                      <option value="admin">Admin</option>
-                      <option value="user">User</option>
-                    </select>
+                    <div className="relative">
+                      {/* Input-like container that shows selected roles */}
+                      <div
+                        className={`w-full min-h-12 p-2 bg-white border border-indigo-200 rounded-md flex flex-wrap items-center cursor-pointer ${isRolesOpen ? 'ring-1 ring-indigo-300 border-transparent' : ''}`}
+                        onClick={() => setIsRolesOpen(!isRolesOpen)}
+                      >
+                        {formData.roleIds.length === 0 ? (
+                          <span className="text-gray-400 ml-2">Select roles...</span>
+                        ) : (
+                          formData.roleIds.map(roleId => {
+                            const role = roles.find(r => r.id === roleId);
+                            return (
+                              <div
+                                key={roleId}
+                                className="bg-indigo-100 text-indigo-800 text-sm px-2 py-1 rounded m-1 flex items-center"
+                              >
+                                {role?.role || 'Unknown'}
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleRoleToggle(roleId);
+                                  }}
+                                  className="ml-1 text-indigo-500 hover:text-indigo-700"
+                                >
+                                  <FaTimes className="text-xs" />
+                                </button>
+                              </div>
+                            );
+                          })
+                        )}
+                        <div className="ml-auto pr-2">
+                          <FaChevronDown className={`text-gray-400 transition-transform ${isRolesOpen ? 'transform rotate-180' : ''}`} />
+                        </div>
+                      </div>
+
+                      {/* Dropdown with checkboxes */}
+                      {isRolesOpen && (
+                        <div className="absolute z-10 mt-1 w-full bg-white shadow-lg rounded-lg py-1 border border-indigo-200 max-h-60 overflow-auto">
+                          {roles.map(role => (
+                            <label
+                              key={role.id}
+                              className="flex items-center px-4 py-2 hover:bg-gray-50 cursor-pointer"
+                            >
+                              <input
+                                type="checkbox"
+                                className="form-checkbox h-4 w-4 text-indigo-600 transition duration-150 ease-in-out rounded"
+                                checked={formData.roleIds.includes(role.id)}
+                                onChange={() => handleRoleToggle(role.id)}
+                                onClick={(e) => e.stopPropagation()}
+                              />
+                              <span className="ml-3 text-gray-700">{role.role}</span>
+                            </label>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   ) : (
                     <p className="text-sm font-medium text-indigo-800">
-                      {formData.role || 'Not specified'}
+                      {getRoleName(formData.roleIds).names || 'Not specified'}
                     </p>
                   )}
                 </div>
@@ -348,10 +435,13 @@ const EmployeeDetailPage = ({ publicId, onClose }) => {
                       className="w-full bg-white border border-indigo-200 rounded-md px-2 py-1.5 text-sm focus:ring-1 focus:ring-indigo-300"
                       disabled={loading}
                     >
-                      <option value="">Select Location</option>
-                      <option value="indore">Indore</option>
-                      <option value="pune">Pune</option>
-                      <option value="hydrabad">Hydrabad</option>
+                      <option value="indore-yash-it-park-sc-dc">Indore-YASH IT Park-SC-DC</option>
+                      <option value="pune-magarpatta-dc-ii">Pune-Magarpatta-DC-II</option>
+                      <option value="hyderabad-mindspace-i-dc">Hyderabad-Mindspace I-DC</option>
+                      <option value="bangalore-whitefield-dc">Bangalore-Whitefield-DC</option>
+                      <option value="indore-crystal-it-park-dc-ii">Indore-Crystal IT Park-DC-II</option>
+                      <option value="indore-btc-co">Indore-BTC-CO</option>
+                      <option value="indore-btc-co">Pune-Hinjewadi III-DC</option>
                     </select>
                   ) : (
                     <p className="text-sm font-medium text-indigo-800">
@@ -362,25 +452,31 @@ const EmployeeDetailPage = ({ publicId, onClose }) => {
 
                 {/* Designation */}
                 <div className="bg-indigo-50/50 p-3 rounded-lg border border-indigo-100">
-                  <label className="block text-xs text-indigo-600 mb-1 font-semibold">
-                    <FaUserTie className="mr-2 inline" /> Designation
-                  </label>
+                  <label className="block text-xs text-indigo-600 mb-1 font-semibold">Designation</label>
                   {isEditing ? (
                     <select
-                      name="role"
-                      value={formData.designation}
-                      onChange={handleInputChange}
-                      className="w-full bg-white border border-indigo-200 rounded-md px-2 py-1.5 text-sm focus:ring-1 focus:ring-indigo-300"
-                      disabled={loading}
+                      name='designation'
+                      value={formData.competencyId || ''}
+                      onChange={(e) => {
+                        const selectedDesignation = designations.find(c => c.publicId === e.target.value);
+                        setFormData(prev => ({
+                          ...prev,
+                          competencyId: e.target.value,
+                          competency: selectedDesignation?.name || ''
+                        }));
+                      }}
+                      className="w-full h-12 p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 transition-colors"
+                      required
                     >
-                      <option value="">Select Designation</option>
-                      <option value="software_developer">Software Developer</option>
-                      <option value="sr_software_developer">Sr Software Developer</option>
-                      <option value="module_lead">Module Lead</option>
-                      <option value="tech_lead">Tech Lead</option>
+                      <option value="" disabled>Select Designation</option>
+                      {designations.map((designation) => (
+                        <option value={designation.publicId} key={designation.publicId}>
+                          {designation.name}
+                        </option>
+                      ))}
                     </select>
                   ) : (
-                    <p className="text-sm font-medium text-indigo-800">
+                    <p className="text-sm font-medium text-indigo-800 truncate">
                       {formData.designation || 'Not specified'}
                     </p>
                   )}
@@ -394,7 +490,7 @@ const EmployeeDetailPage = ({ publicId, onClose }) => {
                 <FaBuilding className="text-indigo-500 mr-2 text-sm" />
                 Organizational Structure
               </h4>
-              
+
               <div className="space-y-4">
                 {/* Business Group */}
                 <div className="bg-indigo-50/50 p-3 rounded-lg border border-indigo-100">
@@ -410,10 +506,9 @@ const EmployeeDetailPage = ({ publicId, onClose }) => {
                       disabled={loading}
                     >
                       <option value="">Select Business Group</option>
-                      <option value="BG1">Business Group 1</option>
-                      <option value="BG2">Business Group 2</option>
-                      <option value="BG3">Business Group 3</option>
-                      <option value="BG4">Business Group 4</option>
+                      <option value="BG4">BG4</option>
+                      <option value="BG5">BG5</option>
+                      <option value="SSG1">SSG1</option>
                     </select>
                   ) : (
                     <p className="text-sm font-medium text-indigo-800">
@@ -436,10 +531,9 @@ const EmployeeDetailPage = ({ publicId, onClose }) => {
                       disabled={loading}
                     >
                       <option value="">Select Business Unit</option>
-                      <option value="BU1">Business Unit 1</option>
-                      <option value="BU2">Business Unit 2</option>
-                      <option value="BU3">Business Unit 3</option>
-                      <option value="BU4">Business Unit 4</option>
+                      <option value="BU5">BU5</option>
+                      <option value="BU4">BU4</option>
+                      <option value="SSU1">SSU1</option>
                     </select>
                   ) : (
                     <p className="text-sm font-medium text-indigo-800">
@@ -450,24 +544,31 @@ const EmployeeDetailPage = ({ publicId, onClose }) => {
 
                 {/* Competency */}
                 <div className="bg-indigo-50/50 p-3 rounded-lg border border-indigo-100">
-                  <label className="block text-xs text-indigo-600 mb-1 font-semibold flex items-center">
-                    <FaLightbulb className="mr-2" /> Competency
-                  </label>
+                  <label className="block text-xs text-indigo-600 mb-1 font-semibold">Competency</label>
                   {isEditing ? (
                     <select
-                      name="role"
-                      value={formData.competency}
-                      onChange={handleInputChange}
-                      className="w-full bg-white border border-indigo-200 rounded-md px-2 py-1.5 text-sm focus:ring-1 focus:ring-indigo-300"
-                      disabled={loading}
+                      name='competencyId'
+                      value={formData.competencyId || ''}
+                      onChange={(e) => {
+                        const selectedCompetency = competencies.find(c => c.publicId === e.target.value);
+                        setFormData(prev => ({
+                          ...prev,
+                          competencyId: e.target.value,
+                          competency: selectedCompetency?.name || ''
+                        }));
+                      }}
+                      className="w-full h-12 p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 transition-colors"
+                      required
                     >
-                      <option value="">Select Competency</option>
-                      <option value="python">Python</option>
-                      <option value="java">Java</option>
-                      <option value="scala">Scala</option>
+                      <option value="" disabled>Select Competency</option>
+                      {competencies.map((competency) => (
+                        <option value={competency.publicId} key={competency.publicId}>
+                          {competency.name}
+                        </option>
+                      ))}
                     </select>
                   ) : (
-                    <p className="text-sm font-medium text-indigo-800">
+                    <p className="text-sm font-medium text-indigo-800 truncate">
                       {formData.competency || 'Not specified'}
                     </p>
                   )}
@@ -483,14 +584,14 @@ const EmployeeDetailPage = ({ publicId, onClose }) => {
                 <FaChartLine className="text-indigo-500 mr-2 text-sm" />
                 Additional Information
               </h4>
-              <button 
+              <button
                 onClick={() => setShowAdditionalInfo(!showAdditionalInfo)}
                 className="text-sm text-indigo-600 hover:text-indigo-800"
               >
                 {showAdditionalInfo ? 'Hide' : 'Show More'}
               </button>
             </div>
-            
+
             {showAdditionalInfo && (
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {/* Add any additional fields here */}

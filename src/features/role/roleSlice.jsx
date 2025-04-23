@@ -1,14 +1,17 @@
 import { createSlice } from "@reduxjs/toolkit";
 import {
-  fetchRoles
+  fetchRoles,
+  createRoles,
+  fetchFeatures
 } from "./roleAction";
-import { fetchFeatures } from "./roleAction";
 
 const initialState = {
   roles: [],
   features: [],
   roleLoading: false,
   featuresloading: false,
+  createdrole: null,
+  roleDetails: null,
   pagination: {
     currentPage: 1,
     totalPages: 1,
@@ -31,12 +34,12 @@ const roleSlice = createSlice({
       state.error = null;
     },
     resetRolesDetails: (state) => {
-      if (state.resourceDetails) {
-        state.resourceDetails = null;
+      if (state.roleDetails) {
+        state.roleDetails = null;
       }
     },
     resetCreatedRoles: (state) => {
-      state.createdRoles = null;
+      state.createdrole = null;
     },
     setPage: (state, action) => {
       state.pagination.currentPage = action.payload;
@@ -49,7 +52,27 @@ const roleSlice = createSlice({
   extraReducers: (builder) => {
     builder
 
-      // Fetch Roles (New)
+      // Create Resource
+      .addCase(createRoles.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(createRoles.fulfilled, (state, { payload }) => {
+        state.loading = false;
+        state.createdrole = payload;
+        state.roles.unshift({
+          id: payload.id || '',
+          role: payload.role,
+          permission: payload.features || []
+        });
+        state.pagination.totalItems += 1;
+      })
+      .addCase(createRoles.rejected, (state, { payload }) => {
+        state.loading = false;
+        state.error = payload;
+      })
+
+    // Fetch Roles (New)
       .addCase(fetchRoles.pending, (state) => {
         state.roleLoading = true;
         state.error = null;
@@ -61,6 +84,7 @@ const roleSlice = createSlice({
           role: item?.role,
           features: item?.permission
         }));
+        sessionStorage.setItem('role', JSON.stringify(state.roles));
       })
       .addCase(fetchRoles.rejected, (state, { payload }) => {
         state.roleLoading = false;

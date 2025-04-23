@@ -18,7 +18,7 @@ rolesApiClient.interceptors.request.use((config) => {
 });
 
 export const fetchRoles = createAsyncThunk(
-  "resource/fetchRoles",
+  "role/fetchRoles",
   async (_, { rejectWithValue }) => {
     try {
       const response = await rolesApiClient.get(ROLE_API.LIST, {
@@ -29,20 +29,20 @@ export const fetchRoles = createAsyncThunk(
       const { success, data, message } = response.data;
 
       if (!success) {
-        throw new Error(message || "Failed to fetch technologies");
+        throw new Error(message || "Failed to fetch roles");
       }
       return data;
     } catch (error) {
       const errorMessage =
         error.response?.data?.message ||
         error.message ||
-        "Failed to fetch technologies";
+        "Failed to fetch roles";
       return rejectWithValue(errorMessage);
     }
   }
 );
 export const fetchFeatures = createAsyncThunk(
-  "resource/fetchFeatures",
+  "role/fetchFeatures",
   async (_, { rejectWithValue }) => {
     try {
       const response = await rolesApiClient.get(FEATURE_API.LIST, {
@@ -53,7 +53,7 @@ export const fetchFeatures = createAsyncThunk(
       const { success, data, message } = response.data;
 
       if (!success) {
-        throw new Error(message || "Failed to fetch technologies");
+        throw new Error(message || "Failed to fetch roles");
       }
 
       console.log(data, "dsf")
@@ -63,7 +63,29 @@ export const fetchFeatures = createAsyncThunk(
       const errorMessage =
         error.response?.data?.message ||
         error.message ||
-        "Failed to fetch technologies";
+        "Failed to fetch roles";
+      return rejectWithValue(errorMessage);
+    }
+  }
+);
+
+export const createRoles = createAsyncThunk(
+  "role/createRoles",
+  async (roleData, { rejectWithValue }) => {
+    try {
+      const response = await roleApiClient.post(ROLE_API.CREATE, roleData);
+      const { success, data, message } = response.data;
+
+      if (!success) {
+        throw new Error(message || "Failed to create role");
+      }
+
+      return data;
+    } catch (error) {
+      const errorMessage =
+        error.response?.data?.message ||
+        error.message ||
+        "Failed to create role";
       return rejectWithValue(errorMessage);
     }
   }

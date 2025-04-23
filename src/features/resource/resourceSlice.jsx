@@ -128,7 +128,8 @@ const resourceSlice = createSlice({
           certifications: user.certification || "",
           communication: user.communication || "",
           profileImage: user.profileImage,
-          programs: user.programs || []
+          programs: user.programs || [],
+          roleIds: user.roleIds || []
         }));
 
         if (payload.pagination) {
@@ -222,6 +223,7 @@ const resourceSlice = createSlice({
             location: payload.location,
             phoneNumber: payload.phoneNumber,
             email: payload.email,
+            gender: payload.gender,
             joiningDate: payload.joiningDate,
             status: payload.status || "pool",
             grade: payload.grade,
@@ -231,7 +233,8 @@ const resourceSlice = createSlice({
             certifications: payload.certification || "",
             communication: payload.communication || "",
             profileImage: payload.profileImage,
-            resumeFile: payload.resumeFile
+            resumeFile: payload.resumeFile,
+            roleIds: payload.roleIds || []
           };
         }
       })

@@ -69,6 +69,8 @@ const AddRoleForm = ({ setActiveSection }) => {
     const handleSubmit = (e) => {
         e.preventDefault();
         console.log(formData, "dfffffff")
+        
+
         onClose(); // Close the form after saving
     };
 
