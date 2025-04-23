@@ -47,8 +47,9 @@ export const fetchResources = createAsyncThunk(
       communication,
       certification,
       technology,
-      page = 1, // Added page parameter
-      size = 10 // Added pageSize parameter
+      role_id, // New optional parameter
+      page = 1,
+      size = 10
     } = {},
     { rejectWithValue }
   ) => {
@@ -71,8 +72,9 @@ export const fetchResources = createAsyncThunk(
         ...(mappedCommunication && { communication: mappedCommunication }),
         ...(certification && { certification }),
         ...(technologyString && { technology: technologyString }),
-        page, // Include page in the request
-        size // Include pageSize in the request
+        ...(role_id && { role_id }), // Include role_id if provided
+        page,
+        size
       });
 
       console.log("params log", params.toString());
@@ -341,7 +343,7 @@ export const fetchTechnologies = createAsyncThunk(
   "resource/fetchTechnologies",
   async (_, { rejectWithValue }) => {
     try {
-      const response = await resourceApiClient.get( TECHNOLOGY_BASELINE_API.GET , {
+      const response = await resourceApiClient.get(TECHNOLOGY_BASELINE_API.GET, {
         headers: {
           accept: "application/json"
         }
