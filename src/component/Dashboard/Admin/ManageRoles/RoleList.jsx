@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { FaPlus, FaSort, FaSortUp, FaSortDown, FaEdit, FaTrash } from 'react-icons/fa';
 import DeleteConfirmationModal from '../../../helper/DeleteConfirmationModal';
 
-const RoleList = ({ roles, onDelete, onEdit, onSort, sortConfig, setActiveSection }) => {
+const RoleList = ({ roles, setActiveSection, onDelete, onEdit, onSort, sortConfig }) => {
     const [deleteModal, setDeleteModal] = useState({ isOpen: false, roleId: null, roleName: "" });
     const [searchTerm, setSearchTerm] = useState("");
 
@@ -26,7 +26,7 @@ const RoleList = ({ roles, onDelete, onEdit, onSort, sortConfig, setActiveSectio
     };
 
     return (
-        <div className="p-6 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl shadow-lg">
+        <div className="p-6 bg-gradient-to-r overscroll-none from-blue-50 to-purple-50 rounded-xl shadow-lg">
             <div className="mb-6">
                 <div className="flex items-center justify-between mb-4">
                     <h2 className="text-3xl font-bold text-blue-800">Roles Management</h2>
@@ -106,10 +106,10 @@ const RoleList = ({ roles, onDelete, onEdit, onSort, sortConfig, setActiveSectio
                                     <div className="flex flex-wrap gap-2">
                                         {role.features.map(feature => (
                                             <span 
-                                                key={feature}
+                                                key={feature.id}
                                                 className="bg-indigo-100 text-indigo-800 text-xs px-2 py-1 rounded-full"
                                             >
-                                                {feature}
+                                                {feature.name}
                                             </span>
                                         ))}
                                     </div>

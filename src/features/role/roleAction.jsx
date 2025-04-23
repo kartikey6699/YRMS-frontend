@@ -27,7 +27,8 @@ export const fetchRoles = createAsyncThunk(
         }
       });
       const { success, data, message } = response.data;
-
+      
+      console.log(data, ">>>>>>>>>>")
       if (!success) {
         throw new Error(message || "Failed to fetch roles");
       }
@@ -72,9 +73,12 @@ export const fetchFeatures = createAsyncThunk(
 export const createRoles = createAsyncThunk(
   "role/createRoles",
   async (roleData, { rejectWithValue }) => {
+    console.log("createRole")
     try {
       const response = await roleApiClient.post(ROLE_API.CREATE, roleData);
       const { success, data, message } = response.data;
+
+      console.log(response, "response.data   ")
 
       if (!success) {
         throw new Error(message || "Failed to create role");

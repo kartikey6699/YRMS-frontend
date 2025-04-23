@@ -46,16 +46,12 @@ const EmployeeDetailPage = ({ publicId, onClose }) => {
     }
   }, [dispatch]);
 
-
   // Get roles from sessionStorage (expecting a stringified array of roles)
   const storedRoles = sessionStorage.getItem('role');
-
   const roles = JSON.parse(storedRoles); // Parse the stored string into an array
 
   const getRoleName = (roleIds) => {
-    console.log(roleIds, "Input role IDs");
     if (!roleIds) return { names: "N/A", ids: "N/A" };
-
     if (!storedRoles) return { names: "N/A", ids: "N/A" };
 
     try {
@@ -82,7 +78,8 @@ const EmployeeDetailPage = ({ publicId, onClose }) => {
     if (resourceDetails) {
       setFormData({
         ...resourceDetails,
-        joiningDate: resourceDetails.joiningDate?.split('T')[0] || ''
+        joiningDate: resourceDetails.joiningDate?.split('T')[0] || '',
+        roleIds: resourceDetails.roleIds || []
       });
     }
   }, [resourceDetails]);
@@ -113,16 +110,15 @@ const EmployeeDetailPage = ({ publicId, onClose }) => {
         roleIds: Array.isArray(formData.roleIds) ? formData.roleIds.map(id => parseInt(id)) : [],
         phoneNumber: formData.phoneNumber || '',
         gender: formData.gender ? formData.gender.toLowerCase() : '',
-        location: formData.location || formData.location || '',
+        location: formData.location || '',
         businessGroup: formData.businessGroup || '',
         businessUnit: formData.businessUnit || '',
         competency: formData.competency || ''
       };
-      console.log(transformData, ">??????????????::::")
 
       const response = await dispatch(updateResource({
         publicId: publicId,
-        updatedData: transformData
+        resourceData: transformData
       })).unwrap();
 
       setToast({ type: 'success', message: 'Employee details updated successfully!' });
@@ -138,12 +134,11 @@ const EmployeeDetailPage = ({ publicId, onClose }) => {
   const handleCancel = () => {
     setFormData({
       ...resourceDetails,
-      joiningDate: resourceDetails.joiningDate?.split('T')[0] || ''
+      joiningDate: resourceDetails.joiningDate?.split('T')[0] || '',
+      roleIds: resourceDetails.roleIds || []
     });
     setIsEditing(false);
   };
-
-  console.log("resourceDetails: ", resourceDetails)
 
   if (!resourceDetails) {
     return (
@@ -164,18 +159,13 @@ const EmployeeDetailPage = ({ publicId, onClose }) => {
   return (
     <>
       {/* Toast Notification */}
-      <div className="fixed top-4 right-4 z-60">
-        {toast?.type === 'success' && (
-          <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded">
+      {toast && (
+        <div className="fixed top-4 right-4 z-60">
+          <div className={`px-4 py-3 rounded ${toast.type === 'success' ? 'bg-green-100 border border-green-400 text-green-700' : 'bg-red-100 border border-red-400 text-red-700'}`}>
             {toast.message}
           </div>
-        )}
-        {toast?.type === 'error' && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
-            {toast.message}
-          </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Main Modal */}
       <div className="fixed inset-0 flex items-center justify-center z-50 overflow-auto backdrop-blur-sm bg-black/20 p-4">
@@ -204,7 +194,7 @@ const EmployeeDetailPage = ({ publicId, onClose }) => {
                     />
                   ) : (
                     <h3 className="text-xl font-semibold text-indigo-800 truncate">
-                      {formData.employeeName}
+                      {resourceDetails.employeeName}
                     </h3>
                   )}
                 </div>
@@ -214,7 +204,7 @@ const EmployeeDetailPage = ({ publicId, onClose }) => {
                   <FaIdBadge className="text-indigo-500" />
                   <span className="text-sm text-indigo-600 font-medium">Employee ID:</span>
                   <span className="text-base text-indigo-800 font-medium">
-                    {formData.employeeId}
+                    {resourceDetails.employeeId}
                   </span>
                 </div>
 
@@ -225,7 +215,7 @@ const EmployeeDetailPage = ({ publicId, onClose }) => {
                     formData.status === 'Inactive' ? 'bg-red-100 text-red-800' :
                       'bg-yellow-100 text-yellow-800'
                     }`}>
-                    {formData.status || 'Not specified'}
+                    {resourceDetails.status || 'Not specified'}
                   </div>
                 </div>
 
@@ -244,12 +234,11 @@ const EmployeeDetailPage = ({ publicId, onClose }) => {
                       />
                     ) : (
                       <span className="text-base text-indigo-800 font-medium">
-                        {formData.joiningDate ? new Date(formData.joiningDate).toLocaleDateString() : 'N/A'}
+                        {resourceDetails.joiningDate ? new Date(resourceDetails.joiningDate).toLocaleDateString() : 'N/A'}
                       </span>
                     )}
                   </div>
                 </div>
-
               </div>
             </div>
 
@@ -307,7 +296,7 @@ const EmployeeDetailPage = ({ publicId, onClose }) => {
                     />
                   ) : (
                     <p className="text-sm font-medium text-indigo-800">
-                      {formData.email || 'Not specified'}
+                      {resourceDetails.email || 'Not specified'}
                     </p>
                   )}
                 </div>
@@ -328,7 +317,7 @@ const EmployeeDetailPage = ({ publicId, onClose }) => {
                     />
                   ) : (
                     <p className="text-sm font-medium text-indigo-800">
-                      {formData.phoneNumber || 'Not specified'}
+                      {resourceDetails.phoneNumber || 'Not specified'}
                     </p>
                   )}
                 </div>
@@ -353,7 +342,7 @@ const EmployeeDetailPage = ({ publicId, onClose }) => {
                     </select>
                   ) : (
                     <p className="text-sm font-medium text-indigo-800">
-                      {formData.gender || 'Not specified'}
+                      {resourceDetails.gender || 'Not specified'}
                     </p>
                   )}
                 </div>
@@ -371,7 +360,7 @@ const EmployeeDetailPage = ({ publicId, onClose }) => {
                 {/* Role */}
                 <div className="bg-indigo-50/50 p-3 rounded-lg border border-indigo-100">
                   <label className="block text-xs text-indigo-600 mb-1 font-semibold flex items-center">
-                    <FaVenusMars className="mr-2" /> Role
+                    <FaUserTie className="mr-2" /> Role
                   </label>
                   {isEditing ? (
                     <div className="relative">
@@ -380,10 +369,10 @@ const EmployeeDetailPage = ({ publicId, onClose }) => {
                         className={`w-full min-h-12 p-2 bg-white border border-indigo-200 rounded-md flex flex-wrap items-center cursor-pointer ${isRolesOpen ? 'ring-1 ring-indigo-300 border-transparent' : ''}`}
                         onClick={() => setIsRolesOpen(!isRolesOpen)}
                       >
-                        {formData.roleIds.length === 0 ? (
+                        {formData.roleIds?.length === 0 ? (
                           <span className="text-gray-400 ml-2">Select roles...</span>
                         ) : (
-                          formData.roleIds.map(roleId => {
+                          formData.roleIds?.map(roleId => {
                             const role = roles.find(r => r.id === roleId);
                             return (
                               <div
@@ -413,7 +402,7 @@ const EmployeeDetailPage = ({ publicId, onClose }) => {
                       {/* Dropdown with checkboxes */}
                       {isRolesOpen && (
                         <div className="absolute z-10 mt-1 w-full bg-white shadow-lg rounded-lg py-1 border border-indigo-200 max-h-60 overflow-auto">
-                          {roles.map(role => (
+                          {roles?.map(role => (
                             <label
                               key={role.id}
                               className="flex items-center px-4 py-2 hover:bg-gray-50 cursor-pointer"
@@ -421,7 +410,7 @@ const EmployeeDetailPage = ({ publicId, onClose }) => {
                               <input
                                 type="checkbox"
                                 className="form-checkbox h-4 w-4 text-indigo-600 transition duration-150 ease-in-out rounded"
-                                checked={formData.roleIds.includes(role.id)}
+                                checked={formData.roleIds?.includes(role.id)}
                                 onChange={() => handleRoleToggle(role.id)}
                                 onClick={(e) => e.stopPropagation()}
                               />
@@ -433,10 +422,11 @@ const EmployeeDetailPage = ({ publicId, onClose }) => {
                     </div>
                   ) : (
                     <p className="text-sm font-medium text-indigo-800">
-                      {getRoleName(formData.roleIds).names || 'Not specified'}
+                      {getRoleName(resourceDetails.roleIds).names || 'Not specified'}
                     </p>
                   )}
                 </div>
+
                 {/* Location */}
                 <div className="bg-indigo-50/50 p-3 rounded-lg border border-indigo-100">
                   <label className="block text-xs text-indigo-600 mb-1 font-semibold flex items-center">
@@ -444,55 +434,51 @@ const EmployeeDetailPage = ({ publicId, onClose }) => {
                   </label>
                   {isEditing ? (
                     <select
-                      name="role"
+                      name="location"
                       value={formData.location}
                       onChange={handleInputChange}
                       className="w-full bg-white border border-indigo-200 rounded-md px-2 py-1.5 text-sm focus:ring-1 focus:ring-indigo-300"
                       disabled={loading}
                     >
-                      <option value="indore-yash-it-park-sc-dc">Indore-YASH IT Park-SC-DC</option>
-                      <option value="pune-magarpatta-dc-ii">Pune-Magarpatta-DC-II</option>
-                      <option value="hyderabad-mindspace-i-dc">Hyderabad-Mindspace I-DC</option>
-                      <option value="bangalore-whitefield-dc">Bangalore-Whitefield-DC</option>
-                      <option value="indore-crystal-it-park-dc-ii">Indore-Crystal IT Park-DC-II</option>
-                      <option value="indore-btc-co">Indore-BTC-CO</option>
-                      <option value="indore-btc-co">Pune-Hinjewadi III-DC</option>
+                      <option value="">Select Location</option>
+                      <option value="Indore_Yash_IT_Park_SC_DC">Indore-YASH IT Park-SC-DC</option>
+                      <option value="Pune_Magarpatta_DC_II">Pune-Magarpatta-DC-II</option>
+                      <option value="Hyderabad_Mindspace_I_DC">Hyderabad-Mindspace I-DC</option>
+                      <option value="Bangalore_Whitefield_DC">Bangalore-Whitefield-DC</option>
+                      <option value="Indore_Crystal_IT_Park_DC_II">Indore-Crystal IT Park-DC-II</option>
+                      <option value="Indore_BTC_CO">Indore-BTC-CO</option>
+                      <option value="Pune_Hinjewadi_III_DC">Pune-Hinjewadi III-DC</option>
                     </select>
                   ) : (
                     <p className="text-sm font-medium text-indigo-800">
-                      {formData.location || 'Not specified'}
+                      {resourceDetails.location || 'Not specified'}
                     </p>
                   )}
                 </div>
 
                 {/* Designation */}
                 <div className="bg-indigo-50/50 p-3 rounded-lg border border-indigo-100">
-                  <label className="block text-xs text-indigo-600 mb-1 font-semibold">Designation</label>
+                  <label className="block text-xs text-indigo-600 mb-1 font-semibold flex items-center">
+                    <FaChartLine className="mr-2" /> Designation
+                  </label>
                   {isEditing ? (
                     <select
                       name='designation'
-                      value={formData.competencyId || ''}
-                      onChange={(e) => {
-                        const selectedDesignation = designations.find(c => c.publicId === e.target.value);
-                        setFormData(prev => ({
-                          ...prev,
-                          competencyId: e.target.value,
-                          competency: selectedDesignation?.name || ''
-                        }));
-                      }}
-                      className="w-full h-12 p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 transition-colors"
-                      required
+                      value={formData.designation || ''}
+                      onChange={handleInputChange}
+                      className="w-full bg-white border border-indigo-200 rounded-md px-2 py-1.5 text-sm focus:ring-1 focus:ring-indigo-300"
+                      disabled={loading}
                     >
-                      <option value="" disabled>Select Designation</option>
+                      <option value="">Select Designation</option>
                       {designations.map((designation) => (
-                        <option value={designation.publicId} key={designation.publicId}>
+                        <option value={designation.name} key={designation.publicId}>
                           {designation.name}
                         </option>
                       ))}
                     </select>
                   ) : (
                     <p className="text-sm font-medium text-indigo-800 truncate">
-                      {formData.designation || 'Not specified'}
+                      {resourceDetails.designation || 'Not specified'}
                     </p>
                   )}
                 </div>
@@ -514,7 +500,7 @@ const EmployeeDetailPage = ({ publicId, onClose }) => {
                   </label>
                   {isEditing ? (
                     <select
-                      name="role"
+                      name="businessGroup"
                       value={formData.businessGroup}
                       onChange={handleInputChange}
                       className="w-full bg-white border border-indigo-200 rounded-md px-2 py-1.5 text-sm focus:ring-1 focus:ring-indigo-300"
@@ -527,7 +513,7 @@ const EmployeeDetailPage = ({ publicId, onClose }) => {
                     </select>
                   ) : (
                     <p className="text-sm font-medium text-indigo-800">
-                      {formData.businessGroup || 'Not specified'}
+                      {resourceDetails.businessGroup || 'Not specified'}
                     </p>
                   )}
                 </div>
@@ -539,7 +525,7 @@ const EmployeeDetailPage = ({ publicId, onClose }) => {
                   </label>
                   {isEditing ? (
                     <select
-                      name="role"
+                      name="businessUnit"
                       value={formData.businessUnit}
                       onChange={handleInputChange}
                       className="w-full bg-white border border-indigo-200 rounded-md px-2 py-1.5 text-sm focus:ring-1 focus:ring-indigo-300"
@@ -552,78 +538,39 @@ const EmployeeDetailPage = ({ publicId, onClose }) => {
                     </select>
                   ) : (
                     <p className="text-sm font-medium text-indigo-800">
-                      {formData.businessUnit || 'Not specified'}
+                      {resourceDetails.businessUnit || 'Not specified'}
                     </p>
                   )}
                 </div>
 
                 {/* Competency */}
                 <div className="bg-indigo-50/50 p-3 rounded-lg border border-indigo-100">
-                  <label className="block text-xs text-indigo-600 mb-1 font-semibold">Competency</label>
+                  <label className="block text-xs text-indigo-600 mb-1 font-semibold flex items-center">
+                    <FaLightbulb className="mr-2" /> Competency
+                  </label>
                   {isEditing ? (
                     <select
-                      name='competencyId'
-                      value={formData.competencyId || ''}
-                      onChange={(e) => {
-                        const selectedCompetency = competencies.find(c => c.publicId === e.target.value);
-                        setFormData(prev => ({
-                          ...prev,
-                          competencyId: e.target.value,
-                          competency: selectedCompetency?.name || ''
-                        }));
-                      }}
-                      className="w-full h-12 p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 transition-colors"
-                      required
+                      name='competency'
+                      value={formData.competency || ''}
+                      onChange={handleInputChange}
+                      className="w-full bg-white border border-indigo-200 rounded-md px-2 py-1.5 text-sm focus:ring-1 focus:ring-indigo-300"
+                      disabled={loading}
                     >
-                      <option value="" disabled>Select Competency</option>
+                      <option value="">Select Competency</option>
                       {competencies.map((competency) => (
-                        <option value={competency.publicId} key={competency.publicId}>
+                        <option value={competency.name} key={competency.publicId}>
                           {competency.name}
                         </option>
                       ))}
                     </select>
                   ) : (
                     <p className="text-sm font-medium text-indigo-800 truncate">
-                      {formData.competency || 'Not specified'}
+                      {resourceDetails.competencyName || 'Not specified'}
                     </p>
                   )}
                 </div>
               </div>
             </div>
-          </div>
-
-          {/* Optional Full-width Bottom Section */}
-          <div className="bg-gradient-to-b from-gray-50 to-white rounded-lg p-4 border border-gray-200">
-            <div className="flex justify-between items-center mb-3">
-              <h4 className="flex items-center text-base font-medium text-indigo-700">
-                <FaChartLine className="text-indigo-500 mr-2 text-sm" />
-                Additional Information
-              </h4>
-              <button
-                onClick={() => setShowAdditionalInfo(!showAdditionalInfo)}
-                className="text-sm text-indigo-600 hover:text-indigo-800"
-              >
-                {showAdditionalInfo ? 'Hide' : 'Show More'}
-              </button>
-            </div>
-
-            {showAdditionalInfo && (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {/* Add any additional fields here */}
-                <div className="bg-indigo-50/50 p-3 rounded-lg border border-indigo-100">
-                  <label className="block text-xs text-indigo-600 mb-1 font-semibold">Reporting Manager</label>
-                  <p className="text-sm font-medium text-indigo-800">John Doe</p>
-                </div>
-                <div className="bg-indigo-50/50 p-3 rounded-lg border border-indigo-100">
-                  <label className="block text-xs text-indigo-600 mb-1 font-semibold">Department</label>
-                  <p className="text-sm font-medium text-indigo-800">Engineering</p>
-                </div>
-                <div className="bg-indigo-50/50 p-3 rounded-lg border border-indigo-100">
-                  <label className="block text-xs text-indigo-600 mb-1 font-semibold">Team</label>
-                  <p className="text-sm font-medium text-indigo-800">Frontend Development</p>
-                </div>
-              </div>
-            )}
           </div>
 
           {/* Footer Actions - Save/Cancel when editing */}

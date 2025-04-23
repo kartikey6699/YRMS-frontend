@@ -4,7 +4,9 @@ import { Link } from 'react-router';
 import DatePicker from "react-datepicker";
 import EmployeeDetailPage from './UserDetails';
 import { useDispatch, useSelector } from "react-redux";
-import { fetchCompetencies, fetchDesignations, fetchResources } from '../../../../features/resource/resourceAction';
+import { fetchCompetencies, fetchDesignations, fetchResources, updateResource } from '../../../../features/resource/resourceAction';
+import { ErrorToast, SuccessToast } from '../../../helper/ResourceToast';
+import YRMSLoader from '../../../helper/loader';
 
 const UserList = ({ setActiveSection }) => {
   const dispatch = useDispatch();
@@ -15,6 +17,15 @@ const UserList = ({ setActiveSection }) => {
   const designationsOptions = designations.map((designation) => designation.name); // Updated to match API
   const [selectedUser, setSelectedUser] = useState(null);
   const [filteredData, setFilteredData] = useState([]);
+  const [editingStatusId, setEditingStatusId] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [toast, setToast] = useState(null);
+  const [deleteModal, setDeleteModal] = useState({
+    isOpen: false,
+    resourceId: null,
+    resourceName: "",
+  });
+
   const [searchTerms, setSearchTerms] = useState({
     name: '',
     designation: '',
@@ -87,7 +98,7 @@ const UserList = ({ setActiveSection }) => {
 
     const filtered = resources.filter((item) => {
       return Object.entries(filters).every(([key, value]) => {
-        console.log(key,"key", "value",value)
+        console.log(key, "key", "value", value)
         if (!value) return true;
 
         if (key === 'joiningDate') {
@@ -103,6 +114,34 @@ const UserList = ({ setActiveSection }) => {
     });
 
     setFilteredData(filtered);
+  };
+
+  const handleUpdateStatus = async (e, event, publicId) => {
+    setIsSubmitting(true);
+    try {
+      setToast(<YRMSLoader message="Updating status..." />);
+      
+      const resourceData = {
+        status: event.target.value
+      };
+      console.log("df",resourceData)
+
+      const updateResult = await dispatch(updateResource({
+        publicId: publicId,
+        resourceData
+      }));
+
+      if (updateResult) {
+        setToast(<SuccessToast message="status updated successfully!" onClose={() => setToast(null)} />);
+        dispatch(fetchResources())
+      } else {
+        throw new Error("Failed to update resource");
+      }
+    } catch (err) {
+      setToast(<ErrorToast message={err.message || "Failed to update status"} onClose={() => setToast(null)} />);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const columns = [
@@ -178,7 +217,7 @@ const UserList = ({ setActiveSection }) => {
                         <option value="">All {column.label}</option>
                         {(column.key === "status" ? statusOptions :
                           column.key === "designation" ? designationsOptions :
-                          competenciesOptions).map((option) => (
+                            competenciesOptions).map((option) => (
                               <option
                                 key={typeof option === 'string' ? option : option.publicId}
                                 value={typeof option === 'string' ? option : option.publicId}
@@ -226,14 +265,48 @@ const UserList = ({ setActiveSection }) => {
                 {getRoleName(resource.roleIds)}
               </td>
               <td className="p-3 text-gray-700 text-sm border-r border-gray-200 relative">
-                <span className={`px-2 py-1 rounded-full text-xs ${
-                  resource.status === 'pool' ? 'bg-yellow-100 text-yellow-800' :
-                  resource.status === 'pip' ? 'bg-red-100 text-red-800' :
-                  resource.status === 'deployed' ? 'bg-green-100 text-green-800' :
-                  'bg-gray-100 text-gray-800'
-                }`}>
-                  {resource.status ? resource.status.charAt(0).toUpperCase() + resource.status.slice(1) : "Unknown"}
-                </span>
+                <div
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setEditingStatusId(editingStatusId === resource.publicId ? null : resource.publicId);
+                  }}
+                  className="cursor-pointer"
+                >
+                  <span className={`px-2 py-1 rounded-full text-xs ${resource.status === 'Running' ? 'bg-blue-100 text-blue-800' :
+                    resource.status === 'Complete' ? 'bg-green-100 text-green-800' :
+                      'bg-red-100 text-red-800'
+                    }`}>
+                    {!resource.status ? "Running" : resource.status.charAt(0).toUpperCase() + resource.status.slice(1)}
+                  </span>
+                </div>
+
+                {editingStatusId === resource.publicId && (
+                  <div className="absolute z-10 mt-1 bg-white shadow-lg rounded-md border border-gray-200">
+                    <select
+                      autoFocus
+                      name='status'
+                      className="w-full p-1 rounded-md text-sm focus:ring-blue-500 focus:border-blue-500"
+                      value={resource.status || 'Running'}
+                      onChange={(e) => {
+                        const syntheticEvent = {
+                          target: {
+                            name: 'status',
+                            value: e.target.value
+                          }
+                        };
+                        handleUpdateStatus(e, syntheticEvent, resource.publicId);
+                        setEditingStatusId(null);
+                      }}
+                      onBlur={() => setTimeout(() => setEditingStatusId(null), 200)}
+                    >
+                      {statusOptions.map((option) => (
+                        <option key={option} value={option}>
+                          {option}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
               </td>
             </tr>
           ))}
