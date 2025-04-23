@@ -1,12 +1,12 @@
 import React, { useState, useMemo } from "react";
-import { 
-  FaChartLine, 
-  FaLightbulb, 
-  FaSortUp, 
-  FaSortDown, 
-  FaSort, 
-  FaSpinner, 
-  FaSearch, 
+import {
+  FaChartLine,
+  FaLightbulb,
+  FaSortUp,
+  FaSortDown,
+  FaSort,
+  FaSpinner,
+  FaSearch,
   FaCalendarAlt,
   FaTrash,
   FaAngleDoubleLeft,
@@ -87,9 +87,9 @@ const ResourceList = ({ handleBaselineClick, handleOpportunitiesClick }) => {
     try {
       await dispatch(deleteResource(deleteModal.resourceId));
       setToast(
-        <SuccessToast 
-          message="Resource deleted successfully!" 
-          onClose={() => setToast(null)} 
+        <SuccessToast
+          message="Resource deleted successfully!"
+          onClose={() => setToast(null)}
         />
       );
       setDeleteModal({ isOpen: false, resourceId: null, resourceName: "" });
@@ -185,7 +185,7 @@ const ResourceList = ({ handleBaselineClick, handleOpportunitiesClick }) => {
   return (
     <div className="relative">
       {toast}
-      
+
       <div className={`overflow-x-auto rounded-lg shadow-lg border border-gray-200 ${deleteModal.isOpen ? 'filter blur-sm' : ''}`}>
         <table className="w-full border-collapse">
           <thead>
@@ -276,7 +276,7 @@ const ResourceList = ({ handleBaselineClick, handleOpportunitiesClick }) => {
           <tbody>
             {paginatedResources.map((resource, index) => (
               <tr key={resource.publicId} className={`h-8 ${index % 2 === 0 ? "bg-gray-100" : "bg-white"}`}>
-                <td className="p-1 text-gray-700 text-sm border-r border-gray-200">{(currentPage - 1) * itemsPerPage + index + 1}</td>
+                <td className="p-1 text-gray-700 text-sm border-r border-gray-200 text-center">{index + 1}</td>
                 <td
                   className="p-1 text-blue-600 text-sm cursor-pointer hover:underline border-r border-gray-200"
                   onClick={() => setSelectedResource(resource.publicId)}
@@ -292,7 +292,7 @@ const ResourceList = ({ handleBaselineClick, handleOpportunitiesClick }) => {
                 <td className="p-1 text-gray-700 text-sm border-r border-gray-200 max-w-xs truncate">
                   <div className="flex flex-wrap gap-1">
                     {(resource.programs || []).map(program => (
-                      <span 
+                      <span
                         key={program.id}
                         className="px-2 py-0.5 bg-blue-100 text-blue-800 text-xs rounded-full cursor-pointer hover:bg-blue-200"
                         onClick={(e) => {
@@ -312,11 +312,11 @@ const ResourceList = ({ handleBaselineClick, handleOpportunitiesClick }) => {
                       (resource.status || "pool") === "pool"
                         ? "bg-blue-100 text-blue-800"
                         : resource.status === "deployed"
-                        ? "bg-green-100 text-green-800"
-                        : resource.status === "pip"
-                        ? "bg-yellow-100 text-yellow-800"
-                        : "bg-red-100 text-red-800"
-                    }`}
+                          ? "bg-green-100 text-green-800"
+                          : resource.status === "pip"
+                            ? "bg-yellow-100 text-yellow-800"
+                            : "bg-red-100 text-red-800"
+                      }`}
                   >
                     {(resource.status || "pool").charAt(0).toUpperCase() +
                       (resource.status || "pool").slice(1)}
@@ -328,7 +328,7 @@ const ResourceList = ({ handleBaselineClick, handleOpportunitiesClick }) => {
                       <button
                         className={`flex items-center justify-center w-7 h-7 bg-teal-500 text-white rounded-lg hover:bg-teal-600 transition-colors cursor-pointer ${
                           loadingBaselineId === resource.publicId ? "opacity-75" : ""
-                        }`}
+                          }`}
                         onClick={() => handleBaselineClickWithLoading(resource)}
                         disabled={loadingBaselineId === resource.publicId}
                       >
