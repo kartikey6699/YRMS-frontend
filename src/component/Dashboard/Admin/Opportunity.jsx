@@ -154,7 +154,7 @@ const Opportunities = () => {
 
   const getStatusStyles = (status) => {
     switch(status) {
-      case 'Selected':
+      case 'Cleared':
         return { bg: 'bg-green-100', text: 'text-green-800', border: 'border-green-700', icon: <FaCheck className="mr-1" /> };
       case 'Rejected':
         return { bg: 'bg-red-100', text: 'text-red-800', border: 'border-red-700', icon: <FaTimes className="mr-1" /> };
@@ -210,10 +210,10 @@ const Opportunities = () => {
               All
             </button>
             <button
-              onClick={() => setStatusFilter('Selected')}
-              className={`px-3 py-1 text-xs font-medium rounded-full transition-colors duration-200 flex items-center ${statusFilter === 'Selected' ? 'bg-green-600 text-white' : 'bg-green-100 text-green-800 hover:bg-green-200'}`}
+              onClick={() => setStatusFilter('Cleared')}
+              className={`px-3 py-1 text-xs font-medium rounded-full transition-colors duration-200 flex items-center ${statusFilter === 'Cleared' ? 'bg-green-600 text-white' : 'bg-green-100 text-green-800 hover:bg-green-200'}`}
             >
-              <FaCheck className="mr-1" /> Selected
+              <FaCheck className="mr-1" /> Cleared
             </button>
             <button
               onClick={() => setStatusFilter('Rejected')}
@@ -301,7 +301,7 @@ const Opportunities = () => {
   <div className={`fixed inset-0 bg-gray-900/30 backdrop-blur-sm flex items-center justify-center p-4 z-50 transition-opacity duration-300 ${isPopupOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
     <div className={`bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto transform transition-all duration-300 ${isPopupOpen ? 'scale-100' : 'scale-95'}`}>
       {/* Header with gradient background */}
-      <div className={`bg-gradient-to-r ${selectedOpportunity.finalResult === 'Selected' ? 'from-green-500 to-green-600' : selectedOpportunity.finalResult === 'Rejected' ? 'from-red-500 to-red-600' : 'from-yellow-500 to-yellow-600'} p-6 rounded-t-2xl relative overflow-hidden`}>
+      <div className={`bg-gradient-to-r ${selectedOpportunity.finalResult === 'Cleared' ? 'from-green-500 to-green-600' : selectedOpportunity.finalResult === 'Rejected' ? 'from-red-500 to-red-600' : 'from-yellow-500 to-yellow-600'} p-6 rounded-t-2xl relative overflow-hidden`}>
         {/* Decorative elements */}
         <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full transform translate-x-16 -translate-y-16"></div>
         <div className="absolute bottom-0 left-0 w-40 h-40 bg-white/10 rounded-full transform -translate-x-20 translate-y-20"></div>
@@ -447,22 +447,22 @@ const Opportunities = () => {
                 value={selectedOpportunity.finalResult}
                 onChange={handleEditInputChange}
                 className={`w-full p-3 rounded-lg border focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-transparent transition-all ${
-                  selectedOpportunity.finalResult === 'Selected' ? 'bg-green-100 border-green-200 text-green-800' :
+                  selectedOpportunity.finalResult === 'Cleared' ? 'bg-green-100 border-green-200 text-green-800' :
                   selectedOpportunity.finalResult === 'Rejected' ? 'bg-red-100 border-red-200 text-red-800' :
                   'bg-yellow-100 border-yellow-200 text-yellow-800'
                 }`}
               >
                 <option value="Pending" className="bg-yellow-100 text-yellow-800">Pending</option>
-                <option value="Selected" className="bg-green-100 text-green-800">Selected</option>
+                <option value="Cleared" className="bg-green-100 text-green-800">Cleared</option>
                 <option value="Rejected" className="bg-red-100 text-red-800">Rejected</option>
               </select>
             ) : (
               <div className={`inline-flex items-center px-4 py-2 rounded-full text-sm font-semibold ${
-                selectedOpportunity.finalResult === 'Selected' ? 'bg-green-100 text-green-800 border border-green-200' :
+                selectedOpportunity.finalResult === 'Cleared' ? 'bg-green-100 text-green-800 border border-green-200' :
                 selectedOpportunity.finalResult === 'Rejected' ? 'bg-red-100 text-red-800 border border-red-200' :
                 'bg-yellow-100 text-yellow-800 border border-yellow-200'
               }`}>
-                {selectedOpportunity.finalResult === 'Selected' ? (
+                {selectedOpportunity.finalResult === 'Cleared' ? (
                   <FaCheck className="mr-2" />
                 ) : selectedOpportunity.finalResult === 'Rejected' ? (
                   <FaTimes className="mr-2" />
@@ -531,7 +531,7 @@ const Opportunities = () => {
                 <div className="w-full bg-gray-200 rounded-full h-2.5">
                   <div 
                     className={`h-2.5 rounded-full ${
-                      selectedOpportunity.finalResult === 'Selected' ? 'bg-green-400' :
+                      selectedOpportunity.finalResult === 'Cleared' ? 'bg-green-400' :
                       selectedOpportunity.finalResult === 'Rejected' ? 'bg-red-400' :
                       'bg-yellow-400'
                     }`}
