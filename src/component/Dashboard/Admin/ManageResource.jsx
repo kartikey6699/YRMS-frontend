@@ -122,6 +122,8 @@ const ManageResource = () => {
       const formData = new FormData();
       formData.append("payload", profilePic);
 
+      const token = sessionStorage.getItem("token"); // Retrieve token from session storage
+
       const response = await axios.post(
         `${ADMIN_API_BASE_URL}/user-profile-upload/?user_id=${userId}`,
         formData,
@@ -129,6 +131,7 @@ const ManageResource = () => {
           headers: {
             accept: "application/json",
             "Content-Type": "multipart/form-data",
+            Authorization: `Bearer ${token}`, // Add token to headers
           },
         }
       );
