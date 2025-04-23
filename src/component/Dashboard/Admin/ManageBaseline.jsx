@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect , useRef} from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import ProfileCard from "../../helper/ProfileCard";
@@ -14,7 +14,28 @@ import {
 import { SuccessToast, ErrorToast } from "../../helper/ResourceToast";
 
 const TechSkillSelector = ({ techSkills, setTechSkills, technologyCategoriesWithTech, loading, setModalField, setSelectedCategoryId }) => {
-  const [openTechDropdowns, setOpenTechDropdowns] = useState({}); // Track open/closed state for each section
+  const [openTechDropdowns, setOpenTechDropdowns] = useState({});
+  const dropdownRefs = useRef({}); // Store refs for each dropdown
+
+  // Handle click outside to close technologies dropdown
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      Object.keys(dropdownRefs.current).forEach((cardIndex) => {
+        if (
+          dropdownRefs.current[cardIndex] &&
+          !dropdownRefs.current[cardIndex].contains(event.target)
+        ) {
+          setOpenTechDropdowns((prev) => ({
+            ...prev,
+            [cardIndex]: false,
+          }));
+        }
+      });
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const handleCategoryChange = (categoryId, cardIndex) => {
     const updatedTechSkills = [...techSkills];
@@ -25,10 +46,10 @@ const TechSkillSelector = ({ techSkills, setTechSkills, technologyCategoriesWith
   const handleTechToggle = (techId, techName, cardIndex) => {
     const updatedTechSkills = [...techSkills];
     const card = updatedTechSkills[cardIndex];
-    const existingTech = card.technologies.find(t => t.technology === techId);
+    const existingTech = card.technologies.find((t) => t.technology === techId);
 
     if (existingTech) {
-      card.technologies = card.technologies.filter(t => t.technology !== techId);
+      card.technologies = card.technologies.filter((t) => t.technology !== techId);
     } else {
       card.technologies.push({ technology: techId, name: techName, rating: "" });
     }
@@ -37,10 +58,10 @@ const TechSkillSelector = ({ techSkills, setTechSkills, technologyCategoriesWith
   };
 
   const handleRatingChange = (techId, rating, cardIndex) => {
-    const value = Math.min(parseInt(rating) || 0, 5); // Restrict to max 5
+    const value = Math.min(parseInt(rating) || 0, 5);
     const updatedTechSkills = [...techSkills];
     const card = updatedTechSkills[cardIndex];
-    const tech = card.technologies.find(t => t.technology === techId);
+    const tech = card.technologies.find((t) => t.technology === techId);
     if (tech) {
       tech.rating = value.toString();
     }
@@ -50,7 +71,7 @@ const TechSkillSelector = ({ techSkills, setTechSkills, technologyCategoriesWith
   const handleDeleteTech = (techId, cardIndex) => {
     const updatedTechSkills = [...techSkills];
     const card = updatedTechSkills[cardIndex];
-    card.technologies = card.technologies.filter(t => t.technology !== techId);
+    card.technologies = card.technologies.filter((t) => t.technology !== techId);
     setTechSkills(updatedTechSkills);
   };
 
@@ -92,7 +113,7 @@ const TechSkillSelector = ({ techSkills, setTechSkills, technologyCategoriesWith
           )}
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-start">
-            {/* Category Selector - Equal Width Column */}
+            {/* Category Selector */}
             <div className="space-y-2">
               <label className="block text-sm font-medium text-gray-700">Category</label>
               <div className="relative">
@@ -122,8 +143,8 @@ const TechSkillSelector = ({ techSkills, setTechSkills, technologyCategoriesWith
               </div>
             </div>
 
-            {/* Technology Dropdown - Equal Width Column */}
-            <div className="space-y-2">
+            {/* Technology Dropdown */}
+            <div className="space-y-2" ref={(el) => (dropdownRefs.current[cardIndex] = el)}>
               <label className="block text-sm font-medium text-gray-700">Technologies</label>
               <button
                 onClick={() => toggleTechDropdown(cardIndex)}
@@ -183,7 +204,7 @@ const TechSkillSelector = ({ techSkills, setTechSkills, technologyCategoriesWith
               )}
             </div>
 
-            {/* Selected Technologies - Equal Width Column */}
+            {/* Selected Technologies */}
             <div className="space-y-2">
               <label className="block text-sm font-medium text-gray-700">
                 Selected ({card.technologies.length})
