@@ -114,7 +114,7 @@ const Opportunities = () => {
       const result = await dispatch(updateOpportunity({
         id: selectedOpportunity.publicId, // Changed to use userId as the identifier
         opportunityData: selectedOpportunity
-      })); 
+        })); 
       if (updateOpportunity.fulfilled.match(result)) {
         setToast(<SuccessToast message="Opportunity updated successfully!" onClose={() => setToast(null)} />);
         dispatch(fetchOpportunities(userId));
@@ -565,7 +565,7 @@ const Opportunities = () => {
               placeholder="Enter client feedback..."
             />
           ) : (
-            <p className="text-gray-700 italic">
+            <p className="text-gray-700">
               {selectedOpportunity.clientFeedback || "No feedback provided"}
             </p>
           )}
