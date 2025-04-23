@@ -92,6 +92,7 @@ const internSlice = createSlice({
           remark: intern.remark,
           mentorId: intern.mentorId,
           competencyId: intern.competencyId,
+          isOffered: intern.isOffered,
         }));
       })
       .addCase(fetchInterns.rejected, (state, { payload }) => {

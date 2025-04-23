@@ -20,7 +20,13 @@ export const adminLogin = createAsyncThunk(
         throw new Error(message || "No token received from server");
       }
 
-      return { token: data.token, data: {} };
+      return { 
+        token: data.token, 
+        data: {
+          userName: data.userName,
+          rolesName: data.rolesName,
+        } 
+      };
       
     } catch (error) {
       const errorMessage =
