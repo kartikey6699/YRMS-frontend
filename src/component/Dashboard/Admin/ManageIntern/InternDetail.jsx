@@ -19,7 +19,6 @@ const InternDetail = ({ publicId, onClose }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [toast, setToast] = useState(null);
   const initialLoadDone = useRef(false);
-  const locationConst = ['Indore', 'Pune'];
   const [modalField, setModalField] = useState(null);
   const [formData, setFormData] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -35,32 +34,30 @@ const InternDetail = ({ publicId, onClose }) => {
     if (!initialLoadDone.current && (!internDetails || internDetails.publicId !== publicId?.publicId)) {
       initialLoadDone.current = true;
       dispatch(fetchInternDetails(publicId?.publicId));
-      dispatch(fetchCompetencies()); // Fetch competencies when component mounts
-      dispatch(fetchResources()); // Fetch fetchResources when component mounts
+      dispatch(fetchCompetencies());
+      dispatch(fetchResources());
     }
   }, [publicId, internDetails, dispatch]);
 
-
-  //for temporary case user object picked from list later on actual api data will be updated
   useEffect(() => {
     if (publicId?.publicId === internDetails?.publicId) {
       setFormData({
         profileImage: null,
-        employeeName: internDetails.name || 'N/A',
-        endDate: internDetails.endDate || 'N/A',
-        startDate: internDetails.startDate || 'N/A',
-        lastWorkingDay: internDetails.lastWorkingDay || 'N/A',
-        mentor: internDetails.mentor || 'N/A',
-        mentorId: internDetails.mentorId || 'N/A',
-        location: internDetails.location || 'N/A',
-        status: internDetails.status || 'N/A',
-        rating: internDetails.rating || 'N/A',
-        feedback: internDetails.feedback || 'N/A',
-        remark: internDetails.remark || 'N/A',
+        employeeName: internDetails.name || null,
+        endDate: internDetails.endDate || null,
+        startDate: internDetails.startDate || null,
+        lastWorkingDay: internDetails.lastWorkingDay || null,
+        mentor: internDetails.mentor || null,
+        mentorId: internDetails.mentorId || null,
+        location: internDetails.location || null,
+        status: internDetails.status || null,
+        rating: internDetails.rating || '0',
+        feedback: internDetails.feedback || null,
+        remark: internDetails.remark || null,
         hired: internDetails.isOffered || false,
-        competency: internDetails.competency || 'N/A',
-        hiredCompetency: internDetails.hiredCompetency || 'N/A',
-        competencyId: internDetails.competencyId || 'N/A'
+        competency: internDetails.competency || null,
+        hiredCompetency: internDetails.hiredCompetency || null,
+        competencyId: internDetails.competencyId || null
       });
     }
   }, [internDetails, publicId]);
@@ -79,39 +76,32 @@ const InternDetail = ({ publicId, onClose }) => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  // Helper function to parse date strings (handles both Date objects and strings)
   const parseDate = (date) => {
     if (!date) return null;
     if (date instanceof Date) return date;
     return new Date(date);
   };
 
-  // Calculate duration between two dates in "X months Y days" format
   const calculateDuration = (startDate, endDate) => {
     const start = parseDate(startDate);
-    const end = parseDate(endDate || new Date()); // Use current date if endDate not provided
+    const end = parseDate(endDate || new Date());
 
-    if (!start || !end) return 'N/A';
+    if (!start || !end) return null;
     if (start > end) return 'Invalid date range';
 
-    // Calculate total months difference
     let months = (end.getFullYear() - start.getFullYear()) * 12;
     months += end.getMonth() - start.getMonth();
 
-    // Calculate days difference
     let days = end.getDate() - start.getDate();
 
-    // Adjust for negative days
     if (days < 0) {
       months -= 1;
-      // Get last day of previous month
       const tempDate = new Date(end);
       tempDate.setMonth(end.getMonth() - 1);
       tempDate.setDate(0);
       days += tempDate.getDate();
     }
 
-    // Format the output
     if (months === 0) {
       return `${days} day${days !== 1 ? 's' : ''}`;
     } else if (days === 0) {
@@ -121,7 +111,6 @@ const InternDetail = ({ publicId, onClose }) => {
     }
   };
 
-  // In the handleSubmit function:
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -167,21 +156,21 @@ const InternDetail = ({ publicId, onClose }) => {
   const handleCancel = () => {
     setFormData({
       profileImage: null,
-      employeeName: internDetails.name || 'N/A',
-      endDate: internDetails.endDate || 'N/A',
-      startDate: internDetails.startDate || 'N/A',
-      lastWorkingDay: internDetails.lastWorkingDay || 'N/A',
-      mentor: internDetails.mentor || 'N/A',
-      mentorId: internDetails.mentorId || 'N/A',
-      location: internDetails.location || 'N/A',
-      status: internDetails.status || 'N/A',
-      rating: internDetails.rating || 'N/A',
-      feedback: internDetails.feedback || 'N/A',
-      remark: internDetails.remark || 'N/A',
+      employeeName: internDetails.name || null,
+      endDate: internDetails.endDate || null,
+      startDate: internDetails.startDate || null,
+      lastWorkingDay: internDetails.lastWorkingDay || null,
+      mentor: internDetails.mentor || null,
+      mentorId: internDetails.mentorId || null,
+      location: internDetails.location || null,
+      status: internDetails.status || null,
+      rating: internDetails.rating || '0',
+      feedback: internDetails.feedback || null,
+      remark: internDetails.remark || null,
       hired: internDetails.isOffered || false,
-      competency: internDetails.competency || 'N/A',
-      hiredCompetency: internDetails.hiredCompetency || 'N/A',
-      competencyId: internDetails.competencyId || 'N/A'
+      competency: internDetails.competency || null,
+      hiredCompetency: internDetails.hiredCompetency || null,
+      competencyId: internDetails.competencyId || null
     });
     setModalField(null)
     setIsEditing(false);
@@ -208,11 +197,11 @@ const InternDetail = ({ publicId, onClose }) => {
         )}
       </div>
 
-      <div className="fixed inset-0 flex items-center justify-center z-50 backdrop-blur-sm bg-black/20 p-4">
-        <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-4xl border border-gray-200">
-          {/* Header Section with Creative Colors */}
-          <div className="flex justify-between items-center mb-6 gap-4 bg-gradient-to-r from-indigo-50 to-purple-50 p-4 rounded-lg border border-indigo-100">
-            <div className="flex items-center gap-3 min-w-0 flex-1 overflow-hidden">
+      <div className="fixed inset-0 flex items-center justify-center z-50 backdrop-blur-sm bg-black/20 p-4 overflow-y-auto">
+        <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-4xl border border-gray-200 max-h-[90vh] overflow-y-auto">
+          {/* Redesigned Header Section */}
+          <div className="flex flex-col gap-4 mb-6 bg-gradient-to-r from-indigo-50 to-purple-50 p-4 rounded-lg border border-indigo-100">
+            <div className="flex justify-between items-start w-full">
               {/* Profile Image */}
               <div className="relative flex-shrink-0">
                 {formData.profileImage ? (
@@ -228,99 +217,117 @@ const InternDetail = ({ publicId, onClose }) => {
                 )}
               </div>
 
-              {/* Employee Details */}
-              <div className="flex items-center gap-3 min-w-0 overflow-hidden">
-                {/* Name */}
-                <div className="bg-gradient-to-r from-white to-indigo-50 px-4 py-2 rounded-lg shadow-xs min-w-0 max-w-35 overflow-hidden border border-indigo-100">
-                  {isEditing ? (
-                    <input
-                      name="employeeName"
-                      value={formData.employeeName}
-                      onChange={handleInputChange}
-                      className="text-xl font-semibold text-indigo-800 bg-transparent w-full min-w-0 focus:outline-none focus:ring-2 focus:ring-indigo-300"
-                      disabled={loading}
-                    />
-                  ) : (
-                    <h3 className="text-xl font-semibold text-indigo-800 truncate">
-                      {formData.employeeName}
-                    </h3>
-                  )}
-                </div>
-
-                {/* Date Info */}
-                <div className="flex items-center gap-2">
-                  <div className="bg-gradient-to-r from-indigo-50 to-blue-50 px-2 py-2 rounded-lg shadow-xs flex items-center gap-2 border border-indigo-100">
-                    <span className="text-sm text-indigo-600 font-medium">Start:</span>
+              {/* Name and Duration */}
+              <div className="flex-1 min-w-0 px-4">
+                <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2 w-full">
+                  {/* Name */}
+                  <div className="min-w-0 max-w-[70%]">
                     {isEditing ? (
                       <input
-                        type="date"
-                        name="lastWorkingDay"
-                        value={formData.startDate}
+                        name="employeeName"
+                        value={formData.employeeName}
                         onChange={handleInputChange}
-                        className="w-full bg-white border border-blue-200 rounded-md px-1 py-1 text-sm focus:ring-1 focus:ring-blue-300"
+                        className="text-2xl font-bold text-indigo-900 bg-transparent w-full focus:outline-none focus:ring-2 focus:ring-indigo-300 rounded px-2 py-1"
                         disabled={loading}
                       />
                     ) : (
-                      <span className="text-base text-indigo-800 font-medium">
-                        {formData.startDate ? new Date(formData.startDate).toLocaleDateString() : 'N/A'}
-                      </span>
+                      <h3 className="text-2xl font-bold text-indigo-900 truncate">
+                        {formData.employeeName}
+                      </h3>
                     )}
                   </div>
 
-                  <div className="bg-gradient-to-r from-purple-50 to-pink-50 px-2 py-2 rounded-lg shadow-xs flex items-center gap-2 border border-purple-100">
-                    <span className="text-sm text-purple-600 font-medium">End:</span>
-                    {isEditing ? (
-                      <input
-                        type="date"
-                        name="endDate"
-                        value={formData.endDate}
-                        onChange={handleInputChange}
-                        className="w-full bg-white border border-blue-200 rounded-md px-1 py-1 text-sm focus:ring-1 focus:ring-blue-300"
-                        disabled={loading}
-                      />
-                    ) : (
-                      <span className="text-base text-purple-800 font-medium">
-                        {formData.endDate ? new Date(formData.endDate).toLocaleDateString() : 'N/A'}
-                      </span>
-                    )}
-                  </div>
-
-                  <div className="bg-gradient-to-r from-blue-50 to-cyan-50 px-3 py-2 rounded-lg shadow-xs flex items-center gap-2 border border-blue-100">
-                    <span className="text-sm text-blue-600 font-medium">Duration:</span>
-                    <span className="text-base text-blue-800 font-medium">
-                      {calculateDuration(formData.startDate, formData.endDate)}
+                  {/* Duration */}
+                  <div className="bg-gradient-to-r from-blue-100 to-cyan-100 px-3 py-1.5 rounded-lg flex items-center gap-2 border border-blue-200 min-w-fit">
+                    <span className="text-sm text-blue-700 font-medium">Duration:</span>
+                    <span className="text-base font-semibold text-blue-900 whitespace-nowrap">
+                      {calculateDuration(formData.startDate, formData.endDate) || 'N/A'}
                     </span>
                   </div>
                 </div>
+
+                {/* Dates - New Compact Layout */}
+                <div className="flex flex-wrap gap-3 items-center mt-3 pl-0">
+                  {/* Start and End Dates grouped together */}
+                  <div className="flex flex-wrap gap-3 items-center">
+                    {/* Start Date */}
+                    <div className="bg-gradient-to-r from-indigo-100 to-blue-100 px-3 py-1.5 rounded-lg flex items-center gap-2 border border-indigo-200">
+                      <span className="text-sm text-indigo-700 font-medium">Start:</span>
+                      {isEditing ? (
+                        <input
+                          type="date"
+                          name="startDate"
+                          value={formData.startDate}
+                          onChange={handleInputChange}
+                          className="bg-white border border-blue-200 rounded-md px-1 py-1 text-sm focus:ring-1 focus:ring-blue-300"
+                          disabled={loading}
+                        />
+                      ) : (
+                        <span className="text-base font-medium text-indigo-900">
+                          {formData.startDate ? new Date(formData.startDate).toLocaleDateString() : 'Not set'}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* End Date */}
+                    <div className="bg-gradient-to-r from-purple-100 to-pink-100 px-3 py-1.5 rounded-lg flex items-center gap-2 border border-purple-200">
+                      <span className="text-sm text-purple-700 font-medium">End:</span>
+                      {isEditing ? (
+                        <input
+                          type="date"
+                          name="endDate"
+                          value={formData.endDate}
+                          onChange={handleInputChange}
+                          className="bg-white border border-purple-200 rounded-md px-1 py-1 text-sm focus:ring-1 focus:ring-purple-300"
+                          disabled={loading}
+                        />
+                      ) : (
+                        <span className="text-base font-medium text-purple-900">
+                          {formData.endDate ? new Date(formData.endDate).toLocaleDateString() : 'Not set'}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Last Working Day (conditionally shown) */}
+                  {formData.lastWorkingDay && (
+                    <div className="bg-gradient-to-r from-amber-100 to-orange-100 px-3 py-1.5 rounded-lg flex items-center gap-2 border border-amber-200">
+                      <span className="text-sm text-amber-700 font-medium">LWD:</span>
+                      <span className="text-base font-medium text-amber-900">
+                        {new Date(formData.lastWorkingDay).toLocaleDateString()}
+                      </span>
+                    </div>
+                  )}
+                </div>
               </div>
+
+              {/* Edit/Close Buttons */}
+              {!isEditing && (
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  <button
+                    onClick={() => setIsEditing(true)}
+                    className="flex items-center px-4 py-2 bg-gradient-to-r from-indigo-100 to-blue-100 text-indigo-700 rounded-lg hover:from-indigo-200 hover:to-blue-200 text-base font-medium transition-colors duration-200 shadow-xs border border-indigo-200"
+                  >
+                    <FaEdit className="mr-2" /> Edit
+                  </button>
+                  <button
+                    onClick={onClose}
+                    className="p-2.5 rounded-lg bg-gradient-to-r from-gray-100 to-gray-50 hover:from-gray-200 hover:to-gray-100 text-gray-600 flex-shrink-0 transition-colors duration-200 shadow-xs border border-gray-200"
+                  >
+                    <FaTimes size={18} />
+                  </button>
+                </div>
+              )}
             </div>
-
-            {/* Right Block - Actions (Only show close button when not editing) */}
-            {!isEditing && (
-              <div className="flex items-center gap-2 flex-shrink-0">
-                <button
-                  onClick={() => setIsEditing(true)}
-                  className="flex items-center px-4 py-2 bg-gradient-to-r from-indigo-100 to-blue-100 text-indigo-700 rounded-lg hover:from-indigo-200 hover:to-blue-200 text-base font-medium transition-colors duration-200 shadow-xs border border-indigo-200"
-                >
-                  <FaEdit className="mr-2" /> Edit
-                </button>
-                <button
-                  onClick={onClose}
-                  className="p-2.5 rounded-lg bg-gradient-to-r from-gray-100 to-gray-50 hover:from-gray-200 hover:to-gray-100 text-gray-600 flex-shrink-0 transition-colors duration-200 shadow-xs border border-gray-200"
-                >
-                  <FaTimes size={18} />
-                </button>
-              </div>
-            )}
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-7 gap-4">
 
+          <div className="grid grid-cols-1 md:grid-cols-7 gap-4">
             <div className={`bg-gradient-to-b from-gray-50 to-white rounded-lg p-4 md:col-span-2 ${isEditing ? 'ring-2 ring-indigo-200' : ''}`}>
               <h4 className="flex items-center text-base font-medium text-indigo-700 mb-3 border-b border-indigo-100 pb-2">
                 <FaUser className="text-indigo-500 mr-2 text-sm" />
                 Basic Information
               </h4>
-              <div className="space-y-4"> {/* Increased spacing */}
+              <div className="space-y-4">
                 {/* Mentor Field */}
                 <div className="bg-indigo-50/50 p-3 rounded-lg border border-indigo-100">
                   <label className="block text-xs text-indigo-600 mb-1 font-semibold">Mentor</label>
@@ -353,16 +360,25 @@ const InternDetail = ({ publicId, onClose }) => {
                   )}
                 </div>
 
+                {/* Location Field - Updated with dropdown */}
                 <div className="bg-indigo-50/50 p-3 rounded-lg border border-indigo-100">
                   <label className="block text-xs text-indigo-600 mb-1 font-semibold">Location</label>
                   {isEditing ? (
-                    <input
+                    <select
                       name="location"
                       value={formData.location}
                       onChange={handleInputChange}
-                      className="w-full bg-white border border-indigo-200 rounded-md px-2 py-1.5 text-sm focus:ring-1 focus:ring-indigo-300"
-                      disabled={loading}
-                    />
+                      className="w-full h-12 p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 transition-colors"
+                      required
+                    >
+                      <option value="Indore_Yash_IT_Park_SC_DC">Indore-YASH IT Park-SC-DC</option>
+                      <option value="Pune_Magarpatta_DC_II">Pune-Magarpatta-DC-II</option>
+                      <option value="Hyderabad_Mindspace_I_DC">Hyderabad-Mindspace I-DC</option>
+                      <option value="Bangalore_Whitefield_DC">Bangalore-Whitefield-DC</option>
+                      <option value="Indore_Crystal_IT_Park_DC_II">Indore-Crystal IT Park-DC-II</option>
+                      <option value="Indore_BTC_CO">Indore-BTC-CO</option>
+                      <option value="Pune_Hinjewadi_III_DC">Pune-Hinjewadi III-DC</option>
+                    </select>
                   ) : (
                     <p className="text-sm font-medium text-indigo-800 truncate">
                       {formData.location || 'Not specified'}
@@ -401,11 +417,10 @@ const InternDetail = ({ publicId, onClose }) => {
                     </p>
                   )}
                 </div>
-
               </div>
             </div>
 
-            {/* Second Column - Performance & Feedback (now wider) */}
+            {/* Second Column - Performance & Feedback */}
             <div className={`bg-gradient-to-b from-gray-50 to-white rounded-lg p-4 md:col-span-5 ${isEditing ? 'ring-2 ring-indigo-200' : ''}`}>
               <h4 className="flex items-center text-base font-medium text-indigo-700 mb-3 border-b border-indigo-100 pb-2">
                 <FaChartLine className="text-indigo-500 mr-2 text-sm" />
@@ -436,7 +451,6 @@ const InternDetail = ({ publicId, onClose }) => {
                       </div>
                     ) : (
                       <div className="flex items-center">
-                        {/* Star Rating Input */}
                         <div className="flex mr-2">
                           {[1, 2, 3, 4, 5].map((star) => (
                             <button
@@ -445,7 +459,7 @@ const InternDetail = ({ publicId, onClose }) => {
                               onClick={() => handleInputChange({
                                 target: {
                                   name: 'rating',
-                                  value: formData.rating === star ? 0 : star // Toggle between star and 0
+                                  value: formData.rating === star ? 0 : star
                                 }
                               })}
                               className="focus:outline-none relative"
@@ -453,7 +467,6 @@ const InternDetail = ({ publicId, onClose }) => {
                               <FaStar
                                 className={`${star <= Math.floor(formData.rating) ? 'text-amber-400' : 'text-amber-200'} w-5 h-5 transition-colors`}
                               />
-                              {/* Partial star fill for decimal values */}
                               {formData.rating > star - 1 && formData.rating < star && (
                                 <div
                                   className="absolute top-0 left-0 overflow-hidden"
@@ -465,8 +478,6 @@ const InternDetail = ({ publicId, onClose }) => {
                             </button>
                           ))}
                         </div>
-
-                        {/* Numeric Input */}
                         <span className="ml-2 text-base font-medium text-amber-800">
                           ({formData.rating || '0'}/5)
                         </span>
@@ -548,13 +559,12 @@ const InternDetail = ({ publicId, onClose }) => {
                       </select>
                     ) : (
                       <p className="text-sm font-medium text-purple-800">
-                        {formData.hiredCompetency || 'N/A'}
+                        {formData.hiredCompetency || null}
                       </p>
                     )}
                   </div>
                 )}
 
-                {/* ... (rest of the performance & feedback content remains the same) ... */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="bg-gradient-to-r from-indigo-50 to-blue-50 p-3 rounded-lg border border-indigo-100">
                     <label className="block text-xs text-indigo-600 mb-1">Feedback</label>
@@ -591,7 +601,6 @@ const InternDetail = ({ publicId, onClose }) => {
                     )}
                   </div>
                 </div>
-
               </div>
             </div>
           </div>
@@ -622,7 +631,6 @@ const InternDetail = ({ publicId, onClose }) => {
               setToast={setToast}
             />
           )}
-
         </div>
       </div>
     </>
