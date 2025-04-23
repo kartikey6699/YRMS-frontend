@@ -135,10 +135,12 @@ const EmployeeDetail = ({ publicId, onClose }) => {
     uploadFormData.append('file', file);
     
     try {
+      const token = sessionStorage.getItem('token'); // Get token from sessionStorage
       const response = await fetch(RESUME_API.UPLOAD_RESUME(publicId), {
         method: 'POST',
         headers: {
           'accept': 'application/json',
+          'Authorization': `Bearer ${token}` // Add token to headers
         },
         body: uploadFormData,
       });
@@ -156,6 +158,7 @@ const EmployeeDetail = ({ publicId, onClose }) => {
         // Fetch updated details to sync with backend
         await dispatch(fetchResourceDetails(publicId)).unwrap();
         
+        // Show success toast
         setToast({
           type: 'success',
           message: 'Resume uploaded successfully!'
@@ -183,10 +186,12 @@ const EmployeeDetail = ({ publicId, onClose }) => {
     if (!formData.resumeFile) return;
 
     try {
+      const token = sessionStorage.getItem('token'); // Get token from sessionStorage
       const response = await fetch(RESUME_API.DOWNLOAD_RESUME(publicId), {
         method: 'GET',
         headers: {
           'accept': 'application/json',
+          'Authorization': `Bearer ${token}` // Add token to headers
         },
       });
       
