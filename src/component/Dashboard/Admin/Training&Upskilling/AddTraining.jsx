@@ -77,13 +77,20 @@ const MultiSelectTechnology = ({ value, onChange, setModalField, loading, option
 
 const AddTraining = ({ onClose, onSave, isUpskilling = false }) => {
   const dispatch = useDispatch();
-  const { resources, competencies, trainingTechnologies, trainingTechnologyLoading } = useSelector(
+  const { trainers, participants, competencies, trainingTechnologies, trainingTechnologyLoading } = useSelector(
     (state) => state.resource
   );
 
-  const trainerOptions = resources.map(resource => ({
-    value: resource.publicId,
-    label: resource.employeeName,
+  // Trainer options (ONLY role_id=4)
+  const trainerOptions = trainers.map(user => ({
+    value: user.publicId,
+    label: user.employeeName,
+  }));
+
+  // Participant options (role_id=3, regardless of other roles)
+  const participantOptions = participants.map(user => ({
+    value: user.publicId,
+    label: user.employeeName,
   }));
 
   const competencyOptions = competencies.map(competency => ({
@@ -122,8 +129,8 @@ const AddTraining = ({ onClose, onSave, isUpskilling = false }) => {
 
   // Fetch training technologies, resources, and competencies on mount
   useEffect(() => {
+    dispatch(fetchResources({}));
     dispatch(fetchTrainingTechnologies());
-    dispatch(fetchResources());
     dispatch(fetchCompetencies());
   }, [dispatch]);
 
@@ -206,7 +213,7 @@ const AddTraining = ({ onClose, onSave, isUpskilling = false }) => {
         participantIds: formData.participants.map((p) => p.value)
       };
 
-      console.log('payload >>>' , programData);
+      console.log('payload >>>', programData);
 
       const createResult = await dispatch(createProgram(programData)).unwrap();
 
@@ -499,7 +506,7 @@ const AddTraining = ({ onClose, onSave, isUpskilling = false }) => {
               </label>
               <div className="relative">
                 <Select
-                  options={trainerOptions}
+                  options={participantOptions}
                   isMulti
                   value={formData.participants}
                   onChange={(selected) => handleMultiSelectChange("participants", selected)}

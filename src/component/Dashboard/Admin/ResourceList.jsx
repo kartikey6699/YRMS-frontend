@@ -1,14 +1,18 @@
-import React, { useState } from "react";
-import { 
-  FaChartLine, 
-  FaLightbulb, 
-  FaSortUp, 
-  FaSortDown, 
-  FaSort, 
-  FaSpinner, 
-  FaSearch, 
+import React, { useState, useMemo } from "react";
+import {
+  FaChartLine,
+  FaLightbulb,
+  FaSortUp,
+  FaSortDown,
+  FaSort,
+  FaSpinner,
+  FaSearch,
   FaCalendarAlt,
-  FaTrash
+  FaTrash,
+  FaAngleDoubleLeft,
+  FaAngleLeft,
+  FaAngleRight,
+  FaAngleDoubleRight
 } from "react-icons/fa";
 import { useSelector, useDispatch } from "react-redux";
 import DatePicker from "react-datepicker";
@@ -42,6 +46,8 @@ const ResourceList = ({ handleBaselineClick, handleOpportunitiesClick }) => {
     resourceName: "",
   });
   const [toast, setToast] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   const statusOptions = ["Pool", "Deployed", "PIP"];
 
@@ -58,6 +64,7 @@ const ResourceList = ({ handleBaselineClick, handleOpportunitiesClick }) => {
       ...searchValues,
       [key]: value,
     });
+    setCurrentPage(1); // Reset to first page on new search
   };
 
   const handleDateChange = (date) => {
@@ -65,6 +72,7 @@ const ResourceList = ({ handleBaselineClick, handleOpportunitiesClick }) => {
       ...searchValues,
       joiningDate: date,
     });
+    setCurrentPage(1);
   };
 
   const handleDeleteClick = (resource) => {
@@ -79,9 +87,9 @@ const ResourceList = ({ handleBaselineClick, handleOpportunitiesClick }) => {
     try {
       await dispatch(deleteResource(deleteModal.resourceId));
       setToast(
-        <SuccessToast 
-          message="Resource deleted successfully!" 
-          onClose={() => setToast(null)} 
+        <SuccessToast
+          message="Resource deleted successfully!"
+          onClose={() => setToast(null)}
         />
       );
       setDeleteModal({ isOpen: false, resourceId: null, resourceName: "" });
@@ -91,52 +99,67 @@ const ResourceList = ({ handleBaselineClick, handleOpportunitiesClick }) => {
   };
 
   const handleProgramClick = (programId) => {
-    console.log()
     navigate(`/training-detail/${programId}`);
   };
 
-  const filteredResources = (resources || []).filter((resource) => {
-    const matchesName = resource.employeeName?.toLowerCase().includes(searchValues.employeeName.toLowerCase()) ?? true;
-    const matchesDesignation = resource.designation?.toLowerCase().includes(searchValues.designation.toLowerCase()) ?? true;
-    const matchesStatus = searchValues.status ? resource.status?.toLowerCase() === searchValues.status.toLowerCase() : true;
-    const matchesPrograms = searchValues.assignedPrograms 
-      ? (resource.programs || []).some(p => 
-          p.name.toLowerCase().includes(searchValues.assignedPrograms.toLowerCase())
-        )
-      : true;
-    
-    let matchesDate = true;
-    if (searchValues.joiningDate) {
-      const resourceDate = resource.joiningDate ? new Date(resource.joiningDate) : null;
-      if (resourceDate) {
-        matchesDate = 
-          resourceDate.getDate() === searchValues.joiningDate.getDate() &&
-          resourceDate.getMonth() === searchValues.joiningDate.getMonth() &&
-          resourceDate.getFullYear() === searchValues.joiningDate.getFullYear();
+  const filteredResources = useMemo(() => {
+    return (resources || []).filter((resource) => {
+      const matchesName = resource.employeeName?.toLowerCase().includes(searchValues.employeeName.toLowerCase()) ?? true;
+      const matchesDesignation = resource.designation?.toLowerCase().includes(searchValues.designation.toLowerCase()) ?? true;
+      const matchesStatus = searchValues.status ? resource.status?.toLowerCase() === searchValues.status.toLowerCase() : true;
+      const matchesPrograms = searchValues.assignedPrograms 
+        ? (resource.programs || []).some(p => 
+            p.name.toLowerCase().includes(searchValues.assignedPrograms.toLowerCase())
+          )
+        : true;
+      
+      let matchesDate = true;
+      if (searchValues.joiningDate) {
+        const resourceDate = resource.joiningDate ? new Date(resource.joiningDate) : null;
+        if (resourceDate) {
+          matchesDate = 
+            resourceDate.getDate() === searchValues.joiningDate.getDate() &&
+            resourceDate.getMonth() === searchValues.joiningDate.getMonth() &&
+            resourceDate.getFullYear() === searchValues.joiningDate.getFullYear();
+        }
       }
-    }
 
-    return matchesName && matchesDesignation && matchesStatus && matchesDate && matchesPrograms;
-  });
+      return matchesName && matchesDesignation && matchesStatus && matchesDate && matchesPrograms;
+    });
+  }, [resources, searchValues]);
 
-  const sortedResources = [...filteredResources].sort((a, b) => {
-    if (!sortConfig.key) return 0;
-    
-    // Special sorting for programs
-    if (sortConfig.key === 'assignedPrograms') {
-      const aPrograms = (a.programs || []).map(p => p.name).join(', ');
-      const bPrograms = (b.programs || []).map(p => p.name).join(', ');
+  const sortedResources = useMemo(() => {
+    return [...filteredResources].sort((a, b) => {
+      if (!sortConfig.key) return 0;
+      
+      if (sortConfig.key === 'assignedPrograms') {
+        const aPrograms = (a.programs || []).map(p => p.name).join(', ');
+        const bPrograms = (b.programs || []).map(p => p.name).join(', ');
+        return sortConfig.direction === "ascending"
+          ? aPrograms.localeCompare(bPrograms)
+          : bPrograms.localeCompare(aPrograms);
+      }
+      
+      const valueA = a[sortConfig.key] || "";
+      const valueB = b[sortConfig.key] || "";
       return sortConfig.direction === "ascending"
-        ? aPrograms.localeCompare(bPrograms)
-        : bPrograms.localeCompare(aPrograms);
+        ? valueA.localeCompare(valueB)
+        : valueB.localeCompare(valueA);
+    });
+  }, [filteredResources, sortConfig]);
+
+  // Pagination Logic
+  const totalPages = Math.ceil(sortedResources.length / itemsPerPage);
+  const paginatedResources = sortedResources.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
+  const handlePageChange = (page) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
     }
-    
-    const valueA = a[sortConfig.key] || "";
-    const valueB = b[sortConfig.key] || "";
-    return sortConfig.direction === "ascending"
-      ? valueA.localeCompare(valueB)
-      : valueB.localeCompare(valueA);
-  });
+  };
 
   const handleBaselineClickWithLoading = async (resource) => {
     setLoadingBaselineId(resource.publicId);
@@ -162,7 +185,7 @@ const ResourceList = ({ handleBaselineClick, handleOpportunitiesClick }) => {
   return (
     <div className="relative">
       {toast}
-      
+
       <div className={`overflow-x-auto rounded-lg shadow-lg border border-gray-200 ${deleteModal.isOpen ? 'filter blur-sm' : ''}`}>
         <table className="w-full border-collapse">
           <thead>
@@ -251,9 +274,9 @@ const ResourceList = ({ handleBaselineClick, handleOpportunitiesClick }) => {
             </tr>
           </thead>
           <tbody>
-            {sortedResources.map((resource, index) => (
+            {paginatedResources.map((resource, index) => (
               <tr key={resource.publicId} className={`h-8 ${index % 2 === 0 ? "bg-gray-100" : "bg-white"}`}>
-                <td className="p-1 text-gray-700 text-sm border-r border-gray-200">{index + 1}</td>
+                <td className="p-1 text-gray-700 text-sm border-r border-gray-200 text-center">{index + 1}</td>
                 <td
                   className="p-1 text-blue-600 text-sm cursor-pointer hover:underline border-r border-gray-200"
                   onClick={() => setSelectedResource(resource.publicId)}
@@ -269,7 +292,7 @@ const ResourceList = ({ handleBaselineClick, handleOpportunitiesClick }) => {
                 <td className="p-1 text-gray-700 text-sm border-r border-gray-200 max-w-xs truncate">
                   <div className="flex flex-wrap gap-1">
                     {(resource.programs || []).map(program => (
-                      <span 
+                      <span
                         key={program.id}
                         className="px-2 py-0.5 bg-blue-100 text-blue-800 text-xs rounded-full cursor-pointer hover:bg-blue-200"
                         onClick={(e) => {
@@ -289,11 +312,11 @@ const ResourceList = ({ handleBaselineClick, handleOpportunitiesClick }) => {
                       (resource.status || "pool") === "pool"
                         ? "bg-blue-100 text-blue-800"
                         : resource.status === "deployed"
-                        ? "bg-green-100 text-green-800"
-                        : resource.status === "pip"
-                        ? "bg-yellow-100 text-yellow-800"
-                        : "bg-red-100 text-red-800"
-                    }`}
+                          ? "bg-green-100 text-green-800"
+                          : resource.status === "pip"
+                            ? "bg-yellow-100 text-yellow-800"
+                            : "bg-red-100 text-red-800"
+                      }`}
                   >
                     {(resource.status || "pool").charAt(0).toUpperCase() +
                       (resource.status || "pool").slice(1)}
@@ -305,7 +328,7 @@ const ResourceList = ({ handleBaselineClick, handleOpportunitiesClick }) => {
                       <button
                         className={`flex items-center justify-center w-7 h-7 bg-teal-500 text-white rounded-lg hover:bg-teal-600 transition-colors cursor-pointer ${
                           loadingBaselineId === resource.publicId ? "opacity-75" : ""
-                        }`}
+                          }`}
                         onClick={() => handleBaselineClickWithLoading(resource)}
                         disabled={loadingBaselineId === resource.publicId}
                       >
@@ -351,6 +374,75 @@ const ResourceList = ({ handleBaselineClick, handleOpportunitiesClick }) => {
           </tbody>
         </table>
 
+        {/* Pagination Controls */}
+        {sortedResources.length > 0 && (
+          <div className="flex items-center justify-between px-4 py-3 bg-white border-t border-gray-200">
+            <div className="text-sm text-gray-700">
+              Showing <span className="font-medium">{(currentPage - 1) * itemsPerPage + 1}</span> to{" "}
+              <span className="font-medium">
+                {Math.min(currentPage * itemsPerPage, sortedResources.length)}
+              </span>{" "}
+              of <span className="font-medium">{sortedResources.length}</span> results
+            </div>
+            <div className="flex space-x-2">
+              <button
+                onClick={() => handlePageChange(1)}
+                disabled={currentPage === 1}
+                className={`p-2 rounded-md ${currentPage === 1 ? 'text-gray-400 cursor-not-allowed' : 'text-blue-600 hover:bg-blue-50'}`}
+              >
+                <FaAngleDoubleLeft />
+              </button>
+              <button
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage === 1}
+                className={`p-2 rounded-md ${currentPage === 1 ? 'text-gray-400 cursor-not-allowed' : 'text-blue-600 hover:bg-blue-50'}`}
+              >
+                <FaAngleLeft />
+              </button>
+              
+              {/* Dynamic Page Numbers */}
+              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                let pageNum;
+                if (totalPages <= 5) {
+                  pageNum = i + 1;
+                } else if (currentPage <= 3) {
+                  pageNum = i + 1;
+                } else if (currentPage >= totalPages - 2) {
+                  pageNum = totalPages - 4 + i;
+                } else {
+                  pageNum = currentPage - 2 + i;
+                }
+
+                return (
+                  <button
+                    key={pageNum}
+                    onClick={() => handlePageChange(pageNum)}
+                    className={`w-10 h-10 rounded-md ${currentPage === pageNum ? 'bg-blue-600 text-white' : 'text-blue-600 hover:bg-blue-50'}`}
+                  >
+                    {pageNum}
+                  </button>
+                );
+              })}
+
+              <button
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage === totalPages}
+                className={`p-2 rounded-md ${currentPage === totalPages ? 'text-gray-400 cursor-not-allowed' : 'text-blue-600 hover:bg-blue-50'}`}
+              >
+                <FaAngleRight />
+              </button>
+              <button
+                onClick={() => handlePageChange(totalPages)}
+                disabled={currentPage === totalPages}
+                className={`p-2 rounded-md ${currentPage === totalPages ? 'text-gray-400 cursor-not-allowed' : 'text-blue-600 hover:bg-blue-50'}`}
+              >
+                <FaAngleDoubleRight />
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Employee Detail Modal */}
         {selectedResource && (
           <EmployeeDetail
             publicId={selectedResource}
@@ -358,6 +450,7 @@ const ResourceList = ({ handleBaselineClick, handleOpportunitiesClick }) => {
           />
         )}
 
+        {/* Empty State */}
         {!loading && sortedResources.length === 0 && (
           <div className="text-center py-8 bg-white">
             <div className="text-gray-500 mb-4">
@@ -382,6 +475,7 @@ const ResourceList = ({ handleBaselineClick, handleOpportunitiesClick }) => {
         )}
       </div>
 
+      {/* Delete Confirmation Modal */}
       <DeleteConfirmationModal
         isOpen={deleteModal.isOpen}
         onClose={() => setDeleteModal({ isOpen: false, resourceId: null, resourceName: "" })}

@@ -22,6 +22,8 @@ import {
 
 const initialState = {
   resources: [],
+  trainers: [],
+  participants: [],
   resourceDetails: null,
   loading: false,
   error: null,
@@ -108,8 +110,11 @@ const resourceSlice = createSlice({
         state.loading = true;
         state.error = null;
       })
+
       .addCase(fetchResources.fulfilled, (state, { payload }) => {
         state.loading = false;
+
+        // Store all resources (if needed)
         state.resources = payload.users.map(user => ({
           publicId: user.publicId,
           employeeName: user.employeeName,
@@ -132,6 +137,24 @@ const resourceSlice = createSlice({
           roleIds: user.roleIds || []
         }));
 
+        // Separate trainers (role_id=4)
+        state.trainers = payload.users
+          .filter(user => user.roleIds?.includes(4))
+          .map(user => ({
+            publicId: user.publicId,
+            employeeName: user.employeeName,
+            roleIds: user.roleIds
+          }));
+
+        // Store participants (role_id=3) - include even if they're also trainers
+        state.participants = payload.users
+          .filter(user => user.roleIds?.includes(3))
+          .map(user => ({
+            publicId: user.publicId,
+            employeeName: user.employeeName,
+            roleIds: user.roleIds
+          }));
+
         if (payload.pagination) {
           state.pagination = {
             currentPage: payload.pagination.currentPage || 1,
@@ -141,6 +164,7 @@ const resourceSlice = createSlice({
           };
         }
       })
+
       .addCase(fetchResources.rejected, (state, { payload }) => {
         state.loading = false;
         state.error = payload;

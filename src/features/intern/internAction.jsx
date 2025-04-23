@@ -47,7 +47,7 @@ export const fetchInterns = createAsyncThunk(
       startDate,
       endDate,
       page = 1, // Added page parameter
-      size = 10 // Added pageSize parameter
+      size = 1000 // Added pageSize parameter
     } = {},
     { rejectWithValue }
   ) => {

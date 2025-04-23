@@ -102,8 +102,9 @@ export const PROGRAM_API = {
     UPDATE_STATUS: `${PROGRAM_API_BASE_URL}program/`,
     DETAILS: `${PROGRAM_API_BASE_URL}program-detail/`,
     DELETE: `${PROGRAM_API_BASE_URL}program/`,
-    UPDATE: `${PROGRAM_API_BASE_URL}update-program/`
-
+    UPDATE: `${PROGRAM_API_BASE_URL}update-program/`,
+    ADD_PARTICIPANT: `${PROGRAM_API_BASE_URL}program-participant/add`,
+    DELETE_PARTICIPANT: `${PROGRAM_API_BASE_URL}program-participant/remove`,
 };
 
 export const TRAINING_TECHNOLOGY_API = {
