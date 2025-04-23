@@ -47,7 +47,7 @@ const InternList = () => {
         email: '',
         startDate: null,
         endDate: null,
-        isOffered: 'All',
+        isOffered: 'All', // Default to "All"
     });
     const [sortConfig, setSortConfig] = useState({
         key: null,
@@ -57,7 +57,7 @@ const InternList = () => {
 
     const handleSearchChange = (key, value) => {
         setSearchTerms(prev => ({ ...prev, [key]: value }));
-        setCurrentPage(1); // Reset to first page on new search
+        setCurrentPage(1);
     };
 
     const handleSort = (key) => {
@@ -84,7 +84,7 @@ const InternList = () => {
             const matchesStatus = searchTerms.status ? intern.status?.toLowerCase() === searchTerms.status.toLowerCase() : true;
             const matchesEmail = intern.email?.toLowerCase().includes(searchTerms.email.toLowerCase()) ?? true;
             
-            // Hired status filtering
+            // Hired status filtering (fixed logic)
             let matchesHiredStatus = true;
             if (searchTerms.isOffered === "Hired") {
                 matchesHiredStatus = intern.isOffered === true;
