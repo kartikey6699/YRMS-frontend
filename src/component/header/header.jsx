@@ -1,16 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import logo from '/header_logo.png';
 import userManual from '../../assets/user-solid.svg';
-// import { SuccessToast } from '../helper/SuccessToast';
-// import { ErrorToast } from '../helper/ErrorToast';
-import { SuccessToast , ErrorToast } from '../helper/ResourceToast';
 
 const Header = ({ isLoggedIn }) => {
-  const [dropdownOpen, setDropdownOpen] = useState(false);
   const [currentDateTime, setCurrentDateTime] = useState(new Date());
-  const [showToast, setShowToast] = useState(false);
-  const [showSuccess, setShowSuccess] = useState(false);
-  const [showError, setShowError] = useState(false);
 
   // Update time every second
   useEffect(() => {
@@ -19,17 +12,6 @@ const Header = ({ isLoggedIn }) => {
     }, 1000);
     return () => clearInterval(timer);
   }, []);
-
-  const toggleDropdown = () => {
-    setDropdownOpen(!dropdownOpen);
-    setShowToast(true);
-    setTimeout(() => setShowToast(false), 3000); // Hide toast after 3 seconds
-    
-    setShowSuccess(true);
-    setTimeout(() => setShowSuccess(false), 3000); // Hide success toast after 3 seconds
-    setShowError(true);
-    setTimeout(() => setShowError(false), 3000); // Hide error toast after 3 seconds
-  };
 
   // Format date and time with seconds
   const formattedDate = currentDateTime.toLocaleDateString('en-US', {
@@ -44,6 +26,9 @@ const Header = ({ isLoggedIn }) => {
     second: '2-digit',
     hour12: true
   });
+
+  const userName = sessionStorage.getItem('userName') || 'Guest';
+  const roleName = sessionStorage.getItem('roleName') || '';
 
   return (
     <nav className="bg-gray-200 sticky top-0 z-50 shadow-md">
@@ -73,37 +58,20 @@ const Header = ({ isLoggedIn }) => {
               {formattedTime}
             </div>
 
-            {/* Profile Dropdown */}
-            {isLoggedIn ? (
-              <div className="relative ml-3">
-                <div className="relative">
-                  <button 
-                    onClick={toggleDropdown} 
-                    className="text-gray-700 focus:outline-none hover:bg-gray-300 rounded-full p-1 transition-colors duration-200"
-                  >
-                    <img src={userManual} alt="User Manual" className="w-8 h-8" />
-                  </button>
-                  {dropdownOpen && (
-                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-2 z-20 animate-fade-in">
-                      <a href="#" className="block px-4 py-2 text-gray-800 hover:bg-gray-100 transition-colors duration-200">Profile</a>
-                      <a href="#" className="block px-4 py-2 text-gray-800 hover:bg-gray-100 transition-colors duration-200">Settings</a>
-                      <a href="#" className="block px-4 py-2 text-gray-800 hover:bg-gray-100 transition-colors duration-200">Sign Out</a>
-                    </div>
-                  )}
-                </div>
-              </div>
-            ) : (
-              <button onClick={toggleDropdown} className="text-gray-700 focus:outline-none">
-                <img src={userManual} alt="User Manual" className="w-8 h-8" />
+            {/* Profile Section */}
+            <div className="relative ml-2 flex flex-col items-center">
+              <button 
+                className="text-gray-700 focus:outline-none hover:bg-gray-300 rounded-full p-1 transition-colors duration-200 flex justify-center w-full"
+              >
+                <img src={userManual} alt="User Manual" className="w-6 h-6 mx-auto" />
               </button>
-            )}
+              <p className="text-sm font-medium text-gray-700 bg-gray-100 px-2 py-1 rounded-md shadow-sm border border-gray-300 mt-1">
+                {userName} | <span className="text-blue-600 font-semibold">{roleName}</span>
+              </p>
+            </div> 
           </div>
         </div>
       </div>
-      {/* {showToast && <SuccessToast message="Profile icon clicked!" onClose={() => setShowToast(false)} />} */}
-      {/* {showToast && <ErrorToast message="Profile icon clicked!" onClose={() => setShowToast(false)} />} */}
-      {/* {showSuccess && <SuccessToast message="Profile icon clicked!" onClose={() => setShowSuccess(false)} />} */}
-      {showError && <ErrorToast message="Profile icon clicked!" onClose={() => setShowError(false)} />}
     </nav>
   );
 }
