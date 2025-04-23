@@ -543,7 +543,7 @@ const AssignTraining = () => {
                     </td>
                     <td className="p-2 text-purple-600 text-sm border-r border-gray-200">
                       <button 
-                        onClick={() => navigate(`/training-detail/${upskilling.publicId}`)}
+                        onClick={() => navigate(`/training-detail/${upskilling.id}`)}
                         className="font-medium hover:underline cursor-pointer"
                       >
                         {upskilling.programName}

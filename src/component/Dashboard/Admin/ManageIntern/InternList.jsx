@@ -34,6 +34,7 @@ const InternList = () => {
     }, [toast]);
 
     const statusOptions = ["Complete", "Running", "Pending", "Hold"];
+    const hiredOptions = ["All", "Hired", "Not Hired"];
 
     useEffect(() => {
         dispatch(fetchInterns())
@@ -43,8 +44,10 @@ const InternList = () => {
         name: '',
         mentor: '',
         status: '',
+        email: '',
         startDate: null,
         endDate: null,
+        isOffered: 'All',
     });
     const [sortConfig, setSortConfig] = useState({
         key: null,
@@ -79,20 +82,41 @@ const InternList = () => {
             const matchesName = intern.name?.toLowerCase().includes(searchTerms.name.toLowerCase()) ?? true;
             const matchesMentor = intern.mentor?.toLowerCase().includes(searchTerms.mentor.toLowerCase()) ?? true;
             const matchesStatus = searchTerms.status ? intern.status?.toLowerCase() === searchTerms.status.toLowerCase() : true;
+            const matchesEmail = intern.email?.toLowerCase().includes(searchTerms.email.toLowerCase()) ?? true;
+            
+            // Hired status filtering
+            let matchesHiredStatus = true;
+            if (searchTerms.isOffered === "Hired") {
+                matchesHiredStatus = intern.isOffered === true;
+            } else if (searchTerms.isOffered === "Not Hired") {
+                matchesHiredStatus = intern.isOffered === false;
+            }
 
             // Date filtering
-            let matchesDate = true;
+            let matchesStartDate = true;
             if (searchTerms.startDate) {
                 const internDate = intern.startDate ? new Date(intern.startDate) : null;
                 if (internDate) {
-                    matchesDate =
+                    matchesStartDate =
                         internDate.getDate() === searchTerms.startDate.getDate() &&
                         internDate.getMonth() === searchTerms.startDate.getMonth() &&
                         internDate.getFullYear() === searchTerms.startDate.getFullYear();
                 }
             }
 
-            return matchesName && matchesMentor && matchesStatus && matchesDate;
+            let matchesEndDate = true;
+            if (searchTerms.endDate) {
+                const internDate = intern.endDate ? new Date(intern.endDate) : null;
+                if (internDate) {
+                    matchesEndDate =
+                        internDate.getDate() === searchTerms.endDate.getDate() &&
+                        internDate.getMonth() === searchTerms.endDate.getMonth() &&
+                        internDate.getFullYear() === searchTerms.endDate.getFullYear();
+                }
+            }
+
+            return matchesName && matchesMentor && matchesStatus && matchesEmail && 
+                   matchesStartDate && matchesEndDate && matchesHiredStatus;
         });
     }, [interns, searchTerms]);
 
@@ -100,6 +124,15 @@ const InternList = () => {
     const sortedInterns = useMemo(() => {
         return [...filteredInterns].sort((a, b) => {
             if (!sortConfig.key) return 0;
+            
+            // Special handling for isOffered (hired status)
+            if (sortConfig.key === 'isOffered') {
+                const valueA = a.isOffered ? 1 : 0;
+                const valueB = b.isOffered ? 1 : 0;
+                return sortConfig.direction === "ascending" ? valueA - valueB : valueB - valueA;
+            }
+            
+            // Default string comparison for other fields
             const valueA = a[sortConfig.key] || "";
             const valueB = b[sortConfig.key] || "";
             return sortConfig.direction === "ascending"
@@ -180,7 +213,8 @@ const InternList = () => {
         { key: 'mentor', label: 'Mentored By' },
         { key: 'startDate', label: 'Start Date' },
         { key: 'endDate', label: 'End Date' },
-        { key: 'status', label: 'Status' }
+        { key: 'status', label: 'Status' },
+        { key: 'isOffered', label: 'Hired' }
     ];
 
     if (loading) return <div className="text-center py-8">Loading interns...</div>;
@@ -231,12 +265,12 @@ const InternList = () => {
                                             </button>
                                         )}
                                     </div>
-                                    {column.key !== "sno" && column.key !== "email" && column.key !== "endDate" && (
+                                    {column.key !== "sno" && (
                                         <div className="relative mt-1">
-                                            {column.key === "startDate" ? (
+                                            {column.key === "startDate" || column.key === "endDate" ? (
                                                 <div className="relative">
                                                     <DatePicker
-                                                        selected={searchTerms.startDate}
+                                                        selected={searchTerms[column.key]}
                                                         onChange={(date) => handleDateChange(column.key, date)}
                                                         dateFormat="MM/dd/yyyy"
                                                         placeholderText="Select date"
@@ -252,6 +286,18 @@ const InternList = () => {
                                                 >
                                                     <option value="">All Status</option>
                                                     {statusOptions.map((option) => (
+                                                        <option key={option} value={option}>
+                                                            {option}
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                            ) : column.key === "isOffered" ? (
+                                                <select
+                                                    value={searchTerms.isOffered}
+                                                    onChange={(e) => handleSearchChange("isOffered", e.target.value)}
+                                                    className="w-full px-2 py-1 text-xs border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                                >
+                                                    {hiredOptions.map((option) => (
                                                         <option key={option} value={option}>
                                                             {option}
                                                         </option>
@@ -346,6 +392,15 @@ const InternList = () => {
                                             </select>
                                         </div>
                                     )}
+                                </td>
+                                <td className="p-3 text-gray-700 text-sm border-r border-gray-200">
+                                    <span className={`px-2 py-1 rounded-full text-xs ${
+                                        intern.isOffered 
+                                            ? 'bg-green-100 text-green-800' 
+                                            : 'bg-yellow-100 text-yellow-800'
+                                    }`}>
+                                        {intern.isOffered ? 'Hired' : 'Not Hired'}
+                                    </span>
                                 </td>
                                 <td className="p-3 text-gray-700 text-sm">
                                     <div className="flex space-x-1 relative">

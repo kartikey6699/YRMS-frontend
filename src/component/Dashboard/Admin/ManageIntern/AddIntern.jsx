@@ -1,17 +1,17 @@
 import React, { useEffect, useState } from 'react';
-import { 
-  FaArrowLeft, 
-  FaUser, 
-  FaEnvelope, 
-  FaVenusMars, 
-  FaPhone, 
-  FaUserTie, 
-  FaCode, 
-  FaCalendarAlt, 
-  FaCalendarCheck, 
-  FaClock, 
-  FaMapMarkerAlt, 
-  FaCheckCircle 
+import {
+    FaArrowLeft,
+    FaUser,
+    FaEnvelope,
+    FaVenusMars,
+    FaPhone,
+    FaUserTie,
+    FaCode,
+    FaCalendarAlt,
+    FaCalendarCheck,
+    FaClock,
+    FaMapMarkerAlt,
+    FaCheckCircle
 } from 'react-icons/fa';
 import { useDispatch, useSelector } from 'react-redux';
 import { Link, useNavigate } from 'react-router-dom';
@@ -59,7 +59,7 @@ const AddIntern = () => {
 
     const calculateEndDate = (startDate, duration) => {
         if (!startDate || !duration) return "";
-        
+
         const date = new Date(startDate);
         date.setMonth(date.getMonth() + parseInt(duration));
         return date.toISOString().split('T')[0];
@@ -68,14 +68,14 @@ const AddIntern = () => {
     const handleDateChange = (e) => {
         const { name, value } = e.target;
         const newFormData = { ...formData, [name]: value };
-        
+
         if (name === 'startDate' || name === 'duration') {
             newFormData.endDate = calculateEndDate(
                 name === 'startDate' ? value : formData.startDate,
                 name === 'duration' ? value : formData.duration
             );
         }
-        
+
         setFormData(newFormData);
     };
 
@@ -86,7 +86,7 @@ const AddIntern = () => {
             setToast(<YRMSLoader message="Creating intern..." />);
 
             const createResult = await dispatch(createIntern(formData));
-            
+
             if (!createResult.payload?.publicId) {
                 throw new Error("Failed to get publicId from response");
             }
@@ -107,7 +107,7 @@ const AddIntern = () => {
                 status: "",
                 competencyId: "",
             });
-            
+
             setTimeout(() => {
                 navigate('/interns');
             }, 1500);
@@ -140,19 +140,19 @@ const AddIntern = () => {
                     Back to Intern List
                 </Link>
             </div>
-            
+
             <div className="mb-8 text-center">
                 <h2 className="text-3xl font-bold text-blue-800 mb-2">Add New Intern</h2>
                 <p className="text-gray-600">Fill in the details below to register a new intern</p>
             </div>
-            
+
             <form className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Personal Information Section */}
                 <div className="bg-white p-6 rounded-lg shadow-sm">
                     <h3 className="text-xl font-semibold text-blue-700 mb-4 flex items-center">
                         <FaUser className="mr-2" /> Personal Information
                     </h3>
-                    
+
                     <div className="mb-4">
                         <label className="block text-gray-700 font-medium mb-2 flex items-center">
                             <FaUser className="mr-2 text-blue-500" /> Name
@@ -167,7 +167,7 @@ const AddIntern = () => {
                             required
                         />
                     </div>
-                    
+
                     <div className="mb-4">
                         <label className="block text-gray-700 font-medium mb-2 flex items-center">
                             <FaEnvelope className="mr-2 text-blue-500" /> Email
@@ -182,7 +182,7 @@ const AddIntern = () => {
                             required
                         />
                     </div>
-                    
+
                     <div className="mb-4">
                         <label className="block text-gray-700 font-medium mb-2 flex items-center">
                             <FaVenusMars className="mr-2 text-blue-500" /> Gender
@@ -199,7 +199,7 @@ const AddIntern = () => {
                             <option value="female">Female</option>
                         </select>
                     </div>
-                    
+
                     <div className="mb-4">
                         <label className="block text-gray-700 font-medium mb-2 flex items-center">
                             <FaPhone className="mr-2 text-blue-500" /> Phone Number
@@ -221,7 +221,7 @@ const AddIntern = () => {
                     <h3 className="text-xl font-semibold text-blue-700 mb-4 flex items-center">
                         <FaUserTie className="mr-2" /> Professional Details
                     </h3>
-                    
+
                     <div className="mb-4">
                         <label className="block text-gray-700 font-medium mb-2 flex items-center">
                             <FaUserTie className="mr-2 text-blue-500" /> Mentor
@@ -241,7 +241,7 @@ const AddIntern = () => {
                             ))}
                         </select>
                     </div>
-                    
+
                     <div className="mb-4">
                         <label className="block text-gray-700 font-medium mb-2 flex items-center">
                             <FaCode className="mr-2 text-blue-500" /> Competency
@@ -255,7 +255,7 @@ const AddIntern = () => {
                             placeholder="Select Competency"
                         />
                     </div>
-                    
+
                     <div className="mb-4">
                         <label className="block text-gray-700 font-medium mb-2 flex items-center">
                             <FaMapMarkerAlt className="mr-2 text-blue-500" /> Location
@@ -267,15 +267,16 @@ const AddIntern = () => {
                             className="w-full h-12 p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 transition-colors"
                             required
                         >
-                            <option value="indore-yash-it-park-sc-dc">Indore-YASH IT Park-SC-DC</option>
-                            <option value="pune-magarpatta-dc-ii">Pune-Magarpatta-DC-II</option>
-                            <option value="hyderabad-mindspace-i-dc">Hyderabad-Mindspace I-DC</option>
-                            <option value="bangalore-whitefield-dc">Bangalore-Whitefield-DC</option>
-                            <option value="indore-crystal-it-park-dc-ii">Indore-Crystal IT Park-DC-II</option>
-                            <option value="indore-btc-co">Pune-Hinjewadi III-DC</option>
+                            <option value="Indore_Yash_IT_Park_SC_DC">Indore-YASH IT Park-SC-DC</option>
+                            <option value="Pune_Magarpatta_DC_II">Pune-Magarpatta-DC-II</option>
+                            <option value="Hyderabad_Mindspace_I_DC">Hyderabad-Mindspace I-DC</option>
+                            <option value="Bangalore_Whitefield_DC">Bangalore-Whitefield-DC</option>
+                            <option value="Indore_Crystal_IT_Park_DC_II">Indore-Crystal IT Park-DC-II</option>
+                            <option value="Indore_BTC_CO">Indore-BTC-CO</option>
+                            <option value="Pune_Hinjewadi_III_DC">Pune-Hinjewadi III-DC</option>
                         </select>
                     </div>
-                    
+
                     <div className="mb-4">
                         <label className="block text-gray-700 font-medium mb-2 flex items-center">
                             <FaCheckCircle className="mr-2 text-blue-500" /> Status
@@ -301,7 +302,7 @@ const AddIntern = () => {
                     <h3 className="text-xl font-semibold text-blue-700 mb-4 flex items-center">
                         <FaCalendarAlt className="mr-2" /> Internship Duration
                     </h3>
-                    
+
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div className="mb-4">
                             <label className="block text-gray-700 font-medium mb-2 flex items-center">
@@ -317,7 +318,7 @@ const AddIntern = () => {
                                 onClick={(e) => e.target.showPicker()} // Open date picker on input click
                             />
                         </div>
-                        
+
                         <div className="mb-4">
                             <label className="block text-gray-700 font-medium mb-2 flex items-center">
                                 <FaClock className="mr-2 text-blue-500" /> Duration (months)
@@ -333,7 +334,7 @@ const AddIntern = () => {
                                 required
                             />
                         </div>
-                        
+
                         <div className="mb-4">
                             <label className="block text-gray-700 font-medium mb-2 flex items-center">
                                 <FaCalendarCheck className="mr-2 text-blue-500" /> End Date
@@ -350,17 +351,16 @@ const AddIntern = () => {
                         </div>
                     </div>
                 </div>
-                
+
                 <div className="md:col-span-2 flex justify-center mt-4">
                     <button
                         type="button"
                         onClick={handleSubmit}
                         disabled={isSubmitting}
-                        className={`px-8 py-3 rounded-lg font-semibold text-white transition-all transform hover:scale-105 flex items-center ${
-                            isSubmitting
+                        className={`px-8 py-3 rounded-lg font-semibold text-white transition-all transform hover:scale-105 flex items-center ${isSubmitting
                                 ? "bg-gray-400 cursor-not-allowed"
                                 : "bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
-                        }`}
+                            }`}
                     >
                         {isSubmitting ? (
                             <>
