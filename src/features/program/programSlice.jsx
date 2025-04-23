@@ -14,7 +14,9 @@ import {
   fetchParticipantsDetails,
   updateProgramStatus,
   fetchProgramDetails,
-  updateProgramDetails
+  updateProgramDetails,
+  addParticipants,
+  removeParticipants
 } from "./programAction";
 
 const initialState = {
@@ -279,7 +281,50 @@ const programSlice = createSlice({
       .addCase(updateProgramDetails.rejected, (state, { payload }) => {
         state.programDetails.loading = false;
         state.programDetails.error = payload;
-      });
+      })
+
+      .addCase(addParticipants.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(addParticipants.fulfilled, (state, { payload }) => {
+        state.loading = false;
+        // Update the participants list in programDetails
+        // if (state.programDetails.data) {
+        //   const newParticipants = payload.participants.map(p => ({
+        //     publicId: p.publicId,
+        //     employeeName: p.employeeName
+        //   }));
+        //   state.programDetails.data.participants = [
+        //     ...state.programDetails.data.participants,
+        //     ...newParticipants
+        //   ];
+        //   state.programDetails.data.participantCount += newParticipants.length;
+        // }
+      })
+      .addCase(addParticipants.rejected, (state, { payload }) => {
+        state.loading = false;
+        state.error = payload;
+      })
+      
+      .addCase(removeParticipants.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(removeParticipants.fulfilled, (state, { payload }) => {
+        state.loading = false;
+        // Update the participants list in programDetails
+        // if (state.programDetails.data) {
+        //   state.programDetails.data.participants = state.programDetails.data.participants.filter(
+        //     p => !payload.removedIds.includes(p.publicId)
+        //   );
+        //   state.programDetails.data.participantCount -= payload.removedIds.length;
+        // }
+      })
+      .addCase(removeParticipants.rejected, (state, { payload }) => {
+        state.loading = false;
+        state.error = payload;
+      })
   }
 });
 

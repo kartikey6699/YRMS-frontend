@@ -335,3 +335,39 @@ export const updateProgramDetails = createAsyncThunk(
     }
   }
 );
+
+export const addParticipants = createAsyncThunk(
+  "program/addParticipants",
+  async ({ programId, participantIds }, { rejectWithValue }) => {
+    try {
+      const response = await programApiClient.post(PROGRAM_API.ADD_PARTICIPANT, {
+        program_id: programId,
+        participant_ids: participantIds,
+      });
+      if (!response.data.success) {
+        throw new Error("Failed to add participants");
+      }
+      return { programId, participants: response.data.data };
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || error.message);
+    }
+  }
+);
+
+// Remove participants from program
+export const removeParticipants = createAsyncThunk(
+  "program/removeParticipants",
+  async (participantIds, { rejectWithValue }) => {
+    try {
+      const response = await programApiClient.post(PROGRAM_API.DELETE_PARTICIPANT, {
+        public_id: participantIds,
+      });
+      if (!response.data.success) {
+        throw new Error("Failed to remove participants");
+      }
+      return { removedIds: participantIds };
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || error.message);
+    }
+  }
+);

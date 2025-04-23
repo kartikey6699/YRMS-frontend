@@ -25,7 +25,12 @@ import {
   FaUserCircle
 } from 'react-icons/fa';
 import { format, parseISO } from 'date-fns';
-import { fetchProgramDetails, updateProgramDetails } from '../../../../features/program/programAction';
+import {
+  fetchProgramDetails,
+  updateProgramDetails,
+  addParticipants,
+  removeParticipants
+} from '../../../../features/program/programAction';
 import TextareaAutosize from 'react-textarea-autosize';
 import Select from 'react-select';
 import { SuccessToast, ErrorToast } from '../../../helper/ResourceToast';
@@ -63,7 +68,7 @@ const TrainingDetail = () => {
   const [showErrorToast, setShowErrorToast] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [showParticipantModal, setShowParticipantModal] = useState(false);
-  const [selectedParticipants, setSelectedParticipants] = useState([]);
+  const [selectedParticipantToAdd, setSelectedParticipantToAdd] = useState(null);
 
   // Fetch data on mount
   useEffect(() => {
@@ -96,16 +101,17 @@ const TrainingDetail = () => {
           label: getRequesterDetails(program.requester).text
         } : null,
         competency: program.competencyPublicId ? {
-          value: program.competencyPublicId, // Using publicId
+          value: program.competencyPublicId,
           label: program.competencyName
         } : null,
         trainer: program.trainerPublicId ? {
-          value: program.trainerPublicId, // Using publicId
+          value: program.trainerPublicId,
           label: program.trainerName
         } : null
       });
     }
   }, [program, resources, competencies, trainingTechnologies]);
+
   // Dropdown options
   const requesterOptions = [
     { value: 1, label: "HR Department" },
@@ -212,8 +218,8 @@ const TrainingDetail = () => {
       technology: editedData.technologies?.map(t => t.value).join(', '),
       projectDescription: editedData.projectDescription,
       purpose: editedData.purpose,
-      competencyId: editedData.competency?.value, // Already using publicId from dropdown
-      trainerId: editedData.trainer?.value // Already using publicId from dropdown
+      competencyId: editedData.competency?.value,
+      trainerId: editedData.trainer?.value
     };
 
     dispatch(updateProgramDetails(payload))
@@ -255,34 +261,57 @@ const TrainingDetail = () => {
         label: getRequesterDetails(program.requester).text
       } : null,
       competency: program.competencyPublicId ? {
-        value: program.competencyPublicId, // Using publicId
+        value: program.competencyPublicId,
         label: program.competencyName
       } : null,
       trainer: program.trainerPublicId ? {
-        value: program.trainerPublicId, // Using publicId
+        value: program.trainerPublicId,
         label: program.trainerName
       } : null
     });
   };
 
-  const handleAddParticipant = (selectedOption) => {
-    if (selectedOption) {
-      setSelectedParticipants(prev => [...prev, selectedOption]);
-    }
+  const handleAddParticipant = () => {
+    if (!selectedParticipantToAdd) return;
+
+    dispatch(addParticipants({
+      programId: program.publicId,
+      participantIds: [selectedParticipantToAdd.value]
+    }))
+      .unwrap()
+      .then(() => {
+        // Refresh program details after successful addition
+        dispatch(fetchProgramDetails(id)).unwrap().then(() => {
+          setSuccessMessage('Participant added successfully!');
+          setShowSuccessToast(true);
+          setTimeout(() => setShowSuccessToast(false), 3000);
+          setSelectedParticipantToAdd(null);
+        });
+      })
+      .catch(err => {
+        setErrorMessage(err.message || 'Failed to add participant');
+        setShowErrorToast(true);
+        setTimeout(() => setShowErrorToast(false), 3000);
+      });
   };
 
   const handleRemoveParticipant = (participantId) => {
-    setSelectedParticipants(prev => prev.filter(p => p.value !== participantId));
+    dispatch(removeParticipants([participantId]))
+      .unwrap()
+      .then(() => {
+        // Refresh program details after successful removal
+        dispatch(fetchProgramDetails(id)).unwrap().then(() => {
+          setSuccessMessage('Participant removed successfully!');
+          setShowSuccessToast(true);
+          setTimeout(() => setShowSuccessToast(false), 3000);
+        });
+      })
+      .catch(err => {
+        setErrorMessage(err.message || 'Failed to remove participant');
+        setShowErrorToast(true);
+        setTimeout(() => setShowErrorToast(false), 3000);
+      });
   };
-
-  const handleSaveParticipants = () => {
-    // Here you would typically call an API to update participants
-    setShowParticipantModal(false);
-    setSuccessMessage('Participants updated successfully!');
-    setShowSuccessToast(true);
-    setTimeout(() => setShowSuccessToast(false), 3000);
-  };
-
   // Loading and error states
   if (loading) return (
     <div className="flex justify-center items-center h-screen bg-gradient-to-b from-purple-50 to-white">
@@ -610,13 +639,13 @@ const TrainingDetail = () => {
         <div className="fixed inset-0 z-50 overflow-y-auto">
           {/* Blurred Background */}
           <div
-            className="fixed inset-0  bg-opacity-30 backdrop-blur-sm transition-opacity"
+            className="fixed inset-0 bg-opacity-30 backdrop-blur-sm transition-opacity"
             onClick={() => setShowParticipantModal(false)}
           ></div>
 
           {/* Modal Container */}
           <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-            <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+            <div className="inline-block align-bottom bg-white rounded-lg text-left shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
               {/* Modal Header */}
               <div className="bg-purple-600 px-4 py-3 sm:px-6 sm:flex sm:items-center sm:justify-between">
                 <h3 className="text-lg leading-6 font-bold text-white">
@@ -640,7 +669,7 @@ const TrainingDetail = () => {
                   </h4>
 
                   {program.participants.length > 0 ? (
-                    <ul className="divide-y divide-gray-200">
+                    <ul className="divide-y divide-gray-200 max-h-64 overflow-y-auto">
                       {program.participants.map((participant) => (
                         <li key={participant.publicId} className="py-3 flex items-center justify-between">
                           <div className="flex items-center">
@@ -669,22 +698,45 @@ const TrainingDetail = () => {
                   <div className="flex items-center gap-2">
                     <Select
                       options={participantOptions}
-                      onChange={handleAddParticipant}
+                      onChange={setSelectedParticipantToAdd}
+                      value={selectedParticipantToAdd}
                       className="flex-1"
                       placeholder="Search participants to add..."
                       classNamePrefix="select"
                       styles={{
                         control: (provided) => ({
                           ...provided,
-                          minHeight: '42px'
-                        })
+                          minHeight: '42px',
+                          borderColor: '#E5E7EB', // Tailwind gray-200
+                          boxShadow: 'none',
+                          '&:hover': {
+                            borderColor: '#A78BFA', // Tailwind purple-400
+                          },
+                        }),
+                        menu: (provided) => ({
+                          ...provided,
+                          zIndex: 60, // Higher than modal's z-50
+                          marginTop: 4,
+                          borderRadius: '0.5rem', // Tailwind rounded-lg
+                          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)', // Tailwind shadow-md
+                          maxHeight: '200px',
+                          overflowY: 'auto',
+                        }),
+                        menuPortal: (provided) => ({
+                          ...provided,
+                          zIndex: 60, // Ensure portal has high z-index
+                        }),
                       }}
+                      menuPortalTarget={document.body} // Append dropdown to body to avoid clipping
+                      menuPosition="fixed" // Use fixed positioning to prevent overflow issues
                     />
                     <button
-                      className="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 transition-colors flex items-center"
-                      disabled={!selectedParticipants.length}
+                      onClick={handleAddParticipant}
+                      className="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 transition-colors flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
+                      disabled={!selectedParticipantToAdd}
                     >
                       <FaUserPlus className="mr-1" />
+                      Add
                     </button>
                   </div>
                 </div>
@@ -695,22 +747,16 @@ const TrainingDetail = () => {
                 <button
                   type="button"
                   className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-purple-600 text-base font-medium text-white hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 sm:ml-3 sm:w-auto sm:text-sm"
-                  onClick={handleSaveParticipants}
-                >
-                  Save Changes
-                </button>
-                <button
-                  type="button"
-                  className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
                   onClick={() => setShowParticipantModal(false)}
                 >
-                  Cancel
+                  Close
                 </button>
               </div>
             </div>
           </div>
         </div>
       )}
+
       {/* Toast Notifications */}
       {showSuccessToast && (
         <SuccessToast
