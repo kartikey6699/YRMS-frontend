@@ -170,7 +170,7 @@ const ManageResource = () => {
         employeeId: "",
         employeeName: "",
         gender: "",
-        location: "indore",
+        location: "",
         email: "",
         phoneNumber: "",
         joiningDate: "",
