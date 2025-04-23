@@ -4,47 +4,53 @@ import { Link } from 'react-router';
 import DatePicker from "react-datepicker";
 import EmployeeDetailPage from './UserDetails';
 import { useDispatch, useSelector } from "react-redux";
-import { fetchResources } from '../../../../features/resource/resourceAction';
+import { fetchCompetencies, fetchDesignations, fetchResources } from '../../../../features/resource/resourceAction';
 
 const UserList = ({ setActiveSection }) => {
-
   const dispatch = useDispatch();
-  const { resources } = useSelector((state) => state.resource);
+  const { resources, competencies, designations } = useSelector((state) => state.resource);
   const roleOptions = ["Admin", "User"];
+  const statusOptions = ["pool", "pip", "deployed"]; // Updated to match API
+  const competenciesOptions = competencies.map((competency) => competency.name); // Updated to match API
+  const designationsOptions = designations.map((designation) => designation.name); // Updated to match API
   const [selectedUser, setSelectedUser] = useState(null);
+  const [filteredData, setFilteredData] = useState([]);
   const [searchTerms, setSearchTerms] = useState({
     name: '',
-    status: null,
-    role: null,
-    competency: null
+    designation: '',
+    competency: '',
+    joiningDate: '',
+    status: '',
+    roleIds: ''
   });
 
   const getRoleName = (roleIds) => {
-    console.log(roleIds, "fjsioif")
     if (!roleIds) return "N/A";
-  
-    // Get roles from sessionStorage (expecting a stringified array of roles)
     const storedRoles = sessionStorage.getItem('role');
     if (!storedRoles) return "N/A";
-  
     try {
-      const roles = JSON.parse(storedRoles); // Parse the stored string into an array
-  
-      // Handle both single ID and array of IDs
-      const roleNames = Array.isArray(roleIds) 
-        ? roleIds.map(id => roles.find(r => r.id === id)?.role || "Unknown") 
+      const roles = JSON.parse(storedRoles);
+      const roleNames = Array.isArray(roleIds)
+        ? roleIds.map(id => roles.find(r => r.id === id)?.role || "Unknown")
         : [roles.find(r => r.id === roleIds)?.role || "Unknown"];
-  
-      return roleNames.join(", "); // Combine names if multiple IDs
+      return roleNames.join(", ");
     } catch (e) {
       console.error("Error parsing roles:", e);
       return "N/A";
     }
   };
-  
+
   useEffect(() => {
-    dispatch(fetchResources())
-  }, [dispatch], resources);
+    dispatch(fetchResources());
+    dispatch(fetchDesignations());
+    dispatch(fetchCompetencies());
+  }, [dispatch]);
+
+  // Set filteredData to resources when resources change
+  useEffect(() => {
+    setFilteredData(resources);
+    applyFilters(searchTerms); // Re-apply filters if any are active
+  }, [resources]);
 
   const [sortConfig, setSortConfig] = useState({
     key: null,
@@ -52,7 +58,8 @@ const UserList = ({ setActiveSection }) => {
   });
 
   const handleSearchChange = (key, value) => {
-    setSearchTerms(searchTerms => ({ ...searchTerms, [key]: value }));
+    setSearchTerms(prev => ({ ...prev, [key]: value }));
+    applyFilters({ ...searchTerms, [key]: value });
   };
 
   const handleSort = (key) => {
@@ -61,29 +68,46 @@ const UserList = ({ setActiveSection }) => {
       direction = 'descending';
     }
     setSortConfig({ key, direction });
-  };
 
-  const handleDateChange = (key, date) => {
-    setSearchTerms({
-      ...searchTerms,
-      [key]: date,
+    // Apply sorting to filteredData
+    const sortedData = [...filteredData].sort((a, b) => {
+      if (a[key] < b[key]) return direction === 'ascending' ? -1 : 1;
+      if (a[key] > b[key]) return direction === 'ascending' ? 1 : -1;
+      return 0;
     });
+    setFilteredData(sortedData);
   };
 
-  // Apply all filters
-  const filteredData = resources.filter(item => {
-    return (
-      (searchTerms.name === '' || item.name.toLowerCase().includes(searchTerms.name.toLowerCase())) &&
-      (searchTerms.status === null || item.status === searchTerms.status) &&
-      (searchTerms.role === null || item.role === searchTerms.role) &&
-      (searchTerms.competency === null || item.competency === searchTerms.competency)
-    );
-  });
+  const applyFilters = (filters) => {
+    const isFilterEmpty = Object.values(filters).every(val => !val);
+    if (isFilterEmpty) {
+      setFilteredData(resources);
+      return;
+    }
 
+    const filtered = resources.filter((item) => {
+      return Object.entries(filters).every(([key, value]) => {
+        console.log(key,"key", "value",value)
+        if (!value) return true;
+
+        if (key === 'joiningDate') {
+          return new Date(item[key]).toDateString() === new Date(value).toDateString();
+        }
+
+        if (item[key]) {
+          return String(item[key]).toLowerCase().includes(String(value).toLowerCase());
+        }
+
+        return false;
+      });
+    });
+
+    setFilteredData(filtered);
+  };
 
   const columns = [
     { key: "sno", label: "S.No" },
-    { key: 'name', label: 'Name' },
+    { key: 'employeeName', label: 'Name' }, // Updated to match API field
     { key: 'designation', label: 'Designation' },
     { key: 'competency', label: 'Competency' },
     { key: 'joiningDate', label: 'Joining Date' },
@@ -98,7 +122,7 @@ const UserList = ({ setActiveSection }) => {
           <h2 className="text-3xl font-bold text-blue-800">All Users</h2>
           <button
             className="btn px-6 py-3 rounded-lg font-semibold text-lg flex items-center bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 transition-all transform hover:scale-105"
-            onClick={() => { setActiveSection('add') }}
+            onClick={() => setActiveSection('add')}
           >
             <FaPlus className="mr-2" />
             Add User
@@ -132,58 +156,36 @@ const UserList = ({ setActiveSection }) => {
                     </button>
                   )}
                 </div>
-                {/* Search input for each column (except S.No) */}
                 {column.key !== "sno" && (
                   <div className="relative mt-1">
                     {column.key === "joiningDate" ? (
                       <div className="relative">
                         <DatePicker
-                          selected={searchTerms.joiningDate}
-                          onChange={(date) => handleDateChange(column.key, date)}
+                          selected={searchTerms[column.key] ? new Date(searchTerms[column.key]) : null}
+                          onChange={(date) => handleSearchChange(column.key, date)}
                           dateFormat="MM/dd/yyyy"
                           placeholderText="Select date"
                           className="w-full px-2 py-1 pr-6 text-xs border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
                         />
                         <FaCalendarAlt className="absolute right-2 top-2 text-gray-400 text-xs" />
                       </div>
-                    ) : column.key === "status" ? (
+                    ) : column.key === "status" || column.key === "designation" || column.key === "competency" ? (
                       <select
-                        value={searchTerms.status}
-                        onChange={(e) => handleSearchChange("status", e.target.value)}
+                        value={searchTerms[column.key] || ""}
+                        onChange={(e) => handleSearchChange(column.key, e.target.value)}
                         className="w-full px-2 py-1 text-xs border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
                       >
-                        <option value="">All Status</option>
-                        {roleOptions.map((option) => (
-                          <option key={option} value={option}>
-                            {option}
-                          </option>
-                        ))}
-                      </select>
-                    ) : column.key === "designation" ? (
-                      <select
-                        value={searchTerms.designation}
-                        onChange={(e) => handleSearchChange("designation", e.target.value)}
-                        className="w-full px-2 py-1 text-xs border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
-                      >
-                        <option value="">All Status</option>
-                        {roleOptions.map((option) => (
-                          <option key={option} value={option}>
-                            {option}
-                          </option>
-                        ))}
-                      </select>
-                    ) : column.key === "competency" ? (
-                      <select
-                        value={searchTerms.competency}
-                        onChange={(e) => handleSearchChange("competency", e.target.value)}
-                        className="w-full px-2 py-1 text-xs border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
-                      >
-                        <option value="">All Status</option>
-                        {roleOptions.map((option) => (
-                          <option key={option} value={option}>
-                            {option}
-                          </option>
-                        ))}
+                        <option value="">All {column.label}</option>
+                        {(column.key === "status" ? statusOptions :
+                          column.key === "designation" ? designationsOptions :
+                          competenciesOptions).map((option) => (
+                              <option
+                                key={typeof option === 'string' ? option : option.publicId}
+                                value={typeof option === 'string' ? option : option.publicId}
+                              >
+                                {typeof option === 'string' ? option : option.name}
+                              </option>
+                            ))}
                       </select>
                     ) : (
                       <div className="relative">
@@ -224,11 +226,13 @@ const UserList = ({ setActiveSection }) => {
                 {getRoleName(resource.roleIds)}
               </td>
               <td className="p-3 text-gray-700 text-sm border-r border-gray-200 relative">
-                <span className={`px-2 py-1 rounded-full text-xs ${resource.status === 'Active' ? 'bg-blue-100 text-blue-800' :
-                  resource.status === 'Inactive' ? 'bg-red-100 text-red-800' :
-                    'bg-red-100 text-red-800'
-                  }`}>
-                  {!resource.status ? "Admin" : resource.status.charAt(0).toUpperCase() + resource.status.slice(1)}
+                <span className={`px-2 py-1 rounded-full text-xs ${
+                  resource.status === 'pool' ? 'bg-yellow-100 text-yellow-800' :
+                  resource.status === 'pip' ? 'bg-red-100 text-red-800' :
+                  resource.status === 'deployed' ? 'bg-green-100 text-green-800' :
+                  'bg-gray-100 text-gray-800'
+                }`}>
+                  {resource.status ? resource.status.charAt(0).toUpperCase() + resource.status.slice(1) : "Unknown"}
                 </span>
               </td>
             </tr>
@@ -239,9 +243,7 @@ const UserList = ({ setActiveSection }) => {
         <EmployeeDetailPage
           key={selectedUser}
           publicId={selectedUser}
-          onClose={() => {
-            setSelectedUser(null)
-          }}
+          onClose={() => setSelectedUser(null)}
         />
       )}
     </div>
