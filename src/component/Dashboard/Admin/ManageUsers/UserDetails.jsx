@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import { useDispatch, useSelector } from "react-redux";
 import {
   FaUser,
   FaEnvelope,
@@ -17,14 +18,40 @@ import {
   FaUserTie,
   FaChartLine
 } from 'react-icons/fa';
+import { fetchResourceDetails, updateResource } from '../../../../features/resource/resourceAction';
 
-const EmployeeDetailPage = ({ publicId, onClose, onSave }) => {
+const EmployeeDetailPage = ({ publicId, onClose }) => {
+  const dispatch = useDispatch();
+  const { resourceDetails, loading, error } = useSelector((state) => state.resource);
   const [isEditing, setIsEditing] = useState(false);
-  const [formData, setFormData] = useState(publicId);
-  console.log("publicId: ",publicId)
-  const [loading, setLoading] = useState(false);
+  const [formData, setFormData] = useState({});
   const [toast, setToast] = useState(null);
   const [showAdditionalInfo, setShowAdditionalInfo] = useState(false);
+
+  // Fetch resource details when component mounts or publicId changes
+  useEffect(() => {
+    if (publicId) {
+      dispatch(fetchResourceDetails(publicId));
+    }
+  }, [dispatch, resourceDetails]);
+
+  // Initialize form data when resourceDetails changes
+  useEffect(() => {
+    if (resourceDetails) {
+      setFormData({
+        ...resourceDetails,
+        joiningDate: resourceDetails.joiningDate?.split('T')[0] || ''
+      });
+    }
+  }, [resourceDetails]);
+
+  // Auto-dismiss toast after 3 seconds
+  useEffect(() => {
+    if (toast) {
+      const timer = setTimeout(() => setToast(null), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [toast]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -35,22 +62,47 @@ const EmployeeDetailPage = ({ publicId, onClose, onSave }) => {
   };
 
   const handleSubmit = async () => {
-    setLoading(true);
     try {
-      await onSave(formData);
-      setToast({ type: 'success', message: 'Employee details saved successfully!' });
+      const response = await dispatch(updateResource({
+        publicId: publicId,
+        updatedData: formData
+      })).unwrap();
+      
+      setToast({ type: 'success', message: 'Employee details updated successfully!' });
       setIsEditing(false);
     } catch (error) {
-      setToast({ type: 'error', message: 'Failed to save employee details' });
-    } finally {
-      setLoading(false);
+      setToast({ 
+        type: 'error', 
+        message: error.message || 'Failed to update employee details' 
+      });
     }
   };
 
   const handleCancel = () => {
-    setFormData(publicId);
+    setFormData({
+      ...resourceDetails,
+      joiningDate: resourceDetails.joiningDate?.split('T')[0] || ''
+    });
     setIsEditing(false);
   };
+
+  console.log("resourceDetails: ",resourceDetails)
+
+  if (!resourceDetails) {
+    return (
+      <div className="fixed inset-0 flex items-center justify-center z-50 backdrop-blur-sm bg-black/20 p-4">
+        <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-4xl border border-gray-200">
+          <div className="flex justify-center items-center h-64">
+            {loading ? (
+              <p className="text-gray-600">Loading employee details...</p>
+            ) : (
+              <p className="text-gray-600">Employee not found</p>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -69,7 +121,7 @@ const EmployeeDetailPage = ({ publicId, onClose, onSave }) => {
       </div>
 
       {/* Main Modal */}
-      <div className="fixed inset-0 flex items-center justify-center z-50 backdrop-blur-sm bg-black/20 p-4">
+      <div className="fixed inset-0 flex items-center justify-center z-50 overflow-auto backdrop-blur-sm bg-black/20 p-4">
         <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-6xl border border-gray-200">
           {/* Header Section */}
           <div className="flex justify-between items-center mb-6 gap-4 bg-gradient-to-r from-indigo-50 to-purple-50 p-4 rounded-lg border border-indigo-100">
@@ -103,9 +155,9 @@ const EmployeeDetailPage = ({ publicId, onClose, onSave }) => {
                 {/* ID Info */}
                 <div className="bg-gradient-to-r from-indigo-50 to-blue-50 px-3 py-2 rounded-lg shadow-xs flex items-center gap-2 border border-indigo-100">
                   <FaIdBadge className="text-indigo-500" />
-                  <span className="text-sm text-indigo-600 font-medium">UserID:</span>
+                  <span className="text-sm text-indigo-600 font-medium">Employee ID:</span>
                   <span className="text-base text-indigo-800 font-medium">
-                    {formData.publicId}
+                    {formData.employeeId}
                   </span>
                 </div>
 

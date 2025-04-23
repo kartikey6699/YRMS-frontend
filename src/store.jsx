@@ -5,6 +5,7 @@ import opportunityReducer from './features/opportunity/opportunitySlice';
 import baselineReducer from "./features/baseline/baselineSlice";
 import internReducer from "./features/intern/internSlice";
 import programReducer from "./features/program/programSlice";
+import roleReducer from "./features/role/roleSlice"
 
 export const store = configureStore({
     reducer: {
@@ -14,5 +15,6 @@ export const store = configureStore({
         baseline: baselineReducer,
         intern: internReducer,
         program: programReducer,
+        role: roleReducer,
     }
 })
