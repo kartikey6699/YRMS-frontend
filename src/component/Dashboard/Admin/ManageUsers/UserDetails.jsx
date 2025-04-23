@@ -105,9 +105,24 @@ const EmployeeDetailPage = ({ publicId, onClose }) => {
 
   const handleSubmit = async () => {
     try {
+      const transformData = {
+        employeeName: formData.employeeName || '',
+        employeeId: formData.employeeId || '',
+        joiningDate: formData.joiningDate || '',
+        designation: formData.designation || '',
+        roleIds: Array.isArray(formData.roleIds) ? formData.roleIds.map(id => parseInt(id)) : [],
+        phoneNumber: formData.phoneNumber || '',
+        gender: formData.gender ? formData.gender.toLowerCase() : '',
+        location: formData.location || formData.location || '',
+        businessGroup: formData.businessGroup || '',
+        businessUnit: formData.businessUnit || '',
+        competency: formData.competency || ''
+      };
+      console.log(transformData, ">??????????????::::")
+
       const response = await dispatch(updateResource({
         publicId: publicId,
-        updatedData: formData
+        updatedData: transformData
       })).unwrap();
 
       setToast({ type: 'success', message: 'Employee details updated successfully!' });
