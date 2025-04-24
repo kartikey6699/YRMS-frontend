@@ -9,6 +9,11 @@ const AddRoleForm = ({ setActiveSection, setSelectedRole, selectedRole, onSucces
     const dispatch = useDispatch();
     const { features } = useSelector((state) => state.role);
 
+    const [errors, setErrors] = useState({
+        role: '',
+        features: ''
+    });
+
     useEffect(() => {
         dispatch(fetchFeatures());
     }, [dispatch]);
@@ -18,14 +23,37 @@ const AddRoleForm = ({ setActiveSection, setSelectedRole, selectedRole, onSucces
         features: selectedRole?.features || []
     });
 
+    useEffect(() => {
+        validateForm();
+    }, [formData]);
+
+    const validateForm = () => {
+        const newErrors = {};
+        
+        if (!formData.role.trim()) {
+            newErrors.role = 'Role name is required';
+        } else if (formData.role.length < 3) {
+            newErrors.role = 'Role name must be at least 3 characters';
+        } else if (formData.role.length > 50) {
+            newErrors.role = 'Role name cannot exceed 50 characters';
+        }
+        
+        if (formData.features.length === 0) {
+            newErrors.features = 'At least one feature must be selected';
+        }
+        
+        setErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
+    };
+
     const handleClose = () => {
-        setSelectedRole(null)
-        setActiveSection("view")
-    }
+        setSelectedRole(null);
+        setActiveSection("view");
+    };
 
     const [isFeaturesOpen, setIsFeaturesOpen] = useState(false);
     const featuresRef = useRef(null);
-    const formRef = useRef(null); // Ref for scrollable form
+    const formRef = useRef(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [toast, setToast] = useState(null);
 
@@ -34,7 +62,20 @@ const AddRoleForm = ({ setActiveSection, setSelectedRole, selectedRole, onSucces
         label: feature.name,
     }));
 
-    // Close dropdown when clicking outside
+    // Calculate dropdown height based on number of features
+    const getDropdownHeight = () => {
+        const optionHeight = 40; // px - height of each option
+        const minVisibleOptions = 4;
+        const maxHeight = 240; // px - maximum dropdown height
+        
+        const requiredHeight = Math.min(
+            Math.max(featuresOptions.length * optionHeight, minVisibleOptions * optionHeight),
+            maxHeight
+        );
+        
+        return `${requiredHeight}px`;
+    };
+
     useEffect(() => {
         const handleClickOutside = (event) => {
             if (featuresRef.current && !featuresRef.current.contains(event.target)) {
@@ -45,13 +86,6 @@ const AddRoleForm = ({ setActiveSection, setSelectedRole, selectedRole, onSucces
         return () => {
             document.removeEventListener('mousedown', handleClickOutside);
         };
-    }, []);
-
-    // Auto-scroll to top when opening
-    useEffect(() => {
-        if (formRef.current) {
-            formRef.current.scrollTo(0, 0);
-        }
     }, []);
 
     const handleInputChange = (e) => {
@@ -81,6 +115,11 @@ const AddRoleForm = ({ setActiveSection, setSelectedRole, selectedRole, onSucces
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        
+        if (!validateForm()) {
+            return;
+        }
+        
         setIsSubmitting(true);
         try {
             setToast(<YRMSLoader message={selectedRole ? "Updating role..." : "Creating role..."} />);
@@ -100,7 +139,7 @@ const AddRoleForm = ({ setActiveSection, setSelectedRole, selectedRole, onSucces
             setToast(<SuccessToast message={`Role ${selectedRole ? 'updated' : 'created'} successfully!`} onClose={() => setToast(null)} />);
             setFormData({ role: '', features: [] });
             onSuccess?.();
-            setSelectedRole(null)
+            setSelectedRole(null);
             setActiveSection("view");
         } catch (err) {
             setToast(<ErrorToast message={err.message || `Failed to ${selectedRole ? 'update' : 'create'} role`} onClose={() => setToast(null)} />);
@@ -109,7 +148,6 @@ const AddRoleForm = ({ setActiveSection, setSelectedRole, selectedRole, onSucces
         }
     };
 
-    // Pre-select features when in edit mode
     useEffect(() => {
         if (selectedRole) {
             setFormData({
@@ -128,12 +166,14 @@ const AddRoleForm = ({ setActiveSection, setSelectedRole, selectedRole, onSucces
         }
     };
 
+    const isFormValid = Object.keys(errors).length === 0 && formData.role && formData.features.length > 0;
+
     return (
         <div
             className="fixed inset-0 bg-opacity-50 flex items-center justify-center z-50 backdrop-blur-sm bg-black/20 p-4 overflow-y-auto"
             onClick={handleOverlayClick}
         >
-            <div className="bg-white rounded-xl shadow-xl w-full max-w-md transform transition-all max-h-[90vh] flex flex-col">
+            <div className="bg-white rounded-xl shadow-xl w-full max-w-lg transform transition-all h-full max-h-130 flex flex-col">
                 {/* Header */}
                 <div className="flex justify-between items-center border-b border-gray-200 p-4 flex-shrink-0">
                     <h3 className="text-xl font-semibold text-gray-800">
@@ -157,27 +197,32 @@ const AddRoleForm = ({ setActiveSection, setSelectedRole, selectedRole, onSucces
                     {/* Role Field */}
                     <div className="mb-6">
                         <label className="block text-gray-700 font-medium mb-2">
-                            Role Name
+                            Role Name <span className="text-red-500">*</span>
                         </label>
                         <input
                             type="text"
                             name="role"
                             value={formData.role}
                             onChange={handleInputChange}
-                            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-transparent transition-all"
-                            placeholder="Enter role name"
+                            className={`w-full p-3 border ${errors.role ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-transparent transition-all`}
+                            placeholder="Enter role name (3-50 characters)"
                             required
+                            minLength={3}
+                            maxLength={50}
                         />
+                        {errors.role && (
+                            <p className="mt-1 text-sm text-red-600">{errors.role}</p>
+                        )}
                     </div>
 
                     {/* Features Field */}
                     <div className="mb-8" ref={featuresRef}>
                         <label className="block text-gray-700 font-medium mb-2">
-                            Features
+                            Features <span className="text-red-500">*</span>
                         </label>
                         <div className="relative">
                             <div
-                                className={`w-full min-h-12 p-2 border border-gray-300 rounded-lg flex flex-wrap items-center cursor-pointer ${isFeaturesOpen ? 'ring-2 ring-indigo-300 border-transparent' : ''}`}
+                                className={`w-full min-h-12 p-2 border ${errors.features ? 'border-red-500' : 'border-gray-300'} rounded-lg flex flex-wrap items-center cursor-pointer ${isFeaturesOpen ? 'ring-2 ring-indigo-300 border-transparent' : ''}`}
                                 onClick={() => setIsFeaturesOpen(!isFeaturesOpen)}
                                 aria-expanded={isFeaturesOpen}
                                 aria-haspopup="listbox"
@@ -206,29 +251,35 @@ const AddRoleForm = ({ setActiveSection, setSelectedRole, selectedRole, onSucces
                                     <FaChevronDown className={`text-gray-400 transition-transform ${isFeaturesOpen ? 'transform rotate-180' : ''}`} />
                                 </div>
                             </div>
+                            {errors.features && (
+                                <p className="mt-1 text-sm text-red-600">{errors.features}</p>
+                            )}
 
                             {isFeaturesOpen && (
                                 <div
-                                    className="absolute z-10 mt-1 w-full bg-white shadow-lg rounded-lg py-1 border border-gray-200 max-h-60 overflow-auto"
+                                    className="absolute z-10 mt-1 w-full bg-white shadow-lg rounded-lg py-1 border border-gray-200 overflow-auto"
                                     role="listbox"
+                                    style={{ height: getDropdownHeight() }}
                                 >
                                     {featuresOptions.map(feature => (
-                                        <label
+                                        <div 
                                             key={feature.value}
-                                            className="flex items-center px-4 py-2 hover:bg-gray-50 cursor-pointer"
+                                            className="h-10 flex items-center px-4 hover:bg-gray-50 cursor-pointer"
                                             role="option"
                                             aria-selected={formData.features.some(f => f.value === feature.value)}
                                         >
-                                            <input
-                                                type="checkbox"
-                                                className="form-checkbox h-4 w-4 text-indigo-600 transition duration-150 ease-in-out rounded"
-                                                checked={formData.features.some(f => f.value === feature.value)}
-                                                onChange={() => handleFeatureToggle(feature)}
-                                                onClick={(e) => e.stopPropagation()}
-                                                aria-label={`Select ${feature.label}`}
-                                            />
-                                            <span className="ml-3 text-gray-700">{feature.label}</span>
-                                        </label>
+                                            <label className="flex items-center w-full h-full cursor-pointer">
+                                                <input
+                                                    type="checkbox"
+                                                    className="form-checkbox h-4 w-4 text-indigo-600 transition duration-150 ease-in-out rounded"
+                                                    checked={formData.features.some(f => f.value === feature.value)}
+                                                    onChange={() => handleFeatureToggle(feature)}
+                                                    onClick={(e) => e.stopPropagation()}
+                                                    aria-label={`Select ${feature.label}`}
+                                                />
+                                                <span className="ml-3 text-gray-700">{feature.label}</span>
+                                            </label>
+                                        </div>
                                     ))}
                                 </div>
                             )}
@@ -248,8 +299,8 @@ const AddRoleForm = ({ setActiveSection, setSelectedRole, selectedRole, onSucces
                     <button
                         type="submit"
                         onClick={handleSubmit}
-                        className="px-6 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-medium rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-all shadow-md disabled:opacity-70"
-                        disabled={isSubmitting}
+                        className="px-6 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-medium rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-all shadow-md disabled:opacity-70 disabled:cursor-not-allowed"
+                        disabled={isSubmitting || !isFormValid}
                     >
                         {isSubmitting ? 'Processing...' : (selectedRole ? 'Update Role' : 'Save Role')}
                     </button>
