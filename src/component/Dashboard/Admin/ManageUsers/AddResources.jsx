@@ -144,6 +144,7 @@ const AddResource = ({ setActiveSection }) => {
             console.log(formData, "formData")
             const createResult = await dispatch(createResource(formData));
 
+            console.log(createResult.payload, "createResult.payload?")
             if (!createResult.payload?.publicId) {
                 throw new Error("Failed to get publicId from response");
             }
@@ -335,13 +336,14 @@ const AddResource = ({ setActiveSection }) => {
                                     className={`w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-transparent transition-all ${formData.location ? "text-gray-800" : "text-gray-400"}`}
                                     required
                                 >
-                                    <option value="indore-yash-it-park-sc-dc">Indore-YASH IT Park-SC-DC</option>
-                                    <option value="pune-magarpatta-dc-ii">Pune-Magarpatta-DC-II</option>
-                                    <option value="hyderabad-mindspace-i-dc">Hyderabad-Mindspace I-DC</option>
-                                    <option value="bangalore-whitefield-dc">Bangalore-Whitefield-DC</option>
-                                    <option value="indore-crystal-it-park-dc-ii">Indore-Crystal IT Park-DC-II</option>
-                                    <option value="indore-btc-co">Indore-BTC-CO</option>
-                                    <option value="indore-btc-co">Pune-Hinjewadi III-DC</option>
+                                    <option value="">Select Location</option>
+                                    <option value="Indore_Yash_IT_Park_SC_DC">Indore-YASH IT Park-SC-DC</option>
+                                    <option value="Pune_Magarpatta_DC_II">Pune-Magarpatta-DC-II</option>
+                                    <option value="Hyderabad_Mindspace_I_DC">Hyderabad-Mindspace I-DC</option>
+                                    <option value="Bangalore_Whitefield_DC">Bangalore-Whitefield-DC</option>
+                                    <option value="Indore_Crystal_IT_Park_DC_II">Indore-Crystal IT Park-DC-II</option>
+                                    <option value="Indore_BTC_CO">Indore-BTC-CO</option>
+                                    <option value="Pune_Hinjewadi_III_DC">Pune-Hinjewadi III-DC</option>
                                 </select>
                             </div>
 
