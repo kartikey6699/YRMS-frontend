@@ -16,9 +16,10 @@ import {
   FaSave,
   FaBriefcase,
   FaUserTie,
-  FaChartLine
+  FaChartLine,
+  FaTrash
 } from 'react-icons/fa';
-import { fetchCompetencies, fetchDesignations, fetchResourceDetails, updateResource } from '../../../../features/resource/resourceAction';
+import { deleteResource, fetchCompetencies, fetchDesignations, fetchResourceDetails, updateResource } from '../../../../features/resource/resourceAction';
 
 const EmployeeDetailPage = ({ publicId, onClose }) => {
   const dispatch = useDispatch();
@@ -28,6 +29,11 @@ const EmployeeDetailPage = ({ publicId, onClose }) => {
   const [toast, setToast] = useState(null);
   const [showAdditionalInfo, setShowAdditionalInfo] = useState(false);
   const [isRolesOpen, setIsRolesOpen] = useState(false);
+  const [deleteModal, setDeleteModal] = useState({
+    isOpen: false,
+    resourceId: null,
+    resourceName: ''
+  });
 
   const handleRoleToggle = (roleId) => {
     setFormData(prev => ({
@@ -175,9 +181,17 @@ const EmployeeDetailPage = ({ publicId, onClose }) => {
             <div className="flex items-center gap-3 min-w-0 flex-1 overflow-hidden">
               {/* Profile Image */}
               <div className="relative flex-shrink-0">
-                <div className="w-14 h-14 rounded-full bg-gradient-to-br from-indigo-100 to-purple-100 flex items-center justify-center border-2 border-white shadow-lg">
-                  <FaUser className="text-indigo-500 text-2xl" />
-                </div>
+                {formData.profileImage ? (
+                  <img
+                    src={`data:image/png;base64,${formData.profileImage}`}
+                    alt="Profile"
+                    className="w-14 h-14 rounded-full object-cover border-2 border-white shadow-lg"
+                  />
+                ) : (
+                  <div className="w-14 h-14 rounded-full bg-gradient-to-br from-indigo-100 to-purple-100 flex items-center justify-center border-2 border-white shadow-lg">
+                    <FaUser className="text-indigo-500 text-2xl" />
+                  </div>
+                )}
               </div>
 
               {/* Employee Details */}
@@ -285,20 +299,9 @@ const EmployeeDetailPage = ({ publicId, onClose }) => {
                   <label className="block text-xs text-indigo-600 mb-1 font-semibold flex items-center">
                     <FaEnvelope className="mr-2" /> Email
                   </label>
-                  {isEditing ? (
-                    <input
-                      type="email"
-                      name="email"
-                      value={formData.email}
-                      onChange={handleInputChange}
-                      className="w-full bg-white border border-indigo-200 rounded-md px-2 py-1.5 text-sm focus:ring-1 focus:ring-indigo-300"
-                      disabled={loading}
-                    />
-                  ) : (
-                    <p className="text-sm font-medium text-indigo-800">
-                      {resourceDetails.email || 'Not specified'}
-                    </p>
-                  )}
+                  <p className="text-sm font-medium text-indigo-800">
+                    {resourceDetails.email || 'Not specified'}
+                  </p>
                 </div>
 
                 {/* Phone Number */}

@@ -1,18 +1,19 @@
 import React, { useEffect, useState } from 'react';
-import { FaPlus, FaSort, FaSearch, FaCalendarAlt, FaSortUp, FaSortDown, FaAngleDoubleLeft, FaAngleLeft, FaAngleRight, FaAngleDoubleRight } from 'react-icons/fa';
+import { FaPlus, FaSort, FaSearch, FaCalendarAlt, FaSortUp, FaSortDown, FaAngleDoubleLeft, FaAngleLeft, FaAngleRight, FaAngleDoubleRight, FaTrash } from 'react-icons/fa';
 import { Link } from 'react-router';
 import DatePicker from "react-datepicker";
 import EmployeeDetailPage from './UserDetails';
 import { useDispatch, useSelector } from "react-redux";
-import { fetchCompetencies, fetchDesignations, fetchResources, updateResource } from '../../../../features/resource/resourceAction';
+import { deleteResource, fetchCompetencies, fetchDesignations, fetchResources, updateResource } from '../../../../features/resource/resourceAction';
 import { ErrorToast, SuccessToast } from '../../../helper/ResourceToast';
 import YRMSLoader from '../../../helper/loader';
+import DeleteConfirmationModal from '../../../helper/DeleteConfirmationModal';
 
 const UserList = ({ setActiveSection }) => {
   const dispatch = useDispatch();
   const { resources, competencies, designations } = useSelector((state) => state.resource);
   const roleOptions = ["Admin", "User"];
-  const statusOptions = ["pool", "pip", "deployed"]; // Updated to match API
+  const statusOptions = ["Pool", "Deployed", "PIP"];
   const competenciesOptions = competencies.map((competency) => competency.name); // Updated to match API
   const designationsOptions = designations.map((designation) => designation.name); // Updated to match API
   const [selectedUser, setSelectedUser] = useState(null);
@@ -159,6 +160,21 @@ const UserList = ({ setActiveSection }) => {
     }
   };
 
+  const handleDeleteConfirm = () => {
+    setToast(<YRMSLoader message="Deleting resource..." />);
+
+    dispatch(deleteResource(deleteModal.resourceId))
+      .unwrap()
+      .then(() => {
+        setToast(<SuccessToast message="Resource deleted successfully!" onClose={() => setToast(null)} />);
+      })
+      .catch(error => {
+        setToast(<ErrorToast message={err.message || "Failed to delete resource"} onClose={() => setToast(null)} />);
+      });
+    setDeleteModal({ isOpen: false, resourceId: null, resourceName: '' });
+  };
+
+
   const columns = [
     { key: "sno", label: "S.No" },
     { key: 'employeeName', label: 'Name' }, // Updated to match API field
@@ -166,7 +182,8 @@ const UserList = ({ setActiveSection }) => {
     { key: 'competency', label: 'Competency' },
     { key: 'joiningDate', label: 'Joining Date' },
     { key: 'roleIds', label: 'Role' },
-    { key: 'status', label: 'Status' }
+    { key: 'status', label: 'Status' },
+    { key: 'action', label: 'Actions' }
   ];
 
   return (
@@ -287,11 +304,18 @@ const UserList = ({ setActiveSection }) => {
                   }}
                   className="cursor-pointer"
                 >
-                  <span className={`px-2 py-1 rounded-full text-xs ${resource.status === 'Running' ? 'bg-blue-100 text-blue-800' :
-                    resource.status === 'Complete' ? 'bg-green-100 text-green-800' :
-                      'bg-red-100 text-red-800'
-                    }`}>
-                    {!resource.status ? "Running" : resource.status.charAt(0).toUpperCase() + resource.status.slice(1)}
+                  <span
+                    className={`px-1 py-0.5 rounded-full text-xs ${(resource.status || "pool") === "pool"
+                      ? "bg-blue-100 text-blue-800"
+                      : resource.status === "deployed"
+                        ? "bg-green-100 text-green-800"
+                        : resource.status === "pip"
+                          ? "bg-yellow-100 text-yellow-800"
+                          : "bg-red-100 text-red-800"
+                      }`}
+                  >
+                    {(resource.status || "pool").charAt(0).toUpperCase() +
+                      (resource.status || "pool").slice(1)}
                   </span>
                 </div>
 
@@ -322,6 +346,26 @@ const UserList = ({ setActiveSection }) => {
                     </select>
                   </div>
                 )}
+              </td>
+              <td className="p-3 text-gray-700 text-sm">
+                <div className="flex space-x-1 relative">
+                  <div className="relative group">
+                    <button
+                      className="flex items-center justify-center w-7 h-7 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors cursor-pointer"
+                      onClick={() => setDeleteModal({
+                        isOpen: true,
+                        resourceId: resource.publicId,
+                        resourceName: resource.employeeName
+                    })}
+>
+                      <FaTrash size={12} />
+                    </button>
+                    <span className="absolute -top-8 left-1/2 -translate-x-1/2 w-max px-2 py-1 bg-gray-800 text-white text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                      Delete
+                      <div className="absolute left-1/2 -translate-x-1/2 w-2 h-2 bg-gray-800 rotate-45 -bottom-1"></div>
+                    </span>
+                  </div>
+                </div>
               </td>
             </tr>
           ))}
@@ -400,6 +444,14 @@ const UserList = ({ setActiveSection }) => {
           onClose={() => setSelectedUser(null)}
         />
       )}
+      <DeleteConfirmationModal
+        isOpen={deleteModal.isOpen}
+        onClose={() => setDeleteModal({ isOpen: false, resourceId: null, resourceName: "" })}
+        onConfirm={handleDeleteConfirm}
+        resourceName={deleteModal.resourceName}
+        resourceType="role"
+      />
+
     </div>
   );
 };
