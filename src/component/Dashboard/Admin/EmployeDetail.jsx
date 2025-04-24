@@ -192,6 +192,7 @@ const EmployeeDetail = ({ publicId, onClose }) => {
         message: 'Employee details updated successfully!'
       });
       setIsEditing(false);
+      window.location.reload();
     } catch (error) {
       setToast({
         type: 'error',
@@ -247,12 +248,16 @@ const EmployeeDetail = ({ publicId, onClose }) => {
           resumeFile: newResumeFileName
         }));
 
+
         await dispatch(fetchResourceDetails(publicId)).unwrap();
         
         setToast({
           type: 'success',
           message: 'Resume uploaded successfully!'
         });
+
+        window.location.reload();
+
       } else {
         const errorData = await response.json();
         setToast({
