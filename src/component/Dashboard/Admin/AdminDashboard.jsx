@@ -1,23 +1,17 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef } from "react";
 import { FaBox, FaTags, FaUsers } from "react-icons/fa";
 import UserList from "./ManageUsers/UserList";
 import AddResource from "./ManageUsers/AddResources";
 import AddRole from "./ManageRoles/AddRole";
 import RolesPage from "./ManageRoles/ManageRole";
-import { useDispatch, useSelector } from "react-redux";
-import { fetchRoles } from "../../../features/role/roleAction";
+import CompetencyPage from "./ManageCompetency/ManageCompetency";
 
 const AdminDashboard = () => {
-    const dispatch = useDispatch()    
     const [selectedSection, setSelectedSection] = useState("");
-    const [activeSection, setActiveSection] = useState("view"); // 'view' or 'add'
+    const [activeSection, setActiveSection] = useState("view");
     const contentRef = useRef(null);
-    const [selectedRole, setSelectedRole] = useState(null); 
+    const [selectedRole, setSelectedRole] = useState(null);
 
-    useEffect(() => {
-        dispatch(fetchRoles());
-    }, [dispatch])
-    
     const handleSectionClick = (section) => {
         setSelectedSection(section);
         setActiveSection("view"); // Reset to view mode when switching sections
@@ -106,24 +100,26 @@ const AdminDashboard = () => {
                             )}
                         </>
                     )}
-                    {selectedSection === "competency"}
-                    {!selectedSection && (
-                        <div className="text-center py-12">
-                            <div className="inline-block p-4 mb-4 rounded-full bg-gradient-to-br from-indigo-100 to-purple-100">
-                                <FaUsers className="text-indigo-500 text-2xl" />
-                            </div>
-                            <h3 className="text-xl font-semibold text-gray-700 mb-2">
-                                Welcome to Admin Dashboard
-                            </h3>
-                            <p className="text-gray-500 max-w-md mx-auto">
-                                Select a section above to manage your eCommerce store.
-                            </p>
-                        </div>
+                    {selectedSection === "competency" && (
+                    <CompetencyPage activeSection={activeSection} setActiveSection={setActiveSection} />
                     )}
+                            {!selectedSection && (
+                                <div className="text-center py-12">
+                                    <div className="inline-block p-4 mb-4 rounded-full bg-gradient-to-br from-indigo-100 to-purple-100">
+                                        <FaUsers className="text-indigo-500 text-2xl" />
+                                    </div>
+                                    <h3 className="text-xl font-semibold text-gray-700 mb-2">
+                                        Welcome to Admin Dashboard
+                                    </h3>
+                                    <p className="text-gray-500 max-w-md mx-auto">
+                                        Select a section above to manage your eCommerce store.
+                                    </p>
+                                </div>
+                            )}
+                        </div>
                 </div>
             </div>
-        </div>
-    );
+            );
 };
 
-export default AdminDashboard;
+            export default AdminDashboard;
