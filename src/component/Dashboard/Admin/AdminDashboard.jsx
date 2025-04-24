@@ -99,6 +99,7 @@ const AdminDashboard = () => {
                             ) : (
                                 <AddRole
                                     setActiveSection={setActiveSection}
+                                    setSelectedRole={setSelectedRole}
                                     selectedRole={selectedRole}
                                     onSuccess={() => setActiveSection("view")}
                                 />

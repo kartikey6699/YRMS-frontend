@@ -5,7 +5,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import YRMSLoader from '../../../helper/loader';
 import { ErrorToast, SuccessToast } from '../../../helper/ResourceToast';
 
-const AddRoleForm = ({ setActiveSection, selectedRole, onSuccess }) => {
+const AddRoleForm = ({ setActiveSection, setSelectedRole, selectedRole, onSuccess }) => {
     const dispatch = useDispatch();
     const { features } = useSelector((state) => state.role);
 
@@ -17,6 +17,11 @@ const AddRoleForm = ({ setActiveSection, selectedRole, onSuccess }) => {
         role: selectedRole?.role || '',
         features: selectedRole?.features || []
     });
+
+    const handleClose = () => {
+        setSelectedRole(null)
+        setActiveSection("view")
+    }
 
     const [isFeaturesOpen, setIsFeaturesOpen] = useState(false);
     const featuresRef = useRef(null);
@@ -95,6 +100,7 @@ const AddRoleForm = ({ setActiveSection, selectedRole, onSuccess }) => {
             setToast(<SuccessToast message={`Role ${selectedRole ? 'updated' : 'created'} successfully!`} onClose={() => setToast(null)} />);
             setFormData({ role: '', features: [] });
             onSuccess?.();
+            setSelectedRole(null)
             setActiveSection("view");
         } catch (err) {
             setToast(<ErrorToast message={err.message || `Failed to ${selectedRole ? 'update' : 'create'} role`} onClose={() => setToast(null)} />);
@@ -134,7 +140,7 @@ const AddRoleForm = ({ setActiveSection, selectedRole, onSuccess }) => {
                         {selectedRole ? "Update Role" : "Add New Role"}
                     </h3>
                     <button
-                        onClick={() => setActiveSection("view")}
+                        onClick={handleClose}
                         className="text-gray-500 hover:text-gray-700 transition-colors"
                         aria-label="Close"
                     >
