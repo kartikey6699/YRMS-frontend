@@ -63,7 +63,10 @@ const EmployeeDetail = ({ publicId, onClose }) => {
         status: resourceDetails.status || prev?.status || 'pool',
         profileImage: resourceDetails.profileImage || prev?.profileImage || null,
         techSkill: resourceDetails.techSkill || prev?.techSkill || [],
-        resumeFile: prev?.resumeFile || resourceDetails.resumeFile || null
+        resumeFile: prev?.resumeFile || resourceDetails.resumeFile || null,
+        gender: resourceDetails.gender || prev?.gender || '',
+        competencyId: resourceDetails.competencyId || prev?.competencyId || null,
+        roleIds: resourceDetails.roleIds || prev?.roleIds || []
       }));
       // Set initial profile picture preview from resourceDetails
       if (resourceDetails.profileImage) {
@@ -71,6 +74,23 @@ const EmployeeDetail = ({ publicId, onClose }) => {
       }
     }
   }, [resourceDetails, publicId]);
+
+  const renderRatingStars = (rating) => {
+    return (
+      <div className="flex items-center ml-1">
+        {[...Array(5)].map((_, i) => (
+          <svg
+            key={i}
+            className={`w-3 h-3 ${i < rating ? 'text-yellow-400' : 'text-gray-300'}`}
+            fill="currentColor"
+            viewBox="0 0 20 20"
+          >
+            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+          </svg>
+        ))}
+      </div>
+    );
+  };
 
   useEffect(() => {
     return () => {
@@ -97,7 +117,7 @@ const EmployeeDetail = ({ publicId, onClose }) => {
         });
         return;
       }
-      
+
       // Validate file size (max 2MB)
       if (file.size > 2 * 1024 * 1024) {
         setToast({
@@ -177,9 +197,9 @@ const EmployeeDetail = ({ publicId, onClose }) => {
       };
 
       // Update employee details
-      await dispatch(updateResource({ 
-        publicId, 
-        resourceData: updatedData 
+      await dispatch(updateResource({
+        publicId,
+        resourceData: updatedData
       })).unwrap();
 
       // Upload profile picture if a new one is selected
@@ -227,7 +247,7 @@ const EmployeeDetail = ({ publicId, onClose }) => {
     setIsUploading(true);
     const uploadFormData = new FormData();
     uploadFormData.append('file', file);
-    
+
     try {
       const token = sessionStorage.getItem('token');
       const response = await fetch(RESUME_API.UPLOAD_RESUME(publicId), {
@@ -238,7 +258,7 @@ const EmployeeDetail = ({ publicId, onClose }) => {
         },
         body: uploadFormData,
       });
-      
+
       if (response.ok) {
         const responseData = await response.json();
         const newResumeFileName = responseData.fileName || file.name;
@@ -250,7 +270,7 @@ const EmployeeDetail = ({ publicId, onClose }) => {
 
 
         await dispatch(fetchResourceDetails(publicId)).unwrap();
-        
+
         setToast({
           type: 'success',
           message: 'Resume uploaded successfully!'
@@ -289,7 +309,7 @@ const EmployeeDetail = ({ publicId, onClose }) => {
           'Authorization': `Bearer ${token}`
         },
       });
-      
+
       if (response.ok) {
         const blob = await response.blob();
         const url = window.URL.createObjectURL(blob);
@@ -299,7 +319,7 @@ const EmployeeDetail = ({ publicId, onClose }) => {
         document.body.appendChild(a);
         a.click();
         a.remove();
-        
+
         setToast({
           type: 'success',
           message: 'Resume download started!'
@@ -352,9 +372,9 @@ const EmployeeDetail = ({ publicId, onClose }) => {
               <div className="relative">
                 {profilePicPreview ? (
                   <>
-                    <img 
-                      src={profilePicPreview} 
-                      alt="Profile" 
+                    <img
+                      src={profilePicPreview}
+                      alt="Profile"
                       className="w-10 h-10 rounded-full mr-2 object-cover border-2 border-blue-200"
                     />
                     {profilePic && (
@@ -392,9 +412,8 @@ const EmployeeDetail = ({ publicId, onClose }) => {
                     />
                     <label
                       htmlFor="profilePic"
-                      className={`flex items-center px-3 py-1.5 rounded-md text-sm cursor-pointer transition-all ${
-                        isUploading ? 'bg-gray-100 text-gray-500' : 'bg-blue-50 text-blue-700 hover:bg-blue-100 active:scale-95'
-                      }`}
+                      className={`flex items-center px-3 py-1.5 rounded-md text-sm cursor-pointer transition-all ${isUploading ? 'bg-gray-100 text-gray-500' : 'bg-blue-50 text-blue-700 hover:bg-blue-100 active:scale-95'
+                        }`}
                     >
                       <FaUpload className="mr-1 text-xs" />
                       {isUploading ? 'Uploading...' : 'Update Profile Picture'}
@@ -560,12 +579,14 @@ const EmployeeDetail = ({ publicId, onClose }) => {
               {formData.techSkill?.length > 0 ? (
                 <div className="flex flex-wrap gap-2">
                   {formData.techSkill.map((skill, index) => (
-                    <span 
+                    <div
                       key={index}
-                      className={`px-3 py-1 rounded-full text-xs font-medium ${getRandomSkillColor(index)} hover:scale-105 transition-transform`}
+                      className={`flex items-center px-3 py-1 rounded-full text-xs font-medium ${getRandomSkillColor(index)} hover:scale-105 transition-transform`}
                     >
-                      {skill}
-                    </span>
+                      {skill.technology}
+                      {renderRatingStars(skill.rating)}
+                    
+                    </div>
                   ))}
                 </div>
               ) : (
@@ -591,7 +612,7 @@ const EmployeeDetail = ({ publicId, onClose }) => {
                   disabled={isUploading || loading}
                 />
               </label>
-              
+
               {formData.resumeFile && (
                 <div className="flex flex-col items-start">
                   <button
