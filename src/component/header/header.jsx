@@ -41,34 +41,27 @@ const Header = ({ isLoggedIn }) => {
             </div>
           </div>
 
-          {/* Right side - Time and Profile */}
+          {/* Right side - Profile and Time */}
           <div className="absolute inset-y-0 right-0 flex items-center pr-2 sm:static sm:inset-auto sm:ml-6 sm:pr-0">
-            {/* Date/Time Display */}
-            <div className="hidden md:flex items-center mr-4 bg-gray-100 rounded-md px-3 py-1 shadow-sm border-2 border-blue-600">
-              <span className="text-gray-700 font-medium text-sm mr-2">
-                {formattedDate}
-              </span>
-              <span className="text-gray-800 font-semibold text-sm">
-                {formattedTime}
-              </span>
-            </div>
-
-            {/* Small time display for mobile */}
-            <div className="md:hidden text-gray-700 text-sm font-medium mr-3">
-              {formattedTime}
-            </div>
-
-            {/* Profile Section */}
-            <div className="relative ml-2 flex flex-col items-center">
+            <div className="flex items-center">
+              {/* User Icon */}
               <button 
-                className="text-gray-700 focus:outline-none hover:bg-gray-300 rounded-full p-1 transition-colors duration-200 flex justify-center w-full"
+                className="text-gray-700 focus:outline-none hover:bg-gray-300 rounded-full p-1 transition-colors duration-200"
               >
-                <img src={userManual} alt="User Manual" className="w-6 h-6 mx-auto" />
+                <img src={userManual} alt="User Manual" className="w-8 h-8" />
               </button>
-              <p className="text-sm font-medium text-gray-700 bg-gray-100 px-2 py-1 rounded-md shadow-sm border border-gray-300 mt-1">
-                {userName} | <span className="text-blue-600 font-semibold">{roleName}</span>
-              </p>
-            </div> 
+              {/* Profile and Time Section */}
+              <div className="ml-2 flex flex-col items-start">
+                <p className="text-sm font-medium text-gray-700 bg-gray-100 px-2 py-1 rounded-md shadow-sm border border-gray-300">
+                  {userName} | <span className="text-blue-600 font-semibold">{roleName}</span>
+                </p>
+                {/* Date/Time Display */}
+                <p className="mt-1 text-sm font-medium text-gray-700 bg-gray-100 px-2 py-1 rounded-md shadow-sm border border-gray-300">
+                  <span>{formattedDate}</span>
+                  <span className="ml-2">{formattedTime}</span>
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       </div>
