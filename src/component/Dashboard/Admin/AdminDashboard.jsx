@@ -1,16 +1,24 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { FaBox, FaTags, FaUsers } from "react-icons/fa";
 import UserList from "./ManageUsers/UserList";
 import AddResource from "./ManageUsers/AddResources";
 import AddRole from "./ManageRoles/AddRole";
 import RolesPage from "./ManageRoles/ManageRole";
 import CompetencyPage from "./ManageCompetency/ManageCompetency";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchRoles } from "../../../features/role/roleAction";
 
 const AdminDashboard = () => {
+    const dispatch = useDispatch()
+    const { roles } = useSelector((state)=> state.role)
     const [selectedSection, setSelectedSection] = useState("");
     const [activeSection, setActiveSection] = useState("view");
     const contentRef = useRef(null);
     const [selectedRole, setSelectedRole] = useState(null);
+
+    useEffect(() => {
+        dispatch(fetchRoles());
+    }, [dispatch])
 
     const handleSectionClick = (section) => {
         setSelectedSection(section);
