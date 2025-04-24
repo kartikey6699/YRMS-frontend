@@ -27,7 +27,6 @@ const RoleList = ({ setActiveSection, onDelete, onEdit, onSort, sortConfig }) =>
     }, [dispatch], roles);
 
     // Filter roles based on search term
-    console.log("roelssssssss", roles)
     const filteredRoles = roles.filter(role =>
         role.role.toLowerCase().includes(searchTerm.toLowerCase())
     );

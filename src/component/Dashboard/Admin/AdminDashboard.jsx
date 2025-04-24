@@ -35,7 +35,7 @@ const AdminDashboard = () => {
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6  ">
                         <button
                             onClick={() => handleSectionClick("user")}
-                            className={`flex flex-col items-center px-4 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 ${selectedSection === "category"
+                            className={`flex flex-col items-center px-4 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 ${selectedSection === "user"
                                 ? "py-4 scale-[0.98] bg-gradient-to-br from-emerald-100 to-teal-100 border-2 border-emerald-200"
                                 : "py-6 bg-gradient-to-br from-white to-gray-50 border border-gray-200 hover:border-emerald-200"
                                 }`}
@@ -48,7 +48,7 @@ const AdminDashboard = () => {
                         </button>
                         <button
                             onClick={() => handleSectionClick("role")}
-                            className={`flex flex-col items-center px-4 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 ${selectedSection === "product"
+                            className={`flex flex-col items-center px-4 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 ${selectedSection === "role"
                                 ? "py-4 scale-[0.98] bg-gradient-to-br from-blue-100 to-indigo-100 border-2 border-blue-200"
                                 : "py-6 bg-gradient-to-br from-white to-gray-50 border border-gray-200 hover:border-blue-200"
                                 }`}
@@ -61,7 +61,7 @@ const AdminDashboard = () => {
                         </button>
                         <button
                             onClick={() => handleSectionClick("competency")}
-                            className={`flex flex-col items-center px-4 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 ${selectedSection === "user"
+                            className={`flex flex-col items-center px-4 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 ${selectedSection === "competency"
                                 ? "py-4 scale-[0.98] bg-gradient-to-br from-purple-100 to-pink-100 border-2 border-purple-200"
                                 : "py-6 bg-gradient-to-br from-white to-gray-50 border border-gray-200 hover:border-purple-200"
                                 }`}
@@ -103,7 +103,7 @@ const AdminDashboard = () => {
                             )}
                         </>
                     )}
-                    {selectedSection === "product" && <AddResource />}
+                    {selectedSection === "competency"}
                     {!selectedSection && (
                         <div className="text-center py-12">
                             <div className="inline-block p-4 mb-4 rounded-full bg-gradient-to-br from-indigo-100 to-purple-100">

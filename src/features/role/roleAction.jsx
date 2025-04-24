@@ -28,7 +28,6 @@ export const fetchRoles = createAsyncThunk(
       });
       const { success, data, message } = response.data;
       
-      console.log(data, ">>>>>>>>>>")
       if (!success) {
         throw new Error(message || "Failed to fetch roles");
       }

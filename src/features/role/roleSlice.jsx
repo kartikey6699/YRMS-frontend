@@ -59,12 +59,12 @@
         })
         .addCase(createRoles.fulfilled, (state, { payload }) => {
           state.loading = false;
-          // state.createdrole = payload;
-          // state.roles.unshift({
-          //   id: payload.id || '',
-          //   role: payload.role,
-          //   permission: payload.features || []
-          // });
+          state.createdrole = payload;
+          state.roles.unshift({
+            id: payload.id || '',
+            role: payload.role,
+            permission: payload.features || []
+          });
           state.pagination.totalItems += 1;
         })
         .addCase(createRoles.rejected, (state, { payload }) => {
