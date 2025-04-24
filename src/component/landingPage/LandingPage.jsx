@@ -1,18 +1,18 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { NavLink } from "react-router-dom";
-import landingPageImage from "../../assets/images/landing_page_img.jpg"
-import landingPageImage3 from "../../assets/images/landingpage4.webp"
-import landingPageImage4 from "../../assets/images/landingpage3.webp"
+import landingPageImage from "../../assets/images/landing_page_img.jpg";
+import landingPageImage3 from "../../assets/images/landingpage4.webp";
+import landingPageImage4 from "../../assets/images/landingpage3.webp";
 
 const LandingPage = () => {
-    // Carousel state
+    // Hero Carousel State
+    const [currentIndex, setCurrentIndex] = useState(0);
+    const images = [landingPageImage, landingPageImage4, landingPageImage3];
+    const heroIntervalRef = useRef(null);
+
+    // Features Carousel State
     const [currentSlide, setCurrentSlide] = useState(0);
-    
-    const images = [
-        landingPageImage,
-        landingPageImage4,
-        landingPageImage3
-    ];
+    const featuresIntervalRef = useRef(null);
     const slides = [
         {
             title: "Resource Allocation",
@@ -31,24 +31,78 @@ const LandingPage = () => {
         },
     ];
 
-    // Handle manual navigation
+    // Auto-slide for Hero Carousel
+    const startHeroInterval = () => {
+        heroIntervalRef.current = setInterval(() => {
+            setCurrentIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1));
+        }, 2000);
+    };
+
+    // Auto-slide for Features Carousel
+    const startFeaturesInterval = () => {
+        featuresIntervalRef.current = setInterval(() => {
+            setCurrentSlide((prev) => (prev === slides.length - 1 ? 0 : prev + 1));
+        }, 2000);
+    };
+
+    // Initialize intervals and cleanup
+    useEffect(() => {
+        startHeroInterval();
+        startFeaturesInterval();
+
+        return () => {
+            clearInterval(heroIntervalRef.current);
+            clearInterval(featuresIntervalRef.current);
+        };
+    }, []);
+
+    // Pause on hover functionality
+    const handleMouseEnter = () => {
+        clearInterval(heroIntervalRef.current);
+        clearInterval(featuresIntervalRef.current);
+    };
+
+    const handleMouseLeave = () => {
+        startHeroInterval();
+        startFeaturesInterval();
+    };
+
+    // Manual navigation handlers
     const goToPrevious = () => {
         setCurrentSlide((prev) => (prev === 0 ? slides.length - 1 : prev - 1));
+        resetFeaturesInterval();
     };
 
     const goToNext = () => {
         setCurrentSlide((prev) => (prev === slides.length - 1 ? 0 : prev + 1));
+        resetFeaturesInterval();
     };
 
-    const [currentIndex, setCurrentIndex] = useState(0);
+    const resetFeaturesInterval = () => {
+        clearInterval(featuresIntervalRef.current);
+        startFeaturesInterval();
+    };
 
-    // Disabled auto-slide functionality
+    const goToHeroSlide = (index) => {
+        setCurrentIndex(index);
+        clearInterval(heroIntervalRef.current);
+        startHeroInterval();
+    };
+
+    const goToFeaturesSlide = (index) => {
+        setCurrentSlide(index);
+        clearInterval(featuresIntervalRef.current);
+        startFeaturesInterval();
+    };
 
     return (
-        // Remove all margins/padding that could create gaps
         <div className="bg-[#F9FAFB] -mt-[1px]">
-            {/* Hero Section - absolutely no margins/padding at the top */}
-            <section className="bg-gradient-to-r from-[#D1D5DB] to-[#F9FAFB] relative -mt-[1px]">
+            {/* Hero Section */}
+            <section 
+                className="bg-gradient-to-r from-[#D1D5DB] to-[#F9FAFB] relative -mt-[1px]"
+                onMouseEnter={handleMouseEnter}
+                onMouseLeave={handleMouseLeave}
+            >
                 <div className="relative w-full h-screen">
                     {images.map((image, index) => (
                         <div
@@ -58,7 +112,7 @@ const LandingPage = () => {
                         >
                             <div className="container mx-auto my-20 px-6 text-center z-20 transition-opacity duration-1000">
                                 <div className="absolute top-5 right-1 m-4 h-20 w-20">
-                                    <img src="https://www.yash.com/wp-content/themes/html5blank-stable/images/yash-logo-new.svg" alt="" />
+                                    <img src="https://www.yash.com/wp-content/themes/html5blank-stable/images/yash-logo-new.svg" alt="Yash Logo" />
                                 </div>
                                 <h1 className="text-5xl md:text-6xl font-extrabold mb-10 leading-tight">
                                     Yash RMS
@@ -79,7 +133,11 @@ const LandingPage = () => {
                     ))}
                     {/* Navigation Arrows */}
                     <button
-                        onClick={() => setCurrentIndex((prevIndex) => (prevIndex === 0 ? images.length - 1 : prevIndex - 1))}
+                        onClick={() => {
+                            setCurrentIndex((prevIndex) => (prevIndex === 0 ? images.length - 1 : prevIndex - 1));
+                            clearInterval(heroIntervalRef.current);
+                            startHeroInterval();
+                        }}
                         className="absolute left-5 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-40 text-white p-3 rounded-full shadow-md hover:bg-opacity-60 transition-all duration-200 focus:outline-none z-20"
                     >
                         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -87,7 +145,11 @@ const LandingPage = () => {
                         </svg>
                     </button>
                     <button
-                        onClick={() => setCurrentIndex((prevIndex) => (prevIndex === images.length - 1 ? 0 : prevIndex + 1))}
+                        onClick={() => {
+                            setCurrentIndex((prevIndex) => (prevIndex === images.length - 1 ? 0 : prevIndex + 1));
+                            clearInterval(heroIntervalRef.current);
+                            startHeroInterval();
+                        }}
                         className="absolute right-5 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-40 text-white p-3 rounded-full shadow-md hover:bg-opacity-60 transition-all duration-200 focus:outline-none z-20"
                     >
                         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -99,7 +161,7 @@ const LandingPage = () => {
                         {images.map((_, index) => (
                             <button
                                 key={index}
-                                onClick={() => setCurrentIndex(index)}
+                                onClick={() => goToHeroSlide(index)}
                                 className={`w-4 h-4 rounded-full border border-white ${index === currentIndex ? 'bg-white' : 'bg-transparent'} focus:outline-none transition-all duration-300`}
                                 aria-label={`Go to slide ${index + 1}`}
                             />
@@ -108,16 +170,19 @@ const LandingPage = () => {
                 </div>
             </section>
 
-            {/* Rest of the component remains the same */}
             {/* Features Carousel */}
-            <section className="py-16">
+            <section 
+                className="py-16"
+                onMouseEnter={handleMouseEnter}
+                onMouseLeave={handleMouseLeave}
+            >
                 <div className="container mx-auto px-6">
                     <h2 className="text-4xl font-extrabold text-[#1F2937] text-center mb-12">
                         Key Features<span className="text-[#3B82F6]">.</span>
                     </h2>
                     <div className="relative max-w-3xl mx-auto">
                         {/* Carousel Slides */}
-                        <div className="overflow-hidden relative h-64"> {/* Fixed height for consistency */}
+                        <div className="overflow-hidden relative h-64">
                             {slides.map((slide, index) => (
                                 <div
                                     key={index}
@@ -195,7 +260,7 @@ const LandingPage = () => {
                             {slides.map((_, index) => (
                                 <button
                                     key={index}
-                                    onClick={() => setCurrentSlide(index)}
+                                    onClick={() => goToFeaturesSlide(index)}
                                     className={`w-3 h-3 rounded-full ${index === currentSlide ? "bg-[#3B82F6]" : "bg-[#D1D5DB]"
                                         } transition-colors duration-200`}
                                 />
