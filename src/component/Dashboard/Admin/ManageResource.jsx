@@ -47,10 +47,28 @@ const ManageResource = () => {
 
   const [filterData, setFilterData] = useState({
     technologies: [],
+    categories: [],
     experience: "",
     certifications: "",
     communication: "",
   });
+
+  // Group technologies by category
+  const technologiesByCategory = technologies.reduce((acc, tech) => {
+    const category = tech.technologyCategoryName;
+    if (!acc[category]) {
+      acc[category] = [];
+    }
+    acc[category].push(tech.name);
+    return acc;
+  }, {});
+
+  // Get unique categories
+  const categories = [...new Set(technologies.map(tech => tech.technologyCategoryName))];
+
+  console.log(categories  , '....');
+  console.log(technologies  , '>>>');
+
 
   // Fetch resources whenever filterData changes
   useEffect(() => {
@@ -92,12 +110,51 @@ const ManageResource = () => {
   };
 
   const toggleTechnology = (tech) => {
-    setFilterData((prev) => ({
-      ...prev,
-      technologies: prev.technologies.includes(tech)
+    setFilterData((prev) => {
+      const newTechs = prev.technologies.includes(tech)
         ? prev.technologies.filter((t) => t !== tech)
-        : [...prev.technologies, tech],
-    }));
+        : [...prev.technologies, tech];
+      
+      // Update categories based on selected technologies
+      const techCategories = technologies
+        .filter(t => newTechs.includes(t.name))
+        .map(t => t.technologyCategoryName);
+      const uniqueCategories = [...new Set(techCategories)];
+      
+      return {
+        ...prev,
+        technologies: newTechs,
+        categories: uniqueCategories
+      };
+    });
+  };
+
+  const toggleCategory = (category) => {
+    setFilterData((prev) => {
+      const categoryTechs = technologies
+        .filter(tech => tech.technologyCategoryName === category)
+        .map(tech => tech.name);
+      
+      const newCategories = prev.categories.includes(category)
+        ? prev.categories.filter((c) => c !== category)
+        : [...prev.categories, category];
+      
+      let newTechs = [...prev.technologies];
+      
+      if (newCategories.includes(category)) {
+        // Add all technologies from this category
+        newTechs = [...new Set([...newTechs, ...categoryTechs])];
+      } else {
+        // Remove all technologies from this category
+        newTechs = newTechs.filter(tech => !categoryTechs.includes(tech));
+      }
+      
+      return {
+        ...prev,
+        categories: newCategories,
+        technologies: newTechs
+      };
+    });
   };
 
   const handleFilterChange = (e) => {
@@ -108,6 +165,7 @@ const ManageResource = () => {
   const clearFilters = () => {
     setFilterData({
       technologies: [],
+      categories: [],
       experience: "",
       certifications: "",
       communication: "",
@@ -122,7 +180,7 @@ const ManageResource = () => {
       const formData = new FormData();
       formData.append("payload", profilePic);
 
-      const token = sessionStorage.getItem("token"); // Retrieve token from session storage
+      const token = sessionStorage.getItem("token");
 
       const response = await axios.post(
         `${ADMIN_API_BASE_URL}/user-profile-upload/?user_id=${userId}`,
@@ -131,7 +189,7 @@ const ManageResource = () => {
           headers: {
             accept: "application/json",
             "Content-Type": "multipart/form-data",
-            Authorization: `Bearer ${token}`, // Add token to headers
+            Authorization: `Bearer ${token}`,
           },
         }
       );
@@ -224,6 +282,7 @@ const ManageResource = () => {
               <h3 className="text-md font-semibold text-gray-700"></h3>
               <div className="flex space-x-2">
                 {filterData.technologies.length > 0 ||
+                  filterData.categories.length > 0 ||
                   filterData.experience ||
                   filterData.certifications ||
                   filterData.communication ? (
@@ -252,7 +311,7 @@ const ManageResource = () => {
             {/* Filter Panel - Collapsible */}
             <div
               className={`transition-all duration-300 ease-in-out overflow-hidden ${
-                showFilters ? "max-h-80 opacity-100 mb-2" : "max-h-0 opacity-0 mb-0"
+                showFilters ? "max-h-96 opacity-100 mb-2" : "max-h-0 opacity-0 mb-0"
               }`}
             >
               <div className="bg-white p-3 rounded-lg shadow-sm border border-gray-200">
@@ -312,9 +371,44 @@ const ManageResource = () => {
                     />
                   </div>
 
-                  {/* Technology Filter - Dynamic */}
+                  {/* Category Filter */}
                   <div className="md:col-span-3 space-y-1">
                     <div className="flex items-center text-blue-600">
+                      <FaCogs className="mr-1 text-xs" />
+                      <span className="font-medium text-sm">Filter by selecting category</span>
+                    </div>
+                    {technologyLoading ? (
+                      <div className="text-gray-500 text-sm">Loading categories...</div>
+                    ) : categories.length === 0 ? (
+                      <div className="text-gray-500 text-sm">No categories available</div>
+                    ) : (
+                      <div className="flex flex-wrap gap-1.5 max-h-[3.5rem] overflow-y-auto">
+                        {categories.map((category) => (
+                          <label key={category} className="flex items-center cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={filterData.categories.includes(category)}
+                              onChange={() => toggleCategory(category)}
+                              className="hidden"
+                            />
+                            <span
+                              className={`px-2 py-1 text-xs rounded-full transition-all ${
+                                filterData.categories.includes(category)
+                                  ? "bg-blue-100 text-blue-800 border border-blue-500"
+                                  : "bg-gray-100 text-gray-700 border border-gray-200 hover:bg-gray-50"
+                              }`}
+                            >
+                              {category}
+                            </span>
+                          </label>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Technology Filter - Dynamic */}
+                  <div className="md:col-span-3 space-y-1">
+                    <div className="flex items-center text-red-600">
                       <FaCogs className="mr-1 text-xs" />
                       <span className="font-medium text-sm">Filter by selecting technology</span>
                     </div>
@@ -523,7 +617,7 @@ const ManageResource = () => {
                 onChange={handleInputChange}
                 className="w-full p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 transition-colors"
                 required
-                onClick={(e) => e.target.showPicker()} // This line allows the date picker to open on input click
+                onClick={(e) => e.target.showPicker()}
               />
             </div>
             <div>
