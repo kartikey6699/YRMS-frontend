@@ -2,11 +2,10 @@ import React, { useState, useRef, useEffect } from 'react';
 import { FaTimes, FaChevronDown } from 'react-icons/fa';
 import { createRoles, fetchFeatures, fetchRoles } from '../../../../features/role/roleAction';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchResources } from '../../../../features/resource/resourceAction';
 import YRMSLoader from '../../../helper/loader';
 import { ErrorToast, SuccessToast } from '../../../helper/ResourceToast';
 
-const AddRoleForm = ({ setActiveSection }) => {
+const AddRoleForm = ({ setActiveSection, selectedRole, onSuccess }) => {
     const dispatch = useDispatch();
 
     const { features } = useSelector(
@@ -18,8 +17,8 @@ const AddRoleForm = ({ setActiveSection }) => {
     }, [dispatch]);
 
     const [formData, setFormData] = useState({
-        role: '',
-        features: []
+        role: selectedRole?.role || '',
+        features: selectedRole?.features || []  // Ensure features match {value, label} format
     });
 
     const [isFeaturesOpen, setIsFeaturesOpen] = useState(false);
@@ -70,35 +69,43 @@ const AddRoleForm = ({ setActiveSection }) => {
         }));
     };
 
-    const handleSubmit = async(e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
         setIsSubmitting(true);
         try {
             setToast(<YRMSLoader message="Creating intern..." />);
 
+            // Create new payload with role and permission (array of feature IDs)
+            let payload = {
+                role: formData.role,
+                permission: formData.features.map(feature => feature.value)
+            }
 
-        // Create new payload with role and permission (array of feature IDs)
-        const payload = {
-            role: formData.role,
-            permission: formData.features.map(feature => feature.value)
-        };
-
-        console.log(payload, "Submitted payload");
-        const createResult = await dispatch(createRoles(payload));
-
-        if (!createResult) {
-            throw new Error("Failed to get publicId from response");
-        }
-
-        setToast(<SuccessToast message="Role created successfully!" onClose={() => setToast(null)} />);
-        setFormData({
-            role: '',
-            features: []
-        });
-        
+            if (selectedRole) {
+                payload = {
+                    id: selectedRole.id,
+                    role: formData.role,
+                    permission: formData.features.map(feature => feature.value)
+                }
+            }
 
 
-        setActiveSection("view"); // Close form by switching to view section
+            console.log(payload, "Submitted payload");
+            const createResult = await dispatch(createRoles(payload));
+
+            if (!createResult) {
+                throw new Error("Failed to get publicId from response");
+            }
+
+            setToast(<SuccessToast message="Role created successfully!" onClose={() => setToast(null)} />);
+            setFormData({
+                role: '',
+                features: []
+            });
+
+
+
+            setActiveSection("view"); // Close form by switching to view section
         } catch (err) {
             setToast(<ErrorToast message={err.message || "Failed to create intern"} onClose={() => setToast(null)} />);
         } finally {
@@ -106,6 +113,20 @@ const AddRoleForm = ({ setActiveSection }) => {
         }
 
     };
+
+    // Pre-select features when in edit mode
+    useEffect(() => {
+        if (selectedRole) {
+            setFormData({
+                role: selectedRole.role,
+                features: selectedRole.features.map(f => ({
+                    value: f.id,
+                    label: f.name
+                }))
+            });
+        }
+    }, [selectedRole]);
+
 
     // Handle clicking the overlay (outside the form)
     const handleOverlayClick = (e) => {

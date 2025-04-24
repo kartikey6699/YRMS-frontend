@@ -12,6 +12,7 @@ const AdminDashboard = () => {
     const [selectedSection, setSelectedSection] = useState("");
     const [activeSection, setActiveSection] = useState("view"); // 'view' or 'add'
     const contentRef = useRef(null);
+    const [selectedRole, setSelectedRole] = useState(null); 
 
     useEffect(() => {
         dispatch(fetchRoles());
@@ -94,10 +95,11 @@ const AdminDashboard = () => {
                     {selectedSection === "role" && (
                         <>
                             {activeSection === "view" ? (
-                                <RolesPage setActiveSection={setActiveSection} />
+                                <RolesPage setActiveSection={setActiveSection} setSelectedRole={setSelectedRole} />
                             ) : (
                                 <AddRole
                                     setActiveSection={setActiveSection}
+                                    selectedRole={selectedRole}
                                     onSuccess={() => setActiveSection("view")}
                                 />
                             )}

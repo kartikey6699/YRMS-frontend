@@ -2,7 +2,8 @@
   import {
     fetchRoles,
     createRoles,
-    fetchFeatures
+    fetchFeatures,
+    deleteRole
   } from "./roleAction";
 
   const initialState = {
@@ -63,7 +64,7 @@
           state.roles.unshift({
             id: payload.id || '',
             role: payload.role,
-            permission: payload.features || []
+            features: payload.permission || []
           });
           state.pagination.totalItems += 1;
         })
@@ -91,6 +92,19 @@
           state.error = payload;
         })
 
+        // delete role (New)
+        .addCase(deleteRole.pending, (state) => {
+          state.roleLoading = true;
+        })
+        .addCase(deleteRole.fulfilled, (state, { payload }) => {
+          state.roleLoading = false;
+          state.roles = state.roles.filter(data => data.id !== payload);
+        })
+        .addCase(deleteRole.rejected, (state, { payload }) => {
+          state.roleLoading = false;
+          state.error = payload;
+        })
+  
         // Fetch Feature (New)
         .addCase(fetchFeatures.pending, (state) => {
           state.featuresloading = true;

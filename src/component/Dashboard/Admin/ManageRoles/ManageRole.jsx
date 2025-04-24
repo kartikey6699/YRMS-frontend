@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import RoleList from './RoleList';
 
 
-const RolesPage = ({setActiveSection}) => {
+const RolesPage = ({ setActiveSection, setSelectedRole }) => {
     const [sortConfig, setSortConfig] = useState({ key: 'name', direction: 'ascending' });
 
     const handleSort = (key) => {
@@ -23,12 +23,12 @@ const RolesPage = ({setActiveSection}) => {
 
     return (
         <RoleList
-            // roles={roles} 
+            setSelectedRole={setSelectedRole}
             setActiveSection={setActiveSection}
-            onDelete={handleDelete} 
-            onEdit={handleEdit} 
-            onSort={handleSort} 
-            sortConfig={sortConfig} 
+            onDelete={handleDelete}
+            onEdit={handleEdit}
+            onSort={handleSort}
+            sortConfig={sortConfig}
         />
     );
 };

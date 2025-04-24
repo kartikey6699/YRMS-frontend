@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { FaPlus, FaSort, FaSearch, FaCalendarAlt, FaSortUp, FaSortDown } from 'react-icons/fa';
+import { FaPlus, FaSort, FaSearch, FaCalendarAlt, FaSortUp, FaSortDown, FaAngleDoubleLeft, FaAngleLeft, FaAngleRight, FaAngleDoubleRight } from 'react-icons/fa';
 import { Link } from 'react-router';
 import DatePicker from "react-datepicker";
 import EmployeeDetailPage from './UserDetails';
@@ -25,6 +25,9 @@ const UserList = ({ setActiveSection }) => {
     resourceId: null,
     resourceName: "",
   });
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   const [searchTerms, setSearchTerms] = useState({
     name: '',
@@ -115,11 +118,25 @@ const UserList = ({ setActiveSection }) => {
     setFilteredData(filtered);
   };
 
+  // Pagination Logic
+  const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+  const paginatedResources = filteredData.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
+  const handlePageChange = (page) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+    }
+  };
+
+
   const handleUpdateStatus = async (e, event, publicId) => {
     setIsSubmitting(true);
     try {
       setToast(<YRMSLoader message="Updating status..." />);
-      
+
       const resourceData = {
         status: event.target.value
       };
@@ -243,7 +260,7 @@ const UserList = ({ setActiveSection }) => {
           </tr>
         </thead>
         <tbody>
-          {filteredData.map((resource, index) => (
+          {paginatedResources.map((resource, index) => (
             <tr key={index} className={`${index % 2 === 0 ? 'bg-gray-50' : 'bg-white'} hover:bg-gray-100 transition-colors`}>
               <td className="p-3 text-gray-700 text-sm text-center border-r border-gray-200">{index + 1}</td>
               <td
@@ -310,6 +327,72 @@ const UserList = ({ setActiveSection }) => {
           ))}
         </tbody>
       </table>
+      {filteredData.length > 0 && (
+        <div className="flex items-center justify-between px-4 py-3 bg-white border-t border-gray-200">
+          <div className="text-sm text-gray-700">
+            Showing <span className="font-medium">{(currentPage - 1) * itemsPerPage + 1}</span> to{" "}
+            <span className="font-medium">
+              {Math.min(currentPage * itemsPerPage, filteredData.length)}
+            </span>{" "}
+            of <span className="font-medium">{filteredData.length}</span> results
+          </div>
+          <div className="flex space-x-2">
+            <button
+              onClick={() => handlePageChange(1)}
+              disabled={currentPage === 1}
+              className={`p-2 rounded-md ${currentPage === 1 ? 'text-gray-400 cursor-not-allowed' : 'text-blue-600 hover:bg-blue-50'}`}
+            >
+              <FaAngleDoubleLeft />
+            </button>
+            <button
+              onClick={() => handlePageChange(currentPage - 1)}
+              disabled={currentPage === 1}
+              className={`p-2 rounded-md ${currentPage === 1 ? 'text-gray-400 cursor-not-allowed' : 'text-blue-600 hover:bg-blue-50'}`}
+            >
+              <FaAngleLeft />
+            </button>
+
+            {/* Dynamic Page Numbers */}
+            {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+              let pageNum;
+              if (totalPages <= 5) {
+                pageNum = i + 1;
+              } else if (currentPage <= 3) {
+                pageNum = i + 1;
+              } else if (currentPage >= totalPages - 2) {
+                pageNum = totalPages - 4 + i;
+              } else {
+                pageNum = currentPage - 2 + i;
+              }
+
+              return (
+                <button
+                  key={pageNum}
+                  onClick={() => handlePageChange(pageNum)}
+                  className={`w-10 h-10 rounded-md ${currentPage === pageNum ? 'bg-blue-600 text-white' : 'text-blue-600 hover:bg-blue-50'}`}
+                >
+                  {pageNum}
+                </button>
+              );
+            })}
+
+            <button
+              onClick={() => handlePageChange(currentPage + 1)}
+              disabled={currentPage === totalPages}
+              className={`p-2 rounded-md ${currentPage === totalPages ? 'text-gray-400 cursor-not-allowed' : 'text-blue-600 hover:bg-blue-50'}`}
+            >
+              <FaAngleRight />
+            </button>
+            <button
+              onClick={() => handlePageChange(totalPages)}
+              disabled={currentPage === totalPages}
+              className={`p-2 rounded-md ${currentPage === totalPages ? 'text-gray-400 cursor-not-allowed' : 'text-blue-600 hover:bg-blue-50'}`}
+            >
+              <FaAngleDoubleRight />
+            </button>
+          </div>
+        </div>
+      )}
       {selectedUser && (
         <EmployeeDetailPage
           key={selectedUser}
