@@ -1,18 +1,19 @@
 import React, { useEffect, useState } from 'react';
-import { FaPlus, FaSort, FaSearch, FaCalendarAlt, FaSortUp, FaSortDown } from 'react-icons/fa';
+import { FaPlus, FaSort, FaSearch, FaCalendarAlt, FaSortUp, FaSortDown, FaAngleDoubleLeft, FaAngleLeft, FaAngleRight, FaAngleDoubleRight, FaTrash } from 'react-icons/fa';
 import { Link } from 'react-router';
 import DatePicker from "react-datepicker";
 import EmployeeDetailPage from './UserDetails';
 import { useDispatch, useSelector } from "react-redux";
-import { fetchCompetencies, fetchDesignations, fetchResources, updateResource } from '../../../../features/resource/resourceAction';
+import { deleteResource, fetchCompetencies, fetchDesignations, fetchResources, updateResource } from '../../../../features/resource/resourceAction';
 import { ErrorToast, SuccessToast } from '../../../helper/ResourceToast';
 import YRMSLoader from '../../../helper/loader';
+import DeleteConfirmationModal from '../../../helper/DeleteConfirmationModal';
 
 const UserList = ({ setActiveSection }) => {
   const dispatch = useDispatch();
   const { resources, competencies, designations } = useSelector((state) => state.resource);
   const roleOptions = ["Admin", "User"];
-  const statusOptions = ["pool", "pip", "deployed"]; // Updated to match API
+  const statusOptions = ["Pool", "Deployed", "PIP"];
   const competenciesOptions = competencies.map((competency) => competency.name); // Updated to match API
   const designationsOptions = designations.map((designation) => designation.name); // Updated to match API
   const [selectedUser, setSelectedUser] = useState(null);
@@ -25,6 +26,9 @@ const UserList = ({ setActiveSection }) => {
     resourceId: null,
     resourceName: "",
   });
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   const [searchTerms, setSearchTerms] = useState({
     name: '',
@@ -115,11 +119,25 @@ const UserList = ({ setActiveSection }) => {
     setFilteredData(filtered);
   };
 
+  // Pagination Logic
+  const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+  const paginatedResources = filteredData.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
+  const handlePageChange = (page) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+    }
+  };
+
+
   const handleUpdateStatus = async (e, event, publicId) => {
     setIsSubmitting(true);
     try {
       setToast(<YRMSLoader message="Updating status..." />);
-      
+
       const resourceData = {
         status: event.target.value
       };
@@ -142,6 +160,21 @@ const UserList = ({ setActiveSection }) => {
     }
   };
 
+  const handleDeleteConfirm = () => {
+    setToast(<YRMSLoader message="Deleting resource..." />);
+
+    dispatch(deleteResource(deleteModal.resourceId))
+      .unwrap()
+      .then(() => {
+        setToast(<SuccessToast message="Resource deleted successfully!" onClose={() => setToast(null)} />);
+      })
+      .catch(error => {
+        setToast(<ErrorToast message={err.message || "Failed to delete resource"} onClose={() => setToast(null)} />);
+      });
+    setDeleteModal({ isOpen: false, resourceId: null, resourceName: '' });
+  };
+
+
   const columns = [
     { key: "sno", label: "S.No" },
     { key: 'employeeName', label: 'Name' }, // Updated to match API field
@@ -149,7 +182,8 @@ const UserList = ({ setActiveSection }) => {
     { key: 'competency', label: 'Competency' },
     { key: 'joiningDate', label: 'Joining Date' },
     { key: 'roleIds', label: 'Role' },
-    { key: 'status', label: 'Status' }
+    { key: 'status', label: 'Status' },
+    { key: 'action', label: 'Actions' }
   ];
 
   return (
@@ -243,7 +277,7 @@ const UserList = ({ setActiveSection }) => {
           </tr>
         </thead>
         <tbody>
-          {filteredData.map((resource, index) => (
+          {paginatedResources.map((resource, index) => (
             <tr key={index} className={`${index % 2 === 0 ? 'bg-gray-50' : 'bg-white'} hover:bg-gray-100 transition-colors`}>
               <td className="p-3 text-gray-700 text-sm text-center border-r border-gray-200">{index + 1}</td>
               <td
@@ -270,11 +304,18 @@ const UserList = ({ setActiveSection }) => {
                   }}
                   className="cursor-pointer"
                 >
-                  <span className={`px-2 py-1 rounded-full text-xs ${resource.status === 'Running' ? 'bg-blue-100 text-blue-800' :
-                    resource.status === 'Complete' ? 'bg-green-100 text-green-800' :
-                      'bg-red-100 text-red-800'
-                    }`}>
-                    {!resource.status ? "Running" : resource.status.charAt(0).toUpperCase() + resource.status.slice(1)}
+                  <span
+                    className={`px-1 py-0.5 rounded-full text-xs ${(resource.status || "pool") === "pool"
+                      ? "bg-blue-100 text-blue-800"
+                      : resource.status === "deployed"
+                        ? "bg-green-100 text-green-800"
+                        : resource.status === "pip"
+                          ? "bg-yellow-100 text-yellow-800"
+                          : "bg-red-100 text-red-800"
+                      }`}
+                  >
+                    {(resource.status || "pool").charAt(0).toUpperCase() +
+                      (resource.status || "pool").slice(1)}
                   </span>
                 </div>
 
@@ -306,10 +347,96 @@ const UserList = ({ setActiveSection }) => {
                   </div>
                 )}
               </td>
+              <td className="p-3 text-gray-700 text-sm">
+                <div className="flex space-x-1 relative">
+                  <div className="relative group">
+                    <button
+                      className="flex items-center justify-center w-7 h-7 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors cursor-pointer"
+                      onClick={() => setDeleteModal({
+                        isOpen: true,
+                        resourceId: resource.publicId,
+                        resourceName: resource.employeeName
+                    })}
+>
+                      <FaTrash size={12} />
+                    </button>
+                    <span className="absolute -top-8 left-1/2 -translate-x-1/2 w-max px-2 py-1 bg-gray-800 text-white text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                      Delete
+                      <div className="absolute left-1/2 -translate-x-1/2 w-2 h-2 bg-gray-800 rotate-45 -bottom-1"></div>
+                    </span>
+                  </div>
+                </div>
+              </td>
             </tr>
           ))}
         </tbody>
       </table>
+      {filteredData.length > 0 && (
+        <div className="flex items-center justify-between px-4 py-3 bg-white border-t border-gray-200">
+          <div className="text-sm text-gray-700">
+            Showing <span className="font-medium">{(currentPage - 1) * itemsPerPage + 1}</span> to{" "}
+            <span className="font-medium">
+              {Math.min(currentPage * itemsPerPage, filteredData.length)}
+            </span>{" "}
+            of <span className="font-medium">{filteredData.length}</span> results
+          </div>
+          <div className="flex space-x-2">
+            <button
+              onClick={() => handlePageChange(1)}
+              disabled={currentPage === 1}
+              className={`p-2 rounded-md ${currentPage === 1 ? 'text-gray-400 cursor-not-allowed' : 'text-blue-600 hover:bg-blue-50'}`}
+            >
+              <FaAngleDoubleLeft />
+            </button>
+            <button
+              onClick={() => handlePageChange(currentPage - 1)}
+              disabled={currentPage === 1}
+              className={`p-2 rounded-md ${currentPage === 1 ? 'text-gray-400 cursor-not-allowed' : 'text-blue-600 hover:bg-blue-50'}`}
+            >
+              <FaAngleLeft />
+            </button>
+
+            {/* Dynamic Page Numbers */}
+            {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+              let pageNum;
+              if (totalPages <= 5) {
+                pageNum = i + 1;
+              } else if (currentPage <= 3) {
+                pageNum = i + 1;
+              } else if (currentPage >= totalPages - 2) {
+                pageNum = totalPages - 4 + i;
+              } else {
+                pageNum = currentPage - 2 + i;
+              }
+
+              return (
+                <button
+                  key={pageNum}
+                  onClick={() => handlePageChange(pageNum)}
+                  className={`w-10 h-10 rounded-md ${currentPage === pageNum ? 'bg-blue-600 text-white' : 'text-blue-600 hover:bg-blue-50'}`}
+                >
+                  {pageNum}
+                </button>
+              );
+            })}
+
+            <button
+              onClick={() => handlePageChange(currentPage + 1)}
+              disabled={currentPage === totalPages}
+              className={`p-2 rounded-md ${currentPage === totalPages ? 'text-gray-400 cursor-not-allowed' : 'text-blue-600 hover:bg-blue-50'}`}
+            >
+              <FaAngleRight />
+            </button>
+            <button
+              onClick={() => handlePageChange(totalPages)}
+              disabled={currentPage === totalPages}
+              className={`p-2 rounded-md ${currentPage === totalPages ? 'text-gray-400 cursor-not-allowed' : 'text-blue-600 hover:bg-blue-50'}`}
+            >
+              <FaAngleDoubleRight />
+            </button>
+          </div>
+        </div>
+      )}
       {selectedUser && (
         <EmployeeDetailPage
           key={selectedUser}
@@ -317,6 +444,14 @@ const UserList = ({ setActiveSection }) => {
           onClose={() => setSelectedUser(null)}
         />
       )}
+      <DeleteConfirmationModal
+        isOpen={deleteModal.isOpen}
+        onClose={() => setDeleteModal({ isOpen: false, resourceId: null, resourceName: "" })}
+        onConfirm={handleDeleteConfirm}
+        resourceName={deleteModal.resourceName}
+        resourceType="role"
+      />
+
     </div>
   );
 };

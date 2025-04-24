@@ -28,7 +28,6 @@ export const fetchRoles = createAsyncThunk(
       });
       const { success, data, message } = response.data;
       
-      console.log(data, ">>>>>>>>>>")
       if (!success) {
         throw new Error(message || "Failed to fetch roles");
       }
@@ -56,8 +55,6 @@ export const fetchFeatures = createAsyncThunk(
       if (!success) {
         throw new Error(message || "Failed to fetch roles");
       }
-
-      console.log(data, "dsf")
 
       return data;
     } catch (error) {
@@ -89,6 +86,26 @@ export const createRoles = createAsyncThunk(
         error.response?.data?.message ||
         error.message ||
         "Failed to create role";
+      return rejectWithValue(errorMessage);
+    }
+  }
+);
+
+
+export const deleteRole = createAsyncThunk(
+  "role/deleteRole",
+  async (Id, { rejectWithValue }) => {
+    try {
+      const response = await rolesApiClient.delete(
+        `${ROLE_API.DELETE}/${Id}`
+      );
+
+      return Id;
+    } catch (error) {
+      const errorMessage =
+        error.response?.data?.message ||
+        error.message ||
+        "Failed to delete role";
       return rejectWithValue(errorMessage);
     }
   }

@@ -1,23 +1,10 @@
-import React, { useEffect, useState } from 'react';
-import { fetchRoles } from '../../../../features/role/roleAction'
-import { useDispatch, useSelector } from 'react-redux';
+import React, { useState } from 'react';
 import RoleList from './RoleList';
 
 
-const RolesPage = ({setActiveSection}) => {
-
-    const dispatch = useDispatch();
-    const { roles } = useSelector(
-        (state) => state.role
-    );
+const RolesPage = ({ setActiveSection, setSelectedRole }) => {
     const [sortConfig, setSortConfig] = useState({ key: 'name', direction: 'ascending' });
 
-    // Fetch roles from API
-    useEffect(() => {
-        dispatch(fetchRoles());
-    }, [dispatch]);
-
-    console.log(roles, "?>>>>>>>>")
     const handleSort = (key) => {
         let direction = 'ascending';
         if (sortConfig.key === key && sortConfig.direction === 'ascending') {
@@ -36,12 +23,12 @@ const RolesPage = ({setActiveSection}) => {
 
     return (
         <RoleList
-            roles={roles} 
+            setSelectedRole={setSelectedRole}
             setActiveSection={setActiveSection}
-            onDelete={handleDelete} 
-            onEdit={handleEdit} 
-            onSort={handleSort} 
-            sortConfig={sortConfig} 
+            onDelete={handleDelete}
+            onEdit={handleEdit}
+            onSort={handleSort}
+            sortConfig={sortConfig}
         />
     );
 };

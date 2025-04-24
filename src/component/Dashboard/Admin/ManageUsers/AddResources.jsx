@@ -21,6 +21,8 @@ import { fetchRoles } from '../../../../features/role/roleAction'
 import { ErrorToast, SuccessToast } from '../../../helper/ResourceToast';
 import YRMSLoader from '../../../helper/loader';
 import Dropdown from '../../../helper/Dropdown';
+import axios from 'axios';
+import { ADMIN_API_BASE_URL } from '../../../../config/Endpoints/BaseEndpoints';
 
 const AddResource = ({ setActiveSection }) => {
     const navigate = useNavigate();
@@ -115,6 +117,7 @@ const AddResource = ({ setActiveSection }) => {
             const formData = new FormData();
             formData.append("payload", profilePic);
 
+            const token = sessionStorage.getItem("token");
             const response = await axios.post(
                 `${ADMIN_API_BASE_URL}/user-profile-upload/?user_id=${userId}`,
                 formData,
@@ -122,6 +125,7 @@ const AddResource = ({ setActiveSection }) => {
                     headers: {
                         accept: "application/json",
                         "Content-Type": "multipart/form-data",
+                        Authorization: `Bearer ${token}`,
                     },
                 }
             );
