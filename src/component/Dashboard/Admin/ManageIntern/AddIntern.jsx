@@ -45,6 +45,7 @@ const AddIntern = () => {
         competencyId: "",
     });
 
+    const [errors, setErrors] = useState({});
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     useEffect(() => {
@@ -52,9 +53,108 @@ const AddIntern = () => {
         dispatch(fetchCompetencies());
     }, [dispatch]);
 
+    const validateField = (name, value) => {
+        const newErrors = {};
+
+        switch (name) {
+            case 'name':
+                if (!value) {
+                    newErrors.name = 'Name is required';
+                } else if (value.length < 2) {
+                    newErrors.name = 'Name must be at least 2 characters long';
+                } else if (!/^[a-zA-Z\s]+$/.test(value)) {
+                    newErrors.name = 'Name can only contain letters and spaces';
+                }
+                break;
+            case 'email':
+                if (!value) {
+                    newErrors.email = 'Email is required';
+                } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+                    newErrors.email = 'Please enter a valid email address';
+                }
+                break;
+            case 'phoneNumber':
+                if (!value) {
+                    newErrors.phoneNumber = 'Phone number is required';
+                } else if (!/^\d{10}$/.test(value)) {
+                    newErrors.phoneNumber = 'Phone number must be exactly 10 digits';
+                }
+                break;
+            case 'gender':
+                if (!value) {
+                    newErrors.gender = 'Gender is required';
+                }
+                break;
+            case 'location':
+                if (!value) {
+                    newErrors.location = 'Location is required';
+                }
+                break;
+            case 'mentorId':
+                if (!value) {
+                    newErrors.mentorId = 'Mentor is required';
+                }
+                break;
+            case 'competencyId':
+                if (!value) {
+                    newErrors.competencyId = 'Competency is required';
+                }
+                break;
+            case 'status':
+                if (!value) {
+                    newErrors.status = 'Status is required';
+                }
+                break;
+            case 'startDate':
+                if (!value) {
+                    newErrors.startDate = 'Start date is required';
+                } else {
+                    const today = new Date().toISOString().split('T')[0];
+                    if (value < today) {
+                        newErrors.startDate = 'Start date cannot be in the past';
+                    }
+                }
+                break;
+            case 'duration':
+                if (!value) {
+                    newErrors.duration = 'Duration is required';
+                } else if (!/^\d+$/.test(value) || parseInt(value) < 1) {
+                    newErrors.duration = 'Duration must be a positive integer';
+                }
+                break;
+            case 'endDate':
+                if (!value) {
+                    newErrors.endDate = 'End date is required';
+                } else if (formData.startDate && value <= formData.startDate) {
+                    newErrors.endDate = 'End date must be after start date';
+                }
+                break;
+            default:
+                break;
+        }
+
+        return newErrors;
+    };
+
+    const validateForm = () => {
+        const newErrors = {};
+
+        Object.keys(formData).forEach((key) => {
+            const fieldErrors = validateField(key, formData[key]);
+            Object.assign(newErrors, fieldErrors);
+        });
+
+        setErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
+    };
+
     const handleInputChange = (e) => {
         const { name, value } = e.target;
         setFormData((prev) => ({ ...prev, [name]: value }));
+
+        // Validate the changed field
+        const fieldErrors = validateField(name, value);
+        setErrors((prev) => ({ ...prev, ...fieldErrors, [name]: fieldErrors[name] || '' }));
     };
 
     const calculateEndDate = (startDate, duration) => {
@@ -77,10 +177,24 @@ const AddIntern = () => {
         }
 
         setFormData(newFormData);
+
+        // Validate the changed field and related fields
+        const fieldErrors = validateField(name, value);
+        if (name === 'startDate' || name === 'duration') {
+            const endDateErrors = validateField('endDate', newFormData.endDate);
+            Object.assign(fieldErrors, endDateErrors);
+        }
+        setErrors((prev) => ({ ...prev, ...fieldErrors, [name]: fieldErrors[name] || '' }));
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+
+        if (!validateForm()) {
+            setToast(<ErrorToast message="Please fix the errors in the form" onClose={() => setToast(null)} />);
+            return;
+        }
+
         setIsSubmitting(true);
         try {
             setToast(<YRMSLoader message="Creating intern..." />);
@@ -107,6 +221,7 @@ const AddIntern = () => {
                 status: "",
                 competencyId: "",
             });
+            setErrors({});
 
             setTimeout(() => {
                 navigate('/interns');
@@ -116,6 +231,10 @@ const AddIntern = () => {
         } finally {
             setIsSubmitting(false);
         }
+    };
+
+    const isFormValid = () => {
+        return Object.keys(formData).every((key) => !validateField(key, formData[key])[key]);
     };
 
     return (
@@ -146,7 +265,7 @@ const AddIntern = () => {
                 <p className="text-gray-600">Fill in the details below to register a new intern</p>
             </div>
 
-            <form className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <form className="grid grid-cols-1 md:grid-cols-2 gap-6" onSubmit={handleSubmit}>
                 {/* Personal Information Section */}
                 <div className="bg-white p-6 rounded-lg shadow-sm">
                     <h3 className="text-xl font-semibold text-blue-700 mb-4 flex items-center">
@@ -162,10 +281,11 @@ const AddIntern = () => {
                             name="name"
                             value={formData.name}
                             onChange={handleInputChange}
-                            className="w-full h-12 p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 transition-colors"
+                            className={`w-full h-12 p-3 border-2 rounded-lg focus:outline-none transition-colors ${errors.name ? 'border-red-500' : 'border-gray-200 focus:border-blue-500'}`}
                             placeholder="Enter Name"
                             required
                         />
+                        {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name}</p>}
                     </div>
 
                     <div className="mb-4">
@@ -177,10 +297,11 @@ const AddIntern = () => {
                             name="email"
                             value={formData.email}
                             onChange={handleInputChange}
-                            className="w-full h-12 p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 transition-colors"
+                            className={`w-full h-12 p-3 border-2 rounded-lg focus:outline-none transition-colors ${errors.email ? 'border-red-500' : 'border-gray-200 focus:border-blue-500'}`}
                             placeholder="Enter Email"
                             required
                         />
+                        {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
                     </div>
 
                     <div className="mb-4">
@@ -191,13 +312,14 @@ const AddIntern = () => {
                             name="gender"
                             value={formData.gender}
                             onChange={handleInputChange}
-                            className="w-full h-12 p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 transition-colors"
+                            className={`w-full h-12 p-3 border-2 rounded-lg focus:outline-none transition-colors ${errors.gender ? 'border-red-500' : 'border-gray-200 focus:border-blue-500'}`}
                             required
                         >
                             <option value="" disabled>Select Gender</option>
                             <option value="male">Male</option>
                             <option value="female">Female</option>
                         </select>
+                        {errors.gender && <p className="text-red-500 text-sm mt-1">{errors.gender}</p>}
                     </div>
 
                     <div className="mb-4">
@@ -209,10 +331,11 @@ const AddIntern = () => {
                             name="phoneNumber"
                             value={formData.phoneNumber}
                             onChange={handleInputChange}
-                            className="w-full h-12 p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 transition-colors"
+                            className={`w-full h-12 p-3 border-2 rounded-lg focus:outline-none transition-colors ${errors.phoneNumber ? 'border-red-500' : 'border-gray-200 focus:border-blue-500'}`}
                             placeholder="Enter phone number"
                             required
                         />
+                        {errors.phoneNumber && <p className="text-red-500 text-sm mt-1">{errors.phoneNumber}</p>}
                     </div>
                 </div>
 
@@ -230,7 +353,7 @@ const AddIntern = () => {
                             name='mentorId'
                             value={formData.mentorId}
                             onChange={handleInputChange}
-                            className="w-full h-12 p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 transition-colors"
+                            className={`w-full h-12 p-3 border-2 rounded-lg focus:outline-none transition-colors ${errors.mentorId ? 'border-red-500' : 'border-gray-200 focus:border-blue-500'}`}
                             required
                         >
                             <option value="" disabled>Select Mentor</option>
@@ -240,6 +363,7 @@ const AddIntern = () => {
                                 </option>
                             ))}
                         </select>
+                        {errors.mentorId && <p className="text-red-500 text-sm mt-1">{errors.mentorId}</p>}
                     </div>
 
                     <div className="mb-4">
@@ -253,7 +377,9 @@ const AddIntern = () => {
                             onChange={handleInputChange}
                             setModalField={() => setModalField('competency')}
                             placeholder="Select Competency"
+                            className={errors.competencyId ? 'border-red-500' : ''}
                         />
+                        {errors.competencyId && <p className="text-red-500 text-sm mt-1">{errors.competencyId}</p>}
                     </div>
 
                     <div className="mb-4">
@@ -264,7 +390,7 @@ const AddIntern = () => {
                             name="location"
                             value={formData.location}
                             onChange={handleInputChange}
-                            className="w-full h-12 p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 transition-colors"
+                            className={`w-full h-12 p-3 border-2 rounded-lg focus:outline-none transition-colors ${errors.location ? 'border-red-500' : 'border-gray-200 focus:border-blue-500'}`}
                             required
                         >
                             <option value="Indore_Yash_IT_Park_SC_DC">Indore-YASH IT Park-SC-DC</option>
@@ -275,6 +401,7 @@ const AddIntern = () => {
                             <option value="Indore_BTC_CO">Indore-BTC-CO</option>
                             <option value="Pune_Hinjewadi_III_DC">Pune-Hinjewadi III-DC</option>
                         </select>
+                        {errors.location && <p className="text-red-500 text-sm mt-1">{errors.location}</p>}
                     </div>
 
                     <div className="mb-4">
@@ -285,7 +412,7 @@ const AddIntern = () => {
                             name="status"
                             value={formData.status}
                             onChange={handleInputChange}
-                            className="w-full h-12 p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 transition-colors"
+                            className={`w-full h-12 p-3 border-2 rounded-lg focus:outline-none transition-colors ${errors.status ? 'border-red-500' : 'border-gray-200 focus:border-blue-500'}`}
                             required
                         >
                             <option value="" disabled>Select Status</option>
@@ -294,6 +421,7 @@ const AddIntern = () => {
                             <option value="running">Running</option>
                             <option value="complete">Complete</option>
                         </select>
+                        {errors.status && <p className="text-red-500 text-sm mt-1">{errors.status}</p>}
                     </div>
                 </div>
 
@@ -313,10 +441,11 @@ const AddIntern = () => {
                                 name="startDate"
                                 value={formData.startDate}
                                 onChange={handleDateChange}
-                                className="w-full h-12 p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 transition-colors"
+                                className={`w-full h-12 p-3 border-2 rounded-lg focus:outline-none transition-colors ${errors.startDate ? 'border-red-500' : 'border-gray-200 focus:border-blue-500'}`}
                                 required
-                                onClick={(e) => e.target.showPicker()} // Open date picker on input click
+                                onClick={(e) => e.target.showPicker()}
                             />
+                            {errors.startDate && <p className="text-red-500 text-sm mt-1">{errors.startDate}</p>}
                         </div>
 
                         <div className="mb-4">
@@ -329,10 +458,11 @@ const AddIntern = () => {
                                 value={formData.duration}
                                 onChange={handleDateChange}
                                 min="1"
-                                className="w-full h-12 p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 transition-colors"
+                                className={`w-full h-12 p-3 border-2 rounded-lg focus:outline-none transition-colors ${errors.duration ? 'border-red-500' : 'border-gray-200 focus:border-blue-500'}`}
                                 placeholder="Enter duration"
                                 required
                             />
+                            {errors.duration && <p className="text-red-500 text-sm mt-1">{errors.duration}</p>}
                         </div>
 
                         <div className="mb-4">
@@ -344,20 +474,20 @@ const AddIntern = () => {
                                 name="endDate"
                                 value={formData.endDate}
                                 onChange={handleInputChange}
-                                className="w-full h-12 p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 transition-colors"
+                                className={`w-full h-12 p-3 border-2 rounded-lg focus:outline-none transition-colors ${errors.endDate ? 'border-red-500' : 'border-gray-200 focus:border-blue-500'}`}
                                 required
-                                onClick={(e) => e.target.showPicker()} // Open date picker on input click
+                                onClick={(e) => e.target.showPicker()}
                             />
+                            {errors.endDate && <p className="text-red-500 text-sm mt-1">{errors.endDate}</p>}
                         </div>
                     </div>
                 </div>
 
                 <div className="md:col-span-2 flex justify-center mt-4">
                     <button
-                        type="button"
-                        onClick={handleSubmit}
-                        disabled={isSubmitting}
-                        className={`px-8 py-3 rounded-lg font-semibold text-white transition-all transform hover:scale-105 flex items-center ${isSubmitting
+                        type="submit"
+                        disabled={isSubmitting || !isFormValid()}
+                        className={`px-8 py-3 rounded-lg font-semibold text-white transition-all transform hover:scale-105 flex items-center ${isSubmitting || !isFormValid()
                                 ? "bg-gray-400 cursor-not-allowed"
                                 : "bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
                             }`}

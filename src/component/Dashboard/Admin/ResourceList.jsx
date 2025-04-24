@@ -107,17 +107,17 @@ const ResourceList = ({ handleBaselineClick, handleOpportunitiesClick }) => {
       const matchesName = resource.employeeName?.toLowerCase().includes(searchValues.employeeName.toLowerCase()) ?? true;
       const matchesDesignation = resource.designation?.toLowerCase().includes(searchValues.designation.toLowerCase()) ?? true;
       const matchesStatus = searchValues.status ? resource.status?.toLowerCase() === searchValues.status.toLowerCase() : true;
-      const matchesPrograms = searchValues.assignedPrograms 
-        ? (resource.programs || []).some(p => 
-            p.name.toLowerCase().includes(searchValues.assignedPrograms.toLowerCase())
-          )
+      const matchesPrograms = searchValues.assignedPrograms
+        ? (resource.programs || []).some(p =>
+          p.name.toLowerCase().includes(searchValues.assignedPrograms.toLowerCase())
+        )
         : true;
-      
+
       let matchesDate = true;
       if (searchValues.joiningDate) {
         const resourceDate = resource.joiningDate ? new Date(resource.joiningDate) : null;
         if (resourceDate) {
-          matchesDate = 
+          matchesDate =
             resourceDate.getDate() === searchValues.joiningDate.getDate() &&
             resourceDate.getMonth() === searchValues.joiningDate.getMonth() &&
             resourceDate.getFullYear() === searchValues.joiningDate.getFullYear();
@@ -131,7 +131,7 @@ const ResourceList = ({ handleBaselineClick, handleOpportunitiesClick }) => {
   const sortedResources = useMemo(() => {
     return [...filteredResources].sort((a, b) => {
       if (!sortConfig.key) return 0;
-      
+
       if (sortConfig.key === 'assignedPrograms') {
         const aPrograms = (a.programs || []).map(p => p.name).join(', ');
         const bPrograms = (b.programs || []).map(p => p.name).join(', ');
@@ -139,7 +139,7 @@ const ResourceList = ({ handleBaselineClick, handleOpportunitiesClick }) => {
           ? aPrograms.localeCompare(bPrograms)
           : bPrograms.localeCompare(aPrograms);
       }
-      
+
       const valueA = a[sortConfig.key] || "";
       const valueB = b[sortConfig.key] || "";
       return sortConfig.direction === "ascending"
@@ -289,8 +289,8 @@ const ResourceList = ({ handleBaselineClick, handleOpportunitiesClick }) => {
                 <td className="p-1 text-gray-700 text-sm border-r border-gray-200">
                   {resource.designation || "N/A"}
                 </td>
-                <td className="p-1 text-gray-700 text-sm border-r border-gray-200 max-w-xs truncate">
-                  <div className="flex flex-wrap gap-1">
+                <td className="p-1 text-gray-700 text-sm border-r border-gray-200 max-w-xs truncate text-center">
+                  <div className="flex flex-wrap gap-1 text-centre">
                     {(resource.programs || []).map(program => (
                       <span
                         key={program.id}
@@ -303,13 +303,14 @@ const ResourceList = ({ handleBaselineClick, handleOpportunitiesClick }) => {
                         {program.name}
                       </span>
                     ))}
-                    {(!resource.programs || resource.programs.length === 0) && "N/A"}
+                    {(!resource.programs || resource.programs.length === 0) && (
+                      <div className="w-full flex justify-center">-</div>
+                    )}
                   </div>
                 </td>
                 <td className="p-1 text-gray-700 text-sm border-r border-gray-200">
                   <span
-                    className={`px-1 py-0.5 rounded-full text-xs ${
-                      (resource.status || "pool") === "pool"
+                    className={`px-1 py-0.5 rounded-full text-xs ${(resource.status || "pool") === "pool"
                         ? "bg-blue-100 text-blue-800"
                         : resource.status === "deployed"
                           ? "bg-green-100 text-green-800"
@@ -326,8 +327,7 @@ const ResourceList = ({ handleBaselineClick, handleOpportunitiesClick }) => {
                   <div className="flex space-x-1 relative">
                     <div className="relative group">
                       <button
-                        className={`flex items-center justify-center w-7 h-7 bg-teal-500 text-white rounded-lg hover:bg-teal-600 transition-colors cursor-pointer ${
-                          loadingBaselineId === resource.publicId ? "opacity-75" : ""
+                        className={`flex items-center justify-center w-7 h-7 bg-teal-500 text-white rounded-lg hover:bg-teal-600 transition-colors cursor-pointer ${loadingBaselineId === resource.publicId ? "opacity-75" : ""
                           }`}
                         onClick={() => handleBaselineClickWithLoading(resource)}
                         disabled={loadingBaselineId === resource.publicId}
@@ -399,7 +399,7 @@ const ResourceList = ({ handleBaselineClick, handleOpportunitiesClick }) => {
               >
                 <FaAngleLeft />
               </button>
-              
+
               {/* Dynamic Page Numbers */}
               {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
                 let pageNum;

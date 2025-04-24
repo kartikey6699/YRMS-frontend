@@ -5,6 +5,8 @@ import { fetchResourceDetails, updateResource, fetchDesignations } from '../../.
 import { resetResourceDetails } from '../../../features/resource/resourceSlice';
 import { SuccessToast, ErrorToast } from '../../helper/ResourceToast';
 import { RESUME_API } from '../../../config/Endpoints/Endpoints';
+import axios from 'axios';
+import { ADMIN_API_BASE_URL } from '../../../config/Endpoints/BaseEndpoints';
 
 // Color palette for skill tags
 const skillColors = [
@@ -25,6 +27,8 @@ const EmployeeDetail = ({ publicId, onClose }) => {
   const [formData, setFormData] = useState(null);
   const [toast, setToast] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [profilePic, setProfilePic] = useState(null);
+  const [profilePicPreview, setProfilePicPreview] = useState(null);
   const initialLoadDone = useRef(false);
 
   // Grade options
@@ -59,8 +63,12 @@ const EmployeeDetail = ({ publicId, onClose }) => {
         status: resourceDetails.status || prev?.status || 'pool',
         profileImage: resourceDetails.profileImage || prev?.profileImage || null,
         techSkill: resourceDetails.techSkill || prev?.techSkill || [],
-        resumeFile: prev?.resumeFile || resourceDetails.resumeFile || null // Preserve local resumeFile if set
+        resumeFile: prev?.resumeFile || resourceDetails.resumeFile || null
       }));
+      // Set initial profile picture preview from resourceDetails
+      if (resourceDetails.profileImage) {
+        setProfilePicPreview(`data:image/png;base64,${resourceDetails.profileImage}`);
+      }
     }
   }, [resourceDetails, publicId]);
 
@@ -78,6 +86,85 @@ const EmployeeDetail = ({ publicId, onClose }) => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
+  const handleProfilePicChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      // Validate file type
+      if (!file.type.match('image.*')) {
+        setToast({
+          type: 'error',
+          message: 'Only image files are allowed'
+        });
+        return;
+      }
+      
+      // Validate file size (max 2MB)
+      if (file.size > 2 * 1024 * 1024) {
+        setToast({
+          type: 'error',
+          message: 'Image must be less than 2MB'
+        });
+        return;
+      }
+
+      setProfilePic(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setProfilePicPreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const removeProfilePic = () => {
+    setProfilePic(null);
+    setProfilePicPreview(null);
+    setFormData(prev => ({ ...prev, profileImage: null }));
+  };
+
+  const uploadProfilePicture = async () => {
+    if (!profilePic) return;
+
+    try {
+      setIsUploading(true);
+      const uploadFormData = new FormData();
+      uploadFormData.append('payload', profilePic);
+
+      const token = sessionStorage.getItem('token');
+      const response = await axios.post(
+        `${ADMIN_API_BASE_URL}/user-profile-upload/?user_id=${publicId}`,
+        uploadFormData,
+        {
+          headers: {
+            accept: 'application/json',
+            'Content-Type': 'multipart/form-data',
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (response.status === 200) {
+        // Refresh resource details to get updated profile image
+        await dispatch(fetchResourceDetails(publicId)).unwrap();
+        setToast({
+          type: 'success',
+          message: 'Profile picture updated successfully!'
+        });
+        setProfilePic(null); // Clear the selected file
+      } else {
+        throw new Error('Failed to upload profile picture');
+      }
+    } catch (error) {
+      setToast({
+        type: 'error',
+        message: error.message || 'Failed to update profile picture'
+      });
+      console.error('Profile upload failed:', error);
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
   const handleSubmit = async () => {
     try {
       const updatedData = {
@@ -89,10 +176,16 @@ const EmployeeDetail = ({ publicId, onClose }) => {
         status: formData.status
       };
 
+      // Update employee details
       await dispatch(updateResource({ 
         publicId, 
         resourceData: updatedData 
       })).unwrap();
+
+      // Upload profile picture if a new one is selected
+      if (profilePic) {
+        await uploadProfilePicture();
+      }
 
       setToast({
         type: 'success',
@@ -135,12 +228,12 @@ const EmployeeDetail = ({ publicId, onClose }) => {
     uploadFormData.append('file', file);
     
     try {
-      const token = sessionStorage.getItem('token'); // Get token from sessionStorage
+      const token = sessionStorage.getItem('token');
       const response = await fetch(RESUME_API.UPLOAD_RESUME(publicId), {
         method: 'POST',
         headers: {
           'accept': 'application/json',
-          'Authorization': `Bearer ${token}` // Add token to headers
+          'Authorization': `Bearer ${token}`
         },
         body: uploadFormData,
       });
@@ -149,16 +242,13 @@ const EmployeeDetail = ({ publicId, onClose }) => {
         const responseData = await response.json();
         const newResumeFileName = responseData.fileName || file.name;
 
-        // Update formData to show download button immediately
         setFormData(prev => ({
           ...prev,
           resumeFile: newResumeFileName
         }));
 
-        // Fetch updated details to sync with backend
         await dispatch(fetchResourceDetails(publicId)).unwrap();
         
-        // Show success toast
         setToast({
           type: 'success',
           message: 'Resume uploaded successfully!'
@@ -178,7 +268,7 @@ const EmployeeDetail = ({ publicId, onClose }) => {
       console.error('Error uploading resume:', error);
     } finally {
       setIsUploading(false);
-      e.target.value = ''; // Reset file input
+      e.target.value = '';
     }
   };
 
@@ -186,12 +276,12 @@ const EmployeeDetail = ({ publicId, onClose }) => {
     if (!formData.resumeFile) return;
 
     try {
-      const token = sessionStorage.getItem('token'); // Get token from sessionStorage
+      const token = sessionStorage.getItem('token');
       const response = await fetch(RESUME_API.DOWNLOAD_RESUME(publicId), {
         method: 'GET',
         headers: {
           'accept': 'application/json',
-          'Authorization': `Bearer ${token}` // Add token to headers
+          'Authorization': `Bearer ${token}`
         },
       });
       
@@ -225,7 +315,6 @@ const EmployeeDetail = ({ publicId, onClose }) => {
     }
   };
 
-  // Function to get random color class for skill tags
   const getRandomSkillColor = (index) => {
     return skillColors[index % skillColors.length];
   };
@@ -255,23 +344,58 @@ const EmployeeDetail = ({ publicId, onClose }) => {
         <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-3xl border border-gray-200">
           <div className="flex justify-between items-center mb-6">
             <div className="flex items-center">
-              {formData.profileImage ? (
-                <img 
-                  src={`data:image/png;base64,${formData.profileImage}`} 
-                  alt="Profile" 
-                  className="w-10 h-10 rounded-full mr-2 object-cover"
-                />
-              ) : (
-                <FaUser className="w-10 h-10 rounded-full mr-2 text-gray-400" />
-              )}
+              <div className="relative">
+                {profilePicPreview ? (
+                  <>
+                    <img 
+                      src={profilePicPreview} 
+                      alt="Profile" 
+                      className="w-10 h-10 rounded-full mr-2 object-cover border-2 border-blue-200"
+                    />
+                    {profilePic && (
+                      <button
+                        onClick={removeProfilePic}
+                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
+                        disabled={loading || isUploading}
+                      >
+                        <FaTimes className="text-xs" />
+                      </button>
+                    )}
+                  </>
+                ) : (
+                  <FaUser className="w-10 h-10 rounded-full mr-2 text-gray-400" />
+                )}
+              </div>
               {isEditing ? (
-                <input
-                  name="employeeName"
-                  value={formData.employeeName}
-                  onChange={handleInputChange}
-                  className="text-xl font-semibold text-gray-800 border rounded-md px-2 py-1 focus:ring-1 focus:ring-blue-300"
-                  disabled={loading}
-                />
+                <div className="flex flex-col">
+                  <input
+                    name="employeeName"
+                    value={formData.employeeName}
+                    onChange={handleInputChange}
+                    className="text-xl font-semibold text-gray-800 border rounded-md px-2 py-1 focus:ring-1 focus:ring-blue-300"
+                    disabled={loading}
+                  />
+                  <div className="mt-2">
+                    <input
+                      type="file"
+                      id="profilePic"
+                      name="profilePic"
+                      accept="image/*"
+                      onChange={handleProfilePicChange}
+                      className="hidden"
+                      disabled={loading || isUploading}
+                    />
+                    <label
+                      htmlFor="profilePic"
+                      className={`flex items-center px-3 py-1.5 rounded-md text-sm cursor-pointer transition-all ${
+                        isUploading ? 'bg-gray-100 text-gray-500' : 'bg-blue-50 text-blue-700 hover:bg-blue-100 active:scale-95'
+                      }`}
+                    >
+                      <FaUpload className="mr-1 text-xs" />
+                      {isUploading ? 'Uploading...' : 'Update Profile Picture'}
+                    </label>
+                  </div>
+                </div>
               ) : (
                 <h3 className="text-xl font-semibold text-gray-800">
                   {formData.employeeName}
