@@ -454,7 +454,8 @@ const resourceSlice = createSlice({
         state.technologyLoading = false;
         state.technologies = payload.Technologies.map((item) => ({
           publicId: item.publicId,
-          name: item.name
+          name: item.name,
+          technologyCategoryName: item.technologyCategoryName
         }));
       })
       .addCase(fetchTechnologies.rejected, (state, { payload }) => {

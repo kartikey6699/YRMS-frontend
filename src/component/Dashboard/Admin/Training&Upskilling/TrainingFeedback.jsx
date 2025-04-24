@@ -11,14 +11,16 @@ import {
     FaSearch,
     FaTrash
 } from 'react-icons/fa';
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchFeedbackList, addFeedback } from '../../../../features/program/programAction';
 
 const TrainingFeedback = ({ training, onClose, onSave }) => {
-    const [employees, setEmployees] = useState([
-        { id: 'EMP001', name: 'John Doe', technicalSkills: '', attitude: '', communication: '', workQuality: '' },
-        { id: 'EMP002', name: 'Jane Smith', technicalSkills: '', attitude: '', communication: '', workQuality: '' },
-        { id: 'EMP003', name: 'Robert Johnson', technicalSkills: '', attitude: '', communication: '', workQuality: '' },
-    ]);
-
+    const dispatch = useDispatch();
+    const feedbackList = useSelector(state => state.program.feedback);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+    
+    const [employees, setEmployees] = useState([]);
     const [customFeedbackColumns, setCustomFeedbackColumns] = useState([]);
     const [customScoreColumns, setCustomScoreColumns] = useState([]);
     const [newColumnName, setNewColumnName] = useState('');
@@ -27,7 +29,7 @@ const TrainingFeedback = ({ training, onClose, onSave }) => {
     const [hasChanges, setHasChanges] = useState(false);
     const [editingColumn, setEditingColumn] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
-    const [totalScore, setTotalScore] = useState(100);
+    const [totalScore, setTotalScore] = useState(null);
 
     const ratingOptions = [
         { value: '', label: 'Select rating' },
@@ -39,15 +41,124 @@ const TrainingFeedback = ({ training, onClose, onSave }) => {
 
     useEffect(() => {
         if (training) {
-            // Load actual employee data here if needed
+            loadFeedbackData();
         }
     }, [training]);
 
+    const loadFeedbackData = async () => {
+        try {
+            setLoading(true);
+            setError(null);
+            await dispatch(fetchFeedbackList(training.publicId)).unwrap();
+            setLoading(false);
+        } catch (err) {
+            setError(err.message || 'Failed to load feedback data');
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        if (feedbackList) {
+            processFeedbackData(feedbackList);
+        }
+    }, [feedbackList]);
+
+    const processFeedbackData = (feedbackData) => {
+        const processedEmployees = feedbackData.map(emp => {
+            const employeeData = {
+                id: emp.employeeId,
+                name: emp.employeeName,
+                userId: emp.userId,
+                technicalSkills: emp.feedbacks?.technicalSkills || null,
+                attitude: emp.feedbacks?.attitude || null,
+                communication: emp.feedbacks?.communication || null,
+                workQuality: emp.feedbacks?.workQuality || null
+            };
+
+            // Process custom feedback columns
+            if (emp.feedbacks?.feedback?.length > 0) {
+                const feedbackObj = emp.feedbacks.feedback[0];
+                Object.keys(feedbackObj).forEach(key => {
+                    if (!key.endsWith('CreatedAt')) {
+                        employeeData[`feedback_${key}`] = feedbackObj[key];
+                    }
+                });
+            }
+
+            // Process custom score columns
+            if (emp.feedbacks?.score?.length > 0) {
+                const scoreObj = emp.feedbacks.score[0];
+                Object.keys(scoreObj).forEach(key => {
+                    if (!key.endsWith('Total')) {
+                        employeeData[`score_${key}`] = scoreObj[key];
+                    }
+                });
+            }
+
+            return employeeData;
+        });
+
+        // Extract all unique feedback and score keys from all employees
+        const feedbackKeys = new Set();
+        const feedbackDates = {};
+        const scoreKeys = new Set();
+        const scoreTotals = {};
+
+        feedbackData.forEach(emp => {
+            if (emp.feedbacks?.feedback?.length > 0) {
+                const feedbackObj = emp.feedbacks.feedback[0];
+                Object.keys(feedbackObj).forEach(key => {
+                    if (!key.endsWith('CreatedAt')) {
+                        feedbackKeys.add(key);
+                        if (feedbackObj[`${key}CreatedAt`]) {
+                            feedbackDates[key] = feedbackObj[`${key}CreatedAt`];
+                        }
+                    }
+                });
+            }
+            if (emp.feedbacks?.score?.length > 0) {
+                const scoreObj = emp.feedbacks.score[0];
+                Object.keys(scoreObj).forEach(key => {
+                    if (!key.endsWith('Total')) {
+                        scoreKeys.add(key);
+                        if (scoreObj[`${key}Total`]) {
+                            scoreTotals[key] = scoreObj[`${key}Total`];
+                        }
+                    }
+                });
+            }
+        });
+
+        // Set custom feedback columns with dynamic created_at dates
+        setCustomFeedbackColumns(
+            Array.from(feedbackKeys).map(key => ({
+                id: `feedback_${key}`,
+                name: key,
+                createdAt: feedbackDates[key] ? new Date(feedbackDates[key]).toLocaleDateString() : new Date().toLocaleDateString()
+            }))
+        );
+
+        // Set custom score columns with dynamic total scores
+        setCustomScoreColumns(
+            Array.from(scoreKeys).map(key => ({
+                id: `score_${key}`,
+                name: key,
+                totalScore: scoreTotals[key] || 100
+            }))
+        );
+
+        setEmployees(processedEmployees);
+    };
+
     const handleRatingChange = (empId, field, value) => {
-        setEmployees(employees.map(emp =>
-            emp.id === empId ? { ...emp, [field]: value } : emp
-        ));
-        setHasChanges(true);
+        if (['poor', 'average', 'good', 'excellent'].includes(value)) {
+            setEmployees(employees.map(emp =>
+                emp.id === empId ? { ...emp, [field]: value } : emp
+            ));
+            setHasChanges(true);
+        } else {
+            alert(`Input for ${field} should be 'poor', 'average', 'good' or 'excellent'`);
+        }
     };
 
     const handleCustomFeedbackChange = (empId, columnId, value) => {
@@ -60,7 +171,7 @@ const TrainingFeedback = ({ training, onClose, onSave }) => {
     const handleCustomScoreChange = (empId, columnId, value) => {
         const column = customScoreColumns.find(col => col.id === columnId);
         const maxScore = column?.totalScore || 100;
-        const numericValue = value === '' ? '' : Math.min(maxScore, Math.max(0, parseInt(value) || 0));
+        const numericValue = value === '' ? null : Math.min(maxScore, Math.max(0, parseInt(value) || 0));
         
         setEmployees(employees.map(emp =>
             emp.id === empId ? { ...emp, [columnId]: numericValue } : emp
@@ -97,10 +208,10 @@ const TrainingFeedback = ({ training, onClose, onSave }) => {
             }]);
             setEmployees(employees.map(emp => ({
                 ...emp,
-                [columnId]: 0
+                [columnId]: null
             })));
             setNewColumnName('');
-            setTotalScore(100);
+            setTotalScore(null);
             setIsAddingScore(false);
             setHasChanges(true);
         }
@@ -161,8 +272,8 @@ const TrainingFeedback = ({ training, onClose, onSave }) => {
     };
 
     const renderScoreInput = (employee, columnId, totalScore) => {
-        const score = employee[columnId] || 0;
-        const percentage = totalScore ? Math.round((score / totalScore) * 100) : 0;
+        const score = employee[columnId] ?? '';
+        const percentage = score !== null && totalScore ? Math.round((score / totalScore) * 100) : 0;
         
         return (
             <div className="flex items-center">
@@ -170,7 +281,7 @@ const TrainingFeedback = ({ training, onClose, onSave }) => {
                     type="number"
                     min="0"
                     max={totalScore}
-                    value={score}
+                    value={score ?? ''}
                     onChange={(e) => handleCustomScoreChange(employee.id, columnId, e.target.value)}
                     className="border border-purple-300 rounded px-2 py-1 text-sm w-16 focus:ring-purple-500 focus:border-purple-500"
                 />
@@ -211,21 +322,54 @@ const TrainingFeedback = ({ training, onClose, onSave }) => {
         emp.name.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
-    const handleSave = () => {
-        const dataToSave = {
-            training: training?.name || 'Training',
-            employees: employees.map(emp => {
-                const empData = { ...emp };
-                return empData;
+    const handleSave = async () => {
+        try {   
+            const feedbackData = {
+                feedback: employees.map(emp => {
+                    // Standard ratings
+                    const standardRatings = {
+                        training_id: training.publicId,
+                        user_id: emp.userId,
+                        technicalSkills: emp.technicalSkills,
+                        attitude: emp.attitude,
+                        communication: emp.communication,
+                        workQuality: emp.workQuality
+                    };
+                
+
+                // Custom feedbacks
+                const feedbacks = {};
+                customFeedbackColumns.forEach(col => {
+                    const key = col.name;
+                    feedbacks[key] = emp[col.id] || '';
+                    feedbacks[`${key}CreatedAt`] = col.createdAt ? col.createdAt : new Date().toLocaleDateString();
+                });
+
+                // Custom scores
+                const scores = {};
+                customScoreColumns.forEach(col => {
+                    const key = col.name;
+                    scores[key] = emp[col.id] || 0;
+                    scores[`${key}Total`] = col.totalScore; // Add total score for each score column
+                });
+
+
+                return {
+                    ...standardRatings,
+                    feedback: [feedbacks],
+                    score: [scores]
+                };
             }),
-            customFeedbackColumns,
-            customScoreColumns
         };
-        
-        console.log('Saving data:', JSON.stringify(dataToSave, null, 2));
-        onSave(employees, customFeedbackColumns, customScoreColumns);
+
+        await dispatch(addFeedback(feedbackData)).unwrap();
         setHasChanges(false);
-    };
+        if (onSave) onSave();
+        await loadFeedbackData();
+    } catch (error) {
+        setError(error.message || 'Failed to save feedback');
+    }
+};
 
     const getAverageScoreColor = (score) => {
         if (score === '-') return 'bg-gray-100';
@@ -234,6 +378,28 @@ const TrainingFeedback = ({ training, onClose, onSave }) => {
         if (score >= 40) return 'bg-yellow-100 border-yellow-300';
         return 'bg-red-100 border-red-300';
     };
+
+    if (loading) {
+        return (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-white bg-opacity-70">
+                <div className="text-purple-600 text-lg font-semibold">Loading feedback data...</div>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-white bg-opacity-70">
+                <div className="text-red-600 text-lg font-semibold">{error}</div>
+                <button 
+                    onClick={onClose}
+                    className="ml-4 px-4 py-2 bg-purple-600 text-white rounded"
+                >
+                    Close
+                </button>
+            </div>
+        );
+    }
 
     return (
         <div className="fixed inset-0 z-50 overflow-y-auto">
@@ -280,7 +446,7 @@ const TrainingFeedback = ({ training, onClose, onSave }) => {
                                             placeholder="Feedback column name"
                                             value={newColumnName}
                                             onChange={(e) => setNewColumnName(e.target.value)}
-                                            className="border border-purple-300 rounded px-2 py-1 text-sm w-40 mr-2"
+                                            className="border border-purple-300 rounded px-2 py-1 text-sm w-80 mr-2" // Increased width
                                         />
                                         <button
                                             onClick={addFeedbackColumn}
@@ -318,8 +484,8 @@ const TrainingFeedback = ({ training, onClose, onSave }) => {
                                             type="number"
                                             min="1"
                                             placeholder="Total"
-                                            value={totalScore}
-                                            onChange={(e) => setTotalScore(parseInt(e.target.value) || 100)}
+                                            value={totalScore ?? ''}
+                                            onChange={(e) => setTotalScore(e.target.value ? parseInt(e.target.value) : null)}
                                             className="border border-purple-300 rounded px-2 py-1 text-sm w-16 mr-2"
                                         />
                                         <button
@@ -377,7 +543,7 @@ const TrainingFeedback = ({ training, onClose, onSave }) => {
 
                                         {/* Feedback Columns */}
                                         {customFeedbackColumns.map((column) => (
-                                            <th key={column.id} className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            <th key={column.id} className="px-25 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                                 <div className="flex items-center justify-between">
                                                     <div className="flex flex-col">
                                                         <div className="flex items-center">
@@ -388,7 +554,7 @@ const TrainingFeedback = ({ training, onClose, onSave }) => {
                                                                     onChange={(e) => updateColumnName(column.id, e.target.value, true)}
                                                                     onBlur={() => updateColumnName(column.id, column.name, true)}
                                                                     onKeyPress={(e) => e.key === 'Enter' && updateColumnName(column.id, column.name, true)}
-                                                                    className="border border-purple-300 rounded px-1 py-0.5 text-xs w-24"
+                                                                    className="border border-purple-300 rounded px-1 py-0.5 text-xs w-48" // Increased width
                                                                     autoFocus
                                                                 />
                                                             ) : (
@@ -434,7 +600,7 @@ const TrainingFeedback = ({ training, onClose, onSave }) => {
                                                                 onChange={(e) => updateColumnName(column.id, e.target.value, false)}
                                                                 onBlur={() => updateColumnName(column.id, column.name, false)}
                                                                 onKeyPress={(e) => e.key === 'Enter' && updateColumnName(column.id, column.name, false)}
-                                                                className="border border-purple-300 rounded px-1 py-0.5 text-xs w-24"
+                                                                className="border border-purple-300 rounded px-1 py-0.5 text-xs w-48" // Increased width
                                                                 autoFocus
                                                             />
                                                         ) : (
@@ -503,17 +669,20 @@ const TrainingFeedback = ({ training, onClose, onSave }) => {
                                             )}
 
                                             {/* Custom Feedback Columns */}
-                                            {customFeedbackColumns.map((column) => (
-                                                <td key={column.id} className="px-3 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                    <textarea
-                                                        value={employee[column.id] || ''}
-                                                        onChange={(e) => handleCustomFeedbackChange(employee.id, column.id, e.target.value)}
-                                                        className="border border-purple-300 rounded px-2 py-1 text-sm w-full focus:ring-purple-500 focus:border-purple-500"
-                                                        placeholder="Enter feedback"
-                                                        rows={2}
-                                                    />
-                                                </td>
-                                            ))}
+                                            {customFeedbackColumns.map((column) => {
+                                                const feedbackValue = employees.find(e => e.id === employee.id)?.[column.id] || '';
+                                                return (
+                                                    <td key={column.id} className="px-3 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                        <textarea
+                                                            value={feedbackValue}
+                                                            onChange={(e) => handleCustomFeedbackChange(employee.id, column.id, e.target.value)}
+                                                            className="border border-purple-300 rounded px-2 py-1 text-sm w-full focus:ring-purple-500 focus:border-purple-500"
+                                                            placeholder="Enter feedback"
+                                                            rows={3}
+                                                        />
+                                                    </td>
+                                                );
+                                            })}
 
                                             {/* Second separator in table body */}
                                             {customFeedbackColumns.length > 0 && customScoreColumns.length > 0 && (
@@ -521,11 +690,13 @@ const TrainingFeedback = ({ training, onClose, onSave }) => {
                                             )}
 
                                             {/* Custom Score Columns */}
-                                            {customScoreColumns.map((column) => (
-                                                <td key={column.id} className="px-3 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                    {renderScoreInput(employee, column.id, column.totalScore)}
-                                                </td>
-                                            ))}
+                                            {customScoreColumns.map((column) => {
+                                                return (
+                                                    <td key={column.id} className="px-3 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                        {renderScoreInput(employee, column.id, column.totalScore)}
+                                                    </td>
+                                                );
+                                            })}
 
                                             {/* Average Score Column */}
                                             <td className={`px-3 py-4 whitespace-nowrap text-sm font-medium sticky right-0 z-10 ${getAverageScoreColor(calculateAverageScore(employee))} border-l-2 border-purple-200`}>

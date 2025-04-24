@@ -1,4 +1,4 @@
-import React, { useState, useEffect , useRef} from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import ProfileCard from "../../helper/ProfileCard";
@@ -150,8 +150,8 @@ const TechSkillSelector = ({ techSkills, setTechSkills, technologyCategoriesWith
                 onClick={() => toggleTechDropdown(cardIndex)}
                 disabled={!card.category}
                 className={`w-full flex items-center justify-between p-2.5 border rounded-lg text-sm ${card.category
-                    ? "border-gray-300 bg-white hover:bg-gray-50 text-gray-700"
-                    : "border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed"
+                  ? "border-gray-300 bg-white hover:bg-gray-50 text-gray-700"
+                  : "border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed"
                   }`}
               >
                 <span>Select Technologies</span>
@@ -693,13 +693,13 @@ const ManageBaseline = () => {
 
                   <div className="md:col-span-2">
                     <label className="block text-sm font-medium text-gray-700 mb-1">Upskill Suggestion</label>
-                    <input
-                      type="text"
+                    <textarea
                       name="upskillSuggestion"
                       value={formData.upskillSuggestion}
                       onChange={handleInputChange}
                       className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                       placeholder="e.g., Learn React"
+                      rows={3} 
                     />
                   </div>
                 </div>

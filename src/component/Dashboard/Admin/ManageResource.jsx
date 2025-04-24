@@ -27,6 +27,8 @@ const ManageResource = () => {
   const [profilePicPreview, setProfilePicPreview] = useState(null);
   const [loadingBaselineId, setLoadingBaselineId] = useState(null);
   const [loadingOpportunityId, setLoadingOpportunityId] = useState(null);
+  const [errors, setErrors] = useState({});
+  const [touched, setTouched] = useState({});
 
   const [formData, setFormData] = useState({
     employeeId: "",
@@ -42,15 +44,107 @@ const ManageResource = () => {
     businessGroup: "",
     businessUnit: "",
     competency: "",
-    status: "",
+    status: "pool",
   });
 
   const [filterData, setFilterData] = useState({
     technologies: [],
+    categories: [],
     experience: "",
     certifications: "",
     communication: "",
   });
+
+  // Validation rules
+  const validate = {
+    employeeId: (value) => {
+      if (!value) return "Employee ID is required";
+      if (!/^[A-Za-z0-9]{4,20}$/.test(value)) return "ID must be 4-20 alphanumeric characters";
+      return null;
+    },
+    employeeName: (value) => {
+      if (!value) return "Name is required";
+      if (!/^[A-Za-z\s]{3,50}$/.test(value)) return "Name must be 3-50 letters only";
+      return null;
+    },
+    gender: (value) => {
+      if (!value) return "Gender is required";
+      return null;
+    },
+    location: (value) => {
+      if (!value) return "Location is required";
+      return null;
+    },
+    email: (value) => {
+      if (!value) return "Email is required";
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return "Invalid email format";
+      return null;
+    },
+    phoneNumber: (value) => {
+      if (!value) return "Phone number is required";
+      if (!/^[0-9]{10,15}$/.test(value)) return "Phone must be 10-15 digits";
+      return null;
+    },
+    joiningDate: (value) => {
+      if (!value) return "Joining date is required";
+      const selectedDate = new Date(value);
+      const today = new Date();
+      if (selectedDate > today) return "Joining date cannot be in the future";
+      return null;
+    },
+    designation: (value) => {
+      if (!value) return "Designation is required";
+      return null;
+    },
+    employeeType: (value) => {
+      if (!value) return "Employee type is required";
+      return null;
+    },
+    grade: (value) => {
+      if (!value) return "Grade is required";
+      return null;
+    },
+    businessGroup: (value) => {
+      if (!value) return "Business group is required";
+      return null;
+    },
+    businessUnit: (value) => {
+      if (!value) return "Business unit is required";
+      return null;
+    },
+    competency: (value) => {
+      if (!value) return "Competency is required";
+      return null;
+    },
+    status: (value) => {
+      if (!value) return "Status is required";
+      return null;
+    },
+  };
+
+  // Validate form
+  const validateForm = () => {
+    const newErrors = {};
+    Object.keys(formData).forEach((field) => {
+      const error = validate[field]?.(formData[field]);
+      if (error) newErrors[field] = error;
+    });
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  // Group technologies by category
+  const technologiesByCategory = technologies.reduce((acc, tech) => {
+    const category = tech.technologyCategoryName;
+    if (!acc[category]) {
+      acc[category] = [];
+    }
+    acc[category].push(tech.name);
+    return acc;
+  }, {});
+
+  // Get unique categories
+  const categories = [...new Set(technologies.map(tech => tech.technologyCategoryName))];
 
   // Fetch resources whenever filterData changes
   useEffect(() => {
@@ -72,12 +166,48 @@ const ManageResource = () => {
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+    
+    // Validate on change if the field has been touched
+    if (touched[name]) {
+      setErrors((prev) => ({
+        ...prev,
+        [name]: validate[name]?.(value) || null,
+      }));
+    }
+  };
+
+  const handleBlur = (e) => {
+    const { name } = e.target;
+    setTouched((prev) => ({ ...prev, [name]: true }));
+    setErrors((prev) => ({
+      ...prev,
+      [name]: validate[name]?.(formData[name]) || null,
+    }));
   };
 
   const handleProfilePicChange = (e) => {
     const file = e.target.files[0];
     if (file) {
+      // Validate file type
+      if (!file.type.match('image.*')) {
+        setErrors((prev) => ({
+          ...prev,
+          profilePic: "Only image files are allowed",
+        }));
+        return;
+      }
+      
+      // Validate file size (max 2MB)
+      if (file.size > 2 * 1024 * 1024) {
+        setErrors((prev) => ({
+          ...prev,
+          profilePic: "Image must be less than 2MB",
+        }));
+        return;
+      }
+
       setProfilePic(file);
+      setErrors((prev) => ({ ...prev, profilePic: null }));
       const reader = new FileReader();
       reader.onloadend = () => {
         setProfilePicPreview(reader.result);
@@ -89,15 +219,55 @@ const ManageResource = () => {
   const removeProfilePic = () => {
     setProfilePic(null);
     setProfilePicPreview(null);
+    setErrors((prev) => ({ ...prev, profilePic: null }));
   };
 
   const toggleTechnology = (tech) => {
-    setFilterData((prev) => ({
-      ...prev,
-      technologies: prev.technologies.includes(tech)
+    setFilterData((prev) => {
+      const newTechs = prev.technologies.includes(tech)
         ? prev.technologies.filter((t) => t !== tech)
-        : [...prev.technologies, tech],
-    }));
+        : [...prev.technologies, tech];
+      
+      // Update categories based on selected technologies
+      const techCategories = technologies
+        .filter(t => newTechs.includes(t.name))
+        .map(t => t.technologyCategoryName);
+      const uniqueCategories = [...new Set(techCategories)];
+      
+      return {
+        ...prev,
+        technologies: newTechs,
+        categories: uniqueCategories
+      };
+    });
+  };
+
+  const toggleCategory = (category) => {
+    setFilterData((prev) => {
+      const categoryTechs = technologies
+        .filter(tech => tech.technologyCategoryName === category)
+        .map(tech => tech.name);
+      
+      const newCategories = prev.categories.includes(category)
+        ? prev.categories.filter((c) => c !== category)
+        : [...prev.categories, category];
+      
+      let newTechs = [...prev.technologies];
+      
+      if (newCategories.includes(category)) {
+        // Add all technologies from this category
+        newTechs = [...new Set([...newTechs, ...categoryTechs])];
+      } else {
+        // Remove all technologies from this category
+        newTechs = newTechs.filter(tech => !categoryTechs.includes(tech));
+      }
+      
+      return {
+        ...prev,
+        categories: newCategories,
+        technologies: newTechs
+      };
+    });
   };
 
   const handleFilterChange = (e) => {
@@ -108,6 +278,7 @@ const ManageResource = () => {
   const clearFilters = () => {
     setFilterData({
       technologies: [],
+      categories: [],
       experience: "",
       certifications: "",
       communication: "",
@@ -122,7 +293,7 @@ const ManageResource = () => {
       const formData = new FormData();
       formData.append("payload", profilePic);
 
-      const token = sessionStorage.getItem("token"); // Retrieve token from session storage
+      const token = sessionStorage.getItem("token");
 
       const response = await axios.post(
         `${ADMIN_API_BASE_URL}/user-profile-upload/?user_id=${userId}`,
@@ -131,7 +302,7 @@ const ManageResource = () => {
           headers: {
             accept: "application/json",
             "Content-Type": "multipart/form-data",
-            Authorization: `Bearer ${token}`, // Add token to headers
+            Authorization: `Bearer ${token}`,
           },
         }
       );
@@ -145,6 +316,20 @@ const ManageResource = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Mark all fields as touched to show all errors
+    const allTouched = {};
+    Object.keys(formData).forEach((field) => {
+      allTouched[field] = true;
+    });
+    setTouched(allTouched);
+    
+    // Validate the form
+    if (!validateForm()) {
+      setToast(<ErrorToast message="Please fix all errors before submitting" onClose={() => setToast(null)} />);
+      return;
+    }
+
     try {
       setToast(<YRMSLoader message="Creating resource..." />);
 
@@ -170,7 +355,7 @@ const ManageResource = () => {
         employeeId: "",
         employeeName: "",
         gender: "",
-        location: "",
+        location: "indore",
         email: "",
         phoneNumber: "",
         joiningDate: "",
@@ -186,6 +371,8 @@ const ManageResource = () => {
       setProfilePicPreview(null);
       setActiveSection("view");
       setToast(null);
+      setErrors({});
+      setTouched({});
     } catch (err) {
       setToast(<ErrorToast message={err.message || "Failed to create resource"} onClose={() => setToast(null)} />);
     }
@@ -200,6 +387,61 @@ const ManageResource = () => {
     setLoadingOpportunityId(resource.publicId);
     navigate(`/opportunities/${resource.publicId}`);
   };
+
+  // Helper function to render input with validation
+  const renderInput = (name, label, type = "text", placeholder, required = true) => (
+    <div>
+      <label className="block text-gray-700 font-medium mb-2">
+        {label} {required && <span className="text-red-500">*</span>}
+      </label>
+      <input
+        type={type}
+        name={name}
+        value={formData[name]}
+        onChange={handleInputChange}
+        onBlur={handleBlur}
+        className={`w-full p-3 border-2 rounded-lg focus:outline-none transition-colors ${
+          errors[name] ? "border-red-500" : "border-gray-200 focus:border-blue-500"
+        }`}
+        placeholder={placeholder}
+        required={required}
+      />
+      {errors[name] && (
+        <p className="text-red-500 text-sm mt-1">{errors[name]}</p>
+      )}
+    </div>
+  );
+
+  // Helper function to render select with validation
+  const renderSelect = (name, label, options, required = true) => (
+    <div>
+      <label className="block text-gray-700 font-medium mb-2">
+        {label} {required && <span className="text-red-500">*</span>}
+      </label>
+      <select
+        name={name}
+        value={formData[name]}
+        onChange={handleInputChange}
+        onBlur={handleBlur}
+        className={`w-full p-3 border-2 rounded-lg focus:outline-none transition-colors ${
+          errors[name] ? "border-red-500" : "border-gray-200 focus:border-blue-500"
+        } ${formData[name] ? "text-black" : "text-gray-500"}`}
+        required={required}
+      >
+        <option value="" disabled>
+          Select {label.toLowerCase()}
+        </option>
+        {options.map((option) => (
+          <option key={option.value || option} value={option.value || option}>
+            {option.label || option}
+          </option>
+        ))}
+      </select>
+      {errors[name] && (
+        <p className="text-red-500 text-sm mt-1">{errors[name]}</p>
+      )}
+    </div>
+  );
 
   return (
     <div className="p-6 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl shadow-lg">
@@ -224,6 +466,7 @@ const ManageResource = () => {
               <h3 className="text-md font-semibold text-gray-700"></h3>
               <div className="flex space-x-2">
                 {filterData.technologies.length > 0 ||
+                  filterData.categories.length > 0 ||
                   filterData.experience ||
                   filterData.certifications ||
                   filterData.communication ? (
@@ -252,7 +495,7 @@ const ManageResource = () => {
             {/* Filter Panel - Collapsible */}
             <div
               className={`transition-all duration-300 ease-in-out overflow-hidden ${
-                showFilters ? "max-h-80 opacity-100 mb-2" : "max-h-0 opacity-0 mb-0"
+                showFilters ? "max-h-96 opacity-100 mb-2" : "max-h-0 opacity-0 mb-0"
               }`}
             >
               <div className="bg-white p-3 rounded-lg shadow-sm border border-gray-200">
@@ -312,9 +555,44 @@ const ManageResource = () => {
                     />
                   </div>
 
-                  {/* Technology Filter - Dynamic */}
+                  {/* Category Filter */}
                   <div className="md:col-span-3 space-y-1">
                     <div className="flex items-center text-blue-600">
+                      <FaCogs className="mr-1 text-xs" />
+                      <span className="font-medium text-sm">Filter by selecting category</span>
+                    </div>
+                    {technologyLoading ? (
+                      <div className="text-gray-500 text-sm">Loading categories...</div>
+                    ) : categories.length === 0 ? (
+                      <div className="text-gray-500 text-sm">No categories available</div>
+                    ) : (
+                      <div className="flex flex-wrap gap-1.5 max-h-[3.5rem] overflow-y-auto">
+                        {categories.map((category) => (
+                          <label key={category} className="flex items-center cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={filterData.categories.includes(category)}
+                              onChange={() => toggleCategory(category)}
+                              className="hidden"
+                            />
+                            <span
+                              className={`px-2 py-1 text-xs rounded-full transition-all ${
+                                filterData.categories.includes(category)
+                                  ? "bg-blue-100 text-blue-800 border border-blue-500"
+                                  : "bg-gray-100 text-gray-700 border border-gray-200 hover:bg-gray-50"
+                              }`}
+                            >
+                              {category}
+                            </span>
+                          </label>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Technology Filter - Dynamic */}
+                  <div className="md:col-span-3 space-y-1">
+                    <div className="flex items-center text-red-600">
                       <FaCogs className="mr-1 text-xs" />
                       <span className="font-medium text-sm">Filter by selecting technology</span>
                     </div>
@@ -377,7 +655,7 @@ const ManageResource = () => {
 
             {/* Profile Picture Upload */}
             <div className="md:col-span-2">
-              <label className="block text-gray-700 font-medium mb-2">Profile Picture </label>
+              <label className="block text-gray-700 font-medium mb-2">Profile Picture</label>
               <div className="flex items-center space-x-4">
                 <div className="relative">
                   {profilePicPreview ? (
@@ -419,230 +697,102 @@ const ManageResource = () => {
                   <span className="ml-2 text-sm text-gray-500">
                     {profilePic ? profilePic.name : "No file chosen"}
                   </span>
+                  {errors.profilePic && (
+                    <p className="text-red-500 text-sm mt-1">{errors.profilePic}</p>
+                  )}
                 </div>
               </div>
             </div>
 
-            <div>
-              <label className="block text-gray-700 font-medium mb-2">Employee Name</label>
-              <input
-                type="text"
-                name="employeeName"
-                value={formData.employeeName}
-                onChange={handleInputChange}
-                className="w-full p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 transition-colors"
-                placeholder="Enter employee name"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-gray-700 font-medium mb-2">Employee Id</label>
-              <input
-                type="text"
-                name="employeeId"
-                value={formData.employeeId}
-                onChange={handleInputChange}
-                className="w-full p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 transition-colors"
-                placeholder="Enter employee ID"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-gray-700 font-medium mb-2">Gender</label>
-              <select
-                name="gender"
-                value={formData.gender}
-                onChange={handleInputChange}
-                className={`w-full p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 transition-colors ${
-                  formData.gender ? "text-black" : "text-gray-500"
-                }`}
-                required
-              >
-                <option value="" disabled>
-                  Select gender
-                </option>
-                <option value="male">Male</option>
-                <option value="female">Female</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-gray-700 font-medium mb-2">Location</label>
-              <select
-                name="location"
-                value={formData.location}
-                onChange={handleInputChange}
-                className={`w-full p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 transition-colors ${
-                  formData.location ? "text-black" : "text-gray-500"
-                }`}
-                required
-              >
-                <option value="Indore_Yash_IT_Park_SC_DC">Indore-YASH IT Park-SC-DC</option>
-                <option value="Pune_Magarpatta_DC_II">Pune-Magarpatta-DC-II</option>
-                <option value="Hyderabad_Mindspace_I_DC">Hyderabad-Mindspace I-DC</option>
-                <option value="Bangalore_Whitefield_DC">Bangalore-Whitefield-DC</option>
-                <option value="Indore_Crystal_IT_Park_DC_II">Indore-Crystal IT Park-DC-II</option>
-                <option value="Indore_BTC_CO">Indore-BTC-CO</option>
-                <option value="Pune_Hinjewadi_III_DC">Pune-Hinjewadi III-DC</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-gray-700 font-medium mb-2">Email</label>
-              <input
-                type="email"
-                name="email"
-                value={formData.email}
-                onChange={handleInputChange}
-                className="w-full p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 transition-colors"
-                placeholder="Enter email"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-gray-700 font-medium mb-2">Phone Number</label>
-              <input
-                type="tel"
-                name="phoneNumber"
-                value={formData.phoneNumber}
-                onChange={handleInputChange}
-                className="w-full p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 transition-colors"
-                placeholder="Enter phone number"
-                required
-              />
-            </div>
+            {renderInput("employeeName", "Employee Name", "text", "Enter employee name")}
+            {renderInput("employeeId", "Employee ID", "text", "Enter employee ID")}
+            
+            {renderSelect("gender", "Gender", [
+              { value: "male", label: "Male" },
+              { value: "female", label: "Female" }
+            ])}
+            
+            {renderSelect("location", "Location", [
+              { value: "Indore_Yash_IT_Park_SC_DC", label: "Indore-YASH IT Park-SC-DC" },
+              { value: "Pune_Magarpatta_DC_II", label: "Pune-Magarpatta-DC-II" },
+              { value: "Hyderabad_Mindspace_I_DC", label: "Hyderabad-Mindspace I-DC" },
+              { value: "Bangalore_Whitefield_DC", label: "Bangalore-Whitefield-DC" },
+              { value: "Indore_Crystal_IT_Park_DC_II", label: "Indore-Crystal IT Park-DC-II" },
+              { value: "Indore_BTC_CO", label: "Indore-BTC-CO" },
+              { value: "Pune_Hinjewadi_III_DC", label: "Pune-Hinjewadi III-DC" }
+            ])}
+            
+            {renderInput("email", "Email", "email", "Enter email")}
+            {renderInput("phoneNumber", "Phone Number", "tel", "Enter phone number")}
 
             {/* Employment Details Section */}
             <div className="md:col-span-2">
               <h3 className="text-xl font-semibold text-gray-800 mb-4 mt-6">Employment Details</h3>
             </div>
+            
+            {renderInput("joiningDate", "Joining Date", "date", "", true)}
+            
             <div>
-              <label className="block text-gray-700 font-medium mb-2">Joining Date</label>
-              <input
-                type="date"
-                name="joiningDate"
-                value={formData.joiningDate}
-                onChange={handleInputChange}
-                className="w-full p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 transition-colors"
-                required
-                onClick={(e) => e.target.showPicker()} // This line allows the date picker to open on input click
-              />
-            </div>
-            <div>
-              <label className="block text-gray-700 font-medium mb-2">Designation</label>
+              <label className="block text-gray-700 font-medium mb-2">
+                Designation <span className="text-red-500">*</span>
+              </label>
               <Dropdown
                 name="designation"
                 value={formData.designation}
                 options={designations}
-                onChange={(e) => {
-                  console.log("Designation selected:", e.target.value);
-                  handleInputChange(e);
-                }}
+                onChange={handleInputChange}
+                onBlur={handleBlur}
                 setModalField={setModalField}
+                error={errors.designation}
               />
+              {errors.designation && (
+                <p className="text-red-500 text-sm mt-1">{errors.designation}</p>
+              )}
             </div>
+            
+            {renderSelect("employeeType", "Employee Type", [
+              { value: "probation", label: "Probation" },
+              { value: "permanent", label: "Permanent" },
+              { value: "contract", label: "Contract" }
+            ])}
+            
+            {renderSelect("grade", "Grade", ["E1", "E2", "E3", "E4", "E5", "E6", "E7"])}
+            
+            {renderSelect("status", "Status", [
+              { value: "pool", label: "Pool" },
+              { value: "deployed", label: "Deployed" },
+              { value: "pip", label: "PIP" },
+              { value: "hold", label: "Hold" }
+            ])}
+            
+            {renderSelect("businessGroup", "Business Group", [
+              { value: "BG4", label: "BG4" },
+              { value: "BG5", label: "BG5" },
+              { value: "SSG1", label: "SSG1" }
+            ])}
+            
+            {renderSelect("businessUnit", "Business Unit", [
+              { value: "BU5", label: "BU5" },
+              { value: "BU4", label: "BU4" },
+              { value: "SSU1", label: "SSU1" }
+            ])}
+            
             <div>
-              <label className="block text-gray-700 font-medium mb-2">Employee Type</label>
-              <select
-                name="employeeType"
-                value={formData.employeeType}
-                onChange={handleInputChange}
-                className={`w-full p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 transition-colors ${
-                  formData.employeeType ? "text-black" : "text-gray-500"
-                }`}
-                required
-              >
-                <option value="" disabled>
-                  Select type
-                </option>
-                <option value="probation">Probation</option>
-                <option value="permanent">Permanent</option>
-                <option value="contract">Contract</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-gray-700 font-medium mb-2">Grade</label>
-              <select
-                name="grade"
-                value={formData.grade}
-                onChange={handleInputChange}
-                className={`w-full p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 transition-colors ${
-                  formData.grade ? "text-black" : "text-gray-500"
-                }`}
-                required
-              >
-                <option value="" disabled>
-                  Select grade
-                </option>
-                {["E1", "E2", "E3", "E4", "E5", "E6", "E7"].map((grade) => (
-                  <option key={grade} value={grade}>
-                    {grade}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block text-gray-700 font-medium mb-2">Status</label>
-              <select
-                name="status"
-                value={formData.status}
-                onChange={handleInputChange}
-                className={`w-full p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 transition-colors ${
-                  formData.status ? "text-black" : "text-gray-500"
-                }`}
-              >
-                <option value="" disabled>Select status</option>
-                <option value="pool">Pool</option>
-                <option value="deployed">Deployed</option>
-                <option value="pip">PIP</option>
-                <option value="hold">Hold</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-gray-700 font-medium mb-2">Business Group</label>
-              <select
-                name="businessGroup"
-                value={formData.businessGroup}
-                onChange={handleInputChange}
-                className={`w-full p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 transition-colors ${
-                  formData.businessGroup ? "text-black" : "text-gray-500"
-                }`}
-                required
-              >
-                <option value="" disabled>
-                  Select business group
-                </option>
-                <option value="BG4">BG4</option>
-                <option value="BG5">BG5</option>
-                <option value="SSG1">SSG1</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-gray-700 font-medium mb-2">Business Unit</label>
-              <select
-                name="businessUnit"
-                value={formData.businessUnit}
-                onChange={handleInputChange}
-                className={`w-full p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 transition-colors ${
-                  formData.businessUnit ? "text-black" : "text-gray-500"
-                }`}
-                required
-              >
-                <option value="" disabled>
-                  Select business unit
-                </option>
-                <option value="BU5">BU5</option>
-                <option value="BU4">BU4</option>
-                <option value="SSU1">SSU1</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-gray-700 font-medium mb-2">Competency</label>
+              <label className="block text-gray-700 font-medium mb-2">
+                Competency <span className="text-red-500">*</span>
+              </label>
               <Dropdown
                 name="competency"
                 value={formData.competency}
                 options={competencies}
                 onChange={handleInputChange}
+                onBlur={handleBlur}
                 setModalField={setModalField}
+                error={errors.competency}
               />
+              {errors.competency && (
+                <p className="text-red-500 text-sm mt-1">{errors.competency}</p>
+              )}
             </div>
 
             {/* Submit Button */}
