@@ -46,6 +46,22 @@ export const createBaseline = createAsyncThunk(
   }
 );
 
+export const updateBaseline = createAsyncThunk(
+  "baseline/updateBaseline",
+  async ({ baselineId, baselineData }, { rejectWithValue }) => {
+    try {
+      const response = await baselineApiClient.patch(
+        BASELINE.BASELINE_UPDATE(baselineId),
+        baselineData
+      );
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || error.message);
+    }
+  }
+);
+
+
 // Certification Authority CRUD Operations
 export const fetchCertificationAuthorities = createAsyncThunk(
   "baseline/fetchCertificationAuthorities",

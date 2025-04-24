@@ -13,6 +13,7 @@ import {
     updateTechnologyStack,
     deleteTechnologyStack,
     createBaseline,
+    updateBaseline,
     fetchBaselineHistories,
     fetchTechnologyCategoriesStack
 } from "./baselineAction";
@@ -35,7 +36,6 @@ const initialState = {
     technologyCategoriesStack: [],
     technologyCategoriesStackLoading: false,
     technologyCategoriesWithTech: []
-
 };
 
 const baselineSlice = createSlice({
@@ -303,6 +303,25 @@ const baselineSlice = createSlice({
                 }
             })
             .addCase(createBaseline.rejected, (state, { payload }) => {
+                state.baselineLoading = false;
+                state.error = payload;
+            })
+            .addCase(updateBaseline.pending, (state) => {
+                state.baselineLoading = true;
+            })
+            .addCase(updateBaseline.fulfilled, (state, { payload }) => {
+                state.baselineLoading = false;
+                if (payload.success && payload.data) {
+                    const index = state.baselineHistories.findIndex(baseline => baseline.publicId === payload.data.publicId);
+                    if (index !== -1) {
+                        state.baselineHistories[index] = {
+                            ...state.baselineHistories[index],
+                            ...payload.data
+                        };
+                    }
+                }
+            })
+            .addCase(updateBaseline.rejected, (state, { payload }) => {
                 state.baselineLoading = false;
                 state.error = payload;
             })
