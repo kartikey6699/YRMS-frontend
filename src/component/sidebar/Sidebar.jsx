@@ -62,7 +62,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
           {isOpen && (
             <div className="ml-3 overflow-hidden">
               <span className="text-xl font-bold text-white tracking-wide whitespace-nowrap">
-                Python RMS 
+                Python CMS 
               </span>  
               <div className="h-1 mt-1 bg-white bg-opacity-50 rounded-full animate-pulse"></div>
             </div>

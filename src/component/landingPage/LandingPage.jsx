@@ -115,7 +115,7 @@ const LandingPage = () => {
                                     <img src="https://www.yash.com/wp-content/themes/html5blank-stable/images/yash-logo-new.svg" alt="Yash Logo" />
                                 </div>
                                 <h1 className="text-5xl md:text-6xl font-extrabold mb-10 leading-tight">
-                                    Yash RMS
+                                    Yash CMS
                                 </h1>
                                 <p className="text-lg md:text-2xl font-extrabold my-10 max-w-2xl mx-auto">
                                     Optimize your resources, streamline operations, and boost productivity with our all-in-one management system.
@@ -274,7 +274,7 @@ const LandingPage = () => {
             <section className="bg-[#F9FAFB] py-16">
                 <div className="container mx-auto px-6">
                     <h2 className="text-4xl font-extrabold text-[#1F2937] text-center mb-12">
-                        Why Choose Yash RMS?
+                        Why Choose Yash CMS?
                     </h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                         <div className="bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 p-6 border border-[#D1D5DB]">
@@ -306,7 +306,7 @@ const LandingPage = () => {
                         Who We Are?
                     </h2>
                     <p className="text-lg text-[#D1D5DB] mb-8 max-w-xl mx-auto">
-                        Join countless teams optimizing their workflows with Yash RMS.
+                        Join countless teams optimizing their workflows with Yash CMS.
                     </p>
                     <NavLink
                         to="/signup"

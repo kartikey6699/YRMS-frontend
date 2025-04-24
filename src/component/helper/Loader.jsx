@@ -9,9 +9,9 @@ const YRMSLoader = ({ loadingMessage = "Loading ..." }) => {
         {/* YRMS Text Logo with gradient */}
         <div className="text-center mb-8">
           <h1 className="text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-teal-400">
-            YRMS
+            YCMS
           </h1>
-          <p className="mt-2 text-gray-600">Resource Management System</p>
+          <p className="mt-2 text-gray-600">Competancy Management System</p>
         </div>
 
         {/* Animated loading bars */}
