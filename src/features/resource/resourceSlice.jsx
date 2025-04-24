@@ -134,7 +134,7 @@ const resourceSlice = createSlice({
           communication: user.communication || "",
           profileImage: user.profileImage,
           programs: user.programs || [],
-          roleIds: user.roleIds || []  // Ensure roleIds is always an array
+          roleIds: user.roleIds || []
         }));
 
         // Separate trainers (role_id=4)
@@ -247,16 +247,19 @@ const resourceSlice = createSlice({
             location: payload.location,
             phoneNumber: payload.phoneNumber,
             email: payload.email,
+            gender: payload.gender,
             joiningDate: payload.joiningDate,
             status: payload.status || "pool",
             grade: payload.grade,
             experience: payload.experience || 0,
-            competency: payload.competency,
+            competencyId: payload.competencyId,
+            competencyName: payload.competencyName,
             techSkill: payload.techSkill || [],
             certifications: payload.certification || "",
             communication: payload.communication || "",
             profileImage: payload.profileImage,
-            resumeFile: payload.resumeFile
+            resumeFile: payload.resumeFile,
+            roleIds: payload.roleIds || []
           };
         }
       })

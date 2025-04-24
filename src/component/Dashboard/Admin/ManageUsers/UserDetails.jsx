@@ -10,7 +10,7 @@ import {
   FaSitemap,
   FaLightbulb,
   FaIdBadge,
-  FaCalendarAlt,
+  FaChevronDown,
   FaEdit,
   FaTimes,
   FaSave,
@@ -18,29 +18,68 @@ import {
   FaUserTie,
   FaChartLine
 } from 'react-icons/fa';
-import { fetchResourceDetails, updateResource } from '../../../../features/resource/resourceAction';
+import { fetchCompetencies, fetchDesignations, fetchResourceDetails, updateResource } from '../../../../features/resource/resourceAction';
 
 const EmployeeDetailPage = ({ publicId, onClose }) => {
   const dispatch = useDispatch();
-  const { resourceDetails, loading, error } = useSelector((state) => state.resource);
+  const { resourceDetails, loading, competencies, designations, error } = useSelector((state) => state.resource);
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({});
   const [toast, setToast] = useState(null);
   const [showAdditionalInfo, setShowAdditionalInfo] = useState(false);
+  const [isRolesOpen, setIsRolesOpen] = useState(false);
 
-  // Fetch resource details when component mounts or publicId changes
+  const handleRoleToggle = (roleId) => {
+    setFormData(prev => ({
+      ...prev,
+      roleIds: prev.roleIds.includes(roleId)
+        ? prev.roleIds.filter(id => id !== roleId)
+        : [...prev.roleIds, roleId]
+    }));
+  };
+
   useEffect(() => {
-    if (publicId) {
+    if (!resourceDetails || resourceDetails.publicId !== publicId) {
       dispatch(fetchResourceDetails(publicId));
+      dispatch(fetchCompetencies());
+      dispatch(fetchDesignations());
     }
-  }, [dispatch, resourceDetails]);
+  }, [dispatch]);
+
+  // Get roles from sessionStorage (expecting a stringified array of roles)
+  const storedRoles = sessionStorage.getItem('role');
+  const roles = JSON.parse(storedRoles); // Parse the stored string into an array
+
+  const getRoleName = (roleIds) => {
+    if (!roleIds) return { names: "N/A", ids: "N/A" };
+    if (!storedRoles) return { names: "N/A", ids: "N/A" };
+
+    try {
+      // Handle both single ID and array of IDs
+      const result = Array.isArray(roleIds)
+        ? {
+          names: roleIds.map(id => roles.find(r => r.id === id)?.role || "Unknown").join(", "),
+          ids: roleIds.join(", ")
+        }
+        : {
+          names: roles.find(r => r.id === roleIds)?.role || "Unknown",
+          ids: roleIds
+        };
+
+      return result;
+    } catch (e) {
+      console.error("Error parsing roles:", e);
+      return { names: "N/A", ids: "N/A" };
+    }
+  };
 
   // Initialize form data when resourceDetails changes
   useEffect(() => {
     if (resourceDetails) {
       setFormData({
         ...resourceDetails,
-        joiningDate: resourceDetails.joiningDate?.split('T')[0] || ''
+        joiningDate: resourceDetails.joiningDate?.split('T')[0] || '',
+        roleIds: resourceDetails.roleIds || []
       });
     }
   }, [resourceDetails]);
@@ -63,17 +102,31 @@ const EmployeeDetailPage = ({ publicId, onClose }) => {
 
   const handleSubmit = async () => {
     try {
+      const transformData = {
+        employeeName: formData.employeeName || '',
+        employeeId: formData.employeeId || '',
+        joiningDate: formData.joiningDate || '',
+        designation: formData.designation || '',
+        roleIds: Array.isArray(formData.roleIds) ? formData.roleIds.map(id => parseInt(id)) : [],
+        phoneNumber: formData.phoneNumber || '',
+        gender: formData.gender ? formData.gender.toLowerCase() : '',
+        location: formData.location || '',
+        businessGroup: formData.businessGroup || '',
+        businessUnit: formData.businessUnit || '',
+        competency: formData.competency || ''
+      };
+
       const response = await dispatch(updateResource({
         publicId: publicId,
-        updatedData: formData
+        resourceData: transformData
       })).unwrap();
-      
+
       setToast({ type: 'success', message: 'Employee details updated successfully!' });
       setIsEditing(false);
     } catch (error) {
-      setToast({ 
-        type: 'error', 
-        message: error.message || 'Failed to update employee details' 
+      setToast({
+        type: 'error',
+        message: error.message || 'Failed to update employee details'
       });
     }
   };
@@ -81,12 +134,11 @@ const EmployeeDetailPage = ({ publicId, onClose }) => {
   const handleCancel = () => {
     setFormData({
       ...resourceDetails,
-      joiningDate: resourceDetails.joiningDate?.split('T')[0] || ''
+      joiningDate: resourceDetails.joiningDate?.split('T')[0] || '',
+      roleIds: resourceDetails.roleIds || []
     });
     setIsEditing(false);
   };
-
-  console.log("resourceDetails: ",resourceDetails)
 
   if (!resourceDetails) {
     return (
@@ -107,18 +159,13 @@ const EmployeeDetailPage = ({ publicId, onClose }) => {
   return (
     <>
       {/* Toast Notification */}
-      <div className="fixed top-4 right-4 z-60">
-        {toast?.type === 'success' && (
-          <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded">
+      {toast && (
+        <div className="fixed top-4 right-4 z-60">
+          <div className={`px-4 py-3 rounded ${toast.type === 'success' ? 'bg-green-100 border border-green-400 text-green-700' : 'bg-red-100 border border-red-400 text-red-700'}`}>
             {toast.message}
           </div>
-        )}
-        {toast?.type === 'error' && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
-            {toast.message}
-          </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Main Modal */}
       <div className="fixed inset-0 flex items-center justify-center z-50 overflow-auto backdrop-blur-sm bg-black/20 p-4">
@@ -147,7 +194,7 @@ const EmployeeDetailPage = ({ publicId, onClose }) => {
                     />
                   ) : (
                     <h3 className="text-xl font-semibold text-indigo-800 truncate">
-                      {formData.employeeName}
+                      {resourceDetails.employeeName}
                     </h3>
                   )}
                 </div>
@@ -157,19 +204,18 @@ const EmployeeDetailPage = ({ publicId, onClose }) => {
                   <FaIdBadge className="text-indigo-500" />
                   <span className="text-sm text-indigo-600 font-medium">Employee ID:</span>
                   <span className="text-base text-indigo-800 font-medium">
-                    {formData.employeeId}
+                    {resourceDetails.employeeId}
                   </span>
                 </div>
 
                 {/* Status */}
                 <div className="bg-gradient-to-r from-indigo-50 to-blue-50 px-3 py-2 rounded-lg shadow-xs flex items-center gap-2 border border-indigo-100">
                   <span className="text-sm text-indigo-600 font-medium">Status:</span>
-                  <div className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                    formData.status === 'Active' ? 'bg-green-100 text-green-800' :
+                  <div className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${formData.status === 'Active' ? 'bg-green-100 text-green-800' :
                     formData.status === 'Inactive' ? 'bg-red-100 text-red-800' :
-                    'bg-yellow-100 text-yellow-800'
-                  }`}>
-                    {formData.status || 'Not specified'}
+                      'bg-yellow-100 text-yellow-800'
+                    }`}>
+                    {resourceDetails.status || 'Not specified'}
                   </div>
                 </div>
 
@@ -188,12 +234,11 @@ const EmployeeDetailPage = ({ publicId, onClose }) => {
                       />
                     ) : (
                       <span className="text-base text-indigo-800 font-medium">
-                        {formData.joiningDate ? new Date(formData.joiningDate).toLocaleDateString() : 'N/A'}
+                        {resourceDetails.joiningDate ? new Date(resourceDetails.joiningDate).toLocaleDateString() : 'N/A'}
                       </span>
                     )}
                   </div>
-                  </div>
-
+                </div>
               </div>
             </div>
 
@@ -233,7 +278,7 @@ const EmployeeDetailPage = ({ publicId, onClose }) => {
                 <FaUser className="text-indigo-500 mr-2 text-sm" />
                 Personal Information
               </h4>
-              
+
               <div className="space-y-4">
                 {/* Email */}
                 <div className="bg-indigo-50/50 p-3 rounded-lg border border-indigo-100">
@@ -251,7 +296,7 @@ const EmployeeDetailPage = ({ publicId, onClose }) => {
                     />
                   ) : (
                     <p className="text-sm font-medium text-indigo-800">
-                      {formData.email || 'Not specified'}
+                      {resourceDetails.email || 'Not specified'}
                     </p>
                   )}
                 </div>
@@ -272,7 +317,7 @@ const EmployeeDetailPage = ({ publicId, onClose }) => {
                     />
                   ) : (
                     <p className="text-sm font-medium text-indigo-800">
-                      {formData.phoneNumber || 'Not specified'}
+                      {resourceDetails.phoneNumber || 'Not specified'}
                     </p>
                   )}
                 </div>
@@ -297,7 +342,7 @@ const EmployeeDetailPage = ({ publicId, onClose }) => {
                     </select>
                   ) : (
                     <p className="text-sm font-medium text-indigo-800">
-                      {formData.gender || 'Not specified'}
+                      {resourceDetails.gender || 'Not specified'}
                     </p>
                   )}
                 </div>
@@ -310,31 +355,78 @@ const EmployeeDetailPage = ({ publicId, onClose }) => {
                 <FaBriefcase className="text-indigo-500 mr-2 text-sm" />
                 Employment Details
               </h4>
-              
+
               <div className="space-y-4">
-                {/* Joining Date */}
+                {/* Role */}
                 <div className="bg-indigo-50/50 p-3 rounded-lg border border-indigo-100">
                   <label className="block text-xs text-indigo-600 mb-1 font-semibold flex items-center">
-                    <FaVenusMars className="mr-2" /> Role
+                    <FaUserTie className="mr-2" /> Role
                   </label>
                   {isEditing ? (
-                    <select
-                      name="role"
-                      value={formData.role}
-                      onChange={handleInputChange}
-                      className="w-full bg-white border border-indigo-200 rounded-md px-2 py-1.5 text-sm focus:ring-1 focus:ring-indigo-300"
-                      disabled={loading}
-                    >
-                      <option value="">Select Role</option>
-                      <option value="admin">Admin</option>
-                      <option value="user">User</option>
-                    </select>
+                    <div className="relative">
+                      {/* Input-like container that shows selected roles */}
+                      <div
+                        className={`w-full min-h-12 p-2 bg-white border border-indigo-200 rounded-md flex flex-wrap items-center cursor-pointer ${isRolesOpen ? 'ring-1 ring-indigo-300 border-transparent' : ''}`}
+                        onClick={() => setIsRolesOpen(!isRolesOpen)}
+                      >
+                        {formData.roleIds?.length === 0 ? (
+                          <span className="text-gray-400 ml-2">Select roles...</span>
+                        ) : (
+                          formData.roleIds?.map(roleId => {
+                            const role = roles.find(r => r.id === roleId);
+                            return (
+                              <div
+                                key={roleId}
+                                className="bg-indigo-100 text-indigo-800 text-sm px-2 py-1 rounded m-1 flex items-center"
+                              >
+                                {role?.role || 'Unknown'}
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleRoleToggle(roleId);
+                                  }}
+                                  className="ml-1 text-indigo-500 hover:text-indigo-700"
+                                >
+                                  <FaTimes className="text-xs" />
+                                </button>
+                              </div>
+                            );
+                          })
+                        )}
+                        <div className="ml-auto pr-2">
+                          <FaChevronDown className={`text-gray-400 transition-transform ${isRolesOpen ? 'transform rotate-180' : ''}`} />
+                        </div>
+                      </div>
+
+                      {/* Dropdown with checkboxes */}
+                      {isRolesOpen && (
+                        <div className="absolute z-10 mt-1 w-full bg-white shadow-lg rounded-lg py-1 border border-indigo-200 max-h-60 overflow-auto">
+                          {roles?.map(role => (
+                            <label
+                              key={role.id}
+                              className="flex items-center px-4 py-2 hover:bg-gray-50 cursor-pointer"
+                            >
+                              <input
+                                type="checkbox"
+                                className="form-checkbox h-4 w-4 text-indigo-600 transition duration-150 ease-in-out rounded"
+                                checked={formData.roleIds?.includes(role.id)}
+                                onChange={() => handleRoleToggle(role.id)}
+                                onClick={(e) => e.stopPropagation()}
+                              />
+                              <span className="ml-3 text-gray-700">{role.role}</span>
+                            </label>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   ) : (
                     <p className="text-sm font-medium text-indigo-800">
-                      {formData.role || 'Not specified'}
+                      {getRoleName(resourceDetails.roleIds).names || 'Not specified'}
                     </p>
                   )}
                 </div>
+
                 {/* Location */}
                 <div className="bg-indigo-50/50 p-3 rounded-lg border border-indigo-100">
                   <label className="block text-xs text-indigo-600 mb-1 font-semibold flex items-center">
@@ -342,46 +434,51 @@ const EmployeeDetailPage = ({ publicId, onClose }) => {
                   </label>
                   {isEditing ? (
                     <select
-                      name="role"
+                      name="location"
                       value={formData.location}
                       onChange={handleInputChange}
                       className="w-full bg-white border border-indigo-200 rounded-md px-2 py-1.5 text-sm focus:ring-1 focus:ring-indigo-300"
                       disabled={loading}
                     >
                       <option value="">Select Location</option>
-                      <option value="indore">Indore</option>
-                      <option value="pune">Pune</option>
-                      <option value="hydrabad">Hydrabad</option>
+                      <option value="Indore_Yash_IT_Park_SC_DC">Indore-YASH IT Park-SC-DC</option>
+                      <option value="Pune_Magarpatta_DC_II">Pune-Magarpatta-DC-II</option>
+                      <option value="Hyderabad_Mindspace_I_DC">Hyderabad-Mindspace I-DC</option>
+                      <option value="Bangalore_Whitefield_DC">Bangalore-Whitefield-DC</option>
+                      <option value="Indore_Crystal_IT_Park_DC_II">Indore-Crystal IT Park-DC-II</option>
+                      <option value="Indore_BTC_CO">Indore-BTC-CO</option>
+                      <option value="Pune_Hinjewadi_III_DC">Pune-Hinjewadi III-DC</option>
                     </select>
                   ) : (
                     <p className="text-sm font-medium text-indigo-800">
-                      {formData.location || 'Not specified'}
+                      {resourceDetails.location || 'Not specified'}
                     </p>
                   )}
                 </div>
 
                 {/* Designation */}
                 <div className="bg-indigo-50/50 p-3 rounded-lg border border-indigo-100">
-                  <label className="block text-xs text-indigo-600 mb-1 font-semibold">
-                    <FaUserTie className="mr-2 inline" /> Designation
+                  <label className="block text-xs text-indigo-600 mb-1 font-semibold flex items-center">
+                    <FaChartLine className="mr-2" /> Designation
                   </label>
                   {isEditing ? (
                     <select
-                      name="role"
-                      value={formData.designation}
+                      name='designation'
+                      value={formData.designation || ''}
                       onChange={handleInputChange}
                       className="w-full bg-white border border-indigo-200 rounded-md px-2 py-1.5 text-sm focus:ring-1 focus:ring-indigo-300"
                       disabled={loading}
                     >
                       <option value="">Select Designation</option>
-                      <option value="software_developer">Software Developer</option>
-                      <option value="sr_software_developer">Sr Software Developer</option>
-                      <option value="module_lead">Module Lead</option>
-                      <option value="tech_lead">Tech Lead</option>
+                      {designations.map((designation) => (
+                        <option value={designation.name} key={designation.publicId}>
+                          {designation.name}
+                        </option>
+                      ))}
                     </select>
                   ) : (
-                    <p className="text-sm font-medium text-indigo-800">
-                      {formData.designation || 'Not specified'}
+                    <p className="text-sm font-medium text-indigo-800 truncate">
+                      {resourceDetails.designation || 'Not specified'}
                     </p>
                   )}
                 </div>
@@ -394,7 +491,7 @@ const EmployeeDetailPage = ({ publicId, onClose }) => {
                 <FaBuilding className="text-indigo-500 mr-2 text-sm" />
                 Organizational Structure
               </h4>
-              
+
               <div className="space-y-4">
                 {/* Business Group */}
                 <div className="bg-indigo-50/50 p-3 rounded-lg border border-indigo-100">
@@ -403,21 +500,20 @@ const EmployeeDetailPage = ({ publicId, onClose }) => {
                   </label>
                   {isEditing ? (
                     <select
-                      name="role"
+                      name="businessGroup"
                       value={formData.businessGroup}
                       onChange={handleInputChange}
                       className="w-full bg-white border border-indigo-200 rounded-md px-2 py-1.5 text-sm focus:ring-1 focus:ring-indigo-300"
                       disabled={loading}
                     >
                       <option value="">Select Business Group</option>
-                      <option value="BG1">Business Group 1</option>
-                      <option value="BG2">Business Group 2</option>
-                      <option value="BG3">Business Group 3</option>
-                      <option value="BG4">Business Group 4</option>
+                      <option value="BG4">BG4</option>
+                      <option value="BG5">BG5</option>
+                      <option value="SSG1">SSG1</option>
                     </select>
                   ) : (
                     <p className="text-sm font-medium text-indigo-800">
-                      {formData.businessGroup || 'Not specified'}
+                      {resourceDetails.businessGroup || 'Not specified'}
                     </p>
                   )}
                 </div>
@@ -429,21 +525,20 @@ const EmployeeDetailPage = ({ publicId, onClose }) => {
                   </label>
                   {isEditing ? (
                     <select
-                      name="role"
+                      name="businessUnit"
                       value={formData.businessUnit}
                       onChange={handleInputChange}
                       className="w-full bg-white border border-indigo-200 rounded-md px-2 py-1.5 text-sm focus:ring-1 focus:ring-indigo-300"
                       disabled={loading}
                     >
                       <option value="">Select Business Unit</option>
-                      <option value="BU1">Business Unit 1</option>
-                      <option value="BU2">Business Unit 2</option>
-                      <option value="BU3">Business Unit 3</option>
-                      <option value="BU4">Business Unit 4</option>
+                      <option value="BU5">BU5</option>
+                      <option value="BU4">BU4</option>
+                      <option value="SSU1">SSU1</option>
                     </select>
                   ) : (
                     <p className="text-sm font-medium text-indigo-800">
-                      {formData.businessUnit || 'Not specified'}
+                      {resourceDetails.businessUnit || 'Not specified'}
                     </p>
                   )}
                 </div>
@@ -455,59 +550,27 @@ const EmployeeDetailPage = ({ publicId, onClose }) => {
                   </label>
                   {isEditing ? (
                     <select
-                      name="role"
-                      value={formData.competency}
+                      name='competency'
+                      value={formData.competency || ''}
                       onChange={handleInputChange}
                       className="w-full bg-white border border-indigo-200 rounded-md px-2 py-1.5 text-sm focus:ring-1 focus:ring-indigo-300"
                       disabled={loading}
                     >
                       <option value="">Select Competency</option>
-                      <option value="python">Python</option>
-                      <option value="java">Java</option>
-                      <option value="scala">Scala</option>
+                      {competencies.map((competency) => (
+                        <option value={competency.name} key={competency.publicId}>
+                          {competency.name}
+                        </option>
+                      ))}
                     </select>
                   ) : (
-                    <p className="text-sm font-medium text-indigo-800">
-                      {formData.competency || 'Not specified'}
+                    <p className="text-sm font-medium text-indigo-800 truncate">
+                      {resourceDetails.competencyName || 'Not specified'}
                     </p>
                   )}
                 </div>
               </div>
             </div>
-          </div>
-
-          {/* Optional Full-width Bottom Section */}
-          <div className="bg-gradient-to-b from-gray-50 to-white rounded-lg p-4 border border-gray-200">
-            <div className="flex justify-between items-center mb-3">
-              <h4 className="flex items-center text-base font-medium text-indigo-700">
-                <FaChartLine className="text-indigo-500 mr-2 text-sm" />
-                Additional Information
-              </h4>
-              <button 
-                onClick={() => setShowAdditionalInfo(!showAdditionalInfo)}
-                className="text-sm text-indigo-600 hover:text-indigo-800"
-              >
-                {showAdditionalInfo ? 'Hide' : 'Show More'}
-              </button>
-            </div>
-            
-            {showAdditionalInfo && (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {/* Add any additional fields here */}
-                <div className="bg-indigo-50/50 p-3 rounded-lg border border-indigo-100">
-                  <label className="block text-xs text-indigo-600 mb-1 font-semibold">Reporting Manager</label>
-                  <p className="text-sm font-medium text-indigo-800">John Doe</p>
-                </div>
-                <div className="bg-indigo-50/50 p-3 rounded-lg border border-indigo-100">
-                  <label className="block text-xs text-indigo-600 mb-1 font-semibold">Department</label>
-                  <p className="text-sm font-medium text-indigo-800">Engineering</p>
-                </div>
-                <div className="bg-indigo-50/50 p-3 rounded-lg border border-indigo-100">
-                  <label className="block text-xs text-indigo-600 mb-1 font-semibold">Team</label>
-                  <p className="text-sm font-medium text-indigo-800">Frontend Development</p>
-                </div>
-              </div>
-            )}
           </div>
 
           {/* Footer Actions - Save/Cancel when editing */}

@@ -120,7 +120,9 @@ export const TECHNOLOGY_BASELINE_API = {
 };
 
 export const ROLE_API = {
-    LIST: `${API_BASE_URL}roles-list`
+    LIST: `${API_BASE_URL}roles-list`,
+    CREATE: `${API_BASE_URL}roles`,
+
 };
 
 export const FEATURE_API = {

@@ -22,7 +22,7 @@ import { ErrorToast, SuccessToast } from '../../../helper/ResourceToast';
 import YRMSLoader from '../../../helper/loader';
 import Dropdown from '../../../helper/Dropdown';
 
-const AddResource = ({setActiveSection}) => {
+const AddResource = ({ setActiveSection }) => {
     const navigate = useNavigate();
     const dispatch = useDispatch();
 
@@ -331,12 +331,13 @@ const AddResource = ({setActiveSection}) => {
                                     className={`w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-transparent transition-all ${formData.location ? "text-gray-800" : "text-gray-400"}`}
                                     required
                                 >
-                                    <option value="indore">Indore-YASH IT Park-SC-DC</option>
+                                    <option value="indore-yash-it-park-sc-dc">Indore-YASH IT Park-SC-DC</option>
                                     <option value="pune-magarpatta-dc-ii">Pune-Magarpatta-DC-II</option>
                                     <option value="hyderabad-mindspace-i-dc">Hyderabad-Mindspace I-DC</option>
                                     <option value="bangalore-whitefield-dc">Bangalore-Whitefield-DC</option>
                                     <option value="indore-crystal-it-park-dc-ii">Indore-Crystal IT Park-DC-II</option>
                                     <option value="indore-btc-co">Indore-BTC-CO</option>
+                                    <option value="indore-btc-co">Pune-Hinjewadi III-DC</option>
                                 </select>
                             </div>
 
