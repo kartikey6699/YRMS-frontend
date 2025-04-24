@@ -58,7 +58,7 @@ const AdminDashboard = () => {
                                 <FaBox size={24} />
                             </div>
                             <span className="text-lg font-semibold text-gray-700">Role Management</span>
-                            <span className="text-sm text-blue-600 mt-1">Manage Rols</span>
+                            <span className="text-sm text-blue-600 mt-1">Manage Roles</span>
                         </button>
                         <button
                             onClick={() => handleSectionClick("competency")}
@@ -70,7 +70,7 @@ const AdminDashboard = () => {
                             <div className="p-4 mb-3 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 text-white shadow-md">
                                 <FaUsers size={24} />
                             </div>
-                            <span className="text-lg font-semibold text-gray-700">Competencies Management</span>
+                            <span className="text-lg font-semibold text-gray-700">Competency Management</span>
                             <span className="text-sm text-purple-600 mt-1">Manage system Competencies</span>
                         </button>
                     </div>
