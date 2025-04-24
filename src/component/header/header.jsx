@@ -37,7 +37,7 @@ const Header = ({ isLoggedIn }) => {
           {/* Logo */}
           <div className="flex items-center justify-left sm:items-stretch sm:justify-start">
             <div className="flex shrink-0 items-center">
-              <img className="h-[55px] w-[230px] ml-[20px]" src={logo} alt="Your Company" />
+              <img className="h-[55px] w-[280px] ml-[5px] mb-[5px]" src={logo} alt="Your Company" />
             </div>
           </div>
 
