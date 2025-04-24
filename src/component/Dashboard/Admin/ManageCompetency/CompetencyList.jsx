@@ -156,20 +156,95 @@ const ListCompetency = ({ setActiveSection, setSelectedCompetency, onSort, sortC
                 </table>
 
                 {filteredCompetencies.length > 0 && (
-                    <div className="flex items-center justify-between px-4 py-3 bg-white border-t border-gray-200">
-                        <div className="text-sm text-gray-700">
+                    <div className="flex flex-col sm:flex-row items-center justify-between px-4 py-3 bg-white border-t border-gray-200 gap-3">
+                        <div className="text-sm text-gray-700 whitespace-nowrap">
                             Showing <span className="font-medium">{(currentPage - 1) * itemsPerPage + 1}</span> to{" "}
                             <span className="font-medium">
                                 {Math.min(currentPage * itemsPerPage, filteredCompetencies.length)}
                             </span>{" "}
                             of <span className="font-medium">{filteredCompetencies.length}</span> results
                         </div>
-                        <div className="flex space-x-2">
-                            {/* Pagination controls same as RoleList */}
+
+                        <div className="flex items-center space-x-1 sm:space-x-2">
+                            <button
+                                onClick={() => handlePageChange(1)}
+                                disabled={currentPage === 1}
+                                className={`p-2 rounded-md ${currentPage === 1
+                                        ? 'text-gray-400 cursor-not-allowed'
+                                        : 'text-blue-600 hover:bg-blue-50'
+                                    }`}
+                                aria-label="First page"
+                            >
+                                <FaAngleDoubleLeft className="text-sm sm:text-base" />
+                            </button>
+
+                            <button
+                                onClick={() => handlePageChange(currentPage - 1)}
+                                disabled={currentPage === 1}
+                                className={`p-2 rounded-md ${currentPage === 1
+                                        ? 'text-gray-400 cursor-not-allowed'
+                                        : 'text-blue-600 hover:bg-blue-50'
+                                    }`}
+                                aria-label="Previous page"
+                            >
+                                <FaAngleLeft className="text-sm sm:text-base" />
+                            </button>
+
+                            {/* Dynamic Page Numbers */}
+                            {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                                let pageNum;
+                                if (totalPages <= 5) {
+                                    pageNum = i + 1;
+                                } else if (currentPage <= 3) {
+                                    pageNum = i + 1;
+                                } else if (currentPage >= totalPages - 2) {
+                                    pageNum = totalPages - 4 + i;
+                                } else {
+                                    pageNum = currentPage - 2 + i;
+                                }
+
+                                return (
+                                    <button
+                                        key={pageNum}
+                                        onClick={() => handlePageChange(pageNum)}
+                                        className={`w-8 h-8 sm:w-10 sm:h-10 text-sm sm:text-base rounded-md ${currentPage === pageNum
+                                                ? 'bg-blue-600 text-white'
+                                                : 'text-blue-600 hover:bg-blue-50'
+                                            }`}
+                                        aria-label={`Page ${pageNum}`}
+                                    >
+                                        {pageNum}
+                                    </button>
+                                );
+                            })}
+
+                            <button
+                                onClick={() => handlePageChange(currentPage + 1)}
+                                disabled={currentPage === totalPages}
+                                className={`p-2 rounded-md ${currentPage === totalPages
+                                        ? 'text-gray-400 cursor-not-allowed'
+                                        : 'text-blue-600 hover:bg-blue-50'
+                                    }`}
+                                aria-label="Next page"
+                            >
+                                <FaAngleRight className="text-sm sm:text-base" />
+                            </button>
+
+                            <button
+                                onClick={() => handlePageChange(totalPages)}
+                                disabled={currentPage === totalPages}
+                                className={`p-2 rounded-md ${currentPage === totalPages
+                                        ? 'text-gray-400 cursor-not-allowed'
+                                        : 'text-blue-600 hover:bg-blue-50'
+                                    }`}
+                                aria-label="Last page"
+                            >
+                                <FaAngleDoubleRight className="text-sm sm:text-base" />
+                            </button>
                         </div>
                     </div>
                 )}
-
+                
                 {filteredCompetencies.length === 0 && (
                     <div className="text-center py-8 bg-white">
                         <div className="text-gray-500 mb-4">

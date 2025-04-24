@@ -24,7 +24,7 @@ const AddCompetency = ({ setActiveSection, setSelectedCompetency, selectedCompet
 
         if (!formData.name.trim()) {
             newErrors.name = 'Competency name is required';
-        } else if (formData.name.length < 3) {
+        } else if (formData.name.length < 2) {
             newErrors.name = 'Competency name must be at least 3 characters';
         } else if (formData.name.length > 50) {
             newErrors.name = 'Competency name cannot exceed 50 characters';
