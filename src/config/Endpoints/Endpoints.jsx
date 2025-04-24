@@ -46,6 +46,7 @@ export const BASELINE = {
     DELETE: `${CERTIFICATION_AUTHORITY_API_BASE_URL}/certification-authority-delete`,
     BASELINE_LIST: `${BASELINE_API_BASE_URL}`,
     BASELINE_CREATE: `${BASELINE_API_BASE_URL}/baseline-create`,
+    BASELINE_UPDATE: (id) => `${BASELINE_API_BASE_URL}/${id}/baseline-update`,
     CATEGORY_LIST: `${CATEGORY_API_BASE_URL}/allCategories`,
     CATEGORY_LIST_TECHNOLOGY: `${CATEGORY_API_BASE_URL}/allCategoriesWithTechnology`,
     CATEGORY_CREATE: `${CATEGORY_API_BASE_URL}/addCategory`,
@@ -71,8 +72,8 @@ export const INTERN_API = {
 };
 
 export const FEEDBACK_API = {
-    LIST: `${ADMIN_API_BASE_URL}/feedback-list`,
-    ADD: `${ADMIN_API_BASE_URL}/add-feedback`,
+    LIST: `${API_BASE_URL}feedback-list`,
+    ADD: `${API_BASE_URL}add-feedback`,
     UPDATE: (publicId) => `${ADMIN_API_BASE_URL}/update-training-feedback/${publicId}`,
     DELETE: (publicId) => `${ADMIN_API_BASE_URL}/delete-feedback/${publicId}`
 };

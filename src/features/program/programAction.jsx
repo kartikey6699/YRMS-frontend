@@ -250,7 +250,7 @@ export const fetchFeedbackList = createAsyncThunk(
       if (!response.data.success) {
         throw new Error("Failed to fetch feedback list");
       }
-      return response.data.data;
+      return response.data.data.feedback;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || error.message);
     }

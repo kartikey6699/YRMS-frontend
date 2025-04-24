@@ -11,14 +11,16 @@ import {
     FaSearch,
     FaTrash
 } from 'react-icons/fa';
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchFeedbackList, addFeedback } from '../../../../features/program/programAction'; // Import your actions
 
 const TrainingFeedback = ({ training, onClose, onSave }) => {
-    const [employees, setEmployees] = useState([
-        { id: 'EMP001', name: 'John Doe', technicalSkills: '', attitude: '', communication: '', workQuality: '' },
-        { id: 'EMP002', name: 'Jane Smith', technicalSkills: '', attitude: '', communication: '', workQuality: '' },
-        { id: 'EMP003', name: 'Robert Johnson', technicalSkills: '', attitude: '', communication: '', workQuality: '' },
-    ]);
-
+    const dispatch = useDispatch();
+    const feedbackList = useSelector(state => state.program.feedback); // Adjust according to your store structure
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+    
+    const [employees, setEmployees] = useState([]);
     const [customFeedbackColumns, setCustomFeedbackColumns] = useState([]);
     const [customScoreColumns, setCustomScoreColumns] = useState([]);
     const [newColumnName, setNewColumnName] = useState('');
@@ -39,15 +41,106 @@ const TrainingFeedback = ({ training, onClose, onSave }) => {
 
     useEffect(() => {
         if (training) {
-            // Load actual employee data here if needed
+            loadFeedbackData();
         }
     }, [training]);
 
+    const loadFeedbackData = async () => {
+        try {
+            setLoading(true);
+            setError(null);
+            await dispatch(fetchFeedbackList(training.publicId)).unwrap();
+            setLoading(false);
+        } catch (err) {
+            setError(err.message || 'Failed to load feedback data');
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        if (feedbackList) {
+            processFeedbackData(feedbackList);
+        }
+    }, [feedbackList]);
+
+    const processFeedbackData = (feedbackData) => {
+        const processedEmployees = feedbackData.map(emp => {
+            const employeeData = {
+                id: emp.employeeId,
+                name: emp.employeeName,
+                userId: emp.userId,
+                technicalSkills: emp.feedbacks?.technicalSkills || null,
+                attitude: emp.feedbacks?.attitude || null,
+                communication: emp.feedbacks?.communication || null,
+                workQuality: emp.feedbacks?.workQuality || null
+            };
+
+            // Process custom feedback columns
+            if (emp.feedbacks?.feedback?.length > 0) {
+                const feedbackObj = emp.feedbacks.feedback[0];
+                Object.keys(feedbackObj).forEach(key => {
+                    employeeData[`feedback_${key}`] = feedbackObj[key];
+                });
+            }
+
+            // Process custom score columns
+            if (emp.feedbacks?.score?.length > 0) {
+                const scoreObj = emp.feedbacks.score[0];
+                Object.keys(scoreObj).forEach(key => {
+                    employeeData[`score_${key}`] = scoreObj[key];
+                });
+            }
+
+            return employeeData;
+        });
+
+        // Extract all unique feedback and score keys from all employees
+        const feedbackKeys = new Set();
+        const scoreKeys = new Set();
+
+        feedbackData.forEach(emp => {
+            if (emp.feedbacks?.feedback?.length > 0) {
+                Object.keys(emp.feedbacks.feedback[0]).forEach(key => {
+                    feedbackKeys.add(key);
+                });
+            }
+            if (emp.feedbacks?.score?.length > 0) {
+                Object.keys(emp.feedbacks.score[0]).forEach(key => {
+                    scoreKeys.add(key);
+                });
+            }
+        });
+
+        // Set custom feedback columns
+        setCustomFeedbackColumns(
+            Array.from(feedbackKeys).map(key => ({
+                id: `feedback_${key}`,
+                name: key,
+                createdAt: new Date().toLocaleDateString()
+            }))
+        );
+
+        // Set custom score columns
+        setCustomScoreColumns(
+            Array.from(scoreKeys).map(key => ({
+                id: `score_${key}`,
+                name: key,
+                totalScore: 100 // Default total score
+            }))
+        );
+
+        setEmployees(processedEmployees);
+    };
+
     const handleRatingChange = (empId, field, value) => {
-        setEmployees(employees.map(emp =>
-            emp.id === empId ? { ...emp, [field]: value } : emp
-        ));
-        setHasChanges(true);
+        if (['poor', 'average', 'good', 'excellent'].includes(value)) {
+            setEmployees(employees.map(emp =>
+                emp.id === empId ? { ...emp, [field]: value } : emp
+            ));
+            setHasChanges(true);
+        } else {
+            alert(`Input for ${field} should be 'poor', 'average', 'good' or 'excellent'`);
+        }
     };
 
     const handleCustomFeedbackChange = (empId, columnId, value) => {
@@ -211,20 +304,49 @@ const TrainingFeedback = ({ training, onClose, onSave }) => {
         emp.name.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
-    const handleSave = () => {
-        const dataToSave = {
-            training: training?.name || 'Training',
-            employees: employees.map(emp => {
-                const empData = { ...emp };
-                return empData;
-            }),
-            customFeedbackColumns,
-            customScoreColumns
-        };
-        
-        console.log('Saving data:', JSON.stringify(dataToSave, null, 2));
-        onSave(employees, customFeedbackColumns, customScoreColumns);
-        setHasChanges(false);
+    const handleSave = async () => {
+        try {
+            const feedbackData = {
+                feedback: employees.map(emp => {
+                    // Standard ratings
+                    const standardRatings = {
+                        training_id: training.publicId,
+                        user_id: emp.userId,
+                        technicalSkills: emp.technicalSkills,
+                        attitude: emp.attitude,
+                        communication: emp.communication,
+                        workQuality: emp.workQuality
+                    };
+
+                    // Custom feedbacks
+                    const feedbacks = {};
+                    customFeedbackColumns.forEach(col => {
+                        const key = col.name;
+                        feedbacks[key] = emp[col.id] || '';
+                    });
+
+                    // Custom scores
+                    const scores = {};
+                    customScoreColumns.forEach(col => {
+                        const key = col.name;
+                        scores[key] = emp[col.id] || 0;
+                    });
+
+                    return {
+                        ...standardRatings,
+                        feedback: [feedbacks],
+                        score: [scores]
+                    };
+                })
+            };
+
+            await dispatch(addFeedback(feedbackData)).unwrap();
+            setHasChanges(false);
+            if (onSave) onSave();
+            await loadFeedbackData();
+        } catch (error) {
+            setError(error.message || 'Failed to save feedback');
+        }
     };
 
     const getAverageScoreColor = (score) => {
@@ -234,6 +356,28 @@ const TrainingFeedback = ({ training, onClose, onSave }) => {
         if (score >= 40) return 'bg-yellow-100 border-yellow-300';
         return 'bg-red-100 border-red-300';
     };
+
+    if (loading) {
+        return (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-white bg-opacity-70">
+                <div className="text-purple-600 text-lg font-semibold">Loading feedback data...</div>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-white bg-opacity-70">
+                <div className="text-red-600 text-lg font-semibold">{error}</div>
+                <button 
+                    onClick={onClose}
+                    className="ml-4 px-4 py-2 bg-purple-600 text-white rounded"
+                >
+                    Close
+                </button>
+            </div>
+        );
+    }
 
     return (
         <div className="fixed inset-0 z-50 overflow-y-auto">
@@ -503,17 +647,20 @@ const TrainingFeedback = ({ training, onClose, onSave }) => {
                                             )}
 
                                             {/* Custom Feedback Columns */}
-                                            {customFeedbackColumns.map((column) => (
-                                                <td key={column.id} className="px-3 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                    <textarea
-                                                        value={employee[column.id] || ''}
-                                                        onChange={(e) => handleCustomFeedbackChange(employee.id, column.id, e.target.value)}
-                                                        className="border border-purple-300 rounded px-2 py-1 text-sm w-full focus:ring-purple-500 focus:border-purple-500"
-                                                        placeholder="Enter feedback"
-                                                        rows={2}
-                                                    />
-                                                </td>
-                                            ))}
+                                            {customFeedbackColumns.map((column) => {
+                                                const feedbackValue = employees.find(e => e.id === employee.id)?.[column.id] || '';
+                                                return (
+                                                    <td key={column.id} className="px-3 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                        <textarea
+                                                            value={feedbackValue}
+                                                            onChange={(e) => handleCustomFeedbackChange(employee.id, column.id, e.target.value)}
+                                                            className="border border-purple-300 rounded px-2 py-1 text-sm w-full focus:ring-purple-500 focus:border-purple-500"
+                                                            placeholder="Enter feedback"
+                                                            rows={2}
+                                                        />
+                                                    </td>
+                                                );
+                                            })}
 
                                             {/* Second separator in table body */}
                                             {customFeedbackColumns.length > 0 && customScoreColumns.length > 0 && (
@@ -521,11 +668,13 @@ const TrainingFeedback = ({ training, onClose, onSave }) => {
                                             )}
 
                                             {/* Custom Score Columns */}
-                                            {customScoreColumns.map((column) => (
-                                                <td key={column.id} className="px-3 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                    {renderScoreInput(employee, column.id, column.totalScore)}
-                                                </td>
-                                            ))}
+                                            {customScoreColumns.map((column) => {
+                                                return (
+                                                    <td key={column.id} className="px-3 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                        {renderScoreInput(employee, column.id, column.totalScore)}
+                                                    </td>
+                                                );
+                                            })}
 
                                             {/* Average Score Column */}
                                             <td className={`px-3 py-4 whitespace-nowrap text-sm font-medium sticky right-0 z-10 ${getAverageScoreColor(calculateAverageScore(employee))} border-l-2 border-purple-200`}>
