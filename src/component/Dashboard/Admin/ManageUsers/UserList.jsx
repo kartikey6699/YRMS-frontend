@@ -98,7 +98,6 @@ const UserList = ({ setActiveSection }) => {
 
     const filtered = resources.filter((item) => {
       return Object.entries(filters).every(([key, value]) => {
-        console.log(key, "key", "value", value)
         if (!value) return true;
 
         if (key === 'joiningDate') {
@@ -124,7 +123,6 @@ const UserList = ({ setActiveSection }) => {
       const resourceData = {
         status: event.target.value
       };
-      console.log("df",resourceData)
 
       const updateResult = await dispatch(updateResource({
         publicId: publicId,

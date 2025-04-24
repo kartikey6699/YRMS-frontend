@@ -75,7 +75,7 @@ export const createRoles = createAsyncThunk(
   async (roleData, { rejectWithValue }) => {
     console.log("createRole")
     try {
-      const response = await roleApiClient.post(ROLE_API.CREATE, roleData);
+      const response = await rolesApiClient.post(ROLE_API.CREATE, roleData);
       const { success, data, message } = response.data;
 
       console.log(response, "response.data   ")

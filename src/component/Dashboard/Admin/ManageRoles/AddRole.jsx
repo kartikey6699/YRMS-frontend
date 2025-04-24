@@ -84,7 +84,7 @@ const AddRoleForm = ({ setActiveSection }) => {
         };
 
         console.log(payload, "Submitted payload");
-        const createResult = await dispatch(createRoles(payload));
+        const createResult = await dispatch(createRoles({roleData: payload}));
 
         if (!createResult) {
             throw new Error("Failed to get publicId from response");
