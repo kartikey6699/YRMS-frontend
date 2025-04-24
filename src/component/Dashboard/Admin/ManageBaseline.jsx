@@ -482,6 +482,7 @@ const ManageBaseline = () => {
             employeeName={resourceDetails?.employeeName}
             competency={resourceDetails?.competency}
             gender={resourceDetails?.gender}
+            userId={resourceDetails?.publicId}
           />
           <div
             onClick={openAddForm}
