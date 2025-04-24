@@ -1,9 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { FaPlus, FaSort, FaSortUp, FaSortDown, FaEdit, FaTrash } from 'react-icons/fa';
+import { fetchRoles } from '../../../../features/role/roleAction'
+import { useDispatch, useSelector } from 'react-redux';
 import DeleteConfirmationModal from '../../../helper/DeleteConfirmationModal';
 
-const RoleList = ({ roles, setActiveSection, onDelete, onEdit, onSort, sortConfig }) => {
+const RoleList = ({ setActiveSection, onDelete, onEdit, onSort, sortConfig }) => {
+    const dispatch = useDispatch();
+    const { roles } = useSelector(
+        (state) => state.role
+    );
+
     const [deleteModal, setDeleteModal] = useState({ isOpen: false, roleId: null, roleName: "" });
     const [searchTerm, setSearchTerm] = useState("");
 
@@ -14,7 +21,13 @@ const RoleList = ({ roles, setActiveSection, onDelete, onEdit, onSort, sortConfi
         { key: "features", label: "Features" }
     ];
 
+    // Fetch roles from API
+    useEffect(() => {
+        dispatch(fetchRoles());
+    }, [dispatch], roles);
+
     // Filter roles based on search term
+    console.log("roelssssssss", roles)
     const filteredRoles = roles.filter(role =>
         role.role.toLowerCase().includes(searchTerm.toLowerCase())
     );
@@ -94,7 +107,7 @@ const RoleList = ({ roles, setActiveSection, onDelete, onEdit, onSort, sortConfi
                         </tr>
                     </thead>
                     <tbody>
-                        {filteredRoles.map((role, index) => (
+                        {(filteredRoles || roles).map((role, index) => (
                             <tr key={role.id} className={`${index % 2 === 0 ? 'bg-gray-50' : 'bg-white'} hover:bg-gray-100 transition-colors`}>
                                 <td className="p-3 text-gray-700 text-sm text-center border-r border-gray-200">
                                     {index + 1}

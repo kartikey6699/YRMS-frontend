@@ -91,11 +91,12 @@ const AddRoleForm = ({ setActiveSection }) => {
         }
 
         setToast(<SuccessToast message="Role created successfully!" onClose={() => setToast(null)} />);
-        dispatch(fetchRoles());
         setFormData({
             role: '',
             features: []
-            });
+        });
+        
+
 
         setActiveSection("view"); // Close form by switching to view section
         } catch (err) {
