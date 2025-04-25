@@ -99,8 +99,9 @@ const AddTraining = ({ onClose, onSave, isUpskilling = false }) => {
   }));
 
   const requesterOptions = [
-    { value: 1, label: "HR Department" },
-    { value: 2, label: "Engineering_Team" },
+    { value: 1, label: "Python" },
+    { value: 2, label: "Data Engineering " },
+    { value: 3, label: "Data Analytics" },
     { value: 3, label: "Project_Management_Office" },
   ];
 
