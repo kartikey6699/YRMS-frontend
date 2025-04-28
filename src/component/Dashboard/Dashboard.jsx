@@ -51,7 +51,7 @@ const Dashboard = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4 md:p-8">
+    <div className="min-h-screen bg-gray-50 p-4 md:p-8 mt-15">
       {/* Hero Section */}
       <div className="relative text-center mb-8 md:mb-12">
         <div className="w-full h-48 md:h-56 bg-gray-300 rounded-xl shadow-lg overflow-hidden">

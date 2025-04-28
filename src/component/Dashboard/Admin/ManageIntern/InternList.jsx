@@ -221,7 +221,7 @@ const InternList = () => {
     if (error) return <div className="text-red-500 text-center py-8">Error: {error}</div>;
 
     return (
-        <div className="p-6 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl shadow-lg">
+        <div className="p-6 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl shadow-lg mt-15">
             {toast}
             
             <div className="mb-6">

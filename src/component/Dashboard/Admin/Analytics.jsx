@@ -3,7 +3,7 @@ import { FaTools } from 'react-icons/fa';
 
 const Analytics = () => {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-purple-50 p-8">
+    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-purple-50 p-8 mt-15">
       <h2 className="text-3xl font-bold text-indigo-800 mb-6">Analytics</h2>
       <div className="bg-white p-8 rounded-xl shadow-lg flex flex-col items-center">
         <FaTools className="text-indigo-500 text-6xl mb-4" />

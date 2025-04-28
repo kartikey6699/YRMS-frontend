@@ -444,7 +444,7 @@ const ManageResource = () => {
   );
 
   return (
-    <div className="p-6 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl shadow-lg">
+    <div className="p-6 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl shadow-lg mt-15">
       {loading && <YRMSLoader />}
       {toast}
       {activeSection !== "add" ? (

@@ -31,7 +31,7 @@ const Header = ({ isLoggedIn }) => {
   const roleName = sessionStorage.getItem('roleName') || '';
 
   return (
-    <nav className="bg-gray-200 sticky top-0 z-50 shadow-md">
+    <nav className="bg-gray-200 fixed top-0 z-50 shadow-md w-full">
       <div className="pr-8 pl-0">
         <div className="relative flex h-16 items-center justify-between">
           {/* Logo */}
