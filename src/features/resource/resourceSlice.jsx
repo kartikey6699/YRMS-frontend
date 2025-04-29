@@ -17,7 +17,9 @@ import {
   updateTrainingTechnology,
   deleteTrainingTechnology,
   fetchTechnologies,
-  deleteResource
+  deleteResource,
+  fetchUserTimeline,
+  updateTimelineEntry
 } from "./resourceAction";
 
 const initialState = {
@@ -41,7 +43,10 @@ const initialState = {
     totalPages: 1,
     totalItems: 0,
     size: 10
-  }
+  },
+  timeline: [],
+  timelineLoading: false,
+  timelineError: null,
 };
 
 const isResourceDetailsDifferent = (current, incoming) => {
@@ -461,6 +466,36 @@ const resourceSlice = createSlice({
       .addCase(fetchTechnologies.rejected, (state, { payload }) => {
         state.technologyLoading = false;
         state.error = payload;
+      })
+
+      .addCase(fetchUserTimeline.pending, (state) => {
+        state.timelineLoading = true;
+        state.timelineError = null;
+      })
+      .addCase(fetchUserTimeline.fulfilled, (state, { payload }) => {
+        state.timelineLoading = false;
+        state.timeline = payload;
+      })
+      .addCase(fetchUserTimeline.rejected, (state, { payload }) => {
+        state.timelineLoading = false;
+        state.timelineError = payload;
+      })
+      
+      // Update Timeline Entry
+      .addCase(updateTimelineEntry.pending, (state) => {
+        state.timelineLoading = true;
+        state.timelineError = null;
+      })
+      .addCase(updateTimelineEntry.fulfilled, (state, { payload }) => {
+        state.timelineLoading = false;
+        const index = state.timeline.findIndex(item => item.id === payload.id);
+        if (index !== -1) {
+          state.timeline[index] = payload;
+        }
+      })
+      .addCase(updateTimelineEntry.rejected, (state, { payload }) => {
+        state.timelineLoading = false;
+        state.timelineError = payload;
       });
   }
 });
