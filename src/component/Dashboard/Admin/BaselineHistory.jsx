@@ -369,9 +369,9 @@ export const BaselineHistories = ({ histories, employeeName, competency, gender,
                                                 <h4 className="text-2xs font-semibold text-blue-600 mb-1 flex items-center">
                                                     <FaChartLine className="mr-1 text-xs" /> EXPERIENCE
                                                 </h4>
-                                                <div className="space-y-1">
+                                                <div className="grid grid-cols-2 gap-2">
                                                     {isEditing ? (
-                                                        <>
+                                                        <div className="space-y-2">
                                                             {formData.technologyExperience?.map((exp, i) => (
                                                                 <div key={i} className="flex items-center gap-2">
                                                                     <input
@@ -413,7 +413,7 @@ export const BaselineHistories = ({ histories, employeeName, competency, gender,
                                                                     setFormData({
                                                                         ...formData,
                                                                         technologyExperience: [
-                                                                            ...formData.technologyExperience,
+                                                                            ...(formData.technologyExperience || []),
                                                                             { technology: "", years: 0 }
                                                                         ]
                                                                     });
@@ -422,7 +422,7 @@ export const BaselineHistories = ({ histories, employeeName, competency, gender,
                                                             >
                                                                 <FaPlus className="mr-1" /> Add Experience
                                                             </button>
-                                                        </>
+                                                        </div>
                                                     ) : (
                                                         <>
                                                             {history.technologyExperience?.map((exp, i) => (
@@ -446,9 +446,9 @@ export const BaselineHistories = ({ histories, employeeName, competency, gender,
                                                 <h4 className="text-2xs font-semibold text-purple-600 mb-1 flex items-center">
                                                     <FaInfoCircle className="mr-1 text-xs" /> CERTIFICATIONS
                                                 </h4>
-                                                <div className="space-y-1">
+                                                <div className="grid grid-cols-2 gap-2">
                                                     {isEditing ? (
-                                                        <>
+                                                        <div className="space-y-2">
                                                             {formData.certification?.map((cert, i) => (
                                                                 <div key={i} className="flex items-center gap-2">
                                                                     <input
@@ -490,7 +490,7 @@ export const BaselineHistories = ({ histories, employeeName, competency, gender,
                                                                     setFormData({
                                                                         ...formData,
                                                                         certification: [
-                                                                            ...formData.certification,
+                                                                            ...(formData.certification || []),
                                                                             { title: "", technology: "" }
                                                                         ]
                                                                     });
@@ -499,7 +499,7 @@ export const BaselineHistories = ({ histories, employeeName, competency, gender,
                                                             >
                                                                 <FaPlus className="mr-1" /> Add Certification
                                                             </button>
-                                                        </>
+                                                        </div>
                                                     ) : (
                                                         <>
                                                             {history.certification?.map((cert, i) => (
@@ -552,9 +552,9 @@ export const BaselineHistories = ({ histories, employeeName, competency, gender,
                                                 <h4 className="text-2xs font-semibold text-emerald-600 mb-1 flex items-center">
                                                     <FaStar className="mr-1 text-xs" /> SKILLS
                                                 </h4>
-                                                <div className="space-y-1">
+                                                <div className="grid grid-cols-2 gap-2">
                                                     {isEditing ? (
-                                                        <>
+                                                        <div className="space-y-3">
                                                             {formData.techSkills?.map((skill, i) => (
                                                                 <div key={i} className="space-y-2">
                                                                     <div className="flex items-center gap-2">
@@ -596,7 +596,7 @@ export const BaselineHistories = ({ histories, employeeName, competency, gender,
                                                                     ))}
                                                                 </div>
                                                             ))}
-                                                        </>
+                                                        </div>
                                                     ) : (
                                                         <>
                                                             {history.technicalSkills?.map((skill, i) => (
@@ -621,7 +621,7 @@ export const BaselineHistories = ({ histories, employeeName, competency, gender,
                                             </div>
 
                                             {/* Combined Feedback & Suggestion Section */}
-                                            <div className="space-y-2">
+                                            <div className="space-y-3">
                                                 <div className={`p-2 rounded ${sectionColors.feedback}`}>
                                                     <h4 className="text-2xs font-semibold text-indigo-600 mb-1 flex items-center">
                                                         <FaEdit className="mr-1 text-xs" /> FEEDBACK
