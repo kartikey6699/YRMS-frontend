@@ -1,16 +1,12 @@
 import React, { useState, useRef } from "react";
-import { FaBox, FaTags, FaUsers } from "react-icons/fa";
-import UserList from "./ManageUsers/UserList";
-import AddResource from "./ManageUsers/AddResources";
-import AddRole from "./ManageRoles/AddRole";
-import RolesPage from "./ManageRoles/ManageRole";
-import CompetencyPage from "./ManageCompetency/ManageCompetency";
+import { FaLock, FaChalkboardTeacher, FaUserShield, FaGraduationCap } from "react-icons/fa";
+import AccessManagement from "./AccessManagement";
+import TrainingManagement from "./TrainingManagement";
 
 const AdminDashboard = () => {
     const [selectedSection, setSelectedSection] = useState("");
     const [activeSection, setActiveSection] = useState("view");
     const contentRef = useRef(null);
-    const [selectedRole, setSelectedRole] = useState(null);
 
     const handleSectionClick = (section) => {
         setSelectedSection(section);
@@ -27,45 +23,32 @@ const AdminDashboard = () => {
                     <h2 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600 mb-6 text-center">
                         Admin Dashboard
                     </h2>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6  ">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <button
-                            onClick={() => handleSectionClick("user")}
-                            className={`flex flex-col items-center px-4 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 ${selectedSection === "user"
-                                ? "py-4 scale-[0.98] bg-gradient-to-br from-emerald-100 to-teal-100 border-2 border-emerald-200"
-                                : "py-6 bg-gradient-to-br from-white to-gray-50 border border-gray-200 hover:border-emerald-200"
-                                }`}
-                        >
-                            <div className="p-4 mb-3 rounded-full bg-gradient-to-br from-emerald-500 to-teal-500 text-white shadow-md">
-                                <FaTags size={24} />
-                            </div>
-                            <span className="text-lg font-semibold text-gray-700">User Management</span>
-                            <span className="text-sm text-emerald-600 mt-1">Manage Users</span>
-                        </button>
-                        <button
-                            onClick={() => handleSectionClick("role")}
-                            className={`flex flex-col items-center px-4 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 ${selectedSection === "role"
+                            onClick={() => handleSectionClick("access")}
+                            className={`flex flex-col items-center px-4 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 ${selectedSection === "access"
                                 ? "py-4 scale-[0.98] bg-gradient-to-br from-blue-100 to-indigo-100 border-2 border-blue-200"
                                 : "py-6 bg-gradient-to-br from-white to-gray-50 border border-gray-200 hover:border-blue-200"
                                 }`}
                         >
                             <div className="p-4 mb-3 rounded-full bg-gradient-to-br from-blue-500 to-indigo-500 text-white shadow-md">
-                                <FaBox size={24} />
+                                <FaLock size={24} />
                             </div>
-                            <span className="text-lg font-semibold text-gray-700">Role Management</span>
-                            <span className="text-sm text-blue-600 mt-1">Manage Roles</span>
+                            <span className="text-lg font-semibold text-gray-700">Access Management</span>
+                            <span className="text-sm text-blue-600 mt-1">Manage roles and permissions</span>
                         </button>
                         <button
-                            onClick={() => handleSectionClick("competency")}
-                            className={`flex flex-col items-center px-4 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 ${selectedSection === "competency"
+                            onClick={() => handleSectionClick("training")}
+                            className={`flex flex-col items-center px-4 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 ${selectedSection === "training"
                                 ? "py-4 scale-[0.98] bg-gradient-to-br from-purple-100 to-pink-100 border-2 border-purple-200"
                                 : "py-6 bg-gradient-to-br from-white to-gray-50 border border-gray-200 hover:border-purple-200"
                                 }`}
                         >
                             <div className="p-4 mb-3 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 text-white shadow-md">
-                                <FaUsers size={24} />
+                                <FaChalkboardTeacher size={24} />
                             </div>
-                            <span className="text-lg font-semibold text-gray-700">Competency Management</span>
-                            <span className="text-sm text-purple-600 mt-1">Manage system Competencies</span>
+                            <span className="text-lg font-semibold text-gray-700">Training Management</span>
+                            <span className="text-sm text-purple-600 mt-1">Manage trainers and sessions</span>
                         </button>
                     </div>
                 </div>
@@ -73,53 +56,37 @@ const AdminDashboard = () => {
                     ref={contentRef}
                     className="mt-10 p-6 bg-white rounded-xl shadow-lg border border-gray-200 transition-all duration-300"
                 >
-                    {selectedSection === "user" && (
-                        <>
-                            {activeSection === "view" ? (
-                                <UserList setActiveSection={setActiveSection} />
-                            ) : (
-                                <AddResource
-                                    setActiveSection={setActiveSection}
-                                    onSuccess={() => setActiveSection("view")}
-                                />
-                            )}
-                        </>
+                    {selectedSection === "access" && (
+                        <AccessManagement 
+                            activeSection={activeSection} 
+                            setActiveSection={setActiveSection} 
+                        />
                     )}
 
-                    {selectedSection === "role" && (
-                        <>
-                            {activeSection === "view" ? (
-                                <RolesPage setActiveSection={setActiveSection} setSelectedRole={setSelectedRole} />
-                            ) : (
-                                <AddRole
-                                    setActiveSection={setActiveSection}
-                                    setSelectedRole={setSelectedRole}
-                                    selectedRole={selectedRole}
-                                    onSuccess={() => setActiveSection("view")}
-                                />
-                            )}
-                        </>
+                    {selectedSection === "training" && (
+                        <TrainingManagement 
+                            activeSection={activeSection} 
+                            setActiveSection={setActiveSection} 
+                        />
                     )}
-                    {selectedSection === "competency" && (
-                    <CompetencyPage activeSection={activeSection} setActiveSection={setActiveSection} />
-                    )}
-                            {!selectedSection && (
-                                <div className="text-center py-12">
-                                    <div className="inline-block p-4 mb-4 rounded-full bg-gradient-to-br from-indigo-100 to-purple-100">
-                                        <FaUsers className="text-indigo-500 text-2xl" />
-                                    </div>
-                                    <h3 className="text-xl font-semibold text-gray-700 mb-2">
-                                        Welcome to Admin Dashboard
-                                    </h3>
-                                    <p className="text-gray-500 max-w-md mx-auto">
-                                        Select a section above to manage your eCommerce store.
-                                    </p>
-                                </div>
-                            )}
+
+                    {!selectedSection && (
+                        <div className="text-center py-12">
+                            <div className="inline-flex items-center justify-center p-4 mb-4 rounded-full bg-gradient-to-br from-indigo-100 to-purple-100">
+                                <FaUserShield className="text-indigo-500 text-2xl" />
+                            </div>
+                            <h3 className="text-xl font-semibold text-gray-700 mb-2">
+                                Welcome to Admin Dashboard
+                            </h3>
+                            <p className="text-gray-500 max-w-md mx-auto">
+                                Select a section above to manage access controls or training programs.
+                            </p>
                         </div>
+                    )}
                 </div>
             </div>
-            );
+        </div>
+    );
 };
 
-            export default AdminDashboard;
+export default AdminDashboard;
