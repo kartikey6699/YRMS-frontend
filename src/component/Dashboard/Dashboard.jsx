@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 const Dashboard = () => {
   const navigate = useNavigate();
   const currentHour = new Date().getHours();
+  const competencyName = sessionStorage.getItem('competencyName') || 'Your Team';
 
   // Time-based greetings with fallback for missing images
   const { backgroundImage, greeting } = (() => {
@@ -68,6 +69,11 @@ const Dashboard = () => {
         <h1 className="text-3xl md:text-4xl font-bold text-white absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 drop-shadow-lg">
           {greeting}
         </h1>
+        <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-white/80 backdrop-blur-sm px-6 py-2 rounded-full shadow-md">
+          <span className="text-lg md:text-xl font-semibold text-gray-800">
+            Welcome to <span className="text-blue-600">{competencyName}</span> Competency
+          </span>
+        </div>
       </div>
       
       {/* Quick Actions Section */}
