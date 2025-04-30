@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { FaStar, FaChevronDown, FaChevronUp } from "react-icons/fa";
+import { FaStar, FaChevronDown, FaChevronUp, FaChartLine, FaInfoCircle, FaAward } from "react-icons/fa";
 
 const BaselineTimeline = ({ histories }) => {
   const getStatusStyles = (rating) => {
@@ -77,7 +77,6 @@ const BaselineTimeline = ({ histories }) => {
     (a, b) => new Date(a.timestamp) - new Date(b.timestamp)
   );
 
-  // Moved isExpanded state to an array to handle multiple histories
   const [expandedStates, setExpandedStates] = useState({});
 
   const toggleExpand = (publicId) => {
@@ -87,25 +86,36 @@ const BaselineTimeline = ({ histories }) => {
     }));
   };
 
+  // Section colors for better visual hierarchy
+  const sectionColors = {
+    skills: "bg-emerald-50 border-l-4 border-emerald-300",
+    experience: "bg-blue-50 border-l-4 border-blue-300",
+    certifications: "bg-purple-50 border-l-4 border-purple-300",
+    feedback: "bg-indigo-50 border-l-4 border-indigo-300",
+    communication: "bg-amber-50 border-l-4 border-amber-300"
+  };
+
   return (
     <div className="space-y-4 h-full">
-      <h3 className="text-lg font-semibold text-gray-800 mb-4">Previous Baselines</h3>
+      <h3 className="text-lg font-semibold text-gray-800 mb-4">Baseline History</h3>
       <div className="space-y-3">
         {sortedHistories.map((history) => {
           const overallRating = Math.round(history.rating);
           const statusStyles = getStatusStyles(overallRating);
+          const isExpanded = expandedStates[history.publicId];
 
           return (
             <div 
               key={history.publicId} 
               className={`rounded-lg overflow-hidden transition-all duration-300 ${statusStyles.gradient} border-l-4 ${statusStyles.border}`}
             >
+              {/* Header */}
               <div 
                 onClick={() => toggleExpand(history.publicId)}
                 className="p-3 flex justify-between items-center cursor-pointer hover:bg-opacity-90 transition-colors"
               >
                 <div className="flex items-center space-x-3">
-                  <div className={`w-7 h-7 rounded-full flex items-center justify-center ${statusStyles.bg} border ${statusStyles.border}`}>
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center ${statusStyles.bg} border ${statusStyles.border}`}>
                     <span className="text-xs font-bold">{overallRating}</span>
                   </div>
                   <div>
@@ -113,68 +123,137 @@ const BaselineTimeline = ({ histories }) => {
                       {formatDate(history.timestamp)}
                     </h4>
                     <p className="text-xs text-gray-600">
-                      {history.technicalSkills?.length || 0} skills | {history.communication}
+                      {history.technicalSkills?.length || 0} skills • {history.communication} • {history.totalExperience} yrs
                     </p>
                   </div>
                 </div>
-                {expandedStates[history.publicId] ? (
+                {isExpanded ? (
                   <FaChevronUp className="text-gray-600 w-4 h-4" />
                 ) : (
                   <FaChevronDown className="text-gray-600 w-4 h-4" />
                 )}
               </div>
 
-              {expandedStates[history.publicId] && (
+              {/* Expanded Content */}
+              {isExpanded && (
                 <div className="p-3 bg-white/90 border-t border-gray-200">
-                  <div className="space-y-2 text-xs">
-                    {/* Technical Skills */}
-                    <div>
-                      <h5 className="font-medium text-gray-500 mb-1">Top Skills</h5>
-                      <div className="space-y-1">
-                        {history.technicalSkills?.slice(0, 3).map((skill, i) => (
-                          <div key={i} className="flex justify-between items-center">
-                            <span className="text-gray-700">{skill.technology}</span>
-                            <div className="flex items-center">
-                              {[...Array(5)].map((_, j) => (
-                                <FaStar
-                                  key={j}
-                                  className={`${j < skill.rating ? statusStyles.star : "text-gray-300"} w-2.5 h-2.5`}
-                                />
-                              ))}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+                    
+                    {/* Left Column */}
+                    <div className="space-y-3">
+                      {/* Skills Section */}
+                      <div className={`p-3 rounded ${sectionColors.skills}`}>
+                        <div className="flex items-center mb-2">
+                          <FaStar className="text-emerald-500 mr-2 text-sm" />
+                          <h5 className="text-xs font-semibold text-emerald-700">TECHNICAL SKILLS</h5>
+                        </div>
+                        <div className="space-y-2">
+                          {history.technicalSkills?.map((skill, i) => (
+                            <div key={i} className="flex justify-between items-center bg-white p-2 rounded border border-emerald-100">
+                              <span className="text-xs text-gray-700">{skill.technology}</span>
+                              <div className="flex items-center">
+                                {[...Array(5)].map((_, j) => (
+                                  <FaStar
+                                    key={j}
+                                    className={`${j < skill.rating ? "text-amber-400" : "text-gray-300"} w-3 h-3`}
+                                  />
+                                ))}
+                              </div>
                             </div>
-                          </div>
-                        ))}
+                          ))}
+                          {(!history.technicalSkills || history.technicalSkills.length === 0) && (
+                            <p className="text-xs text-gray-400 italic">No skills recorded</p>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Experience Section */}
+                      <div className={`p-3 rounded ${sectionColors.experience}`}>
+                        <div className="flex items-center mb-2">
+                          <FaChartLine className="text-blue-500 mr-2 text-sm" />
+                          <h5 className="text-xs font-semibold text-blue-700">EXPERIENCE</h5>
+                        </div>
+                        <div className="space-y-2">
+                          {history.technologyExperience?.map((exp, i) => (
+                            <div key={i} className="flex justify-between items-center bg-white p-2 rounded border border-blue-100">
+                              <span className="text-xs text-gray-700">{exp.technology}</span>
+                              <span className="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full">
+                                {exp.years} yrs
+                              </span>
+                            </div>
+                          ))}
+                          {(!history.technologyExperience || history.technologyExperience.length === 0) && (
+                            <p className="text-xs text-gray-400 italic">No experience recorded</p>
+                          )}
+                        </div>
                       </div>
                     </div>
 
-                    {/* Experience */}
-                    <div>
-                      <h5 className="font-medium text-gray-500 mb-1">Experience</h5>
-                      <div className="space-y-1">
-                        {history.technologyExperience?.slice(0, 2).map((exp, i) => (
-                          <div key={i} className="flex justify-between items-center">
-                            <span className="text-gray-700">{exp.technology}</span>
-                            <span className="bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded-full">
-                              {exp.years} yrs
-                            </span>
-                          </div>
-                        ))}
+                    {/* Right Column */}
+                    <div className="space-y-3">
+                      {/* Certifications Section */}
+                      <div className={`p-3 rounded ${sectionColors.certifications}`}>
+                        <div className="flex items-center mb-2">
+                          <FaAward className="text-purple-500 mr-2 text-sm" />
+                          <h5 className="text-xs font-semibold text-purple-700">CERTIFICATIONS</h5>
+                        </div>
+                        <div className="space-y-2">
+                          {history.certification?.map((cert, i) => (
+                            <div key={i} className="flex justify-between items-center bg-white p-2 rounded border border-purple-100">
+                              <span className="text-xs text-gray-700">{cert.title}</span>
+                              <span className="text-xs bg-purple-100 text-purple-800 px-2 py-0.5 rounded-full">
+                                {cert.technology}
+                              </span>
+                            </div>
+                          ))}
+                          {(!history.certification || history.certification.length === 0) && (
+                            <p className="text-xs text-gray-400 italic">No certifications</p>
+                          )}
+                        </div>
                       </div>
-                    </div>
 
-                    {/* Certifications */}
-                    <div>
-                      <h5 className="font-medium text-gray-500 mb-1">Certifications</h5>
-                      <div className="space-y-1">
-                        {history.certification?.slice(0, 2).map((cert, i) => (
-                          <div key={i} className="flex justify-between items-center">
-                            <span className="text-gray-700">{cert.title}</span>
-                            <span className="bg-purple-100 text-purple-800 px-1.5 py-0.5 rounded-full">
-                              {cert.technology}
-                            </span>
-                          </div>
-                        ))}
+                      {/* Communication Section */}
+                      <div className={`p-3 rounded ${sectionColors.communication}`}>
+                        <div className="flex items-center mb-2">
+                          <FaInfoCircle className="text-amber-500 mr-2 text-sm" />
+                          <h5 className="text-xs font-semibold text-amber-700">COMMUNICATION</h5>
+                        </div>
+                        <div className="bg-white p-2 rounded border border-amber-100">
+                          <p className="text-xs text-gray-700 capitalize">
+                            {history.communication?.toLowerCase() || "Not specified"}
+                          </p>
+                        </div>
                       </div>
+
+                      {/* Feedback Section */}
+                      {history.feedback && (
+                        <div className={`p-3 rounded ${sectionColors.feedback}`}>
+                          <div className="flex items-center mb-2">
+                            <FaInfoCircle className="text-indigo-500 mr-2 text-sm" />
+                            <h5 className="text-xs font-semibold text-indigo-700">FEEDBACK</h5>
+                          </div>
+                          <div className="bg-white p-2 rounded border border-indigo-100">
+                            <p className="text-xs text-gray-700">
+                              {history.feedback}
+                            </p>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Suggestion Section */}
+                      {history.upskillSuggestion && (
+                        <div className={`p-3 rounded ${sectionColors.feedback}`}>
+                          <div className="flex items-center mb-2">
+                            <FaInfoCircle className="text-indigo-500 mr-2 text-sm" />
+                            <h5 className="text-xs font-semibold text-indigo-700">SUGGESTION</h5>
+                          </div>
+                          <div className="bg-white p-2 rounded border border-indigo-100">
+                            <p className="text-xs text-gray-700">
+                              {history.upskillSuggestion}
+                            </p>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -184,8 +263,8 @@ const BaselineTimeline = ({ histories }) => {
         })}
 
         {sortedHistories.length === 0 && (
-          <div className="text-center py-4">
-            <p className="text-gray-500 text-sm">No previous baselines</p>
+          <div className="text-center py-6">
+            <p className="text-gray-500 text-sm">No baseline history available</p>
           </div>
         )}
       </div>
