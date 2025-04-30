@@ -262,6 +262,16 @@ export const BaselineHistories = ({ histories, employeeName, competency, gender,
         (a, b) => new Date(a.timestamp) - new Date(b.timestamp)
     );
 
+    // More compact section colors
+    const sectionColors = {
+        experience: "border-l-4 border-blue-300 bg-blue-50/50",
+        certification: "border-l-4 border-purple-300 bg-purple-50/50",
+        skills: "border-l-4 border-emerald-300 bg-emerald-50/50",
+        communication: "border-l-4 border-amber-300 bg-amber-50/50",
+        feedback: "border-l-4 border-indigo-300 bg-indigo-50/50",
+        suggestion: "border-l-4 border-teal-300 bg-teal-50/50"
+    };
+
     return (
         <>
             <div className="fixed top-4 right-4 z-60">
@@ -278,25 +288,26 @@ export const BaselineHistories = ({ histories, employeeName, competency, gender,
                     return (
                         <div key={`${history.publicId}-${index}`} 
                              className={`rounded-lg overflow-hidden transition-all duration-300 ${statusStyles.gradient} border-l-4 ${statusStyles.border}`}>
-                            {/* Accordion Header */}
+                            
+                            {/* Compact Accordion Header */}
                             <div 
                                 onClick={() => !isEditing && toggleAccordion(index)}
-                                className="p-4 flex justify-between items-center cursor-pointer hover:bg-opacity-90 transition-colors"
+                                className="p-3 flex justify-between items-center cursor-pointer hover:bg-opacity-90 transition-colors"
                             >
-                                <div className="flex items-center space-x-3">
-                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center ${statusStyles.bg} border ${statusStyles.border}`}>
-                                        <span className="text-sm font-bold">{overallRating}</span>
+                                <div className="flex items-center space-x-2">
+                                    <div className={`w-7 h-7 rounded-full flex items-center justify-center ${statusStyles.bg} border ${statusStyles.border}`}>
+                                        <span className="text-xs font-bold">{overallRating}</span>
                                     </div>
                                     <div>
-                                        <h3 className="text-sm font-semibold text-gray-800">
+                                        <h3 className="text-xs font-semibold text-gray-800">
                                             Baseline #{index + 1} - {formatDate(history.timestamp)}
                                         </h3>
-                                        <p className="text-xs text-gray-600">
-                                            {history.technicalSkills?.length || 0} skills | {history.communication} | {history.totalExperience} yrs exp
+                                        <p className="text-2xs text-gray-500">
+                                            {history.technicalSkills?.length || 0} skills • {history.communication} • {history.totalExperience} yrs
                                         </p>
                                     </div>
                                 </div>
-                                <div className="flex items-center space-x-2">
+                                <div className="flex items-center space-x-1">
                                     {!isEditing && isExpanded ? (
                                         <button 
                                             onClick={(e) => {
@@ -346,15 +357,19 @@ export const BaselineHistories = ({ histories, employeeName, competency, gender,
                                 </div>
                             </div>
 
-                            {/* Accordion Content - Full Details */}
+                            {/* Compact Accordion Content */}
                             {isExpanded && (
-                                <div className="p-4 bg-white/90 border-t border-gray-200">
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        {/* Left Column */}
-                                        <div className="space-y-4">
-                                            <div>
-                                                <h4 className="text-xs font-medium text-gray-500 mb-2">TECHNOLOGY EXPERIENCE</h4>
-                                                <div className="space-y-2">
+                                <div className="p-3 bg-white/90 border-t border-gray-200">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-[350px] overflow-y-auto pr-2 custom-scrollbar">
+                                        
+                                        {/* Left Column - Experience & Certifications */}
+                                        <div className="space-y-3">
+                                            {/* Experience Section */}
+                                            <div className={`p-2 rounded ${sectionColors.experience}`}>
+                                                <h4 className="text-2xs font-semibold text-blue-600 mb-1 flex items-center">
+                                                    <FaChartLine className="mr-1 text-xs" /> EXPERIENCE
+                                                </h4>
+                                                <div className="space-y-1">
                                                     {isEditing ? (
                                                         <>
                                                             {formData.technologyExperience?.map((exp, i) => (
@@ -364,29 +379,32 @@ export const BaselineHistories = ({ histories, employeeName, competency, gender,
                                                                         value={exp.technology}
                                                                         onChange={(e) => {
                                                                             const updated = [...formData.technologyExperience];
-                                                                            updated[i] = { ...updated[i], technology: e.target.value }; // Update the technology field
+                                                                            updated[i] = { ...updated[i], technology: e.target.value };
                                                                             setFormData({...formData, technologyExperience: updated});
                                                                         }}
-                                                                        className="flex-1 p-2 border rounded"
+                                                                        className="flex-1 p-2 border rounded text-sm"
+                                                                        placeholder="Technology"
                                                                     />
                                                                     <input
                                                                         type="number"
                                                                         value={exp.years}
                                                                         onChange={(e) => {
                                                                             const updated = [...formData.technologyExperience];
-                                                                            updated[i] = { ...updated[i], years: parseInt(e.target.value) || 0 }; // Update the years field
+                                                                            updated[i] = { ...updated[i], years: parseInt(e.target.value) || 0 };
                                                                             setFormData({...formData, technologyExperience: updated});
                                                                         }}
-                                                                        className="w-20 p-2 border rounded"
+                                                                        className="w-20 p-2 border rounded text-sm"
+                                                                        placeholder="Years"
                                                                     />
                                                                     <button
                                                                         onClick={() => {
                                                                             const updated = formData.technologyExperience.filter((_, idx) => idx !== i);
                                                                             setFormData({...formData, technologyExperience: updated});
                                                                         }}
-                                                                        className="text-red-500"
+                                                                        className="text-red-500 hover:text-red-700"
+                                                                        title="Remove"
                                                                     >
-                                                                        <FaTimes />
+                                                                        <FaTimes className="w-3 h-3" />
                                                                     </button>
                                                                 </div>
                                                             ))}
@@ -396,11 +414,11 @@ export const BaselineHistories = ({ histories, employeeName, competency, gender,
                                                                         ...formData,
                                                                         technologyExperience: [
                                                                             ...formData.technologyExperience,
-                                                                            { technology: "", years: 0 } // Initialize years to 0
+                                                                            { technology: "", years: 0 }
                                                                         ]
                                                                     });
                                                                 }}
-                                                                className="text-blue-500 text-sm flex items-center"
+                                                                className="text-blue-600 text-xs flex items-center hover:text-blue-800 mt-2"
                                                             >
                                                                 <FaPlus className="mr-1" /> Add Experience
                                                             </button>
@@ -408,7 +426,7 @@ export const BaselineHistories = ({ histories, employeeName, competency, gender,
                                                     ) : (
                                                         <>
                                                             {history.technologyExperience?.map((exp, i) => (
-                                                                <div key={i} className="flex justify-between items-center bg-gray-50 p-2 rounded">
+                                                                <div key={i} className="flex justify-between items-center bg-white p-2 rounded border border-blue-100">
                                                                     <span className="text-sm text-gray-700">{exp.technology}</span>
                                                                     <span className="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full">
                                                                         {exp.years} yrs
@@ -423,9 +441,12 @@ export const BaselineHistories = ({ histories, employeeName, competency, gender,
                                                 </div>
                                             </div>
 
-                                            <div>
-                                                <h4 className="text-xs font-medium text-gray-500 mb-2">CERTIFICATIONS</h4>
-                                                <div className="space-y-2">
+                                            {/* Certification Section */}
+                                            <div className={`p-2 rounded ${sectionColors.certification}`}>
+                                                <h4 className="text-2xs font-semibold text-purple-600 mb-1 flex items-center">
+                                                    <FaInfoCircle className="mr-1 text-xs" /> CERTIFICATIONS
+                                                </h4>
+                                                <div className="space-y-1">
                                                     {isEditing ? (
                                                         <>
                                                             {formData.certification?.map((cert, i) => (
@@ -438,7 +459,8 @@ export const BaselineHistories = ({ histories, employeeName, competency, gender,
                                                                             updated[i].title = e.target.value;
                                                                             setFormData({...formData, certification: updated});
                                                                         }}
-                                                                        className="flex-1 p-2 border rounded"
+                                                                        className="flex-1 p-2 border rounded text-sm"
+                                                                        placeholder="Title"
                                                                     />
                                                                     <input
                                                                         type="text"
@@ -448,16 +470,18 @@ export const BaselineHistories = ({ histories, employeeName, competency, gender,
                                                                             updated[i].technology = e.target.value;
                                                                             setFormData({...formData, certification: updated});
                                                                         }}
-                                                                        className="flex-1 p-2 border rounded"
+                                                                        className="flex-1 p-2 border rounded text-sm"
+                                                                        placeholder="Technology"
                                                                     />
                                                                     <button
                                                                         onClick={() => {
                                                                             const updated = formData.certification.filter((_, idx) => idx !== i);
                                                                             setFormData({...formData, certification: updated});
                                                                         }}
-                                                                        className="text-red-500"
+                                                                        className="text-red-500 hover:text-red-700"
+                                                                        title="Remove"
                                                                     >
-                                                                        <FaTimes />
+                                                                        <FaTimes className="w-3 h-3" />
                                                                     </button>
                                                                 </div>
                                                             ))}
@@ -471,7 +495,7 @@ export const BaselineHistories = ({ histories, employeeName, competency, gender,
                                                                         ]
                                                                     });
                                                                 }}
-                                                                className="text-blue-500 text-sm flex items-center"
+                                                                className="text-purple-600 text-xs flex items-center hover:text-purple-800 mt-2"
                                                             >
                                                                 <FaPlus className="mr-1" /> Add Certification
                                                             </button>
@@ -479,7 +503,7 @@ export const BaselineHistories = ({ histories, employeeName, competency, gender,
                                                     ) : (
                                                         <>
                                                             {history.certification?.map((cert, i) => (
-                                                                <div key={i} className="flex justify-between items-center bg-gray-50 p-2 rounded">
+                                                                <div key={i} className="flex justify-between items-center bg-white p-2 rounded border border-purple-100">
                                                                     <span className="text-sm text-gray-700">{cert.title}</span>
                                                                     <span className="text-xs bg-purple-100 text-purple-800 px-2 py-0.5 rounded-full">
                                                                         {cert.technology}
@@ -493,13 +517,42 @@ export const BaselineHistories = ({ histories, employeeName, competency, gender,
                                                     )}
                                                 </div>
                                             </div>
+
+                                            {/* Communication Section */}
+                                            <div className={`p-2 rounded ${sectionColors.communication}`}>
+                                                <h4 className="text-2xs font-semibold text-amber-600 mb-1 flex items-center">
+                                                    <FaUser className="mr-1 text-xs" /> COMMUNICATION
+                                                </h4>
+                                                {isEditing ? (
+                                                    <select
+                                                        name="communication"
+                                                        value={formData.communication}
+                                                        onChange={handleInputChange}
+                                                        className="w-full p-2 border rounded text-sm bg-white"
+                                                    >
+                                                        <option value="">Select Level</option>
+                                                        <option value="1">Average</option>
+                                                        <option value="2">Medium</option>
+                                                        <option value="3">Fluent</option>
+                                                    </select>
+                                                ) : (
+                                                    <div className="bg-white p-2 rounded border border-amber-100">
+                                                        <p className="text-sm text-gray-700 capitalize">
+                                                            {history.communication?.toLowerCase() || "Not specified"}
+                                                        </p>
+                                                    </div>
+                                                )}
+                                            </div>
                                         </div>
 
-                                        {/* Right Column */}
-                                        <div className="space-y-4">
-                                            <div>
-                                                <h4 className="text-xs font-medium text-gray-500 mb-2">TECHNICAL SKILLS</h4>
-                                                <div className="space-y-2">
+                                        {/* Right Column - Skills & Feedback */}
+                                        <div className="space-y-3">
+                                            {/* Skills Section */}
+                                            <div className={`p-2 rounded ${sectionColors.skills}`}>
+                                                <h4 className="text-2xs font-semibold text-emerald-600 mb-1 flex items-center">
+                                                    <FaStar className="mr-1 text-xs" /> SKILLS
+                                                </h4>
+                                                <div className="space-y-1">
                                                     {isEditing ? (
                                                         <>
                                                             {formData.techSkills?.map((skill, i) => (
@@ -512,7 +565,7 @@ export const BaselineHistories = ({ histories, employeeName, competency, gender,
                                                                                 updated[i].category = e.target.value;
                                                                                 setFormData({...formData, techSkills: updated});
                                                                             }}
-                                                                            className="flex-1 p-2 border rounded"
+                                                                            className="flex-1 p-2 border rounded text-sm bg-white"
                                                                         >
                                                                             <option value="">Select Category</option>
                                                                             {technologyCategoriesWithTech.map(cat => (
@@ -523,20 +576,22 @@ export const BaselineHistories = ({ histories, employeeName, competency, gender,
                                                                         </select>
                                                                     </div>
                                                                     {skill.technologies.map((tech, techIdx) => (
-                                                                        <div key={techIdx} className="flex items-center gap-2 ml-4">
-                                                                            <span className="text-sm">{tech.name}</span>
-                                                                            <input
-                                                                                type="number"
-                                                                                value={tech.rating}
-                                                                                onChange={(e) => {
-                                                                                    const updated = [...formData.techSkills];
-                                                                                    updated[i].technologies[techIdx].rating = e.target.value;
-                                                                                    setFormData({...formData, techSkills: updated});
-                                                                                }}
-                                                                                min="0"
-                                                                                max="5"
-                                                                                className="w-12 p-1 border rounded"
-                                                                            />
+                                                                        <div key={techIdx} className="flex items-center gap-2 ml-4 bg-white p-2 rounded border border-emerald-100">
+                                                                            <span className="text-sm flex-1">{tech.name}</span>
+                                                                            <div className="flex items-center">
+                                                                                <input
+                                                                                    type="number"
+                                                                                    value={tech.rating}
+                                                                                    onChange={(e) => {
+                                                                                        const updated = [...formData.techSkills];
+                                                                                        updated[i].technologies[techIdx].rating = e.target.value;
+                                                                                        setFormData({...formData, techSkills: updated});
+                                                                                    }}
+                                                                                    min="0"
+                                                                                    max="5"
+                                                                                    className="w-12 p-1 border rounded text-center"
+                                                                                />
+                                                                            </div>
                                                                         </div>
                                                                     ))}
                                                                 </div>
@@ -545,13 +600,13 @@ export const BaselineHistories = ({ histories, employeeName, competency, gender,
                                                     ) : (
                                                         <>
                                                             {history.technicalSkills?.map((skill, i) => (
-                                                                <div key={i} className="flex justify-between items-center bg-gray-50 p-2 rounded">
+                                                                <div key={i} className="flex justify-between items-center bg-white p-2 rounded border border-emerald-100">
                                                                     <span className="text-sm text-gray-700">{skill.technology}</span>
                                                                     <div className="flex items-center">
                                                                         {[...Array(5)].map((_, i) => (
                                                                             <FaStar
                                                                                 key={i}
-                                                                                className={`${i < skill.rating ? statusStyles.star : "text-gray-300"} w-3 h-3`}
+                                                                                className={`${i < skill.rating ? "text-amber-400" : "text-gray-300"} w-3 h-3`}
                                                                             />
                                                                         ))}
                                                                     </div>
@@ -565,40 +620,49 @@ export const BaselineHistories = ({ histories, employeeName, competency, gender,
                                                 </div>
                                             </div>
 
-                                            <div>
-                                                <h4 className="text-xs font-medium text-gray-500 mb-2">FEEDBACK</h4>
-                                                {isEditing ? (
-                                                    <textarea
-                                                        value={formData.feedback}
-                                                        onChange={(e) => setFormData({...formData, feedback: e.target.value})}
-                                                        className="w-full p-2 border rounded"
-                                                        rows="3"
-                                                    />
-                                                ) : (
-                                                    <div className="bg-gray-50 p-3 rounded">
-                                                        <p className="text-sm text-gray-700">
-                                                            {history.feedback || "No feedback provided"}
-                                                        </p>
-                                                    </div>
-                                                )}
-                                            </div>
+                                            {/* Combined Feedback & Suggestion Section */}
+                                            <div className="space-y-2">
+                                                <div className={`p-2 rounded ${sectionColors.feedback}`}>
+                                                    <h4 className="text-2xs font-semibold text-indigo-600 mb-1 flex items-center">
+                                                        <FaEdit className="mr-1 text-xs" /> FEEDBACK
+                                                    </h4>
+                                                    {isEditing ? (
+                                                        <textarea
+                                                            value={formData.feedback}
+                                                            onChange={(e) => setFormData({...formData, feedback: e.target.value})}
+                                                            className="w-full p-2 border rounded text-sm bg-white"
+                                                            rows="3"
+                                                            placeholder="Enter feedback..."
+                                                        />
+                                                    ) : (
+                                                        <div className="bg-white p-3 rounded border border-indigo-100">
+                                                            <p className="text-sm text-gray-700">
+                                                                {history.feedback || <span className="text-gray-400 italic">No feedback provided</span>}
+                                                            </p>
+                                                        </div>
+                                                    )}
+                                                </div>
 
-                                            <div>
-                                                <h4 className="text-xs font-medium text-gray-500 mb-2">UPSKILL SUGGESTION</h4>
-                                                {isEditing ? (
-                                                    <textarea
-                                                        value={formData.upskillSuggestion}
-                                                        onChange={(e) => setFormData({...formData, upskillSuggestion: e.target.value})}
-                                                        className="w-full p-2 border rounded"
-                                                        rows="3"
-                                                    />
-                                                ) : (
-                                                    <div className="bg-gray-50 p-3 rounded">
-                                                        <p className="text-sm text-gray-700">
-                                                            {history.upskillSuggestion || "No suggestions provided"}
-                                                        </p>
-                                                    </div>
-                                                )}
+                                                <div className={`p-2 rounded ${sectionColors.suggestion}`}>
+                                                    <h4 className="text-2xs font-semibold text-teal-600 mb-1 flex items-center">
+                                                        <FaInfoCircle className="mr-1 text-xs" /> SUGGESTION
+                                                    </h4>
+                                                    {isEditing ? (
+                                                        <textarea
+                                                            value={formData.upskillSuggestion}
+                                                            onChange={(e) => setFormData({...formData, upskillSuggestion: e.target.value})}
+                                                            className="w-full p-2 border rounded text-sm bg-white"
+                                                            rows="3"
+                                                            placeholder="Enter upskill suggestions..."
+                                                        />
+                                                    ) : (
+                                                        <div className="bg-white p-3 rounded border border-teal-100">
+                                                            <p className="text-sm text-gray-700">
+                                                                {history.upskillSuggestion || <span className="text-gray-400 italic">No suggestions provided</span>}
+                                                            </p>
+                                                        </div>
+                                                    )}
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -614,9 +678,6 @@ export const BaselineHistories = ({ histories, employeeName, competency, gender,
                     </div>
                 )}
             </div>
-
-            {/* Baseline Details Modal - Keep this exactly as is from your original code */}
-            
         </>
     );
 };
