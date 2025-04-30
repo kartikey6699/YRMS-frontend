@@ -13,6 +13,7 @@ import { SuccessToast, ErrorToast } from '../../helper/ResourceToast';
 import { RESUME_API } from '../../../config/Endpoints/Endpoints';
 import axios from 'axios';
 import { ADMIN_API_BASE_URL } from '../../../config/Endpoints/BaseEndpoints';
+import backgroundImage from '../../../assets/images/Profile/ProfileBg2.jpg';
 
 const skillColors = [
   'bg-blue-100 text-blue-800',
@@ -125,7 +126,7 @@ const EmployeeDetail = ({ publicId, onClose }) => {
             fill="currentColor"
             viewBox="0 0 20 20"
           >
-            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3 .921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784 .57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81 .588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
           </svg>
         ))}
       </div>
@@ -470,7 +471,7 @@ const EmployeeDetail = ({ publicId, onClose }) => {
   if (!formData) {
     return (
       <div className="fixed inset-0 flex items-center justify-center z-50 backdrop-blur-sm bg-black/20 p-4">
-        <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-4xl">
+        <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-4.5xl">
           Loading employee details...
         </div>
       </div>
@@ -489,94 +490,100 @@ const EmployeeDetail = ({ publicId, onClose }) => {
       </div>
 
       <div className="fixed inset-0 flex items-center justify-center z-50 backdrop-blur-sm bg-black/20 p-4">
-        <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-4xl border border-gray-200">
-          <div className="flex justify-between items-center mb-6 bg-blue-50 px-4 py-3 rounded-lg">
-            <div className="flex items-center">
-              <div className="relative">
-                {profilePicPreview ? (
-                  <>
-                    <img
-                      src={profilePicPreview}
-                      alt="Profile"
-                      className="w-12 h-12 rounded-full mr-3 object-cover border-2 border-blue-200"
+        <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-4.5xl border border-gray-200">
+          <div className="relative mb-6 rounded-lg overflow-hidden">
+            <img
+              src={backgroundImage}
+              alt="Background"
+              className="absolute top-0 left-0 w-full h-full object-cover z-0"
+            />
+            <div className="relative flex justify-between items-center px-4 py-3 z-10">
+              <div className="flex items-center">
+                <div className="relative">
+                  {profilePicPreview ? (
+                    <>
+                      <img
+                        src={profilePicPreview}
+                        alt="Profile"
+                        className="w-12 h-12 rounded-full mr-3 object-cover border-2 border-blue-200"
+                      />
+                      {profilePic && (
+                        <button
+                          onClick={removeProfilePic}
+                          className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
+                          disabled={loading || isUploading}
+                        >
+                          <FaTimes className="text-xs" />
+                        </button>
+                      )}
+                    </>
+                  ) : (
+                    <FaUser className="w-12 h-12 rounded-full mr-3 text-gray-400" />
+                  )}
+                </div>
+                {isEditing ? (
+                  <div className="flex flex-col">
+                    <input
+                      name="employeeName"
+                      value={formData.employeeName}
+                      onChange={handleInputChange}
+                      className="text-xl font-semibold text-gray-800 border rounded-md px-2 py-1 focus:ring-1 focus:ring-blue-300 bg-white bg-opacity-90"
+                      disabled={loading}
                     />
-                    {profilePic && (
-                      <button
-                        onClick={removeProfilePic}
-                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
+                    <div className="mt-2">
+                      <input
+                        type="file"
+                        id="profilePic"
+                        name="profilePic"
+                        accept="image/*"
+                        onChange={handleProfilePicChange}
+                        className="hidden"
                         disabled={loading || isUploading}
+                      />
+                      <label
+                        htmlFor="profilePic"
+                        className={`flex items-center px-3 py-1.5 rounded-md text-sm cursor-pointer transition-all ${isUploading ? 'bg-gray-100 text-gray-500' : 'bg-blue-100 text-blue-700 hover:bg-blue-200 active:scale-95'}`}
                       >
-                        <FaTimes className="text-xs" />
-                      </button>
-                    )}
-                  </>
+                        <FaUpload className="mr-1 text-xs" />
+                        {isUploading ? 'Uploading...' : 'Update Profile Picture'}
+                      </label>
+                    </div>
+                  </div>
                 ) : (
-                  <FaUser className="w-12 h-12 rounded-full mr-3 text-gray-400" />
+                  <h3 className="text-xl font-semibold text-gray-800 bg-white bg-opacity-90 px-2 py-1 rounded">
+                    {formData.employeeName}
+                  </h3>
                 )}
               </div>
-              {isEditing ? (
-                <div className="flex flex-col">
-                  <input
-                    name="employeeName"
-                    value={formData.employeeName}
-                    onChange={handleInputChange}
-                    className="text-xl font-semibold text-gray-800 border rounded-md px-2 py-1 focus:ring-1 focus:ring-blue-300"
-                    disabled={loading}
-                  />
-                  <div className="mt-2">
-                    <input
-                      type="file"
-                      id="profilePic"
-                      name="profilePic"
-                      accept="image/*"
-                      onChange={handleProfilePicChange}
-                      className="hidden"
-                      disabled={loading || isUploading}
-                    />
-                    <label
-                      htmlFor="profilePic"
-                      className={`flex items-center px-3 py-1.5 rounded-md text-sm cursor-pointer transition-all ${isUploading ? 'bg-gray-100 text-gray-500' : 'bg-blue-100 text-blue-700 hover:bg-blue-200 active:scale-95'
-                        }`}
-                    >
-                      <FaUpload className="mr-1 text-xs" />
-                      {isUploading ? 'Uploading...' : 'Update Profile Picture'}
-                    </label>
-                  </div>
-                </div>
-              ) : (
-                <h3 className="text-xl font-semibold text-gray-800">
-                  {formData.employeeName}
-                </h3>
-              )}
-            </div>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setIsEditing(!isEditing)}
-                className="flex items-center px-3 py-1.5 bg-blue-100 text-blue-600 rounded-md hover:bg-blue-200 text-sm"
-                disabled={loading}
-              >
-                {isEditing ? (
-                  <>
-                    <FaTimes className="mr-1" /> Cancel
-                  </>
-                ) : (
-                  <>
-                    <FaEdit className="mr-1" /> Edit
-                  </>
-                )}
-              </button>
-              <button
-                onClick={onClose}
-                className="p-1.5 rounded-md bg-gray-100 hover:bg-gray-200 text-gray-600"
-                disabled={loading}
-              >
-                <FaTimes size={14} />
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setIsEditing(!isEditing)}
+                  className="flex items-center px-3 py-1.5 bg-blue-100 text-blue-600 rounded-md hover:bg-blue-200 text-sm"
+                  disabled={loading}
+                >
+                  {isEditing ? (
+                    <>
+                      <FaTimes className="mr-1" /> Cancel
+                    </>
+                  ) : (
+                    <>
+                      <FaEdit className="mr-1" /> Edit
+                    </>
+                  )}
+                </button>
+                <button
+                  onClick={onClose}
+                  className="p-1.5 rounded-md bg-gray-100 hover:bg-gray-200 text-gray-600"
+                  disabled={loading}
+                >
+                  <FaTimes size={14} />
+                </button>
+              </div>
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="bg-gray-50 rounded-lg p-8">
+            <div className="bg-gray-50 rounded-lg p-10">
               <h4 className="flex items-center text-base font-medium text-gray-800 mb-3">
                 <FaBriefcase className="text-blue-500 mr-2 text-sm" />
                 Timeline
@@ -587,17 +594,17 @@ const EmployeeDetail = ({ publicId, onClose }) => {
                 </div>
               ) : timeline?.length > 0 ? (
                 <div className="relative">
-                  <div className="absolute left-8.5 top-0 bottom-0 w-0.5 bg-blue-200"></div>
+                  <div className="absolute left-7.5 top-0 bottom-0 w-0.5 bg-blue-200"></div>
                   <div className="max-h-[300px] overflow-y-auto overflow-x-hidden pr-2">
                     {timeline.map((event) => (
                       <div
                         key={event.id}
-                        className="mb-4 flex items-center transition-all duration-200 hover:scale-[1.02] hover:bg-blue-50 hover:shadow-sm rounded-md p-3"
+                        className="mb-4 flex items-center transition-all duration-200 hover:scale-[1.02] hover:bg-blue-50 hover:shadow-sm rounded-md p-3 w-full"
                       >
-                        <div className="flex-shrink-0 w-12 h-12 flex items-center justify-center bg-white border-2 border-blue-500 text-blue-500 rounded-full z-10">
+                        <div className="flex-shrink-0 w-9 h-9 flex items-center justify-center bg-white border-2 border-blue-500 text-blue-500 rounded-full z-10">
                           {getStatusIcon(event.status)}
                         </div>
-                        <div className="ml-4 flex-1 bg-white rounded-md shadow-sm p-3 min-h-[100px]">
+                        <div className="ml-4 flex-1 bg-white rounded-md shadow-sm p-5 min-h-[130px] w-full">
                           <div className="flex justify-between items-start">
                             <h5 className="text-sm font-medium text-gray-800 capitalize">
                               {event.status}
@@ -609,16 +616,26 @@ const EmployeeDetail = ({ publicId, onClose }) => {
                               <FaEdit size={12} />
                             </button>
                           </div>
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            <span className="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded">
+                              Start: {formatDate(event.createdAt)}
+                            </span>
+                            {event.endDate && (
+                              <span className="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded">
+                                End: {formatDate(event.endDate)}
+                              </span>
+                            )}
+                          </div>
                           
                           {editingTimelineId === event.id ? (
-                            <div className="mt-1 space-y-2">
-                              <input
-                                type="text"
+                            <div className="mt-2 space-y-2">
+                              <textarea
                                 name="description"
                                 value={timelineEditData.description}
                                 onChange={handleTimelineEditChange}
-                                className="w-full border rounded px-2 py-1 text-xs"
+                                className="w-full border rounded px-2 py-1 text-sm focus:ring-1 focus:ring-blue-300"
                                 placeholder="Description"
+                                rows={4}
                               />
                               {event.status === 'deployed' && (
                                 <input
@@ -626,7 +643,7 @@ const EmployeeDetail = ({ publicId, onClose }) => {
                                   name="clientName"
                                   value={timelineEditData.clientName}
                                   onChange={handleTimelineEditChange}
-                                  className="w-full border rounded px-2 py-1 text-xs"
+                                  className="w-full border rounded px-2 py-1 text-sm focus:ring-1 focus:ring-blue-300"
                                   placeholder="Client Name"
                                 />
                               )}
@@ -647,7 +664,7 @@ const EmployeeDetail = ({ publicId, onClose }) => {
                             </div>
                           ) : (
                             <>
-                              <p className="text-xs text-gray-600 mt-1">{event.description}</p>
+                              <p className="text-xs text-gray-600 mt-2">{event.description}</p>
                               {event.clientName && (
                                 <p className="text-xs text-gray-700 mt-1">
                                   <span className="font-medium">Client:</span> {event.clientName}
@@ -665,9 +682,6 @@ const EmployeeDetail = ({ publicId, onClose }) => {
                                   </div>
                                 </div>
                               )}
-                              <p className="text-xs text-gray-500 mt-1">
-                                {formatDate(event.createdAt)}
-                              </p>
                             </>
                           )}
                         </div>
