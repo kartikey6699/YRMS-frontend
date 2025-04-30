@@ -4,6 +4,7 @@ import { useDispatch, useSelector } from "react-redux";
 import ProfileCard from "../../helper/ProfileCard";
 import { FaArrowLeft, FaInfoCircle, FaTrash, FaPlusCircle, FaEdit, FaCheckCircle, FaTimes, FaPlus, FaChevronDown, FaChevronUp } from "react-icons/fa";
 import { BaselineHistories } from "./BaselineHistory";
+import BaselineTimeline from "./BaselineTimeline"; // Import BaselineTimeline
 import AddOptionModal from "../../helper/OptionalModal";
 import {
   fetchCertificationAuthorities,
@@ -476,7 +477,7 @@ const ManageBaseline = () => {
       </h2>
 
       {activeSection === "view" && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-10">
+        <div className="mb-10">
           <BaselineHistories
             histories={baselineHistories}
             employeeName={resourceDetails?.employeeName}
@@ -486,7 +487,7 @@ const ManageBaseline = () => {
           />
           <div
             onClick={openAddForm}
-            className="rounded-xl shadow-lg border-2 border-dashed border-gray-300 bg-gradient-to-br from-blue-50 to-purple-50 hover:from-blue-100 hover:to-purple-100 flex items-center justify-center cursor-pointer transition-all duration-300 h-48 hover:shadow-xl hover:translate-y-[-4px]"
+            className="rounded-xl shadow-lg border-2 border-dashed border-gray-300 bg-gradient-to-br from-blue-50 to-purple-50 hover:from-blue-100 hover:to-purple-100 flex items-center justify-center cursor-pointer transition-all duration-300 h-40 hover:shadow-xl hover:translate-y-[-4px] mt-4"
           >
             <div className="text-center p-4">
               <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center shadow-md mx-auto mb-3 transition-transform duration-200 hover:scale-110">
@@ -501,7 +502,7 @@ const ManageBaseline = () => {
 
       {showForm && (
         <div className="fixed inset-0 bg-gray-900/30 backdrop-blur-sm flex items-center justify-center p-4 z-50 transition-opacity duration-300">
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-6xl max-h-[90vh] overflow-y-auto">
             <div className="bg-gradient-to-r from-blue-500 to-purple-600 p-6 rounded-t-xl">
               <div className="flex justify-between items-center">
                 <h3 className="text-xl font-bold text-white">Create New Baseline (Step {formStep} of 2)</h3>
@@ -514,235 +515,250 @@ const ManageBaseline = () => {
               </div>
             </div>
 
-            <form onSubmit={handleSubmit} className="p-6 space-y-4">
-              {formStep === 1 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Tech Experience</label>
-                    {formData.experience.map((exp, index) => (
-                      <div key={index} className="flex items-center space-x-2 mb-2">
-                        <div className="w-full">
-                          <label className="block text-sm font-medium text-gray-700 mb-1">Technology</label>
-                          <input
-                            type="text"
-                            value={exp.technology}
-                            onChange={(e) => handleExpChange(index, "technology", e.target.value)}
-                            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            placeholder="Enter technology"
-                          />
-                        </div>
-                        <div className="w-1/4">
-                          <label className="block text-sm font-medium text-gray-700 mb-1">Years</label>
-                          <input
-                            type="number"
-                            value={exp.years}
-                            onChange={(e) => handleExpChange(index, "years", e.target.value)}
-                            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            placeholder="0"
-                            min="0"
-                          />
-                        </div>
-                        {formData.experience.length > 1 && (
-                          <button
-                            type="button"
-                            onClick={() => removeExperience(index)}
-                            className="text-red-500 hover:text-red-700 mt-6"
-                          >
-                            <FaTrash className="w-4 h-4" />
-                          </button>
-                        )}
+            <div className="flex">
+              {/* Form Section (2/3 width) */}
+              <div className="w-full lg:w-2/3 p-6">
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  {formStep === 1 ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Tech Experience</label>
+                        {formData.experience.map((exp, index) => (
+                          <div key={index} className="flex items-center space-x-2 mb-2">
+                            <div className="w-full">
+                              <label className="block text-sm font-medium text-gray-700 mb-1">Technology</label>
+                              <input
+                                type="text"
+                                value={exp.technology}
+                                onChange={(e) => handleExpChange(index, "technology", e.target.value)}
+                                className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                placeholder="Enter technology"
+                              />
+                            </div>
+                            <div className="w-1/4">
+                              <label className="block text-sm font-medium text-gray-700 mb-1">Years</label>
+                              <input
+                                type="number"
+                                value={exp.years}
+                                onChange={(e) => handleExpChange(index, "years", e.target.value)}
+                                className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                placeholder="0"
+                                min="0"
+                              />
+                            </div>
+                            {formData.experience.length > 1 && (
+                              <button
+                                type="button"
+                                onClick={() => removeExperience(index)}
+                                className="text-red-500 hover:text-red-700 mt-6"
+                              >
+                                <FaTrash className="w-4 h-4" />
+                              </button>
+                            )}
+                          </div>
+                        ))}
+                        <button
+                          type="button"
+                          onClick={addExperience}
+                          className="mt-2 px-3 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors duration-200 text-sm"
+                        >
+                          Add Tech Experience
+                        </button>
                       </div>
-                    ))}
-                    <button
-                      type="button"
-                      onClick={addExperience}
-                      className="mt-2 px-3 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors duration-200 text-sm"
-                    >
-                      Add Tech Experience
-                    </button>
-                  </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Certification Details</label>
-                    {formData.certification.map((cert, index) => (
-                      <div key={index} className="flex items-center space-x-2 mb-2">
-                        <div className="w-full">
-                          <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
-                          <input
-                            type="text"
-                            value={cert.name}
-                            onChange={(e) => handleCertChange(index, "name", e.target.value)}
-                            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            placeholder="Enter certification name"
-                          />
-                        </div>
-                        <div className="w-full">
-                          <label className="block text-sm font-medium text-gray-700 mb-1">Authority Name</label>
-                          <select
-                            value={cert.issuingAuthority}
-                            onChange={(e) => {
-                              if (e.target.value === "add_authority") {
-                                setModalField("certification_authority");
-                              } else {
-                                handleCertChange(index, "issuingAuthority", e.target.value);
-                              }
-                            }}
-                            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          >
-                            <option value="">Select Certification Authority</option>
-                            {certificationAuthorities.map((auth) => (
-                              <option key={auth.publicId} value={auth.publicId}>
-                                {auth.name}
-                              </option>
-                            ))}
-                            <option value="add_authority" className="font-semibold text-blue-600">
-                              + Add New Authority
-                            </option>
-                          </select>
-                        </div>
-                        {formData.certification.length > 1 && (
-                          <button
-                            type="button"
-                            onClick={() => removeCertification(index)}
-                            className="text-red-500 hover:text-red-700 mt-6"
-                          >
-                            <FaTrash className="w-4 h-4" />
-                          </button>
-                        )}
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Certification Details</label>
+                        {formData.certification.map((cert, index) => (
+                          <div key={index} className="flex items-center space-x-2 mb-2">
+                            <div className="w-full">
+                              <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                              <input
+                                type="text"
+                                value={cert.name}
+                                onChange={(e) => handleCertChange(index, "name", e.target.value)}
+                                className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                placeholder="Enter certification name"
+                              />
+                            </div>
+                            <div className="w-full">
+                              <label className="block text-sm font-medium text-gray-700 mb-1">Authority Name</label>
+                              <select
+                                value={cert.issuingAuthority}
+                                onChange={(e) => {
+                                  if (e.target.value === "add_authority") {
+                                    setModalField("certification_authority");
+                                  } else {
+                                    handleCertChange(index, "issuingAuthority", e.target.value);
+                                  }
+                                }}
+                                className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              >
+                                <option value="">Select Certification Authority</option>
+                                {certificationAuthorities.map((auth) => (
+                                  <option key={auth.publicId} value={auth.publicId}>
+                                    {auth.name}
+                                  </option>
+                                ))}
+                                <option value="add_authority" className="font-semibold text-blue-600">
+                                  + Add New Authority
+                                </option>
+                              </select>
+                            </div>
+                            {formData.certification.length > 1 && (
+                              <button
+                                type="button"
+                                onClick={() => removeCertification(index)}
+                                className="text-red-500 hover:text-red-700 mt-6"
+                              >
+                                <FaTrash className="w-4 h-4" />
+                              </button>
+                            )}
+                          </div>
+                        ))}
+                        <button
+                          type="button"
+                          onClick={addCertification}
+                          className="mt-2 px-3 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors duration-200 text-sm"
+                        >
+                          Add Certification
+                        </button>
                       </div>
-                    ))}
-                    <button
-                      type="button"
-                      onClick={addCertification}
-                      className="mt-2 px-3 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors duration-200 text-sm"
-                    >
-                      Add Certification
-                    </button>
-                  </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Total Experience (Years)*</label>
-                    <input
-                      type="number"
-                      name="totalExperience"
-                      value={formData.totalExperience}
-                      onChange={handleInputChange}
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="e.g., 5"
-                      min="0"
-                      required
-                    />
-                  </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Total Experience (Years)*</label>
+                        <input
+                          type="number"
+                          name="totalExperience"
+                          value={formData.totalExperience}
+                          onChange={handleInputChange}
+                          className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          placeholder="e.g., 5"
+                          min="0"
+                          required
+                        />
+                      </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Communication Level*</label>
-                    <select
-                      name="communication"
-                      value={formData.communication}
-                      onChange={handleInputChange}
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      required
-                    >
-                      <option value="">Select Communication Level</option>
-                      <option value="1">Average</option>
-                      <option value="2">Medium</option>
-                      <option value="3">Fluent</option>
-                    </select>
-                  </div>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Tech Skills*</label>
-                    <TechSkillSelector
-                      techSkills={formData.techSkills}
-                      setTechSkills={(newTechSkills) => setFormData(prev => ({ ...prev, techSkills: newTechSkills }))}
-                      technologyCategoriesWithTech={technologyCategoriesWithTech}
-                      loading={technologyCategoriesStackLoading}
-                      setModalField={setModalField}
-                      setSelectedCategoryId={setSelectedCategoryId}
-                    />
-                  </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Communication Level*</label>
+                        <select
+                          name="communication"
+                          value={formData.communication}
+                          onChange={handleInputChange}
+                          className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          required
+                        >
+                          <option value="">Select Communication Level</option>
+                          <option value="1">Average</option>
+                          <option value="2">Medium</option>
+                          <option value="3">Fluent</option>
+                        </select>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="md:col-span-2">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Tech Skills*</label>
+                        <TechSkillSelector
+                          techSkills={formData.techSkills}
+                          setTechSkills={(newTechSkills) => setFormData(prev => ({ ...prev, techSkills: newTechSkills }))}
+                          technologyCategoriesWithTech={technologyCategoriesWithTech}
+                          loading={technologyCategoriesStackLoading}
+                          setModalField={setModalField}
+                          setSelectedCategoryId={setSelectedCategoryId}
+                        />
+                      </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Overall Rating*</label>
-                    <input
-                      type="number"
-                      name="rating"
-                      value={formData.rating}
-                      onChange={handleInputChange}
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="0-5"
-                      min="0"
-                      max="5"
-                      required
-                    />
-                  </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Overall Rating*</label>
+                        <input
+                          type="number"
+                          name="rating"
+                          value={formData.rating}
+                          onChange={handleInputChange}
+                          className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          placeholder="0-5"
+                          min="0"
+                          max="5"
+                          required
+                        />
+                      </div>
 
-                  <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Feedback*</label>
-                    <textarea
-                      name="feedback"
-                      value={formData.feedback}
-                      onChange={handleInputChange}
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="Add feedback here"
-                      rows="3"
-                      required
-                    />
-                  </div>
+                      <div className="md:col-span-2">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Feedback*</label>
+                        <textarea
+                          name="feedback"
+                          value={formData.feedback}
+                          onChange={handleInputChange}
+                          className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          placeholder="Add feedback here"
+                          rows="3"
+                          required
+                        />
+                      </div>
 
-                  <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Upskill Suggestion</label>
-                    <textarea
-                      name="upskillSuggestion"
-                      value={formData.upskillSuggestion}
-                      onChange={handleInputChange}
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="e.g., Learn React"
-                      rows={3} 
-                    />
-                  </div>
-                </div>
-              )}
+                      <div className="md:col-span-2">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Upskill Suggestion</label>
+                        <textarea
+                          name="upskillSuggestion"
+                          value={formData.upskillSuggestion}
+                          onChange={handleInputChange}
+                          className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          placeholder="e.g., Learn React"
+                          rows={3} 
+                        />
+                      </div>
+                    </div>
+                  )}
 
-              <div className="flex justify-between space-x-4 pt-6">
-                {formStep === 1 ? (
-                  <button
-                    type="button"
-                    onClick={closeAddForm}
-                    className="px-6 py-3 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-all duration-200 font-medium cursor-pointer"
-                  >
-                    Cancel
-                  </button>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={prevStep}
-                    className="px-6 py-3 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-all duration-200 font-medium cursor-pointer"
-                  >
-                    Previous
-                  </button>
-                )}
-                {formStep === 1 ? (
-                  <button
-                    type="button"
-                    onClick={nextStep}
-                    className="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-200 font-medium cursor-pointer hover:shadow-md"
-                  >
-                    Next
-                  </button>
-                ) : (
-                  <button
-                    type="submit"
-                    className="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-200 font-medium cursor-pointer hover:shadow-md"
-                    disabled={baselineLoading}
-                  >
-                    {baselineLoading ? "Creating..." : "Create Baseline"}
-                  </button>
-                )}
+                  <div className="flex justify-between space-x-4 pt-6">
+                    {formStep === 1 ? (
+                      <button
+                        type="button"
+                        onClick={closeAddForm}
+                        className="px-6 py-3 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-all duration-200 font-medium cursor-pointer"
+                      >
+                        Cancel
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={prevStep}
+                        className="px-6 py-3 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-all duration-200 font-medium cursor-pointer"
+                      >
+                        Previous
+                      </button>
+                    )}
+                    {formStep === 1 ? (
+                      <button
+                        type="button"
+                        onClick={nextStep}
+                        className="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-200 font-medium cursor-pointer hover:shadow-md"
+                      >
+                        Next
+                      </button>
+                    ) : (
+                      <button
+                        type="submit"
+                        className="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-200 font-medium cursor-pointer hover:shadow-md"
+                        disabled={baselineLoading}
+                      >
+                        {baselineLoading ? "Creating..." : "Create Baseline"}
+                      </button>
+                    )}
+                  </div>
+                </form>
               </div>
-            </form>
+
+              {/* Timeline Section (1/3 width) - Only visible when form is open */}
+              <div className="hidden lg:block w-1/3 bg-gray-50 border-l p-6 overflow-y-auto">
+                <BaselineTimeline 
+                  histories={baselineHistories}
+                  onSelect={(id) => {
+                    // Optional: Add logic to highlight or focus on a specific baseline
+                  }}
+                />
+              </div>
+            </div>
           </div>
         </div>
       )}
