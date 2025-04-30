@@ -261,7 +261,7 @@ const EmployeeDetail = ({ publicId, onClose }) => {
     const validTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
     if (!validTypes.includes(file.type)) {
       setToast({
-        type: 'error',
+        type :'error',
         message: 'Please upload a PDF or Word document'
       });
       return;
@@ -595,7 +595,7 @@ const EmployeeDetail = ({ publicId, onClose }) => {
               ) : timeline?.length > 0 ? (
                 <div className="relative">
                   <div className="absolute left-7.5 top-0 bottom-0 w-0.5 bg-blue-200"></div>
-                  <div className="max-h-[300px] overflow-y-auto overflow-x-hidden pr-2">
+                  <div className="max-h-[300px] overflow-y-auto overflow-x-hidden -mr-5">
                     {timeline.map((event) => (
                       <div
                         key={event.id}
@@ -604,7 +604,7 @@ const EmployeeDetail = ({ publicId, onClose }) => {
                         <div className="flex-shrink-0 w-9 h-9 flex items-center justify-center bg-white border-2 border-blue-500 text-blue-500 rounded-full z-10">
                           {getStatusIcon(event.status)}
                         </div>
-                        <div className="ml-4 flex-1 bg-white rounded-md shadow-sm p-5 min-h-[130px] w-full">
+                        <div className="ml-4 flex-1 bg-white rounded-md shadow-sm p-5 min-h-[130px] w-[350px]">
                           <div className="flex justify-between items-start">
                             <h5 className="text-sm font-medium text-gray-800 capitalize">
                               {event.status}
@@ -617,12 +617,12 @@ const EmployeeDetail = ({ publicId, onClose }) => {
                             </button>
                           </div>
                           <div className="flex flex-wrap gap-1 mt-1">
-                            <span className="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded">
-                              Start: {formatDate(event.createdAt)}
+                            <span className="text-xs bg-purple-100 text-purple-800 px-2 py-0.5 rounded font-bold">
+                              From: {formatDate(event.createdAt)}
                             </span>
                             {event.endDate && (
-                              <span className="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded">
-                                End: {formatDate(event.endDate)}
+                              <span className="text-xs bg-purple-100 text-purple-800 px-2 py-0.5 rounded font-bold">
+                                To: {formatDate(event.endDate)}
                               </span>
                             )}
                           </div>
