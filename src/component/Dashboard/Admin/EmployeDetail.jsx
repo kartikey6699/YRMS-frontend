@@ -1,9 +1,9 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { FaUser, FaTimes, FaEdit, FaSave, FaDownload, FaUpload, FaCode, FaBriefcase, FaStar, FaProjectDiagram, FaUserTie, FaCheckCircle, FaExclamationTriangle } from 'react-icons/fa';
 import { useDispatch, useSelector } from 'react-redux';
-import { 
-  fetchResourceDetails, 
-  updateResource, 
+import {
+  fetchResourceDetails,
+  updateResource,
   fetchDesignations,
   fetchUserTimeline,
   updateTimelineEntry
@@ -45,14 +45,14 @@ const getStatusIcon = (status) => {
 
 const EmployeeDetail = ({ publicId, onClose }) => {
   const dispatch = useDispatch();
-  const { 
-    resourceDetails, 
-    loading, 
+  const {
+    resourceDetails,
+    loading,
     designations,
     timeline,
-    timelineLoading 
+    timelineLoading
   } = useSelector((state) => state.resource);
-  
+
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState(null);
   const [toast, setToast] = useState(null);
@@ -67,7 +67,7 @@ const EmployeeDetail = ({ publicId, onClose }) => {
     clientName: '',
     training: []
   });
-  
+
   const initialLoadDone = useRef(false);
   const gradeOptions = ['E1', 'E2', 'E3', 'E4', 'E5', 'E6', 'E7'];
 
@@ -246,7 +246,7 @@ const EmployeeDetail = ({ publicId, onClose }) => {
       });
       setIsEditing(false);
       dispatch(fetchUserTimeline(publicId));
-      
+
     } catch (error) {
       setToast({
         type: 'error',
@@ -261,7 +261,7 @@ const EmployeeDetail = ({ publicId, onClose }) => {
     const validTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
     if (!validTypes.includes(file.type)) {
       setToast({
-        type :'error',
+        type: 'error',
         message: 'Please upload a PDF or Word document'
       });
       return;
@@ -367,24 +367,24 @@ const EmployeeDetail = ({ publicId, onClose }) => {
       case 'deployed':
         return (
           <>
-            <div className="mt-3">
+            <div className="mt-2">
               <label className="block text-xs text-gray-500 mb-1">Client Name</label>
               <input
                 type="text"
                 value={clientName}
                 onChange={(e) => setClientName(e.target.value)}
-                className="w-full border rounded-md px-2 py-1.5 text-sm focus:ring-1 focus:ring-blue-300"
+                className="w-full border rounded-md px-2 py-1 text-sm focus:ring-1 focus:ring-blue-300"
                 placeholder="Enter client name"
               />
             </div>
-            <div className="mt-3">
+            <div className="mt-2">
               <label className="block text-xs text-gray-500 mb-1">Description</label>
               <textarea
                 value={statusDescription}
                 onChange={(e) => setStatusDescription(e.target.value)}
-                className="w-full border rounded-md px-2 py-1.5 text-sm focus:ring-1 focus:ring-blue-300"
+                className="w-full border rounded-md px-2 py-1 text-sm focus:ring-1 focus:ring-blue-300"
                 placeholder="Enter description"
-                rows={3}
+                rows={2}
               />
             </div>
           </>
@@ -392,28 +392,28 @@ const EmployeeDetail = ({ publicId, onClose }) => {
       case 'pool':
         return (
           <>
-            <div className="mt-1">
+            <div className="mt-2">
               <label className="block text-xs text-gray-500 mb-1">Description</label>
               <textarea
                 value={statusDescription}
                 onChange={(e) => setStatusDescription(e.target.value)}
-                className="w-full border rounded-md px-2 py-1.5 text-sm focus:ring-1 focus:ring-blue-300"
+                className="w-full border rounded-md px-2 py-1 text-sm focus:ring-1 focus:ring-blue-300"
                 placeholder="Enter description"
-                rows={3}
+                rows={2}
               />
             </div>
           </>
         );
       case 'pip':
         return (
-          <div className="mt-3">
+          <div className="mt-2">
             <label className="block text-xs text-gray-500 mb-1">Description</label>
             <textarea
               value={statusDescription}
               onChange={(e) => setStatusDescription(e.target.value)}
-              className="w-full border rounded-md px-2 py-1.5 text-sm focus:ring-1 focus:ring-blue-300"
+              className="w-full border rounded-md px-2 py-1 text-sm focus:ring-1 focus:ring-blue-300"
               placeholder="Enter PIP description"
-              rows={3}
+              rows={2}
             />
           </div>
         );
@@ -443,12 +443,12 @@ const EmployeeDetail = ({ publicId, onClose }) => {
         clientName: timelineEditData.clientName,
         training: timelineEditData.training
       };
-      
+
       await dispatch(updateTimelineEntry({
         timelineId,
         data: payload
       })).unwrap();
-      
+
       setToast({
         type: 'success',
         message: 'Timeline updated successfully!'
@@ -490,8 +490,8 @@ const EmployeeDetail = ({ publicId, onClose }) => {
       </div>
 
       <div className="fixed inset-0 flex items-center justify-center z-50 backdrop-blur-sm bg-black/20 p-4">
-        <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-4.5xl border border-gray-200">
-          <div className="relative mb-6 rounded-lg overflow-hidden">
+        <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-4.5xl border border-gray-200 max-h-[98vh]">
+          <div className="relative mb-4 rounded-lg overflow-hidden">
             <img
               src={backgroundImage}
               alt="Background"
@@ -542,7 +542,7 @@ const EmployeeDetail = ({ publicId, onClose }) => {
                       />
                       <label
                         htmlFor="profilePic"
-                        className={`flex items-center px-3 py-1.5 rounded-md text-sm cursor-pointer transition-all ${isUploading ? 'bg-gray-100 text-gray-500' : 'bg-blue-100 text-blue-700 hover:bg-blue-200 active:scale-95'}`}
+                        className={`flex items-center px-3 py-1 rounded-md text-sm cursor-pointer transition-all ${isUploading ? 'bg-gray-100 text-gray-500' : 'bg-blue-100 text-blue-700 hover:bg-blue-200 active:scale-95'}`}
                       >
                         <FaUpload className="mr-1 text-xs" />
                         {isUploading ? 'Uploading...' : 'Update Profile Picture'}
@@ -558,7 +558,7 @@ const EmployeeDetail = ({ publicId, onClose }) => {
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setIsEditing(!isEditing)}
-                  className="flex items-center px-3 py-1.5 bg-blue-100 text-blue-600 rounded-md hover:bg-blue-200 text-sm"
+                  className="flex items-center px-3 py-1 bg-blue-100 text-blue-600 rounded-md hover:bg-blue-200 text-sm"
                   disabled={loading}
                 >
                   {isEditing ? (
@@ -573,7 +573,7 @@ const EmployeeDetail = ({ publicId, onClose }) => {
                 </button>
                 <button
                   onClick={onClose}
-                  className="p-1.5 rounded-md bg-gray-100 hover:bg-gray-200 text-gray-600"
+                  className="p-1 rounded-md bg-gray-100 hover:bg-gray-200 text-gray-600"
                   disabled={loading}
                 >
                   <FaTimes size={14} />
@@ -583,59 +583,59 @@ const EmployeeDetail = ({ publicId, onClose }) => {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="bg-gray-50 rounded-lg p-10">
-              <h4 className="flex items-center text-base font-medium text-gray-800 mb-3">
+            <div className="bg-gray-50 rounded-lg p-6">
+              <h4 className="flex items-center text-base font-medium text-gray-800 mb-2">
                 <FaBriefcase className="text-blue-500 mr-2 text-sm" />
                 Timeline
               </h4>
               {timelineLoading ? (
-                <div className="flex justify-center items-center h-32">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+                <div className="flex justify-center items-center h-24">
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"></div>
                 </div>
               ) : timeline?.length > 0 ? (
                 <div className="relative">
-                  <div className="absolute left-7.5 top-0 bottom-0 w-0.5 bg-blue-200"></div>
-                  <div className="max-h-[300px] overflow-y-auto overflow-x-hidden -mr-5">
+                  <div className="absolute left-5.5 top-0 bottom-0 w-0.5 bg-blue-200"></div>
+                  <div className="max-h-[200px] overflow-y-auto overflow-x-hidden -mr-4">
                     {timeline.map((event) => (
                       <div
                         key={event.id}
-                        className="mb-4 flex items-center transition-all duration-200 hover:scale-[1.02] hover:bg-blue-50 hover:shadow-sm rounded-md p-3 w-full"
+                        className="mb-3 flex items-center transition-all duration-200 hover:scale-[1.02] hover:bg-blue-50 hover:shadow-sm rounded-md p-2 w-full"
                       >
-                        <div className="flex-shrink-0 w-9 h-9 flex items-center justify-center bg-white border-2 border-blue-500 text-blue-500 rounded-full z-10">
+                        <div className="flex-shrink-0 w-8 h-8 flex items-center justify-center bg-white border-2 border-blue-500 text-blue-500 rounded-full z-10">
                           {getStatusIcon(event.status)}
                         </div>
-                        <div className="ml-4 flex-1 bg-white rounded-md shadow-sm p-5 min-h-[130px] w-[350px]">
+                        <div className="ml-3 flex-1 bg-white rounded-md shadow-sm p-4 min-h-[100px] w-[300px]">
                           <div className="flex justify-between items-start">
-                            <h5 className="text-sm font-medium text-gray-800 capitalize">
+                            <h5 className="text-xs font-medium text-gray-800 capitalize">
                               {event.status}
                             </h5>
                             <button
                               onClick={() => handleTimelineEdit(event)}
                               className="text-xs text-blue-600 hover:text-blue-800"
                             >
-                              <FaEdit size={12} />
+                              <FaEdit size={10} />
                             </button>
                           </div>
                           <div className="flex flex-wrap gap-1 mt-1">
-                            <span className="text-xs bg-purple-100 text-purple-800 px-2 py-0.5 rounded font-bold">
+                            <span className="text-xs bg-purple-100 text-purple-800 px-1.5 py-0.5 rounded font-bold">
                               From: {formatDate(event.createdAt)}
                             </span>
                             {event.endDate && (
-                              <span className="text-xs bg-purple-100 text-purple-800 px-2 py-0.5 rounded font-bold">
+                              <span className="text-xs bg-purple-100 text-purple-800 px-1.5 py-0.5 rounded font-bold">
                                 To: {formatDate(event.endDate)}
                               </span>
                             )}
                           </div>
-                          
+
                           {editingTimelineId === event.id ? (
-                            <div className="mt-2 space-y-2">
+                            <div className="mt-2 space-y-1">
                               <textarea
                                 name="description"
                                 value={timelineEditData.description}
                                 onChange={handleTimelineEditChange}
-                                className="w-full border rounded px-2 py-1 text-sm focus:ring-1 focus:ring-blue-300"
+                                className="w-full border rounded px-2 py-1 text-xs focus:ring-1 focus:ring-blue-300"
                                 placeholder="Description"
-                                rows={4}
+                                rows={3}
                               />
                               {event.status === 'deployed' && (
                                 <input
@@ -643,20 +643,20 @@ const EmployeeDetail = ({ publicId, onClose }) => {
                                   name="clientName"
                                   value={timelineEditData.clientName}
                                   onChange={handleTimelineEditChange}
-                                  className="w-full border rounded px-2 py-1 text-sm focus:ring-1 focus:ring-blue-300"
+                                  className="w-full border rounded px-2 py-1 text-xs focus:ring-1 focus:ring-blue-300"
                                   placeholder="Client Name"
                                 />
                               )}
-                              <div className="flex gap-2">
+                              <div className="flex gap-1">
                                 <button
                                   onClick={() => handleTimelineUpdate(event.id)}
-                                  className="px-2 py-1 bg-blue-500 text-white rounded text-xs hover:bg-blue-600"
+                                  className="px-2 py-0.5 bg-blue-500 text-white rounded text-xs hover:bg-blue-600"
                                 >
                                   Save
                                 </button>
                                 <button
                                   onClick={() => setEditingTimelineId(null)}
-                                  className="px-2 py-1 bg-gray-200 text-gray-700 rounded text-xs hover:bg-gray-300"
+                                  className="px-2 py-0.5 bg-gray-200 text-gray-700 rounded text-xs hover:bg-gray-300"
                                 >
                                   Cancel
                                 </button>
@@ -664,7 +664,7 @@ const EmployeeDetail = ({ publicId, onClose }) => {
                             </div>
                           ) : (
                             <>
-                              <p className="text-xs text-gray-600 mt-2">{event.description}</p>
+                              <p className="text-xs text-gray-600 mt-1">{event.description}</p>
                               {event.clientName && (
                                 <p className="text-xs text-gray-700 mt-1">
                                   <span className="font-medium">Client:</span> {event.clientName}
@@ -675,7 +675,7 @@ const EmployeeDetail = ({ publicId, onClose }) => {
                                   <p className="text-xs font-medium text-gray-700">Training:</p>
                                   <div className="flex flex-wrap gap-1 mt-1">
                                     {event.training.map((train, idx) => (
-                                      <span key={idx} className="text-xs bg-purple-100 text-purple-800 px-2 py-0.5 rounded">
+                                      <span key={idx} className="text-xs bg-purple-100 text-purple-800 px-1.5 py-0.5 rounded">
                                         {train.name}
                                       </span>
                                     ))}
@@ -690,20 +690,20 @@ const EmployeeDetail = ({ publicId, onClose }) => {
                   </div>
                 </div>
               ) : (
-                <div className="bg-white/50 rounded-md p-3 flex flex-col items-center justify-center border border-dashed border-gray-300 text-center">
-                  <FaBriefcase className="text-gray-400 text-2xl mb-2" />
-                  <p className="text-gray-500 text-sm">No timeline events added yet</p>
+                <div className="bg-white/50 rounded-md p-2 flex flex-col items-center justify-center border border-dashed border-gray-300 text-center">
+                  <FaBriefcase className="text-gray-400 text-xl mb-1" />
+                  <p className="text-gray-500 text-xs">No timeline events added yet</p>
                 </div>
               )}
             </div>
 
             <div className={`bg-gray-50 rounded-lg p-4 ${isEditing ? 'ring-1 ring-blue-200' : ''}`}>
-              <h4 className="flex items-center text-base font-medium text-gray-800 mb-3">
+              <h4 className="flex items-center text-base font-medium text-gray-800 mb-2">
                 <FaBriefcase className="text-blue-500 mr-2 text-sm" />
                 Employment Details
               </h4>
-              <div className="space-y-3">
-                <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <div className="grid grid-cols-2 gap-2">
                   <div>
                     <label className="block text-xs text-gray-500 mb-1">Employee ID</label>
                     {isEditing ? (
@@ -711,7 +711,7 @@ const EmployeeDetail = ({ publicId, onClose }) => {
                         name="employeeId"
                         value={formData.employeeId}
                         onChange={handleInputChange}
-                        className="w-full border rounded-md px-2 py-1.5 text-sm focus:ring-1 focus:ring-blue-300"
+                        className="w-full border rounded-md px-2 py-1 text-sm focus:ring-1 focus:ring-blue-300"
                         disabled={loading}
                       />
                     ) : (
@@ -725,7 +725,7 @@ const EmployeeDetail = ({ publicId, onClose }) => {
                         name="designation"
                         value={formData.designation}
                         onChange={handleInputChange}
-                        className="w-full border rounded-md px-2 py-1.5 text-sm focus:ring-1 focus:ring-blue-300"
+                        className="w-full border rounded-md px-2 py-1 text-sm focus:ring-1 focus:ring-blue-300"
                         disabled={loading}
                       >
                         <option value="">Select Designation</option>
@@ -740,7 +740,7 @@ const EmployeeDetail = ({ publicId, onClose }) => {
                     )}
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-2 gap-2">
                   <div>
                     <label className="block text-xs text-gray-500 mb-1">Grade</label>
                     {isEditing ? (
@@ -748,7 +748,7 @@ const EmployeeDetail = ({ publicId, onClose }) => {
                         name="grade"
                         value={formData.grade}
                         onChange={handleInputChange}
-                        className="w-full border rounded-md px-2 py-1.5 text-sm focus:ring-1 focus:ring-blue-300"
+                        className="w-full border rounded-md px-2 py-1 text-sm focus:ring-1 focus:ring-blue-300"
                         disabled={loading}
                       >
                         <option value="">Select Grade</option>
@@ -770,7 +770,7 @@ const EmployeeDetail = ({ publicId, onClose }) => {
                         name="joiningDate"
                         value={formData.joiningDate}
                         onChange={handleInputChange}
-                        className="w-full border rounded-md px-2 py-1.5 text-sm focus:ring-1 focus:ring-blue-300"
+                        className="w-full border rounded-md px-2 py-1 text-sm focus:ring-1 focus:ring-blue-300"
                         disabled={loading}
                       />
                     ) : (
@@ -780,7 +780,7 @@ const EmployeeDetail = ({ publicId, onClose }) => {
                     )}
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-2 gap-2">
                   <div>
                     <label className="block text-xs text-gray-500 mb-1">Experience</label>
                     <p className="text-sm font-medium text-gray-800">
@@ -794,7 +794,7 @@ const EmployeeDetail = ({ publicId, onClose }) => {
                         name="status"
                         value={formData.status}
                         onChange={handleInputChange}
-                        className="w-full border rounded-md px-2 py-1.5 text-sm focus:ring-1 focus:ring-blue-300"
+                        className="w-full border rounded-md px-2 py-1 text-sm focus:ring-1 focus:ring-blue-300"
                         disabled={loading}
                       >
                         <option value="pool">Pool</option>
@@ -817,16 +817,16 @@ const EmployeeDetail = ({ publicId, onClose }) => {
             </div>
 
             <div className="bg-gray-50 rounded-lg p-4">
-              <h4 className="flex items-center text-base font-medium text-gray-800 mb-3">
+              <h4 className="flex items-center text-base font-medium text-gray-800 mb-2">
                 <FaCode className="text-blue-500 mr-2 text-sm" />
                 Technical Skills
               </h4>
               {formData.techSkill?.length > 0 ? (
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-1">
                   {formData.techSkill.map((skill, index) => (
                     <div
                       key={index}
-                      className={`flex items-center px-3 py-1 rounded-full text-xs font-medium ${getRandomSkillColor(index)} hover:scale-105 transition-transform`}
+                      className={`flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${getRandomSkillColor(index)} hover:scale-105 transition-transform`}
                     >
                       {skill.technology}
                       {renderRatingStars(skill.rating)}
@@ -834,17 +834,17 @@ const EmployeeDetail = ({ publicId, onClose }) => {
                   ))}
                 </div>
               ) : (
-                <div className="bg-white/50 rounded-md p-3 flex flex-col items-center justify-center border border-dashed border-gray-300 text-center">
-                  <FaCode className="text-gray-400 text-2xl mb-2" />
-                  <p className="text-gray-500 text-sm">No skills added yet</p>
+                <div className="bg-white/50 rounded-md p-2 flex flex-col items-center justify-center border border-dashed border-gray-300 text-center">
+                  <FaCode className="text-gray-400 text-xl mb-1" />
+                  <p className="text-gray-500 text-xs">No skills added yet</p>
                 </div>
               )}
             </div>
           </div>
 
-          <div className="mt-4 flex justify-between items-center">
-            <div className="flex gap-2 items-start">
-              <label className={`flex items-center px-3 py-1.5 rounded-md text-sm cursor-pointer transition-all h-[34px]
+          <div className="mt-3 flex justify-between items-center">
+            <div className="flex gap-2 items-center">
+              <label className={`flex items-center px-3 py-1 rounded-md text-sm cursor-pointer transition-all h-[30px]
                 ${isUploading ? 'bg-gray-100 text-gray-500' : 'bg-blue-50 text-blue-700 hover:bg-blue-100 active:scale-95'}`}>
                 <FaUpload className="mr-1 text-xs" />
                 {isUploading ? 'Uploading...' : 'Upload Resume'}
@@ -857,23 +857,23 @@ const EmployeeDetail = ({ publicId, onClose }) => {
                 />
               </label>
               {formData.resumeFile && (
-                <div className="flex flex-col items-start">
+                <div className="flex items-center gap-2">
                   <button
                     onClick={handleResumeDownload}
-                    className="flex items-center px-3 py-1.5 bg-green-50 text-green-700 rounded-md text-sm transition-all hover:bg-green-100 active:scale-95 h-[34px]"
+                    className="flex items-center px-3 py-1 bg-green-50 text-green-700 rounded-md text-sm transition-all hover:bg-green-100 active:scale-95 h-[30px]"
                     disabled={loading}
                   >
                     <FaDownload className="mr-1 text-xs animate-pulse group-hover:animate-none" />
                     Download Resume
                   </button>
-                  <span className="mt-1 text-xs text-gray-600 font-medium truncate max-w-[200px] hover:text-gray-800 transition-colors">
+                  <span className="text-xs text-gray-600 font-medium truncate max-w-[150px] hover:text-gray-800 transition-colors">
                     {formData.resumeFile}
                   </span>
                 </div>
               )}
             </div>
             <button
-              className="flex items-center px-4 py-1.5 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm font-medium disabled:bg-blue-400 transition-colors"
+              className="flex items-center px-4 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm font-medium disabled:bg-blue-400 transition-colors"
               onClick={isEditing ? handleSubmit : onClose}
               disabled={loading || isUploading}
             >
