@@ -6,7 +6,9 @@ import {
   deleteRole,
   fetchCompetencyAdmins,
   updateUserRole,
-  fetchAvailableAdmins
+  fetchAvailableAdmins,
+  fetchTrainers,
+  fetchUsers
 } from "./roleAction";
 
 const initialState = {
@@ -14,6 +16,8 @@ const initialState = {
   features: [],
   competencyAdmins: [],
   availableAdmins: [],
+  trainers: [],
+  users: [],
   roleLoading: false,
   featuresloading: false,
   createdrole: null,
@@ -177,6 +181,34 @@ const roleSlice = createSlice({
         state.availableAdmins = payload;
       })
       .addCase(fetchAvailableAdmins.rejected, (state, { payload }) => {
+        state.roleLoading = false;
+        state.error = payload;
+      })
+
+      // Fetch Trainers
+      .addCase(fetchTrainers.pending, (state) => {
+        state.roleLoading = true;
+        state.error = null;
+      })
+      .addCase(fetchTrainers.fulfilled, (state, { payload }) => {
+        state.roleLoading = false;
+        state.trainers = payload;
+      })
+      .addCase(fetchTrainers.rejected, (state, { payload }) => {
+        state.roleLoading = false;
+        state.error = payload;
+      })
+
+      // Fetch Users
+      .addCase(fetchUsers.pending, (state) => {
+        state.roleLoading = true;
+        state.error = null;
+      })
+      .addCase(fetchUsers.fulfilled, (state, { payload }) => {
+        state.roleLoading = false;
+        state.users = payload;
+      })
+      .addCase(fetchUsers.rejected, (state, { payload }) => {
         state.roleLoading = false;
         state.error = payload;
       });

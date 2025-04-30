@@ -2,7 +2,6 @@ import axios from "axios";
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import { ROLE_API, FEATURE_API } from "../../config/Endpoints/Endpoints";
 
-
 const rolesApiClient = axios.create({
   headers: {
     "Content-Type": "application/json",
@@ -41,6 +40,7 @@ export const fetchRoles = createAsyncThunk(
     }
   }
 );
+
 export const fetchFeatures = createAsyncThunk(
   "role/fetchFeatures",
   async (_, { rejectWithValue }) => {
@@ -91,7 +91,6 @@ export const createRoles = createAsyncThunk(
   }
 );
 
-
 export const deleteRole = createAsyncThunk(
   "role/deleteRole",
   async (Id, { rejectWithValue }) => {
@@ -110,7 +109,6 @@ export const deleteRole = createAsyncThunk(
     }
   }
 );
-
 
 export const fetchCompetencyAdmins = createAsyncThunk(
   "role/fetchCompetencyAdmins",
@@ -169,7 +167,6 @@ export const updateUserRole = createAsyncThunk(
   }
 );
 
-
 export const fetchAvailableAdmins = createAsyncThunk(
   "role/fetchAvailableAdmins",
   async ({ public_id, role_types = ["admin", "superadmin"], action_type = 2 }, { rejectWithValue }) => {
@@ -180,7 +177,7 @@ export const fetchAvailableAdmins = createAsyncThunk(
         {
           headers: {
             accept: "application/json",
-            Authorization: "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFkbWluQHlhc2guY29tIiwicGFzc3dvcmQiOiIkMmIkMTIkVS9JTk1VNkQ5UXl4b2M1OXE0U1V5dXlabml4SHBLTnlpY2RmcVJtRlRmNVBqNlM5MlBJNW0iLCJleHAiOjE3NDYwMTY2MDd9.C3EBtjCdnDH3RoDlKGPjN0VE6wXA_uj4RpmAeClEzXE",
+            Authorization: `Bearer ${sessionStorage.getItem("token")}`,
             "Content-Type": "application/json",
           },
         }
@@ -201,3 +198,75 @@ export const fetchAvailableAdmins = createAsyncThunk(
     }
   }
 );
+
+export const fetchTrainers = createAsyncThunk(
+  "role/fetchTrainers",
+  async (_, { rejectWithValue }) => {
+    const role_types = ["trainer"];
+    const action_type = 1;
+
+    try {
+      const response = await rolesApiClient.post(
+        `http://localhost:8000/competency/user-list`,
+        { role_types, action_type },
+        {
+          headers: {
+            accept: "application/json",
+            Authorization: `Bearer ${sessionStorage.getItem("token")}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      const { success, data, message } = response.data;
+
+      if (!success) {
+        throw new Error(message || "Failed to fetch trainers");
+      }
+
+      return data;
+    } catch (error) {
+      const errorMessage =
+        error.response?.data?.message ||
+        error.message ||
+        "Failed to fetch trainers";
+      return rejectWithValue(errorMessage);
+    }
+  }
+);
+
+export const fetchUsers = createAsyncThunk(
+  "role/fetchUsers",
+  async (_, { rejectWithValue }) => {
+    const public_id = "157be53f-9955-4078-b75b-fa9fe16da0e5"; // Replace with the actual public_id
+    const role_types = ["trainer", "superadmin"];
+    const action_type = 2;
+
+    try {
+      const response = await rolesApiClient.post(
+        `http://localhost:8000/competency/user-list`,
+        { public_id, role_types, action_type },
+        {
+          headers: {
+            accept: "application/json",
+            Authorization: `Bearer ${sessionStorage.getItem("token")}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      const { success, data, message } = response.data;
+
+      if (!success) {
+        throw new Error(message || "Failed to fetch users");
+      }
+
+      return data;
+    } catch (error) {
+      const errorMessage =
+        error.response?.data?.message ||
+        error.message ||
+        "Failed to fetch users";
+      return rejectWithValue(errorMessage);
+    }
+  }
+);
+
