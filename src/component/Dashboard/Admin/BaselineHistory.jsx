@@ -4,6 +4,18 @@ import { FaInfoCircle, FaStar, FaTimes, FaChartLine, FaUser, FaEdit, FaSave, FaP
 import { updateBaseline, fetchBaselineHistories } from "../../../features/baseline/baselineAction";
 import { SuccessToast, ErrorToast } from '../../helper/ResourceToast';
 
+const groupSkillsByCategory = (technicalSkills) => {
+  if (!technicalSkills || technicalSkills.length === 0) return {};
+  
+  return technicalSkills.reduce((acc, skill) => {
+    if (!acc[skill.category]) {
+      acc[skill.category] = [];
+    }
+    acc[skill.category].push(skill);
+    return acc;
+  }, {});
+};
+
 export const BaselineHistories = ({ histories, employeeName, competency, gender, userId }) => {
     const dispatch = useDispatch();
     const { resourceDetails } = useSelector((state) => state.resource);
@@ -549,76 +561,95 @@ export const BaselineHistories = ({ histories, employeeName, competency, gender,
                                         <div className="space-y-3">
                                             {/* Skills Section */}
                                             <div className={`p-2 rounded ${sectionColors.skills}`}>
-                                                <h4 className="text-2xs font-semibold text-emerald-600 mb-1 flex items-center">
-                                                    <FaStar className="mr-1 text-xs" /> SKILLS
-                                                </h4>
-                                                <div className="grid grid-cols-2 gap-2">
-                                                    {isEditing ? (
-                                                        <div className="space-y-3">
-                                                            {formData.techSkills?.map((skill, i) => (
-                                                                <div key={i} className="space-y-2">
-                                                                    <div className="flex items-center gap-2">
-                                                                        <select
-                                                                            value={skill.category}
-                                                                            onChange={(e) => {
-                                                                                const updated = [...formData.techSkills];
-                                                                                updated[i].category = e.target.value;
-                                                                                setFormData({...formData, techSkills: updated});
-                                                                            }}
-                                                                            className="flex-1 p-2 border rounded text-sm bg-white"
-                                                                        >
-                                                                            <option value="">Select Category</option>
-                                                                            {technologyCategoriesWithTech.map(cat => (
-                                                                                <option key={cat.publicId} value={cat.publicId}>
-                                                                                    {cat.name}
-                                                                                </option>
-                                                                            ))}
-                                                                        </select>
-                                                                    </div>
-                                                                    {skill.technologies.map((tech, techIdx) => (
-                                                                        <div key={techIdx} className="flex items-center gap-2 ml-4 bg-white p-2 rounded border border-emerald-100">
-                                                                            <span className="text-sm flex-1">{tech.name}</span>
-                                                                            <div className="flex items-center">
-                                                                                <input
-                                                                                    type="number"
-                                                                                    value={tech.rating}
-                                                                                    onChange={(e) => {
-                                                                                        const updated = [...formData.techSkills];
-                                                                                        updated[i].technologies[techIdx].rating = e.target.value;
-                                                                                        setFormData({...formData, techSkills: updated});
-                                                                                    }}
-                                                                                    min="0"
-                                                                                    max="5"
-                                                                                    className="w-12 p-1 border rounded text-center"
-                                                                                />
-                                                                            </div>
-                                                                        </div>
-                                                                    ))}
-                                                                </div>
-                                                            ))}
-                                                        </div>
-                                                    ) : (
-                                                        <>
-                                                            {history.technicalSkills?.map((skill, i) => (
-                                                                <div key={i} className="flex justify-between items-center bg-white p-2 rounded border border-emerald-100">
-                                                                    <span className="text-sm text-gray-700">{skill.technology}</span>
-                                                                    <div className="flex items-center">
-                                                                        {[...Array(5)].map((_, i) => (
-                                                                            <FaStar
-                                                                                key={i}
-                                                                                className={`${i < skill.rating ? "text-amber-400" : "text-gray-300"} w-3 h-3`}
-                                                                            />
-                                                                        ))}
-                                                                    </div>
-                                                                </div>
-                                                            ))}
-                                                            {(!history.technicalSkills || history.technicalSkills.length === 0) && (
-                                                                <p className="text-xs text-gray-400 italic">No skills recorded</p>
-                                                            )}
-                                                        </>
-                                                    )}
-                                                </div>
-                                            </div>
+  <h4 className="text-2xs font-semibold text-emerald-600 mb-1 flex items-center">
+    <FaStar className="mr-1 text-xs" /> SKILLS
+  </h4>
+  <div>
+    {isEditing ? (
+      <div className="space-y-3">
+        {formData.techSkills?.map((skill, i) => (
+          <div key={i} className="space-y-2">
+            <div className="flex items-center gap-2">
+              <select
+                value={skill.category}
+                onChange={(e) => {
+                  const updated = [...formData.techSkills];
+                  updated[i].category = e.target.value;
+                  setFormData({...formData, techSkills: updated});
+                }}
+                className="flex-1 p-2 border rounded text-sm bg-white"
+              >
+                <option value="">Select Category</option>
+                {technologyCategoriesWithTech.map(cat => (
+                  <option key={cat.publicId} value={cat.publicId}>
+                    {cat.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            {skill.technologies.map((tech, techIdx) => (
+              <div key={techIdx} className="flex items-center gap-2 ml-4 bg-white p-2 rounded border border-emerald-100">
+                <span className="text-sm flex-1">{tech.name}</span>
+                <div className="flex items-center">
+                  <input
+                    type="number"
+                    value={tech.rating}
+                    onChange={(e) => {
+                      const updated = [...formData.techSkills];
+                      updated[i].technologies[techIdx].rating = e.target.value;
+                      setFormData({...formData, techSkills: updated});
+                    }}
+                    min="0"
+                    max="5"
+                    className="w-12 p-1 border rounded text-center"
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        ))}
+      </div>
+    ) : (
+      <div className="space-y-3">
+        {(() => {
+          const groupedSkills = groupSkillsByCategory(history.technicalSkills);
+          const categories = Object.keys(groupedSkills);
+          
+          if (categories.length === 0) {
+            return <p className="text-xs text-gray-400 italic">No skills recorded</p>;
+          }
+          
+          return categories.map((category) => (
+            <div key={category} className="space-y-2">
+              <h5 className="text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                {category}
+              </h5>
+              <div className="flex flex-wrap gap-2">
+                {groupedSkills[category].map((skill, i) => (
+                  <div 
+                    key={i} 
+                    className="flex items-center bg-white px-3 py-2 rounded border border-emerald-100"
+                    style={{ minWidth: '120px', maxWidth: '160px' }}
+                  >
+                    <span className="text-xs text-gray-700 truncate flex-1">{skill.technology}</span>
+                    <div className="flex items-center ml-2">
+                      {[...Array(5)].map((_, starIndex) => (
+                        <FaStar
+                          key={starIndex}
+                          className={`${starIndex < skill.rating ? "text-amber-400" : "text-gray-300"} w-3 h-3`}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ));
+        })()}
+      </div>
+    )}
+  </div>
+</div>
 
                                             {/* Combined Feedback & Suggestion Section */}
                                             <div className="space-y-3">
