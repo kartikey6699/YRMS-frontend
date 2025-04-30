@@ -20,6 +20,7 @@ import UserList from './component/Dashboard/Admin/ManageUsers/UserList';
 import TrainingDetail from './component/Dashboard/Admin/Training&Upskilling/TrainingDetail';
 import AddResource from './component/Dashboard/Admin/ManageUsers/AddResources';
 import AdminDashboard from './component/Dashboard/Admin/AdminDashboard';
+import SuperAdminDashboard from './component/Dashboard/Admin/SuperAdminDashboard'; // Import SuperAdminDashboard
 
 function App() {
   return (
@@ -29,6 +30,7 @@ function App() {
             <Route element={<HeaderLayout />}>
               <Route path='/dashboard' element={<Dashboard />} />
               <Route path='/admin-dashboard' element={<AdminDashboard />} />
+              <Route path="/superuser-dashboard" element={<SuperAdminDashboard />} /> {/* New route for SuperAdminDashboard */}
               <Route path="/manage-resources" element={<ManageResource />} />
               <Route path="/add-resources" element={<AddResource />} />
               <Route path="/manage-trainers" element={<ManageTrainer />} />

@@ -8,6 +8,7 @@ import {
   FaUsersCog,
   FaSignOutAlt,
   FaUserShield,
+  FaUserTie, // Added icon for Super Admin
 } from 'react-icons/fa';
 import { FiChevronRight, FiChevronLeft } from 'react-icons/fi';
 import logo from '../../assets/images/competency_logos/python.png';
@@ -25,6 +26,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
     { name: 'Training', icon: <FaChalkboardTeacher />, path: '/manage-training' },
     { name: 'Interns', icon: <FaUsersCog />, path: '/interns'},
     { name: 'Admin Panel', icon: <FaUserShield />, path: '/admin-dashboard'},
+    { name: 'Super Admin', icon: <FaUserTie />, path: '/superuser-dashboard'}, // New Super Admin menu item
   ];
 
   const handleLogout = () => {
