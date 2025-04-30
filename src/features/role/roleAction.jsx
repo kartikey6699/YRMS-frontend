@@ -27,7 +27,7 @@ export const fetchRoles = createAsyncThunk(
         }
       });
       const { success, data, message } = response.data;
-      
+
       if (!success) {
         throw new Error(message || "Failed to fetch roles");
       }
@@ -106,6 +106,97 @@ export const deleteRole = createAsyncThunk(
         error.response?.data?.message ||
         error.message ||
         "Failed to delete role";
+      return rejectWithValue(errorMessage);
+    }
+  }
+);
+
+
+export const fetchCompetencyAdmins = createAsyncThunk(
+  "role/fetchCompetencyAdmins",
+  async (competencyId, { rejectWithValue }) => {
+    try {
+      const url =  `http://localhost:8000/competency/competency-users/${competencyId}/Admin`
+      const response = await rolesApiClient.get(url, {
+        headers: {
+          accept: "application/json",
+        },
+      });
+      const { success, data, message } = response.data;
+
+      if (!success) {
+        throw new Error(message || "Failed to fetch admins");
+      }
+
+      return data;
+    } catch (error) {
+      const errorMessage =
+        error.response?.data?.message ||
+        error.message ||
+        "Failed to fetch admins";
+      return rejectWithValue(errorMessage);
+    }
+  }
+);
+
+export const updateUserRole = createAsyncThunk(
+  "role/updateUserRole",
+  async ({ competency_id, user_id, role, action_type }, { rejectWithValue }) => {
+    try {
+      const response = await rolesApiClient.post(
+        `http://localhost:8000/competency/user-role-update`,
+        { competency_id, user_id, role, action_type },
+        {
+          headers: {
+            accept: "application/json",
+          },
+        }
+      );
+      const { success, data, message } = response.data;
+
+      if (!success) {
+        throw new Error(message || "Failed to update user role");
+      }
+
+      return data;
+    } catch (error) {
+      const errorMessage =
+        error.response?.data?.message ||
+        error.message ||
+        "Failed to update user role";
+      return rejectWithValue(errorMessage);
+    }
+  }
+);
+
+
+export const fetchAvailableAdmins = createAsyncThunk(
+  "role/fetchAvailableAdmins",
+  async ({ public_id, role_types = ["admin", "superadmin"], action_type = 2 }, { rejectWithValue }) => {
+    try {
+      const response = await rolesApiClient.post(
+        `http://localhost:8000/competency/user-list`,
+        { public_id, role_types, action_type },
+        {
+          headers: {
+            accept: "application/json",
+            Authorization: "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFkbWluQHlhc2guY29tIiwicGFzc3dvcmQiOiIkMmIkMTIkVS9JTk1VNkQ5UXl4b2M1OXE0U1V5dXlabml4SHBLTnlpY2RmcVJtRlRmNVBqNlM5MlBJNW0iLCJleHAiOjE3NDYwMTY2MDd9.C3EBtjCdnDH3RoDlKGPjN0VE6wXA_uj4RpmAeClEzXE",
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      const { success, data, message } = response.data;
+
+      if (!success) {
+        throw new Error(message || "Failed to fetch available admins");
+      }
+
+      return data;
+    } catch (error) {
+      const errorMessage =
+        error.response?.data?.message ||
+        error.message ||
+        "Failed to fetch available admins";
       return rejectWithValue(errorMessage);
     }
   }
