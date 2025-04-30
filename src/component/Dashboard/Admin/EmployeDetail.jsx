@@ -1,14 +1,19 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { FaUser, FaTimes, FaEdit, FaSave, FaDownload, FaUpload, FaCode, FaBriefcase } from 'react-icons/fa';
+import { FaUser, FaTimes, FaEdit, FaSave, FaDownload, FaUpload, FaCode, FaBriefcase, FaStar, FaProjectDiagram, FaUserTie, FaCheckCircle, FaExclamationTriangle } from 'react-icons/fa';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchResourceDetails, updateResource, fetchDesignations } from '../../../features/resource/resourceAction';
+import { 
+  fetchResourceDetails, 
+  updateResource, 
+  fetchDesignations,
+  fetchUserTimeline,
+  updateTimelineEntry
+} from '../../../features/resource/resourceAction';
 import { resetResourceDetails } from '../../../features/resource/resourceSlice';
 import { SuccessToast, ErrorToast } from '../../helper/ResourceToast';
 import { RESUME_API } from '../../../config/Endpoints/Endpoints';
 import axios from 'axios';
 import { ADMIN_API_BASE_URL } from '../../../config/Endpoints/BaseEndpoints';
 
-// Color palette for skill tags
 const skillColors = [
   'bg-blue-100 text-blue-800',
   'bg-green-100 text-green-800',
@@ -20,18 +25,49 @@ const skillColors = [
   'bg-teal-100 text-teal-800'
 ];
 
+const getStatusIcon = (status) => {
+  switch (status) {
+    case 'deployed':
+      return <FaUserTie className="text-green-600 text-lg" />;
+    case 'pool':
+      return <FaUser className="text-blue-600 text-lg" />;
+    case 'pip':
+      return <FaExclamationTriangle className="text-yellow-600 text-lg" />;
+    case 'promoted':
+      return <FaStar className="text-purple-600 text-lg" />;
+    case 'completed':
+      return <FaCheckCircle className="text-teal-600 text-lg" />;
+    default:
+      return <FaProjectDiagram className="text-indigo-600 text-lg" />;
+  }
+};
+
 const EmployeeDetail = ({ publicId, onClose }) => {
   const dispatch = useDispatch();
-  const { resourceDetails, loading, designations } = useSelector((state) => state.resource);
+  const { 
+    resourceDetails, 
+    loading, 
+    designations,
+    timeline,
+    timelineLoading 
+  } = useSelector((state) => state.resource);
+  
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState(null);
   const [toast, setToast] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
   const [profilePic, setProfilePic] = useState(null);
   const [profilePicPreview, setProfilePicPreview] = useState(null);
+  const [clientName, setClientName] = useState('');
+  const [statusDescription, setStatusDescription] = useState('');
+  const [editingTimelineId, setEditingTimelineId] = useState(null);
+  const [timelineEditData, setTimelineEditData] = useState({
+    description: '',
+    clientName: '',
+    training: []
+  });
+  
   const initialLoadDone = useRef(false);
-
-  // Grade options
   const gradeOptions = ['E1', 'E2', 'E3', 'E4', 'E5', 'E6', 'E7'];
 
   useEffect(() => {
@@ -47,6 +83,7 @@ const EmployeeDetail = ({ publicId, onClose }) => {
     if (!initialLoadDone.current && (!resourceDetails || resourceDetails.publicId !== publicId)) {
       initialLoadDone.current = true;
       dispatch(fetchResourceDetails(publicId));
+      dispatch(fetchUserTimeline(publicId));
     }
   }, [publicId, dispatch]);
 
@@ -66,9 +103,12 @@ const EmployeeDetail = ({ publicId, onClose }) => {
         resumeFile: prev?.resumeFile || resourceDetails.resumeFile || null,
         gender: resourceDetails.gender || prev?.gender || '',
         competencyId: resourceDetails.competencyId || prev?.competencyId || null,
-        roleIds: resourceDetails.roleIds || prev?.roleIds || []
+        roleIds: resourceDetails.roleIds || prev?.roleIds || [],
+        clientName: resourceDetails.clientName || prev?.clientName || '',
+        statusDescription: resourceDetails.statusDescription || prev?.statusDescription || ''
       }));
-      // Set initial profile picture preview from resourceDetails
+      setClientName(resourceDetails.clientName || '');
+      setStatusDescription(resourceDetails.statusDescription || '');
       if (resourceDetails.profileImage) {
         setProfilePicPreview(`data:image/png;base64,${resourceDetails.profileImage}`);
       }
@@ -109,7 +149,6 @@ const EmployeeDetail = ({ publicId, onClose }) => {
   const handleProfilePicChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      // Validate file type
       if (!file.type.match('image.*')) {
         setToast({
           type: 'error',
@@ -117,8 +156,6 @@ const EmployeeDetail = ({ publicId, onClose }) => {
         });
         return;
       }
-
-      // Validate file size (max 2MB)
       if (file.size > 2 * 1024 * 1024) {
         setToast({
           type: 'error',
@@ -126,7 +163,6 @@ const EmployeeDetail = ({ publicId, onClose }) => {
         });
         return;
       }
-
       setProfilePic(file);
       const reader = new FileReader();
       reader.onloadend = () => {
@@ -144,12 +180,10 @@ const EmployeeDetail = ({ publicId, onClose }) => {
 
   const uploadProfilePicture = async () => {
     if (!profilePic) return;
-
     try {
       setIsUploading(true);
       const uploadFormData = new FormData();
       uploadFormData.append('payload', profilePic);
-
       const token = sessionStorage.getItem('token');
       const response = await axios.post(
         `${ADMIN_API_BASE_URL}/user-profile-upload/?user_id=${publicId}`,
@@ -162,15 +196,13 @@ const EmployeeDetail = ({ publicId, onClose }) => {
           },
         }
       );
-
       if (response.status === 200) {
-        // Refresh resource details to get updated profile image
         await dispatch(fetchResourceDetails(publicId)).unwrap();
         setToast({
           type: 'success',
           message: 'Profile picture updated successfully!'
         });
-        setProfilePic(null); // Clear the selected file
+        setProfilePic(null);
       } else {
         throw new Error('Failed to upload profile picture');
       }
@@ -193,16 +225,16 @@ const EmployeeDetail = ({ publicId, onClose }) => {
         designation: formData.designation,
         grade: formData.grade,
         joiningDate: formData.joiningDate,
-        status: formData.status
+        status: formData.status,
+        statusDescription: statusDescription,
+        ...(formData.status === 'deployed' && { clientName: clientName })
       };
 
-      // Update employee details
       await dispatch(updateResource({
         publicId,
         resourceData: updatedData
       })).unwrap();
 
-      // Upload profile picture if a new one is selected
       if (profilePic) {
         await uploadProfilePicture();
       }
@@ -212,7 +244,8 @@ const EmployeeDetail = ({ publicId, onClose }) => {
         message: 'Employee details updated successfully!'
       });
       setIsEditing(false);
-      window.location.reload();
+      dispatch(fetchUserTimeline(publicId));
+      
     } catch (error) {
       setToast({
         type: 'error',
@@ -224,8 +257,6 @@ const EmployeeDetail = ({ publicId, onClose }) => {
   const handleResumeUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
-
-    // Check file type (PDF or DOC/DOCX)
     const validTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
     if (!validTypes.includes(file.type)) {
       setToast({
@@ -234,8 +265,6 @@ const EmployeeDetail = ({ publicId, onClose }) => {
       });
       return;
     }
-
-    // Check file size (5MB max)
     if (file.size > 5 * 1024 * 1024) {
       setToast({
         type: 'error',
@@ -243,11 +272,9 @@ const EmployeeDetail = ({ publicId, onClose }) => {
       });
       return;
     }
-
     setIsUploading(true);
     const uploadFormData = new FormData();
     uploadFormData.append('file', file);
-
     try {
       const token = sessionStorage.getItem('token');
       const response = await fetch(RESUME_API.UPLOAD_RESUME(publicId), {
@@ -258,26 +285,19 @@ const EmployeeDetail = ({ publicId, onClose }) => {
         },
         body: uploadFormData,
       });
-
       if (response.ok) {
         const responseData = await response.json();
         const newResumeFileName = responseData.fileName || file.name;
-
         setFormData(prev => ({
           ...prev,
           resumeFile: newResumeFileName
         }));
-
-
         await dispatch(fetchResourceDetails(publicId)).unwrap();
-
         setToast({
           type: 'success',
           message: 'Resume uploaded successfully!'
         });
-
         window.location.reload();
-
       } else {
         const errorData = await response.json();
         setToast({
@@ -299,7 +319,6 @@ const EmployeeDetail = ({ publicId, onClose }) => {
 
   const handleResumeDownload = async () => {
     if (!formData.resumeFile) return;
-
     try {
       const token = sessionStorage.getItem('token');
       const response = await fetch(RESUME_API.DOWNLOAD_RESUME(publicId), {
@@ -309,7 +328,6 @@ const EmployeeDetail = ({ publicId, onClose }) => {
           'Authorization': `Bearer ${token}`
         },
       });
-
       if (response.ok) {
         const blob = await response.blob();
         const url = window.URL.createObjectURL(blob);
@@ -319,7 +337,6 @@ const EmployeeDetail = ({ publicId, onClose }) => {
         document.body.appendChild(a);
         a.click();
         a.remove();
-
         setToast({
           type: 'success',
           message: 'Resume download started!'
@@ -344,10 +361,116 @@ const EmployeeDetail = ({ publicId, onClose }) => {
     return skillColors[index % skillColors.length];
   };
 
+  const renderStatusSpecificFields = () => {
+    switch (formData?.status) {
+      case 'deployed':
+        return (
+          <>
+            <div className="mt-3">
+              <label className="block text-xs text-gray-500 mb-1">Client Name</label>
+              <input
+                type="text"
+                value={clientName}
+                onChange={(e) => setClientName(e.target.value)}
+                className="w-full border rounded-md px-2 py-1.5 text-sm focus:ring-1 focus:ring-blue-300"
+                placeholder="Enter client name"
+              />
+            </div>
+            <div className="mt-3">
+              <label className="block text-xs text-gray-500 mb-1">Description</label>
+              <textarea
+                value={statusDescription}
+                onChange={(e) => setStatusDescription(e.target.value)}
+                className="w-full border rounded-md px-2 py-1.5 text-sm focus:ring-1 focus:ring-blue-300"
+                placeholder="Enter description"
+                rows={3}
+              />
+            </div>
+          </>
+        );
+      case 'pool':
+        return (
+          <>
+            <div className="mt-1">
+              <label className="block text-xs text-gray-500 mb-1">Description</label>
+              <textarea
+                value={statusDescription}
+                onChange={(e) => setStatusDescription(e.target.value)}
+                className="w-full border rounded-md px-2 py-1.5 text-sm focus:ring-1 focus:ring-blue-300"
+                placeholder="Enter description"
+                rows={3}
+              />
+            </div>
+          </>
+        );
+      case 'pip':
+        return (
+          <div className="mt-3">
+            <label className="block text-xs text-gray-500 mb-1">Description</label>
+            <textarea
+              value={statusDescription}
+              onChange={(e) => setStatusDescription(e.target.value)}
+              className="w-full border rounded-md px-2 py-1.5 text-sm focus:ring-1 focus:ring-blue-300"
+              placeholder="Enter PIP description"
+              rows={3}
+            />
+          </div>
+        );
+      default:
+        return null;
+    }
+  };
+
+  const handleTimelineEdit = (timelineItem) => {
+    setEditingTimelineId(timelineItem.id);
+    setTimelineEditData({
+      description: timelineItem.description,
+      clientName: timelineItem.clientName || '',
+      training: timelineItem.training || []
+    });
+  };
+
+  const handleTimelineEditChange = (e) => {
+    const { name, value } = e.target;
+    setTimelineEditData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleTimelineUpdate = async (timelineId) => {
+    try {
+      const payload = {
+        description: timelineEditData.description,
+        clientName: timelineEditData.clientName,
+        training: timelineEditData.training
+      };
+      
+      await dispatch(updateTimelineEntry({
+        timelineId,
+        data: payload
+      })).unwrap();
+      
+      setToast({
+        type: 'success',
+        message: 'Timeline updated successfully!'
+      });
+      setEditingTimelineId(null);
+      dispatch(fetchUserTimeline(publicId));
+    } catch (error) {
+      setToast({
+        type: 'error',
+        message: error.message || 'Failed to update timeline'
+      });
+    }
+  };
+
+  const formatDate = (dateString) => {
+    const options = { year: 'numeric', month: 'short', day: 'numeric' };
+    return new Date(dateString).toLocaleDateString(undefined, options);
+  };
+
   if (!formData) {
     return (
       <div className="fixed inset-0 flex items-center justify-center z-50 backdrop-blur-sm bg-black/20 p-4">
-        <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-3xl">
+        <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-4xl">
           Loading employee details...
         </div>
       </div>
@@ -366,8 +489,8 @@ const EmployeeDetail = ({ publicId, onClose }) => {
       </div>
 
       <div className="fixed inset-0 flex items-center justify-center z-50 backdrop-blur-sm bg-black/20 p-4">
-        <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-3xl border border-gray-200">
-          <div className="flex justify-between items-center mb-6">
+        <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-4xl border border-gray-200">
+          <div className="flex justify-between items-center mb-6 bg-blue-50 px-4 py-3 rounded-lg">
             <div className="flex items-center">
               <div className="relative">
                 {profilePicPreview ? (
@@ -375,7 +498,7 @@ const EmployeeDetail = ({ publicId, onClose }) => {
                     <img
                       src={profilePicPreview}
                       alt="Profile"
-                      className="w-10 h-10 rounded-full mr-2 object-cover border-2 border-blue-200"
+                      className="w-12 h-12 rounded-full mr-3 object-cover border-2 border-blue-200"
                     />
                     {profilePic && (
                       <button
@@ -388,7 +511,7 @@ const EmployeeDetail = ({ publicId, onClose }) => {
                     )}
                   </>
                 ) : (
-                  <FaUser className="w-10 h-10 rounded-full mr-2 text-gray-400" />
+                  <FaUser className="w-12 h-12 rounded-full mr-3 text-gray-400" />
                 )}
               </div>
               {isEditing ? (
@@ -412,7 +535,7 @@ const EmployeeDetail = ({ publicId, onClose }) => {
                     />
                     <label
                       htmlFor="profilePic"
-                      className={`flex items-center px-3 py-1.5 rounded-md text-sm cursor-pointer transition-all ${isUploading ? 'bg-gray-100 text-gray-500' : 'bg-blue-50 text-blue-700 hover:bg-blue-100 active:scale-95'
+                      className={`flex items-center px-3 py-1.5 rounded-md text-sm cursor-pointer transition-all ${isUploading ? 'bg-gray-100 text-gray-500' : 'bg-blue-100 text-blue-700 hover:bg-blue-200 active:scale-95'
                         }`}
                     >
                       <FaUpload className="mr-1 text-xs" />
@@ -429,7 +552,7 @@ const EmployeeDetail = ({ publicId, onClose }) => {
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setIsEditing(!isEditing)}
-                className="flex items-center px-3 py-1.5 bg-blue-50 text-blue-600 rounded-md hover:bg-blue-100 text-sm"
+                className="flex items-center px-3 py-1.5 bg-blue-100 text-blue-600 rounded-md hover:bg-blue-200 text-sm"
                 disabled={loading}
               >
                 {isEditing ? (
@@ -452,7 +575,114 @@ const EmployeeDetail = ({ publicId, onClose }) => {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="bg-gray-50 rounded-lg p-8">
+              <h4 className="flex items-center text-base font-medium text-gray-800 mb-3">
+                <FaBriefcase className="text-blue-500 mr-2 text-sm" />
+                Timeline
+              </h4>
+              {timelineLoading ? (
+                <div className="flex justify-center items-center h-32">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+                </div>
+              ) : timeline?.length > 0 ? (
+                <div className="relative">
+                  <div className="absolute left-8.5 top-0 bottom-0 w-0.5 bg-blue-200"></div>
+                  <div className="max-h-[300px] overflow-y-auto overflow-x-hidden pr-2">
+                    {timeline.map((event) => (
+                      <div
+                        key={event.id}
+                        className="mb-4 flex items-center transition-all duration-200 hover:scale-[1.02] hover:bg-blue-50 hover:shadow-sm rounded-md p-3"
+                      >
+                        <div className="flex-shrink-0 w-12 h-12 flex items-center justify-center bg-white border-2 border-blue-500 text-blue-500 rounded-full z-10">
+                          {getStatusIcon(event.status)}
+                        </div>
+                        <div className="ml-4 flex-1 bg-white rounded-md shadow-sm p-3 min-h-[100px]">
+                          <div className="flex justify-between items-start">
+                            <h5 className="text-sm font-medium text-gray-800 capitalize">
+                              {event.status}
+                            </h5>
+                            <button
+                              onClick={() => handleTimelineEdit(event)}
+                              className="text-xs text-blue-600 hover:text-blue-800"
+                            >
+                              <FaEdit size={12} />
+                            </button>
+                          </div>
+                          
+                          {editingTimelineId === event.id ? (
+                            <div className="mt-1 space-y-2">
+                              <input
+                                type="text"
+                                name="description"
+                                value={timelineEditData.description}
+                                onChange={handleTimelineEditChange}
+                                className="w-full border rounded px-2 py-1 text-xs"
+                                placeholder="Description"
+                              />
+                              {event.status === 'deployed' && (
+                                <input
+                                  type="text"
+                                  name="clientName"
+                                  value={timelineEditData.clientName}
+                                  onChange={handleTimelineEditChange}
+                                  className="w-full border rounded px-2 py-1 text-xs"
+                                  placeholder="Client Name"
+                                />
+                              )}
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() => handleTimelineUpdate(event.id)}
+                                  className="px-2 py-1 bg-blue-500 text-white rounded text-xs hover:bg-blue-600"
+                                >
+                                  Save
+                                </button>
+                                <button
+                                  onClick={() => setEditingTimelineId(null)}
+                                  className="px-2 py-1 bg-gray-200 text-gray-700 rounded text-xs hover:bg-gray-300"
+                                >
+                                  Cancel
+                                </button>
+                              </div>
+                            </div>
+                          ) : (
+                            <>
+                              <p className="text-xs text-gray-600 mt-1">{event.description}</p>
+                              {event.clientName && (
+                                <p className="text-xs text-gray-700 mt-1">
+                                  <span className="font-medium">Client:</span> {event.clientName}
+                                </p>
+                              )}
+                              {event.training?.length > 0 && (
+                                <div className="mt-1">
+                                  <p className="text-xs font-medium text-gray-700">Training:</p>
+                                  <div className="flex flex-wrap gap-1 mt-1">
+                                    {event.training.map((train, idx) => (
+                                      <span key={idx} className="text-xs bg-purple-100 text-purple-800 px-2 py-0.5 rounded">
+                                        {train.name}
+                                      </span>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                              <p className="text-xs text-gray-500 mt-1">
+                                {formatDate(event.createdAt)}
+                              </p>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div className="bg-white/50 rounded-md p-3 flex flex-col items-center justify-center border border-dashed border-gray-300 text-center">
+                  <FaBriefcase className="text-gray-400 text-2xl mb-2" />
+                  <p className="text-gray-500 text-sm">No timeline events added yet</p>
+                </div>
+              )}
+            </div>
+
             <div className={`bg-gray-50 rounded-lg p-4 ${isEditing ? 'ring-1 ring-blue-200' : ''}`}>
               <h4 className="flex items-center text-base font-medium text-gray-800 mb-3">
                 <FaBriefcase className="text-blue-500 mr-2 text-sm" />
@@ -568,6 +798,7 @@ const EmployeeDetail = ({ publicId, onClose }) => {
                     )}
                   </div>
                 </div>
+                {isEditing && renderStatusSpecificFields()}
               </div>
             </div>
 
@@ -585,7 +816,6 @@ const EmployeeDetail = ({ publicId, onClose }) => {
                     >
                       {skill.technology}
                       {renderRatingStars(skill.rating)}
-                    
                     </div>
                   ))}
                 </div>
@@ -612,7 +842,6 @@ const EmployeeDetail = ({ publicId, onClose }) => {
                   disabled={isUploading || loading}
                 />
               </label>
-
               {formData.resumeFile && (
                 <div className="flex flex-col items-start">
                   <button
@@ -629,7 +858,6 @@ const EmployeeDetail = ({ publicId, onClose }) => {
                 </div>
               )}
             </div>
-
             <button
               className="flex items-center px-4 py-1.5 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm font-medium disabled:bg-blue-400 transition-colors"
               onClick={isEditing ? handleSubmit : onClose}

@@ -364,3 +364,34 @@ export const fetchTechnologies = createAsyncThunk(
     }
   }
 );
+
+// Add these actions to your existing resourceAction.js
+export const fetchUserTimeline = createAsyncThunk(
+  "resource/fetchUserTimeline",
+  async (publicId, { rejectWithValue }) => {
+    try {
+      const response = await resourceApiClient.get(`${RESOURCE_API.TIMELINE}/${publicId}`);
+      if (!response.data.success) {
+        throw new Error("Failed to fetch user timeline");
+      }
+      return response.data.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || error.message);
+    }
+  }
+);
+
+export const updateTimelineEntry = createAsyncThunk(
+  "resource/updateTimelineEntry",
+  async ({ timelineId, data }, { rejectWithValue }) => {
+    try {
+      const response = await resourceApiClient.put(`${RESOURCE_API.UPDATE_TIMELINE}/${timelineId}`, data);
+      if (!response.data.success) {
+        throw new Error("Failed to update timeline entry");
+      }
+      return response.data.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || error.message);
+    }
+  }
+);

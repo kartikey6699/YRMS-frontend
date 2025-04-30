@@ -1,8 +1,10 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import ProfileCard from "../../helper/ProfileCard";
-import { FaArrowLeft, FaInfoCircle, FaTrash, FaPlusCircle, FaCheckCircle, FaTimes, FaPlus, FaChevronDown, FaChevronUp, FaStar, FaChartLine } from "react-icons/fa"; // Added FaStar and FaChartLine imports
+import { FaArrowLeft, FaInfoCircle, FaTrash, FaPlusCircle, FaEdit, FaCheckCircle, FaTimes, FaPlus, FaChevronDown, FaChevronUp } from "react-icons/fa";
+import { BaselineHistories } from "./BaselineHistory";
+import BaselineTimeline from "./BaselineTimeline"; // Import BaselineTimeline
 import AddOptionModal from "../../helper/OptionalModal";
 import {
   fetchCertificationAuthorities,
@@ -12,226 +14,244 @@ import {
 } from "../../../features/baseline/baselineAction";
 import { SuccessToast, ErrorToast } from "../../helper/ResourceToast";
 
-const BaselineAccordion = ({ histories }) => {
-  const [expandedIndex, setExpandedIndex] = useState(null);
+const TechSkillSelector = ({ techSkills, setTechSkills, technologyCategoriesWithTech, loading, setModalField, setSelectedCategoryId }) => {
+  const [openTechDropdowns, setOpenTechDropdowns] = useState({});
+  const dropdownRefs = useRef({}); // Store refs for each dropdown
 
-  const toggleAccordion = (index) => {
-    setExpandedIndex(expandedIndex === index ? null : index);
+  // Handle click outside to close technologies dropdown
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      Object.keys(dropdownRefs.current).forEach((cardIndex) => {
+        if (
+          dropdownRefs.current[cardIndex] &&
+          !dropdownRefs.current[cardIndex].contains(event.target)
+        ) {
+          setOpenTechDropdowns((prev) => ({
+            ...prev,
+            [cardIndex]: false,
+          }));
+        }
+      });
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const handleCategoryChange = (categoryId, cardIndex) => {
+    const updatedTechSkills = [...techSkills];
+    updatedTechSkills[cardIndex] = { ...updatedTechSkills[cardIndex], category: categoryId, technologies: [] };
+    setTechSkills(updatedTechSkills);
   };
 
-  const formatDate = (timestamp) => {
-    if (!timestamp) return "N/A";
-    const date = new Date(timestamp);
-    return date.toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    });
+  const handleTechToggle = (techId, techName, cardIndex) => {
+    const updatedTechSkills = [...techSkills];
+    const card = updatedTechSkills[cardIndex];
+    const existingTech = card.technologies.find((t) => t.technology === techId);
+
+    if (existingTech) {
+      card.technologies = card.technologies.filter((t) => t.technology !== techId);
+    } else {
+      card.technologies.push({ technology: techId, name: techName, rating: "" });
+    }
+
+    setTechSkills(updatedTechSkills);
   };
 
-  const getRatingColor = (rating) => {
-    if (rating >= 4) return "text-emerald-600";
-    if (rating >= 3) return "text-blue-600";
-    if (rating >= 2) return "text-amber-600";
-    return "text-red-600";
+  const handleRatingChange = (techId, rating, cardIndex) => {
+    const value = Math.min(parseInt(rating) || 0, 5);
+    const updatedTechSkills = [...techSkills];
+    const card = updatedTechSkills[cardIndex];
+    const tech = card.technologies.find((t) => t.technology === techId);
+    if (tech) {
+      tech.rating = value.toString();
+    }
+    setTechSkills(updatedTechSkills);
   };
 
-  const getBgColor = (rating) => {
-    if (rating >= 4) return "bg-emerald-50";
-    if (rating >= 3) return "bg-blue-50";
-    if (rating >= 2) return "bg-amber-50";
-    return "bg-red-50";
+  const handleDeleteTech = (techId, cardIndex) => {
+    const updatedTechSkills = [...techSkills];
+    const card = updatedTechSkills[cardIndex];
+    card.technologies = card.technologies.filter((t) => t.technology !== techId);
+    setTechSkills(updatedTechSkills);
   };
 
-  const getBorderColor = (rating) => {
-    if (rating >= 4) return "border-emerald-200";
-    if (rating >= 3) return "border-blue-200";
-    if (rating >= 2) return "border-amber-200";
-    return "border-red-200";
+  const addCategorySection = () => {
+    setTechSkills([...techSkills, { category: "", technologies: [] }]);
+  };
+
+  const removeCategorySection = (cardIndex) => {
+    setTechSkills(techSkills.filter((_, i) => i !== cardIndex));
+  };
+
+  const openTechModal = (categoryId) => {
+    setModalField("technology_stack");
+    setSelectedCategoryId(categoryId);
+  };
+
+  const toggleTechDropdown = (cardIndex) => {
+    setOpenTechDropdowns((prev) => ({
+      ...prev,
+      [cardIndex]: !prev[cardIndex],
+    }));
   };
 
   return (
-    <div className="space-y-2">
-      {histories.map((baseline, index) => {
-        const rating = parseFloat(baseline.rating) || 0;
-        const roundedRating = Math.round(rating * 10) / 10;
-        const isExpanded = expandedIndex === index;
-
-        return (
-          <div
-            key={index}
-            className={`border rounded-lg overflow-hidden ${getBorderColor(rating)} transition-all duration-200 ${isExpanded ? 'shadow-sm' : 'hover:shadow-xs'}`}
-          >
+    <div className="space-y-4">
+      {techSkills.map((card, cardIndex) => (
+        <div
+          key={cardIndex}
+          className="relative bg-white p-4 rounded-xl shadow-sm border border-gray-200 transition-all duration-300 hover:shadow-md"
+        >
+          {techSkills.length > 1 && (
             <button
-              onClick={() => toggleAccordion(index)}
-              className={`w-full text-left p-4 flex justify-between items-center ${getBgColor(rating)} hover:bg-opacity-80 transition-colors duration-200`}
+              onClick={() => removeCategorySection(cardIndex)}
+              className="absolute top-3 right-3 text-gray-400 hover:text-red-500 transition-colors"
+              title="Remove Section"
             >
-              <div className="flex items-center space-x-4">
-                <div className={`text-2xl font-bold ${getRatingColor(rating)}`}>
-                  {roundedRating}
-                </div>
-                <div>
-                  <h3 className="font-medium text-gray-800">Baseline Assessment</h3>
-                  <p className="text-xs text-gray-500">{formatDate(baseline.timestamp)}</p>
-                </div>
-              </div>
-              <div className="flex items-center space-x-4">
-                <span className="text-sm font-medium bg-white px-2 py-1 rounded border border-gray-200">
-                  {baseline.communication || "N/A"}
-                </span>
-                {isExpanded ? (
-                  <FaChevronUp className="text-gray-500" />
-                ) : (
-                  <FaChevronDown className="text-gray-500" />
-                )}
-              </div>
+              <FaTimes className="w-4 h-4" />
             </button>
+          )}
 
-            {isExpanded && (
-              <div className="bg-white p-4">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                  {/* Basic Info */}
-                  <div className="space-y-2">
-                    <h4 className="flex items-center text-sm font-medium text-gray-700">
-                      <FaInfoCircle className="mr-2 text-blue-500" />
-                      Basic Info
-                    </h4>
-                    <div className="grid grid-cols-2 gap-2 text-sm">
-                      <div>
-                        <p className="text-gray-500">Experience</p>
-                        <p>{baseline.totalExperience || 0} yrs</p>
-                      </div>
-                      <div>
-                        <p className="text-gray-500">Communication</p>
-                        <p>{baseline.communication || "N/A"}</p>
-                      </div>
-                      <div className="col-span-2">
-                        <p className="text-gray-500">Rating</p>
-                        <div className="flex items-center">
-                          {[...Array(5)].map((_, i) => (
-                            <FaStar
-                              key={i}
-                              className={`${i < Math.floor(rating) ? "text-yellow-400" : "text-gray-300"} w-4 h-4`}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-start">
+            {/* Category Selector */}
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700">Category</label>
+              <div className="relative">
+                <select
+                  value={card.category}
+                  onChange={(e) => {
+                    if (e.target.value === "add_category") {
+                      setModalField("technology_category");
+                    } else {
+                      handleCategoryChange(e.target.value, cardIndex);
+                    }
+                  }}
+                  className="w-full p-2.5 pl-9 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm bg-white"
+                  disabled={loading}
+                >
+                  <option value="">Select Category</option>
+                  {technologyCategoriesWithTech.map((cat) => (
+                    <option key={cat.publicId} value={cat.publicId}>
+                      {cat.name}
+                    </option>
+                  ))}
+                  <option value="add_category" className="text-blue-600 font-medium">
+                    + Add New Category
+                  </option>
+                </select>
+                <FaEdit className="absolute left-3 top-3.5 text-gray-400 w-4 h-4" />
+              </div>
+            </div>
+
+            {/* Technology Dropdown */}
+            <div className="space-y-2" ref={(el) => (dropdownRefs.current[cardIndex] = el)}>
+              <label className="block text-sm font-medium text-gray-700">Technologies</label>
+              <button
+                onClick={() => toggleTechDropdown(cardIndex)}
+                disabled={!card.category}
+                className={`w-full flex items-center justify-between p-2.5 border rounded-lg text-sm ${card.category
+                  ? "border-gray-300 bg-white hover:bg-gray-50 text-gray-700"
+                  : "border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed"
+                  }`}
+              >
+                <span>Select Technologies</span>
+                {openTechDropdowns[cardIndex] ? (
+                  <FaChevronUp className="w-4 h-4 text-gray-500" />
+                ) : (
+                  <FaChevronDown className="w-4 h-4 text-gray-500" />
+                )}
+              </button>
+
+              {/* Dropdown Content */}
+              {openTechDropdowns[cardIndex] && card.category && (
+                <div className="mt-1 p-3 bg-white border border-gray-200 rounded-lg shadow-lg z-10">
+                  <div className="space-y-2 max-h-60 overflow-y-auto">
+                    {technologyCategoriesWithTech
+                      .find((cat) => cat.publicId === card.category)
+                      ?.technologies.map((tech) => (
+                        <div key={tech.publicId} className="flex items-center justify-between">
+                          <label className="flex items-center space-x-2 w-full">
+                            <input
+                              type="checkbox"
+                              checked={card.technologies.some((t) => t.technology === tech.publicId)}
+                              onChange={() => handleTechToggle(tech.publicId, tech.name, cardIndex)}
+                              className="h-4 w-4 text-blue-600 rounded focus:ring-blue-500"
                             />
-                          ))}
-                          <span className="ml-2 font-medium">{roundedRating}/5</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Technology Experience */}
-                  <div className="space-y-2">
-                    <h4 className="flex items-center text-sm font-medium text-gray-700">
-                      <FaChartLine className="mr-2 text-blue-500" />
-                      Tech Experience
-                    </h4>
-                    <div className="space-y-1">
-                      {baseline.technologyExperience?.slice(0, 3).map((exp, i) => (
-                        <div key={i} className="flex justify-between text-sm">
-                          <span>{exp.technology}</span>
-                          <span className="font-medium">{exp.years} yrs</span>
+                            <span className="text-sm text-gray-700">{tech.name}</span>
+                          </label>
+                          {card.technologies.some((t) => t.technology === tech.publicId) && (
+                            <input
+                              type="number"
+                              value={card.technologies.find((t) => t.technology === tech.publicId)?.rating || ""}
+                              onChange={(e) => handleRatingChange(tech.publicId, e.target.value, cardIndex)}
+                              className="w-12 p-1 text-sm border border-gray-300 rounded focus:ring-blue-500 focus:border-blue-500"
+                              min="0"
+                              max="5"
+                              placeholder="0-5"
+                            />
+                          )}
                         </div>
                       ))}
-                      {baseline.technologyExperience?.length > 3 && (
-                        <p className="text-xs text-gray-500">
-                          +{baseline.technologyExperience.length - 3} more
-                        </p>
-                      )}
-                    </div>
                   </div>
-
-                  {/* Certifications */}
-                  <div className="space-y-2">
-                    <h4 className="flex items-center text-sm font-medium text-gray-700">
-                      <FaCheckCircle className="mr-2 text-blue-500" />
-                      Certifications
-                    </h4>
-                    <div className="space-y-1">
-                      {baseline.certification?.slice(0, 3).map((cert, i) => (
-                        <div key={i} className="text-sm">
-                          <p className="font-medium">{cert.title}</p>
-                          <p className="text-xs text-gray-500">{cert.technology}</p>
-                        </div>
-                      ))}
-                      {baseline.certification?.length > 3 && (
-                        <p className="text-xs text-gray-500">
-                          +{baseline.certification.length - 3} more
-                        </p>
-                      )}
-                    </div>
-                  </div>
+                  <button
+                    onClick={() => openTechModal(card.category)}
+                    className="mt-2 w-full flex items-center justify-center px-2 py-1.5 text-xs text-blue-600 hover:text-blue-800"
+                  >
+                    <FaPlusCircle className="mr-1.5 w-3 h-3" />
+                    Add New Technology
+                  </button>
                 </div>
+              )}
+            </div>
 
-                {/* Technical Skills */}
-                <div className="mb-4">
-                  <h4 className="text-sm font-medium text-gray-700 mb-2">Technical Skills</h4>
+            {/* Selected Technologies */}
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700">
+                Selected ({card.technologies.length})
+              </label>
+              <div className="min-h-[42px] p-2 bg-gray-50 border border-gray-200 rounded-lg">
+                {card.technologies.length > 0 ? (
                   <div className="flex flex-wrap gap-2">
-                    {baseline.technicalSkills?.slice(0, 8).map((skill, i) => (
-                      <div key={i} className="flex items-center bg-gray-50 border border-gray-200 rounded-full px-3 py-1 text-sm">
-                        <span className="mr-1">{skill.technology}</span>
-                        <div className="flex items-center">
-                          {[...Array(5)].map((_, j) => (
-                            <FaStar
-                              key={j}
-                              className={`${j < (parseInt(skill.rating) || 0) ? "text-yellow-400" : "text-gray-300"} w-3 h-3`}
-                            />
-                          ))}
-                        </div>
+                    {card.technologies.map((tech) => (
+                      <div
+                        key={tech.technology}
+                        className="flex items-center bg-white px-2.5 py-1 rounded-full border border-blue-100 shadow-xs text-xs"
+                      >
+                        <span className="text-gray-700 mr-1">{tech.name}</span>
+                        {tech.rating && (
+                          <span className="bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded-full">
+                            {tech.rating}/5
+                          </span>
+                        )}
+                        <button
+                          onClick={() => handleDeleteTech(tech.technology, cardIndex)}
+                          className="ml-1 text-gray-400 hover:text-red-500"
+                        >
+                          <FaTimes className="w-3 h-3" />
+                        </button>
                       </div>
                     ))}
-                    {baseline.technicalSkills?.length > 8 && (
-                      <div className="bg-gray-50 border border-gray-200 rounded-full px-3 py-1 text-sm">
-                        +{baseline.technicalSkills.length - 8} more
-                      </div>
-                    )}
                   </div>
-                </div>
-
-                {/* Feedback & Suggestions */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="bg-blue-50 p-3 rounded-lg border border-blue-100">
-                    <h4 className="text-xs font-medium text-blue-700 mb-1">FEEDBACK</h4>
-                    <p className="text-sm line-clamp-3">
-                      {baseline.feedback || "No feedback provided"}
-                    </p>
-                  </div>
-                  <div className="bg-green-50 p-3 rounded-lg border border-green-100">
-                    <h4 className="text-xs font-medium text-green-700 mb-1">UPSKILL SUGGESTIONS</h4>
-                    <p className="text-sm line-clamp-3">
-                      {baseline.upskillSuggestion || "No suggestions provided"}
-                    </p>
-                  </div>
-                </div>
+                ) : (
+                  <p className="text-sm text-gray-400 italic">No technologies selected</p>
+                )}
               </div>
-            )}
+            </div>
           </div>
-        );
-      })}
+        </div>
+      ))}
+
+      <button
+        onClick={addCategorySection}
+        className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+      >
+        <FaPlus className="mr-2 w-3 h-3" />
+        Add Another Category
+      </button>
     </div>
   );
 };
-
-const CreateBaselineButton = ({ onClick }) => (
-  <button
-    onClick={onClick}
-    className="w-full flex items-center justify-between p-4 rounded-lg bg-gradient-to-r from-blue-50 to-blue-100 border-2 border-dashed border-blue-300 hover:border-blue-400 hover:from-blue-100 hover:to-blue-200 transition-all duration-300 group"
-  >
-    <div className="flex items-center">
-      <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-sm mr-4 group-hover:scale-110 transition-transform">
-        <FaPlusCircle className="text-blue-500 text-xl" />
-      </div>  
-      <div className="text-left">
-        <h3 className="text-lg font-semibold text-blue-700">Create New Baseline</h3>
-        <p className="text-sm text-blue-500">Add a new baseline assessment</p>
-      </div>
-    </div>
-    <div className="bg-blue-100 text-blue-700 px-4 py-2 rounded-full text-sm font-medium flex items-center">
-      <span>New Assessment</span>
-      <FaChevronDown className="ml-2 transform group-hover:translate-y-0.5 transition-transform" />
-    </div>
-  </button>
-);
 
 const ManageBaseline = () => {
   const { publicId } = useParams();
@@ -253,6 +273,7 @@ const ManageBaseline = () => {
     state.resource.resourceDetails
   );
 
+  const [activeSection, setActiveSection] = useState("view");
   const [modalField, setModalField] = useState(null);
   const [selectedCategoryId, setSelectedCategoryId] = useState(null);
   const [showForm, setShowForm] = useState(false);
@@ -282,45 +303,47 @@ const ManageBaseline = () => {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleExpChange = (index, field, value) => {
-    const updated = [...formData.experience];
-    updated[index][field] = value;
-    setFormData({ ...formData, experience: updated });
+    const updatedExp = [...formData.experience];
+    updatedExp[index][field] = value;
+    setFormData((prev) => ({ ...prev, experience: updatedExp }));
   };
 
   const addExperience = () => {
-    setFormData({
-      ...formData,
-      experience: [...formData.experience, { technology: "", years: "" }],
-    });
+    setFormData((prev) => ({
+      ...prev,
+      experience: [...prev.experience, { technology: "", years: "" }],
+    }));
   };
 
   const removeExperience = (index) => {
-    const updated = [...formData.experience];
-    updated.splice(index, 1);
-    setFormData({ ...formData, experience: updated });
+    setFormData((prev) => ({
+      ...prev,
+      experience: prev.experience.filter((_, i) => i !== index),
+    }));
   };
 
   const handleCertChange = (index, field, value) => {
-    const updated = [...formData.certification];
-    updated[index][field] = value;
-    setFormData({ ...formData, certification: updated });
+    const updatedCert = [...formData.certification];
+    updatedCert[index][field] = value;
+    setFormData((prev) => ({ ...prev, certification: updatedCert }));
   };
 
   const addCertification = () => {
-    setFormData({
-      ...formData,
-      certification: [...formData.certification, { name: "", issuingAuthority: "" }],
-    });
+    setFormData((prev) => ({
+      ...prev,
+      certification: [...prev.certification, { name: "", issuingAuthority: "" }],
+    }));
   };
 
   const removeCertification = (index) => {
-    const updated = [...formData.certification];
-    updated.splice(index, 1);
-    setFormData({ ...formData, certification: updated });
+    setFormData((prev) => ({
+      ...prev,
+      certification: prev.certification.filter((_, i) => i !== index),
+    }));
   };
 
   const handleSubmit = async (e) => {
@@ -397,6 +420,7 @@ const ManageBaseline = () => {
 
       setShowForm(false);
       setFormStep(1);
+      setActiveSection("view");
       setToast(<SuccessToast message="Baseline created successfully!" onClose={() => setToast(null)} />);
       dispatch(fetchBaselineHistories(publicId));
     } catch (error) {
@@ -429,12 +453,8 @@ const ManageBaseline = () => {
   const nextStep = () => setFormStep(2);
   const prevStep = () => setFormStep(1);
 
-  const sortedHistories = [...baselineHistories].sort(
-    (a, b) => new Date(b.timestamp) - new Date(a.timestamp)
-  );
-
   return (
-    <div className="p-6 bg-gradient-to-b from-gray-50 to-gray-100 min-h-screen">
+    <div className="p-6 bg-gradient-to-b from-blue-50 to-purple-50 min-h-screen">
       {toast}
       <button
         onClick={() => navigate("/manage-resources")}
@@ -452,21 +472,33 @@ const ManageBaseline = () => {
         status={resourceDetails?.status}
       />
 
-      <h2 className="text-3xl font-bold text-gray-800 mb-6">
+      <h2 className="text-3xl font-bold text-blue-800 mb-6">
         Baseline Management for {resourceDetails?.employeeName || 'Resource'}
       </h2>
 
-      <div className="space-y-4">
-        {sortedHistories.length > 0 ? (
-          <BaselineAccordion histories={sortedHistories} />
-        ) : (
-          <div className="text-center py-12 bg-gray-50 rounded-lg">
-            <FaInfoCircle className="text-gray-400 text-4xl mx-auto mb-4" />
-            <p className="text-gray-500 mb-6">No baseline assessments found</p>
+      {activeSection === "view" && (
+        <div className="mb-10">
+          <BaselineHistories
+            histories={baselineHistories}
+            employeeName={resourceDetails?.employeeName}
+            competency={resourceDetails?.competency}
+            gender={resourceDetails?.gender}
+            userId={resourceDetails?.publicId}
+          />
+          <div
+            onClick={openAddForm}
+            className="rounded-xl shadow-lg border-2 border-dashed border-gray-300 bg-gradient-to-br from-blue-50 to-purple-50 hover:from-blue-100 hover:to-purple-100 flex items-center justify-center cursor-pointer transition-all duration-300 h-40 hover:shadow-xl hover:translate-y-[-4px] mt-4"
+          >
+            <div className="text-center p-4">
+              <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center shadow-md mx-auto mb-3 transition-transform duration-200 hover:scale-110">
+                <FaInfoCircle className="text-blue-500 text-xl" />
+              </div>
+              <p className="text-blue-600 font-medium">Create New Baseline</p>
+              <p className="text-gray-500 text-sm mt-1">Click to add a new baseline</p>
+            </div>
           </div>
-        )}
-        <CreateBaselineButton onClick={openAddForm} />
-      </div>
+        </div>
+      )}
 
       {showForm && (
         <div className="fixed inset-0 bg-gray-900/30 backdrop-blur-sm flex items-center justify-center p-4 z-50 transition-opacity duration-300">
@@ -483,100 +515,152 @@ const ManageBaseline = () => {
               </div>
             </div>
 
-            <div className="flex flex-col md:flex-row">
-              {/* Form Section */}
-              <div className="flex-1 p-6 border-r border-gray-200">
-                <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="flex">
+              {/* Form Section (2/3 width) */}
+              <div className="w-full lg:w-2/3 p-6">
+                <form onSubmit={handleSubmit} className="space-y-4">
                   {formStep === 1 ? (
-                    <>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">Total Experience (years)</label>
-                          <input
-                            type="number"
-                            name="totalExperience"
-                            value={formData.totalExperience}
-                            onChange={handleInputChange}
-                            className="w-full rounded-md border border-gray-300 py-2 px-3 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                            min="0"
-                            step="0.5"
-                          />
-                        </div>
-
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">Communication Rating</label>
-                          <select
-                            name="communication"
-                            value={formData.communication}
-                            onChange={handleInputChange}
-                            className="w-full rounded-md border border-gray-300 py-2 px-3 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                          >
-                            <option value="">Select Rating</option>
-                            <option value="1">1 - Poor</option>
-                            <option value="2">2 - Basic</option>
-                            <option value="3">3 - Good</option>
-                            <option value="4">4 - Very Good</option>
-                            <option value="5">5 - Excellent</option>
-                          </select>
-                        </div>
-                      </div>
-
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <div className="flex justify-between items-center mb-2">
-                          <label className="block text-sm font-medium text-gray-700">Technology Experience</label>
-                          <button
-                            type="button"
-                            onClick={addExperience}
-                            className="text-sm text-blue-600 hover:text-blue-800 flex items-center"
-                          >
-                            <FaPlus className="mr-1" /> Add Experience
-                          </button>
-                        </div>
-
-                        <div className="space-y-3">
-                          {formData.experience.map((exp, index) => (
-                            <div key={index} className="flex items-center space-x-3">
-                              <div className="flex-1">
-                                <input
-                                  type="text"
-                                  placeholder="Technology"
-                                  value={exp.technology}
-                                  onChange={(e) => handleExpChange(index, "technology", e.target.value)}
-                                  className="w-full rounded-md border border-gray-300 py-2 px-3 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                                />
-                              </div>
-                              <div className="w-24">
-                                <input
-                                  type="number"
-                                  placeholder="Years"
-                                  value={exp.years}
-                                  onChange={(e) => handleExpChange(index, "years", e.target.value)}
-                                  className="w-full rounded-md border border-gray-300 py-2 px-3 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                                  min="0"
-                                  step="0.5"
-                                />
-                              </div>
-                              {formData.experience.length > 1 && (
-                                <button
-                                  type="button"
-                                  onClick={() => removeExperience(index)}
-                                  className="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-full"
-                                >
-                                  <FaTrash />
-                                </button>
-                              )}
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Tech Experience</label>
+                        {formData.experience.map((exp, index) => (
+                          <div key={index} className="flex items-center space-x-2 mb-2">
+                            <div className="w-full">
+                              <label className="block text-sm font-medium text-gray-700 mb-1">Technology</label>
+                              <input
+                                type="text"
+                                value={exp.technology}
+                                onChange={(e) => handleExpChange(index, "technology", e.target.value)}
+                                className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                placeholder="Enter technology"
+                              />
                             </div>
-                          ))}
-                        </div>
+                            <div className="w-1/4">
+                              <label className="block text-sm font-medium text-gray-700 mb-1">Years</label>
+                              <input
+                                type="number"
+                                value={exp.years}
+                                onChange={(e) => handleExpChange(index, "years", e.target.value)}
+                                className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                placeholder="0"
+                                min="0"
+                              />
+                            </div>
+                            {formData.experience.length > 1 && (
+                              <button
+                                type="button"
+                                onClick={() => removeExperience(index)}
+                                className="text-red-500 hover:text-red-700 mt-6"
+                              >
+                                <FaTrash className="w-4 h-4" />
+                              </button>
+                            )}
+                          </div>
+                        ))}
+                        <button
+                          type="button"
+                          onClick={addExperience}
+                          className="mt-2 px-3 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors duration-200 text-sm"
+                        >
+                          Add Tech Experience
+                        </button>
                       </div>
-                    </>
-                  ) : (
-                    <>
+
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Technical Skills</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Certification Details</label>
+                        {formData.certification.map((cert, index) => (
+                          <div key={index} className="flex items-center space-x-2 mb-2">
+                            <div className="w-full">
+                              <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                              <input
+                                type="text"
+                                value={cert.name}
+                                onChange={(e) => handleCertChange(index, "name", e.target.value)}
+                                className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                placeholder="Enter certification name"
+                              />
+                            </div>
+                            <div className="w-full">
+                              <label className="block text-sm font-medium text-gray-700 mb-1">Authority Name</label>
+                              <select
+                                value={cert.issuingAuthority}
+                                onChange={(e) => {
+                                  if (e.target.value === "add_authority") {
+                                    setModalField("certification_authority");
+                                  } else {
+                                    handleCertChange(index, "issuingAuthority", e.target.value);
+                                  }
+                                }}
+                                className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              >
+                                <option value="">Select Certification Authority</option>
+                                {certificationAuthorities.map((auth) => (
+                                  <option key={auth.publicId} value={auth.publicId}>
+                                    {auth.name}
+                                  </option>
+                                ))}
+                                <option value="add_authority" className="font-semibold text-blue-600">
+                                  + Add New Authority
+                                </option>
+                              </select>
+                            </div>
+                            {formData.certification.length > 1 && (
+                              <button
+                                type="button"
+                                onClick={() => removeCertification(index)}
+                                className="text-red-500 hover:text-red-700 mt-6"
+                              >
+                                <FaTrash className="w-4 h-4" />
+                              </button>
+                            )}
+                          </div>
+                        ))}
+                        <button
+                          type="button"
+                          onClick={addCertification}
+                          className="mt-2 px-3 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors duration-200 text-sm"
+                        >
+                          Add Certification
+                        </button>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Total Experience (Years)*</label>
+                        <input
+                          type="number"
+                          name="totalExperience"
+                          value={formData.totalExperience}
+                          onChange={handleInputChange}
+                          className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          placeholder="e.g., 5"
+                          min="0"
+                          required
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Communication Level*</label>
+                        <select
+                          name="communication"
+                          value={formData.communication}
+                          onChange={handleInputChange}
+                          className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          required
+                        >
+                          <option value="">Select Communication Level</option>
+                          <option value="1">Average</option>
+                          <option value="2">Medium</option>
+                          <option value="3">Fluent</option>
+                        </select>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="md:col-span-2">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Tech Skills*</label>
                         <TechSkillSelector
                           techSkills={formData.techSkills}
-                          setTechSkills={(skills) => setFormData({ ...formData, techSkills: skills })}
+                          setTechSkills={(newTechSkills) => setFormData(prev => ({ ...prev, techSkills: newTechSkills }))}
                           technologyCategoriesWithTech={technologyCategoriesWithTech}
                           loading={technologyCategoriesStackLoading}
                           setModalField={setModalField}
@@ -585,109 +669,45 @@ const ManageBaseline = () => {
                       </div>
 
                       <div>
-                        <div className="flex justify-between items-center mb-2">
-                          <label className="block text-sm font-medium text-gray-700">Certifications</label>
-                          <button
-                            type="button"
-                            onClick={addCertification}
-                            className="text-sm text-blue-600 hover:text-blue-800 flex items-center"
-                          >
-                            <FaPlus className="mr-1" /> Add Certification
-                          </button>
-                        </div>
-
-                        <div className="space-y-3">
-                          {formData.certification.map((cert, index) => (
-                            <div key={index} className="flex items-center space-x-3">
-                              <div className="flex-1">
-                                <input
-                                  type="text"
-                                  placeholder="Certification Name"
-                                  value={cert.name}
-                                  onChange={(e) => handleCertChange(index, "name", e.target.value)}
-                                  className="w-full rounded-md border border-gray-300 py-2 px-3 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                                />
-                              </div>
-                              <div className="flex-1">
-                                <div className="flex">
-                                  <select
-                                    value={cert.issuingAuthority}
-                                    onChange={(e) => handleCertChange(index, "issuingAuthority", e.target.value)}
-                                    className="flex-1 rounded-l-md border border-gray-300 py-2 px-3 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                                  >
-                                    <option value="">Select Authority</option>
-                                    {certificationAuthorities?.map((auth) => (
-                                      <option key={auth.publicId} value={auth.publicId}>
-                                        {auth.name}
-                                      </option>
-                                    ))}
-                                  </select>
-                                  <button
-                                    type="button"
-                                    onClick={() => setModalField("certification_authority")}
-                                    className="bg-blue-50 text-blue-600 hover:bg-blue-100 border border-l-0 border-gray-300 rounded-r-md px-3"
-                                  >
-                                    <FaPlus className="text-sm" />
-                                  </button>
-                                </div>
-                              </div>
-                              {formData.certification.length > 1 && (
-                                <button
-                                  type="button"
-                                  onClick={() => removeCertification(index)}
-                                  className="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-full"
-                                >
-                                  <FaTrash />
-                                </button>
-                              )}
-                            </div>
-                          ))}
-                        </div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Overall Rating*</label>
+                        <input
+                          type="number"
+                          name="rating"
+                          value={formData.rating}
+                          onChange={handleInputChange}
+                          className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          placeholder="0-5"
+                          min="0"
+                          max="5"
+                          required
+                        />
                       </div>
 
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">Overall Rating</label>
-                          <select
-                            name="rating"
-                            value={formData.rating}
-                            onChange={handleInputChange}
-                            className="w-full rounded-md border border-gray-300 py-2 px-3 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                          >
-                            <option value="">Select Rating</option>
-                            <option value="1">1 - Poor</option>
-                            <option value="2">2 - Basic</option>
-                            <option value="3">3 - Good</option>
-                            <option value="4">4 - Very Good</option>
-                            <option value="5">5 - Excellent</option>
-                          </select>
-                        </div>
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Feedback</label>
+                      <div className="md:col-span-2">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Feedback*</label>
                         <textarea
                           name="feedback"
                           value={formData.feedback}
                           onChange={handleInputChange}
+                          className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          placeholder="Add feedback here"
                           rows="3"
-                          className="w-full rounded-md border border-gray-300 py-2 px-3 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                          placeholder="Provide your feedback on this resource"
-                        ></textarea>
+                          required
+                        />
                       </div>
 
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Upskill Suggestions (Optional)</label>
+                      <div className="md:col-span-2">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Upskill Suggestion</label>
                         <textarea
                           name="upskillSuggestion"
                           value={formData.upskillSuggestion}
                           onChange={handleInputChange}
-                          rows="2"
-                          className="w-full rounded-md border border-gray-300 py-2 px-3 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                          placeholder="Suggest areas for improvement or upskilling"
-                        ></textarea>
+                          className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          placeholder="e.g., Learn React"
+                          rows={3} 
+                        />
                       </div>
-                    </>
+                    </div>
                   )}
 
                   <div className="flex justify-between space-x-4 pt-6">
@@ -729,14 +749,14 @@ const ManageBaseline = () => {
                 </form>
               </div>
 
-              {/* Previous Baselines Accordion */}
-              <div className="w-full md:w-1/3 p-6 bg-gray-50">
-                <h4 className="text-lg font-semibold text-gray-800 mb-4">Previous Baselines</h4>
-                {sortedHistories.length > 0 ? (
-                  <BaselineAccordion histories={sortedHistories} />
-                ) : (
-                  <p className="text-gray-500 text-sm italic">No previous baselines found</p>
-                )}
+              {/* Timeline Section (1/3 width) - Only visible when form is open */}
+              <div className="hidden lg:block w-1/3 bg-gray-50 border-l p-6 overflow-y-auto">
+                <BaselineTimeline 
+                  histories={baselineHistories}
+                  onSelect={(id) => {
+                    // Optional: Add logic to highlight or focus on a specific baseline
+                  }}
+                />
               </div>
             </div>
           </div>
@@ -758,6 +778,5 @@ const ManageBaseline = () => {
     </div>
   );
 };
-
 
 export default ManageBaseline;
