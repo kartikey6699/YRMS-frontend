@@ -1,12 +1,13 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { FaUser, FaTimes, FaEdit, FaSave, FaDownload, FaUpload, FaCode, FaBriefcase, FaStar, FaProjectDiagram, FaUserTie, FaCheckCircle, FaExclamationTriangle } from 'react-icons/fa';
+import { FaUser, FaTimes, FaEdit, FaSave, FaDownload, FaUpload, FaCode, FaBriefcase, FaStar, FaProjectDiagram, FaUserTie, FaCheckCircle, FaExclamationTriangle, FaTrash } from 'react-icons/fa';
 import { useDispatch, useSelector } from 'react-redux';
 import {
   fetchResourceDetails,
   updateResource,
   fetchDesignations,
   fetchUserTimeline,
-  updateTimelineEntry
+  updateTimelineEntry,
+  deleteTimelineEntry
 } from '../../../features/resource/resourceAction';
 import { resetResourceDetails } from '../../../features/resource/resourceSlice';
 import { SuccessToast, ErrorToast } from '../../helper/ResourceToast';
@@ -27,7 +28,7 @@ const skillColors = [
 ];
 
 const getStatusIcon = (status) => {
-  switch (status) {
+  switch (status.toLowerCase()) {
     case 'deployed':
       return <FaUserTie className="text-green-600 text-lg" />;
     case 'pool':
@@ -65,8 +66,14 @@ const EmployeeDetail = ({ publicId, onClose }) => {
   const [timelineEditData, setTimelineEditData] = useState({
     description: '',
     clientName: '',
-    training: []
+    training: [],
+    status: '',
+    createdAt: '',
+    updatedAt: ''
   });
+  const [isTimelineEditMode, setIsTimelineEditMode] = useState(false);
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+  const [timelineToDelete, setTimelineToDelete] = useState(null);
 
   const initialLoadDone = useRef(false);
   const gradeOptions = ['E1', 'E2', 'E3', 'E4', 'E5', 'E6', 'E7'];
@@ -366,53 +373,35 @@ const EmployeeDetail = ({ publicId, onClose }) => {
     switch (formData?.status) {
       case 'deployed':
         return (
-          <>
-            <div className="mt-2">
-              <label className="block text-xs text-gray-500 mb-1">Client Name</label>
-              <input
-                type="text"
-                value={clientName}
-                onChange={(e) => setClientName(e.target.value)}
-                className="w-full border rounded-md px-2 py-1 text-sm focus:ring-1 focus:ring-blue-300"
-                placeholder="Enter client name"
-              />
-            </div>
-            <div className="mt-2">
-              <label className="block text-xs text-gray-500 mb-1">Description</label>
-              <textarea
-                value={statusDescription}
-                onChange={(e) => setStatusDescription(e.target.value)}
-                className="w-full border rounded-md px-2 py-1 text-sm focus:ring-1 focus:ring-blue-300"
-                placeholder="Enter description"
-                rows={2}
-              />
-            </div>
-          </>
+          <div className="mt-4 bg-white rounded-md shadow-sm p-3">
+            <label className="block text-xs text-gray-500 mb-1">Client Name</label>
+            <input
+              type="text"
+              value={clientName}
+              onChange={(e) => setClientName(e.target.value)}
+              className="w-full border rounded-md px-2 py-1 text-sm focus:ring-1 focus:ring-blue-300"
+              placeholder="Enter client name"
+            />
+            <label className="block text-xs text-gray-500 mt-2 mb-1">Description</label>
+            <textarea
+              value={statusDescription}
+              onChange={(e) => setStatusDescription(e.target.value)}
+              className="w-full border rounded-md px-2 py-1 text-sm focus:ring-1 focus:ring-blue-300"
+              placeholder="Enter description"
+              rows={2}
+            />
+          </div>
         );
       case 'pool':
-        return (
-          <>
-            <div className="mt-2">
-              <label className="block text-xs text-gray-500 mb-1">Description</label>
-              <textarea
-                value={statusDescription}
-                onChange={(e) => setStatusDescription(e.target.value)}
-                className="w-full border rounded-md px-2 py-1 text-sm focus:ring-1 focus:ring-blue-300"
-                placeholder="Enter description"
-                rows={2}
-              />
-            </div>
-          </>
-        );
       case 'pip':
         return (
-          <div className="mt-2">
+          <div className="mt-4 bg-white rounded-md shadow-sm p-3">
             <label className="block text-xs text-gray-500 mb-1">Description</label>
             <textarea
               value={statusDescription}
               onChange={(e) => setStatusDescription(e.target.value)}
               className="w-full border rounded-md px-2 py-1 text-sm focus:ring-1 focus:ring-blue-300"
-              placeholder="Enter PIP description"
+              placeholder="Enter description"
               rows={2}
             />
           </div>
@@ -422,26 +411,39 @@ const EmployeeDetail = ({ publicId, onClose }) => {
     }
   };
 
+  const normalizeStatus = (status) => {
+    return status ? status.toLowerCase() : '';
+  };
+
   const handleTimelineEdit = (timelineItem) => {
     setEditingTimelineId(timelineItem.id);
     setTimelineEditData({
-      description: timelineItem.description,
+      description: timelineItem.description || '',
       clientName: timelineItem.clientName || '',
-      training: timelineItem.training || []
+      training: timelineItem.training || [],
+      status: normalizeStatus(timelineItem.status),
+      createdAt: timelineItem.createdAt.split('T')[0] || '',
+      updatedAt: timelineItem.updatedAt ? timelineItem.updatedAt.split('T')[0] : ''
     });
   };
 
   const handleTimelineEditChange = (e) => {
     const { name, value } = e.target;
-    setTimelineEditData(prev => ({ ...prev, [name]: value }));
+    setTimelineEditData(prev => ({
+      ...prev,
+      [name]: name === 'status' ? normalizeStatus(value) : value
+    }));
   };
 
   const handleTimelineUpdate = async (timelineId) => {
     try {
       const payload = {
-        description: timelineEditData.description,
-        clientName: timelineEditData.clientName,
-        training: timelineEditData.training
+        description: timelineEditData.description || '',
+        clientName: timelineEditData.clientName || '',
+        training: timelineEditData.training || [],
+        status: normalizeStatus(timelineEditData.status),
+        created_at: timelineEditData.createdAt ? `${timelineEditData.createdAt}T00:00:00.000Z` : null,
+        updated_at: timelineEditData.updatedAt ? `${timelineEditData.updatedAt}T00:00:00.000Z` : null
       };
 
       await dispatch(updateTimelineEntry({
@@ -463,7 +465,40 @@ const EmployeeDetail = ({ publicId, onClose }) => {
     }
   };
 
+  const openDeleteModal = (timelineItem) => {
+    setTimelineToDelete(timelineItem);
+    setIsDeleteConfirmOpen(true);
+  };
+
+  const handleTimelineDelete = async () => {
+    if (!timelineToDelete) return;
+    try {
+      await dispatch(deleteTimelineEntry(timelineToDelete.id)).unwrap();
+      setToast({
+        type: 'success',
+        message: 'Timeline entry deleted successfully!'
+      });
+      dispatch(fetchUserTimeline(publicId));
+    } catch (error) {
+      setToast({
+        type: 'error',
+        message: error.message || 'Failed to delete timeline entry'
+      });
+    } finally {
+      setIsDeleteConfirmOpen(false);
+      setTimelineToDelete(null);
+    }
+  };
+
+  const toggleTimelineEditMode = () => {
+    setIsTimelineEditMode(!isTimelineEditMode);
+    if (isTimelineEditMode) {
+      setEditingTimelineId(null);
+    }
+  };
+
   const formatDate = (dateString) => {
+    if (!dateString) return 'N/A';
     const options = { year: 'numeric', month: 'short', day: 'numeric' };
     return new Date(dateString).toLocaleDateString(undefined, options);
   };
@@ -488,6 +523,37 @@ const EmployeeDetail = ({ publicId, onClose }) => {
           <ErrorToast message={toast.message} onClose={() => setToast(null)} />
         )}
       </div>
+
+      {isDeleteConfirmOpen && (
+        <div className="fixed inset-0 flex items-center justify-center z-60 backdrop-blur-sm bg-black/30">
+          <div className="bg-white rounded-lg p-4 max-w-sm w-full shadow-xl border border-gray-200">
+            <div className="flex items-center mb-3">
+              <FaExclamationTriangle className="text-yellow-500 mr-2" size={20} />
+              <h3 className="text-sm font-semibold text-gray-800">Confirm Deletion</h3>
+            </div>
+            <p className="text-xs text-gray-600 mb-4">
+              Are you sure you want to delete the <span className="font-medium capitalize">{timelineToDelete?.status}</span> timeline entry? This action cannot be undone.
+            </p>
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => {
+                  setIsDeleteConfirmOpen(false);
+                  setTimelineToDelete(null);
+                }}
+                className="px-3 py-1 border border-gray-300 rounded-md text-xs text-gray-700 hover:bg-gray-100 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleTimelineDelete}
+                className="px-3 py-1 bg-red-500 text-white rounded-md text-xs hover:bg-red-600 transition-colors"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="fixed inset-0 flex items-center justify-center z-50 backdrop-blur-sm bg-black/20 p-4">
         <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-4.5xl border border-gray-200 max-h-[98vh]">
@@ -584,10 +650,27 @@ const EmployeeDetail = ({ publicId, onClose }) => {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="bg-gray-50 rounded-lg p-6">
-              <h4 className="flex items-center text-base font-medium text-gray-800 mb-2">
-                <FaBriefcase className="text-blue-500 mr-2 text-sm" />
-                Timeline
-              </h4>
+              <div className="flex justify-between items-center mb-2">
+                <h4 className="flex items-center text-base font-medium text-gray-800">
+                  <FaBriefcase className="text-blue-500 mr-2 text-sm" />
+                  Timeline
+                </h4>
+                <button
+                  onClick={toggleTimelineEditMode}
+                  className="flex items-center px-2 py-1 bg-blue-100 text-blue-600 rounded-md hover:bg-blue-200 text-sm"
+                  disabled={loading || timelineLoading}
+                >
+                  {isTimelineEditMode ? (
+                    <>
+                      <FaTimes className="mr-1" /> Cancel
+                    </>
+                  ) : (
+                    <>
+                      <FaEdit className="mr-1" /> Edit/Delete
+                    </>
+                  )}
+                </button>
+              </div>
               {timelineLoading ? (
                 <div className="flex justify-center items-center h-24">
                   <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"></div>
@@ -595,7 +678,7 @@ const EmployeeDetail = ({ publicId, onClose }) => {
               ) : timeline?.length > 0 ? (
                 <div className="relative">
                   <div className="absolute left-5.5 top-0 bottom-0 w-0.5 bg-blue-200"></div>
-                  <div className="max-h-[300px] overflow-y-auto overflow-x-hidden -mr-4">
+                  <div className="max-h-[300px] overflow-y-auto overflow-x-hidden -mr-4 pr-1">
                     {timeline.map((event) => (
                       <div
                         key={event.id}
@@ -606,27 +689,80 @@ const EmployeeDetail = ({ publicId, onClose }) => {
                         </div>
                         <div className="ml-3 flex-1 bg-white rounded-md shadow-sm p-4 min-h-[100px] w-[300px]">
                           <div className="flex justify-between items-start">
-                            <h5 className="text-xs font-medium text-gray-800 capitalize">
-                              {event.status}
-                            </h5>
-                            <button
-                              onClick={() => handleTimelineEdit(event)}
-                              className="text-xs text-blue-600 hover:text-blue-800"
-                            >
-                              <FaEdit size={10} />
-                            </button>
+                            {editingTimelineId === event.id ? (
+                              <select
+                                name="status"
+                                value={timelineEditData.status}
+                                onChange={handleTimelineEditChange}
+                                className="text-xs font-medium text-gray-800 border rounded px-2 py-1 focus:ring-1 focus:ring-blue-300"
+                                title="Select status"
+                              >
+                                <option value="deployed">Deployed</option>
+                                <option value="pool">Pool</option>
+                                <option value="pip">PIP</option>
+                                {/* <option value="hold">Hold</option> */}
+                              </select>
+                            ) : (
+                              <h5 className="text-xs font-medium text-gray-800 capitalize">
+                                {event.status.charAt(0).toUpperCase() + event.status.slice(1)}
+                              </h5>
+                            )}
+                            <div className="flex gap-1">
+                              {isTimelineEditMode && (
+                                <>
+                                  <button
+                                    onClick={() => handleTimelineEdit(event)}
+                                    className="text-xs text-blue-600 hover:text-blue-800"
+                                    disabled={editingTimelineId !== null}
+                                    title="Edit timeline entry"
+                                  >
+                                    <FaEdit size={12} />
+                                  </button>
+                                  <button
+                                    onClick={() => openDeleteModal(event)}
+                                    className="text-xs text-red-600 hover:text-red-800"
+                                    disabled={editingTimelineId !== null}
+                                    title="Delete timeline entry"
+                                  >
+                                    <FaTrash size={12} />
+                                  </button>
+                                </>
+                              )}
+                            </div>
                           </div>
                           <div className="flex flex-wrap gap-1 mt-1">
-                            <span className="text-xs bg-purple-100 text-purple-800 px-1.5 py-0.5 rounded font-bold">
-                              From: {formatDate(event.createdAt)}
-                            </span>
-                            {event.endDate && (
-                              <span className="text-xs bg-purple-100 text-purple-800 px-1.5 py-0.5 rounded font-bold">
-                                To: {formatDate(event.endDate)}
-                              </span>
+                            {editingTimelineId === event.id ? (
+                              <>
+                                <input
+                                  type="date"
+                                  name="createdAt"
+                                  value={timelineEditData.createdAt}
+                                  onChange={handleTimelineEditChange}
+                                  className="text-xs border rounded px-1.5 py-0.5 focus:ring-1 focus:ring-blue-300"
+                                  title="Select created date"
+                                />
+                                <input
+                                  type="date"
+                                  name="updatedAt"
+                                  value={timelineEditData.updatedAt}
+                                  onChange={handleTimelineEditChange}
+                                  className="text-xs border rounded px-1.5 py-0.5 focus:ring-1 focus:ring-blue-300"
+                                  title="Select updated date"
+                                />
+                              </>
+                            ) : (
+                              <>
+                                <span className="text-xs bg-purple-100 text-purple-800 px-1.5 py-0.5 rounded font-bold">
+                                  From: {formatDate(event.createdAt)}
+                                </span>
+                                {event.updatedAt && (
+                                  <span className="text-xs bg-purple-100 text-purple-800 px-1.5 py-0.5 rounded font-bold">
+                                    To: {formatDate(event.updatedAt)}
+                                  </span>
+                                )}
+                              </>
                             )}
                           </div>
-
                           {editingTimelineId === event.id ? (
                             <div className="mt-2 space-y-1">
                               <textarea
@@ -636,8 +772,9 @@ const EmployeeDetail = ({ publicId, onClose }) => {
                                 className="w-full border rounded px-2 py-1 text-xs focus:ring-1 focus:ring-blue-300"
                                 placeholder="Description"
                                 rows={3}
+                                title="Enter description"
                               />
-                              {event.status === 'deployed' && (
+                              {timelineEditData.status === 'deployed' && (
                                 <input
                                   type="text"
                                   name="clientName"
@@ -645,44 +782,39 @@ const EmployeeDetail = ({ publicId, onClose }) => {
                                   onChange={handleTimelineEditChange}
                                   className="w-full border rounded px-2 py-1 text-xs focus:ring-1 focus:ring-blue-300"
                                   placeholder="Client Name"
+                                  title="Enter client name"
                                 />
                               )}
                               <div className="flex gap-1">
                                 <button
                                   onClick={() => handleTimelineUpdate(event.id)}
                                   className="px-2 py-0.5 bg-blue-500 text-white rounded text-xs hover:bg-blue-600"
+                                  title="Save changes"
                                 >
                                   Save
                                 </button>
                                 <button
                                   onClick={() => setEditingTimelineId(null)}
                                   className="px-2 py-0.5 bg-gray-200 text-gray-700 rounded text-xs hover:bg-gray-300"
+                                  title="Cancel editing"
                                 >
                                   Cancel
                                 </button>
                               </div>
                             </div>
                           ) : (
-                            <>
-                              <p className="text-xs text-gray-600 mt-1">{event.description}</p>
-                              {event.clientName && (
-                                <p className="text-xs text-gray-700 mt-1">
+                            <div className="mt-2">
+                              {event.description && (
+                                <p className="text-xs text-gray-600 mt-1 break-words max-w-[280px]">
+                                  {event.description}
+                                </p>
+                              )}
+                              {event.clientName && event.status === 'deployed' && (
+                                <p className="text-xs text-gray-600 mt-1">
                                   <span className="font-medium">Client:</span> {event.clientName}
                                 </p>
                               )}
-                              {event.training?.length > 0 && (
-                                <div className="mt-1">
-                                  <p className="text-xs font-medium text-gray-700">Training:</p>
-                                  <div className="flex flex-wrap gap-1 mt-1">
-                                    {event.training.map((train, idx) => (
-                                      <span key={idx} className="text-xs bg-purple-100 text-purple-800 px-1.5 py-0.5 rounded">
-                                        {train.name}
-                                      </span>
-                                    ))}
-                                  </div>
-                                </div>
-                              )}
-                            </>
+                            </div>
                           )}
                         </div>
                       </div>
@@ -690,10 +822,7 @@ const EmployeeDetail = ({ publicId, onClose }) => {
                   </div>
                 </div>
               ) : (
-                <div className="bg-white/50 rounded-md p-2 flex flex-col items-center justify-center border border-dashed border-gray-300 text-center">
-                  <FaBriefcase className="text-gray-400 text-xl mb-1" />
-                  <p className="text-gray-500 text-xs">No timeline events added yet</p>
-                </div>
+                <p className="text-xs text-gray-500">No timeline events available.</p>
               )}
             </div>
 
@@ -713,6 +842,7 @@ const EmployeeDetail = ({ publicId, onClose }) => {
                         onChange={handleInputChange}
                         className="w-full border rounded-md px-2 py-1 text-sm focus:ring-1 focus:ring-blue-300"
                         disabled={loading}
+                        title="Enter employee ID"
                       />
                     ) : (
                       <p className="text-sm font-medium text-gray-800">{formData.employeeId || 'N/A'}</p>
@@ -727,6 +857,7 @@ const EmployeeDetail = ({ publicId, onClose }) => {
                         onChange={handleInputChange}
                         className="w-full border rounded-md px-2 py-1 text-sm focus:ring-1 focus:ring-blue-300"
                         disabled={loading}
+                        title="Select designation"
                       >
                         <option value="">Select Designation</option>
                         {designations.map(designation => (
@@ -750,6 +881,7 @@ const EmployeeDetail = ({ publicId, onClose }) => {
                         onChange={handleInputChange}
                         className="w-full border rounded-md px-2 py-1 text-sm focus:ring-1 focus:ring-blue-300"
                         disabled={loading}
+                        title="Select grade"
                       >
                         <option value="">Select Grade</option>
                         {gradeOptions.map(grade => (
@@ -772,6 +904,7 @@ const EmployeeDetail = ({ publicId, onClose }) => {
                         onChange={handleInputChange}
                         className="w-full border rounded-md px-2 py-1 text-sm focus:ring-1 focus:ring-blue-300"
                         disabled={loading}
+                        title="Select joining date"
                       />
                     ) : (
                       <p className="text-sm font-medium text-gray-800">
@@ -796,16 +929,19 @@ const EmployeeDetail = ({ publicId, onClose }) => {
                         onChange={handleInputChange}
                         className="w-full border rounded-md px-2 py-1 text-sm focus:ring-1 focus:ring-blue-300"
                         disabled={loading}
+                        title="Select status"
                       >
                         <option value="pool">Pool</option>
                         <option value="deployed">Deployed</option>
                         <option value="pip">PIP</option>
+                        <option value="hold">Hold</option>
                       </select>
                     ) : (
                       <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${formData.status === 'pool' ? 'bg-blue-100 text-blue-800' :
                         formData.status === 'deployed' ? 'bg-green-100 text-green-800' :
                           formData.status === 'pip' ? 'bg-yellow-100 text-yellow-800' :
-                            'bg-red-100 text-red-800'
+                            formData.status === 'hold' ? 'bg-gray-100 text-gray-800' :
+                              'bg-red-100 text-red-800'
                         }`}>
                         {formData.status.charAt(0).toUpperCase() + formData.status.slice(1)}
                       </span>
@@ -854,6 +990,7 @@ const EmployeeDetail = ({ publicId, onClose }) => {
                   className="hidden"
                   accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
                   disabled={isUploading || loading}
+                  title="Upload resume"
                 />
               </label>
               {formData.resumeFile && (
@@ -862,6 +999,7 @@ const EmployeeDetail = ({ publicId, onClose }) => {
                     onClick={handleResumeDownload}
                     className="flex items-center px-3 py-1 bg-green-50 text-green-700 rounded-md text-sm transition-all hover:bg-green-100 active:scale-95 h-[30px]"
                     disabled={loading}
+                    title="Download resume"
                   >
                     <FaDownload className="mr-1 text-xs animate-pulse group-hover:animate-none" />
                     Download Resume
@@ -876,6 +1014,7 @@ const EmployeeDetail = ({ publicId, onClose }) => {
               className="flex items-center px-4 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm font-medium disabled:bg-blue-400 transition-colors"
               onClick={isEditing ? handleSubmit : onClose}
               disabled={loading || isUploading}
+              title={isEditing ? 'Save changes' : 'Close modal'}
             >
               {isEditing ? (
                 <>

@@ -395,3 +395,18 @@ export const updateTimelineEntry = createAsyncThunk(
     }
   }
 );
+
+export const deleteTimelineEntry = createAsyncThunk(
+  "resource/deleteTimelineEntry",
+  async (timelineId, { rejectWithValue }) => {
+    try {
+      const response = await resourceApiClient.delete(`${RESOURCE_API.DELETE_TIMELINE}/${timelineId}`);
+      if (!response.data.success) {
+        throw new Error("Failed to delete timeline entry");
+      }
+      return timelineId;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || error.message);
+    }
+  }
+);

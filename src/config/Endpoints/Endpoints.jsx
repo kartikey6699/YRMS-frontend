@@ -15,6 +15,7 @@ export const RESOURCE_API = {
     DELETE_RESOURCE: `${ADMIN_API_BASE_URL}/user-delete`,
     TIMELINE: `${API_BASE_URL}timeline`,
     UPDATE_TIMELINE: `${API_BASE_URL}update-timeline`,
+    DELETE_TIMELINE: `${API_BASE_URL}timeline`,
 
 
 };

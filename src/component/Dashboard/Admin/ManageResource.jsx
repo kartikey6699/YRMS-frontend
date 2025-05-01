@@ -781,15 +781,25 @@ const ManageResource = () => {
               <label className="block text-gray-700 font-medium mb-2">
                 Competency <span className="text-red-500">*</span>
               </label>
-              <Dropdown
+              <select
                 name="competency"
                 value={formData.competency}
-                options={competencies}
                 onChange={handleInputChange}
                 onBlur={handleBlur}
-                setModalField={setModalField}
-                error={errors.competency}
-              />
+                className={`w-full p-3 border-2 rounded-lg focus:outline-none transition-colors ${
+                  errors.competency ? "border-red-500" : "border-gray-200 focus:border-blue-500"
+                } ${formData.competency ? "text-black" : "text-gray-500"}`}
+                required
+              >
+                <option value="" disabled>
+                  Select competency
+                </option>
+                {competencies.map((competency) => (
+                  <option key={competency.publicId} value={competency.name}>
+                    {competency.name}
+                  </option>
+                ))}
+              </select>
               {errors.competency && (
                 <p className="text-red-500 text-sm mt-1">{errors.competency}</p>
               )}
@@ -816,7 +826,7 @@ const ManageResource = () => {
       {modalField && (
         <AddOptionModal
           field={modalField}
-          options={modalField === "designation" ? designations : competencies}
+          options={modalField === "designation" ? designations : []}
           onClose={() => setModalField(null)}
           setToast={setToast}
         />

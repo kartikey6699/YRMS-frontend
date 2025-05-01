@@ -19,7 +19,8 @@ import {
   fetchTechnologies,
   deleteResource,
   fetchUserTimeline,
-  updateTimelineEntry
+  updateTimelineEntry,
+  deleteTimelineEntry
 } from "./resourceAction";
 
 const initialState = {
@@ -494,6 +495,20 @@ const resourceSlice = createSlice({
         }
       })
       .addCase(updateTimelineEntry.rejected, (state, { payload }) => {
+        state.timelineLoading = false;
+        state.timelineError = payload;
+      })
+
+      // Delete Timeline Entry
+      .addCase(deleteTimelineEntry.pending, (state) => {
+        state.timelineLoading = true;
+        state.timelineError = null;
+      })
+      .addCase(deleteTimelineEntry.fulfilled, (state, { payload }) => {
+        state.timelineLoading = false;
+        state.timeline = state.timeline.filter(item => item.id !== payload);
+      })
+      .addCase(deleteTimelineEntry.rejected, (state, { payload }) => {
         state.timelineLoading = false;
         state.timelineError = payload;
       });
