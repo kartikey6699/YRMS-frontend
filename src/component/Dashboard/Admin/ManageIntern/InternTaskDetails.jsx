@@ -1,54 +1,79 @@
 import React, { useState } from 'react';
 import {
-    FaTimes, FaTasks, FaCalendarAlt,
-    FaCheckCircle, FaExclamationCircle, FaEdit,
-    FaArrowLeft, FaPlus
+  FaTimes, FaTasks, FaCalendarAlt,
+  FaEdit, FaArrowLeft, FaPlus, FaChevronDown, FaChevronUp
 } from 'react-icons/fa';
+import TaskCard from '../../../helper/TaskCard';
 
 const InternTaskDetails = ({ onClose, userId }) => {
-    // Sample tasks data
-    const [tasks, setTasks] = useState([
-        {
-            id: 1,
-            title: "Complete React Training",
-            description: "Finish all modules of the advanced React course",
-            deadline: "2023-06-15",
-            status: "In Progress",
-            feedback: ""
-        },
-        {
-            id: 2,
-            title: "API Integration Task",
-            description: "Connect frontend to the new customer API endpoints",
-            deadline: "2023-06-20",
-            status: "Pending",
-            feedback: ""
-        },
-        {
-            id: 3,
-            title: "API Integration Testing",
-            description: "Connect frontend to the new customer API endpoints",
-            deadline: "2023-06-20",
-            status: "Pending",
-            feedback: ""
-        },
-        {
-            id: 4,
-            title: "API Integration Testing",
-            description: "Connect frontend to the new customer API endpoints",
-            deadline: "2023-06-20",
-            status: "Pending",
-            feedback: ""
-        }
-    ]);
+  // Sample tasks data
+  const [tasks, setTasks] = useState([
+    {
+      id: 1,
+      title: "Complete React Training",
+      description: "Finish all modules of the advanced React course",
+      deadline: "2023-06-15",
+      status: "In Progress",
+      feedback: ""
+    },
+    {
+      id: 2,
+      title: "API Integration Task",
+      description: "Connect frontend to the new customer API endpoints",
+      deadline: "2023-06-20",
+      status: "Pending",
+      feedback: ""
+    },
+    {
+      id: 3,
+      title: "Code Review",
+      description: "Review pull requests for authentication module",
+      deadline: "2023-06-10",
+      status: "Completed",
+      feedback: "Good work, just a few minor changes needed"
+    },
+    {
+      id: 4,
+      title: "UI Redesign",
+      description: "Update dashboard components",
+      deadline: "2023-06-25",
+      status: "In Progress",
+      feedback: ""
+    }
+  ]);
 
-    // View state: 'list' or 'form'
-    const [currentView, setCurrentView] = useState('list');
-    // Form mode: 'add' or 'edit'
-    const [formMode, setFormMode] = useState('add');
-    // Currently editing task ID
-    const [editingTaskId, setEditingTaskId] = useState(null);
-    const [errors, setErrors] = useState({});
+  // View state
+  const [currentView, setCurrentView] = useState('list');
+  const [formMode, setFormMode] = useState('add');
+  const [editingTaskId, setEditingTaskId] = useState(null);
+  const [errors, setErrors] = useState({});
+  
+  // Section visibility state
+  const [sectionVisibility, setSectionVisibility] = useState({
+    inProgress: true,
+    pending: true,
+    completed: true
+  });
+
+  // Toggle section visibility
+  const toggleSection = (section) => {
+    setSectionVisibility(prev => ({
+      ...prev,
+      [section]: !prev[section]
+    }));
+  };
+
+  const groupedTasks = tasks.reduce((acc, task) => {
+    if (!acc[task.status]) acc[task.status] = [];
+    acc[task.status].push(task);
+    return acc;
+  }, {});
+
+
+  // Delete task
+  const handleDeleteTask = (taskId) => {
+    setTasks(tasks.filter(task => task.id !== taskId));
+  };
 
     const validateTaskField = (name, value, formData) => {
         const newErrors = {};
@@ -219,72 +244,116 @@ const InternTaskDetails = ({ onClose, userId }) => {
 
                 {/* Modal Body */}
                 <div className="p-6 overflow-y-auto flex-grow">
-                    {currentView === 'list' ? (
-                        <>
-                            <div className="flex justify-between items-center mb-4">
-                                <h4 className="text-lg font-semibold text-gray-800 border-b pb-2">
-                                    Current Tasks
-                                </h4>
-                                <button
-                                    onClick={() => setCurrentView('form')}
-                                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors flex items-center"
-                                >
-                                    <FaPlus className="mr-2" />
-                                    Add Task
-                                </button>
-                            </div>
+          {currentView === 'list' ? (
+            <>
+              <div className="flex justify-between items-center mb-4">
+                <h4 className="text-lg font-semibold text-gray-800">Tasks</h4>
+                <button
+                  onClick={() => setCurrentView('form')}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors flex items-center"
+                >
+                  <FaPlus className="mr-2" />
+                  Add Task
+                </button>
+              </div>
 
-                            {tasks.length > 0 ? (
-                                <div className="space-y-4">
-                                    {tasks.map((task, index) => (
-                                        <div key={index} className="p-4 border border-gray-200 rounded-lg hover:shadow-md transition-shadow relative">
-                                            <div className="flex justify-between items-start">
-                                                <div className="w-4/5">
-                                                    <h5 className="font-medium text-gray-900">{task.title}</h5>
-                                                    <p className="text-sm text-gray-600 mt-1">{task.description}</p>
-                                                    <div className="flex items-center mt-2 text-sm text-gray-500">
-                                                        <FaCalendarAlt className="mr-1" />
-                                                        <span>Due: {task.deadline}</span>
-                                                    </div>
-                                                    {task.feedback && (
-                                                        <div className="mt-2">
-                                                            <p className="text-xs font-semibold text-gray-500">Feedback:</p>
-                                                            <p className="text-sm text-gray-600">{task.feedback}</p>
-                                                        </div>
-                                                    )}
-                                                </div>
-                                                <div className="flex flex-col items-end">
-                                                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${task.status === 'Completed'
-                                                            ? 'bg-green-100 text-green-800'
-                                                            : task.status === 'In Progress'
-                                                                ? 'bg-blue-100 text-blue-800'
-                                                                : 'bg-yellow-100 text-yellow-800'
-                                                        }`}>
-                                                        {task.status === 'Completed' ? (
-                                                            <FaCheckCircle className="inline mr-1" />
-                                                        ) : (
-                                                            <FaExclamationCircle className="inline mr-1" />
-                                                        )}
-                                                        {task.status}
-                                                    </span>
-                                                    <button
-                                                        onClick={() => handleEditClick(task)}
-                                                        className="mt-2 p-1 text-blue-600 hover:text-blue-800"
-                                                        title="Edit task"
-                                                    >
-                                                        <FaEdit />
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            ) : (
-                                <div className="text-center py-8 text-gray-500">
-                                    No tasks assigned yet
-                                </div>
-                            )}
-                        </>
+              {/* In Progress Section */}
+              <div className="mb-6">
+                <div 
+                  className="flex justify-between items-center cursor-pointer bg-blue-50 p-3 rounded-t-lg"
+                  onClick={() => toggleSection('inProgress')}
+                >
+                  <h5 className="font-medium text-blue-800 flex items-center">
+                    {sectionVisibility.inProgress ? <FaChevronDown className="mr-2" /> : <FaChevronUp className="mr-2" />}
+                    In Progress ({groupedTasks['In Progress']?.length || 0})
+                  </h5>
+                  <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-xs">
+                    Active
+                  </span>
+                </div>
+                {sectionVisibility.inProgress && (
+                  <div className="space-y-4 p-3 border border-t-0 border-gray-200 rounded-b-lg">
+                    {groupedTasks['In Progress']?.length > 0 ? (
+                      groupedTasks['In Progress'].map(task => (
+                        <TaskCard 
+                          key={task.id} 
+                          task={task} 
+                          onEdit={handleEditClick}
+                          onDelete={handleDeleteTask}
+                        />
+                      ))
+                    ) : (
+                      <p className="text-gray-500 text-center py-4">No tasks in progress</p>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Pending Section */}
+              <div className="mb-6">
+                <div 
+                  className="flex justify-between items-center cursor-pointer bg-yellow-50 p-3 rounded-t-lg"
+                  onClick={() => toggleSection('pending')}
+                >
+                  <h5 className="font-medium text-yellow-800 flex items-center">
+                    {sectionVisibility.pending ? <FaChevronDown className="mr-2" /> : <FaChevronUp className="mr-2" />}
+                    Pending ({groupedTasks['Pending']?.length || 0})
+                  </h5>
+                  <span className="px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs">
+                    Waiting
+                  </span>
+                </div>
+                {sectionVisibility.pending && (
+                  <div className="space-y-4 p-3 border border-t-0 border-gray-200 rounded-b-lg">
+                    {groupedTasks['Pending']?.length > 0 ? (
+                      groupedTasks['Pending'].map(task => (
+                        <TaskCard 
+                          key={task.id} 
+                          task={task} 
+                          onEdit={handleEditClick}
+                          onDelete={handleDeleteTask}
+                        />
+                      ))
+                    ) : (
+                      <p className="text-gray-500 text-center py-4">No pending tasks</p>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Completed Section */}
+              <div className="mb-6">
+                <div 
+                  className="flex justify-between items-center cursor-pointer bg-green-50 p-3 rounded-t-lg"
+                  onClick={() => toggleSection('completed')}
+                >
+                  <h5 className="font-medium text-green-800 flex items-center">
+                    {sectionVisibility.completed ? <FaChevronDown className="mr-2" /> : <FaChevronUp className="mr-2" />}
+                    Completed ({groupedTasks['Completed']?.length || 0})
+                  </h5>
+                  <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs">
+                    Done
+                  </span>
+                </div>
+                {sectionVisibility.completed && (
+                  <div className="space-y-4 p-3 border border-t-0 border-gray-200 rounded-b-lg">
+                    {groupedTasks['Completed']?.length > 0 ? (
+                      groupedTasks['Completed'].map(task => (
+                        <TaskCard 
+                          key={task.id} 
+                          task={task} 
+                          onEdit={handleEditClick}
+                          onDelete={handleDeleteTask}
+                        />
+                      ))
+                    ) : (
+                      <p className="text-gray-500 text-center py-4">No completed tasks</p>
+                    )}
+                  </div>
+                )}
+              </div>
+            </>
+
                     ) : (
                         <form onSubmit={handleSubmit}>
                             <div className="mb-4">
