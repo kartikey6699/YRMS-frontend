@@ -485,6 +485,7 @@ const ListCompetency = ({ setActiveSection, setSelectedCompetency, onSort, sortC
                 userName={confirmModal.user?.label || ""}
                 competencyName={adminModal.competencyName}
                 actionType={confirmModal.actionType}
+                roleName="admin" // Added roleName prop
             />
 
             {toastState && (
