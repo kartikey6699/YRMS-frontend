@@ -12,10 +12,8 @@ import DeleteConfirmationModal from '../../../helper/DeleteConfirmationModal';
 const UserList = ({ setActiveSection }) => {
   const dispatch = useDispatch();
   const { resources, competencies, designations } = useSelector((state) => state.resource);
-  const roleOptions = ["Admin", "User"];
+  const roleOptions = JSON.parse(sessionStorage.getItem('role')).map((role) => role.role)
   const statusOptions = ["Pool", "Deployed", "PIP"];
-  const competenciesOptions = competencies.map((competency) => competency.name); // Updated to match API
-  const designationsOptions = designations.map((designation) => designation.name); // Updated to match API
   const [selectedUser, setSelectedUser] = useState(null);
   const [filteredData, setFilteredData] = useState([]);
   const [editingStatusId, setEditingStatusId] = useState(null);
@@ -61,10 +59,9 @@ const UserList = ({ setActiveSection }) => {
     dispatch(fetchCompetencies());
   }, [dispatch]);
 
-  // Set filteredData to resources when resources change
   useEffect(() => {
     setFilteredData(resources);
-    applyFilters(searchTerms); // Re-apply filters if any are active
+    applyFilters(searchTerms);
   }, [resources]);
 
   const [sortConfig, setSortConfig] = useState({
@@ -84,7 +81,6 @@ const UserList = ({ setActiveSection }) => {
     }
     setSortConfig({ key, direction });
 
-    // Apply sorting to filteredData
     const sortedData = [...filteredData].sort((a, b) => {
       if (a[key] < b[key]) return direction === 'ascending' ? -1 : 1;
       if (a[key] > b[key]) return direction === 'ascending' ? 1 : -1;
@@ -108,6 +104,11 @@ const UserList = ({ setActiveSection }) => {
           return new Date(item[key]).toDateString() === new Date(value).toDateString();
         }
 
+        if (key === 'roleIds') {
+          const roleName = getRoleName(item.roleIds).toLowerCase();
+          return roleName.includes(value.toLowerCase());
+        }
+
         if (item[key]) {
           return String(item[key]).toLowerCase().includes(String(value).toLowerCase());
         }
@@ -119,7 +120,6 @@ const UserList = ({ setActiveSection }) => {
     setFilteredData(filtered);
   };
 
-  // Pagination Logic
   const totalPages = Math.ceil(filteredData.length / itemsPerPage);
   const paginatedResources = filteredData.slice(
     (currentPage - 1) * itemsPerPage,
@@ -131,7 +131,6 @@ const UserList = ({ setActiveSection }) => {
       setCurrentPage(page);
     }
   };
-
 
   const handleUpdateStatus = async (e, event, publicId) => {
     setIsSubmitting(true);
@@ -174,10 +173,9 @@ const UserList = ({ setActiveSection }) => {
     setDeleteModal({ isOpen: false, resourceId: null, resourceName: '' });
   };
 
-
   const columns = [
     { key: "sno", label: "S.No" },
-    { key: 'employeeName', label: 'Name' }, // Updated to match API field
+    { key: 'employeeName', label: 'Name' },
     { key: 'designation', label: 'Designation' },
     { key: 'competency', label: 'Competency' },
     { key: 'joiningDate', label: 'Joining Date' },
@@ -206,7 +204,7 @@ const UserList = ({ setActiveSection }) => {
             {columns.map(column => (
               <th
                 key={column.key}
-                className="p-1 text-left font-semibold text-sm border-b border-gray-200"
+                className="p-3 text-left font-semibold text-sm border-b border-gray-200 align-top"
               >
                 <div className="flex items-center justify-between">
                   <span>{column.label}</span>
@@ -228,7 +226,7 @@ const UserList = ({ setActiveSection }) => {
                   )}
                 </div>
                 {column.key !== "sno" && (
-                  <div className="relative mt-1">
+                  <div className="relative mt-1 flex flex-col">
                     {column.key === "joiningDate" ? (
                       <div className="relative">
                         <DatePicker
@@ -240,23 +238,57 @@ const UserList = ({ setActiveSection }) => {
                         />
                         <FaCalendarAlt className="absolute right-2 top-2 text-gray-400 text-xs" />
                       </div>
-                    ) : column.key === "status" || column.key === "designation" || column.key === "competency" ? (
+                    ) : column.key === "status" ? (
                       <select
-                        value={searchTerms[column.key] || ""}
-                        onChange={(e) => handleSearchChange(column.key, e.target.value)}
+                        value={searchTerms.status || ""}
+                        onChange={(e) => handleSearchChange("status", e.target.value)}
                         className="w-full px-2 py-1 text-xs border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
                       >
-                        <option value="">All {column.label}</option>
-                        {(column.key === "status" ? statusOptions :
-                          column.key === "designation" ? designationsOptions :
-                            competenciesOptions).map((option) => (
-                              <option
-                                key={typeof option === 'string' ? option : option.publicId}
-                                value={typeof option === 'string' ? option : option.publicId}
-                              >
-                                {typeof option === 'string' ? option : option.name}
-                              </option>
-                            ))}
+                        <option value="">All Statuses</option>
+                        {statusOptions.map((option) => (
+                          <option key={option} value={option}>
+                            {option}
+                          </option>
+                        ))}
+                      </select>
+                    ) : column.key === "designation" ? (
+                      <select
+                        value={searchTerms.designation || ""}
+                        onChange={(e) => handleSearchChange("designation", e.target.value)}
+                        className="w-full px-2 py-1 text-xs border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      >
+                        <option value="">All Designations</option>
+                        {designations.map((designation) => (
+                          <option key={designation.publicId} value={designation.name}>
+                            {designation.name}
+                          </option>
+                        ))}
+                      </select>
+                    ) : column.key === "competency" ? (
+                      <select
+                        value={searchTerms.competency || ""}
+                        onChange={(e) => handleSearchChange("competency", e.target.value)}
+                        className="w-full px-2 py-1 text-xs border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      >
+                        <option value="">All Competencies</option>
+                        {competencies.map((competency) => (
+                          <option key={competency.publicId} value={competency.name}>
+                            {competency.name}
+                          </option>
+                        ))}
+                      </select>
+                    ) : column.key === "roleIds" ? (
+                      <select
+                        value={searchTerms.roleIds || ""}
+                        onChange={(e) => handleSearchChange("roleIds", e.target.value)}
+                        className="w-full px-2 py-1 text-xs border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      >
+                        <option value="">All Roles</option>
+                        {roleOptions.map((role) => (
+                          <option key={role} value={role}>
+                            {role}
+                          </option>
+                        ))}
                       </select>
                     ) : (
                       <div className="relative">
@@ -279,20 +311,22 @@ const UserList = ({ setActiveSection }) => {
         <tbody>
           {paginatedResources.map((resource, index) => (
             <tr key={index} className={`${index % 2 === 0 ? 'bg-gray-50' : 'bg-white'} hover:bg-gray-100 transition-colors`}>
-              <td className="p-3 text-gray-700 text-sm text-center border-r border-gray-200">{index + 1}</td>
+              <td className="p-3 text-gray-700 text-sm text-center border-r border-gray-200">{(currentPage - 1) * itemsPerPage + index + 1}</td>
               <td
                 className="p-3 text-blue-600 text-sm border-r border-gray-200 cursor-pointer hover:underline"
                 onClick={() => setSelectedUser(resource.publicId)}
               >
-                {resource.employeeName.charAt(0).toUpperCase() + resource.employeeName.slice(1)}
+                {resource.employeeName?.charAt(0).toUpperCase() + resource.employeeName?.slice(1)}
               </td>
               <td className="p-3 text-gray-700 text-sm border-r border-gray-200">
                 {resource.designation}
               </td>
               <td className="p-3 text-gray-700 text-sm border-r border-gray-200">
-                {resource.competency.charAt(0).toUpperCase() + resource.competency.slice(1)}
+                {resource.competency?.charAt(0).toUpperCase() + resource.competency?.slice(1)}
               </td>
-              <td className="p-3 text-gray-700 text-sm border-r border-gray-200">{new Date(resource.joiningDate).toLocaleDateString()}</td>
+              <td className="p-3 text-gray-700 text-sm border-r border-gray-200">
+                {resource.joiningDate ? new Date(resource.joiningDate).toLocaleDateString() : 'N/A'}
+              </td>
               <td className="p-3 text-gray-700 text-sm border-r border-gray-200">
                 {getRoleName(resource.roleIds)}
               </td>
@@ -325,7 +359,7 @@ const UserList = ({ setActiveSection }) => {
                       autoFocus
                       name='status'
                       className="w-full p-1 rounded-md text-sm focus:ring-blue-500 focus:border-blue-500"
-                      value={resource.status || 'Running'}
+                      value={resource.status || 'pool'}
                       onChange={(e) => {
                         const syntheticEvent = {
                           target: {
@@ -339,7 +373,7 @@ const UserList = ({ setActiveSection }) => {
                       onBlur={() => setTimeout(() => setEditingStatusId(null), 200)}
                     >
                       {statusOptions.map((option) => (
-                        <option key={option} value={option}>
+                        <option key={option} value={option.toLowerCase()}>
                           {option}
                         </option>
                       ))}
@@ -356,14 +390,10 @@ const UserList = ({ setActiveSection }) => {
                         isOpen: true,
                         resourceId: resource.publicId,
                         resourceName: resource.employeeName
-                    })}
->
+                      })}
+                    >
                       <FaTrash size={12} />
                     </button>
-                    <span className="absolute -top-8 left-1/2 -translate-x-1/2 w-max px-2 py-1 bg-gray-800 text-white text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-                      Delete
-                      <div className="absolute left-1/2 -translate-x-1/2 w-2 h-2 bg-gray-800 rotate-45 -bottom-1"></div>
-                    </span>
                   </div>
                 </div>
               </td>
@@ -372,31 +402,30 @@ const UserList = ({ setActiveSection }) => {
         </tbody>
       </table>
       {filteredData.length > 0 && (
-        <div className="flex items-center justify-between px-4 py-3 bg-white border-t border-gray-200">
-          <div className="text-sm text-gray-700">
+        <div className="flex flex-col sm:flex-row items-center justify-between px-4 py-3 bg-white border-t border-gray-200 gap-3">
+          <div className="text-sm text-gray-700 whitespace-nowrap">
             Showing <span className="font-medium">{(currentPage - 1) * itemsPerPage + 1}</span> to{" "}
             <span className="font-medium">
               {Math.min(currentPage * itemsPerPage, filteredData.length)}
             </span>{" "}
             of <span className="font-medium">{filteredData.length}</span> results
           </div>
-          <div className="flex space-x-2">
+          <div className="flex items-center space-x-1 sm:space-x-2">
             <button
               onClick={() => handlePageChange(1)}
               disabled={currentPage === 1}
               className={`p-2 rounded-md ${currentPage === 1 ? 'text-gray-400 cursor-not-allowed' : 'text-blue-600 hover:bg-blue-50'}`}
             >
-              <FaAngleDoubleLeft />
+              <FaAngleDoubleLeft className="text-sm sm:text-base" />
             </button>
             <button
               onClick={() => handlePageChange(currentPage - 1)}
               disabled={currentPage === 1}
               className={`p-2 rounded-md ${currentPage === 1 ? 'text-gray-400 cursor-not-allowed' : 'text-blue-600 hover:bg-blue-50'}`}
             >
-              <FaAngleLeft />
+              <FaAngleLeft className="text-sm sm:text-base" />
             </button>
 
-            {/* Dynamic Page Numbers */}
             {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
               let pageNum;
               if (totalPages <= 5) {
@@ -413,7 +442,7 @@ const UserList = ({ setActiveSection }) => {
                 <button
                   key={pageNum}
                   onClick={() => handlePageChange(pageNum)}
-                  className={`w-10 h-10 rounded-md ${currentPage === pageNum ? 'bg-blue-600 text-white' : 'text-blue-600 hover:bg-blue-50'}`}
+                  className={`w-8 h-8 sm:w-10 sm:h-10 text-sm sm:text-base rounded-md ${currentPage === pageNum ? 'bg-blue-600 text-white' : 'text-blue-600 hover:bg-blue-50'}`}
                 >
                   {pageNum}
                 </button>
@@ -425,14 +454,14 @@ const UserList = ({ setActiveSection }) => {
               disabled={currentPage === totalPages}
               className={`p-2 rounded-md ${currentPage === totalPages ? 'text-gray-400 cursor-not-allowed' : 'text-blue-600 hover:bg-blue-50'}`}
             >
-              <FaAngleRight />
+              <FaAngleRight className="text-sm sm:text-base" />
             </button>
             <button
               onClick={() => handlePageChange(totalPages)}
               disabled={currentPage === totalPages}
               className={`p-2 rounded-md ${currentPage === totalPages ? 'text-gray-400 cursor-not-allowed' : 'text-blue-600 hover:bg-blue-50'}`}
             >
-              <FaAngleDoubleRight />
+              <FaAngleDoubleRight className="text-sm sm:text-base" />
             </button>
           </div>
         </div>
@@ -449,9 +478,8 @@ const UserList = ({ setActiveSection }) => {
         onClose={() => setDeleteModal({ isOpen: false, resourceId: null, resourceName: "" })}
         onConfirm={handleDeleteConfirm}
         resourceName={deleteModal.resourceName}
-        resourceType="role"
+        resourceType="user"
       />
-
     </div>
   );
 };

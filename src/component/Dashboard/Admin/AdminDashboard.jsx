@@ -1,12 +1,20 @@
-import React, { useState, useRef } from "react";
-import { FaLock, FaChalkboardTeacher, FaUserShield, FaGraduationCap } from "react-icons/fa";
+import React, { useState, useRef, useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchRoles } from "../../../features/role/roleAction";
+import { FaLock, FaChalkboardTeacher, FaUserShield } from "react-icons/fa";
 import AccessManagement from "./AccessManagement";
 import TrainingManagement from "./TrainingManagement";
 
 const AdminDashboard = () => {
+    const dispatch = useDispatch()
+    const { roles } = useSelector((state)=> state.role)
     const [selectedSection, setSelectedSection] = useState("");
     const [activeSection, setActiveSection] = useState("view");
     const contentRef = useRef(null);
+
+    useEffect(() => {
+        dispatch(fetchRoles());
+    }, [dispatch])
 
     const handleSectionClick = (section) => {
         setSelectedSection(section);

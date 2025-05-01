@@ -9,11 +9,14 @@ import InternDetail from './InternDetail';
 import YRMSLoader from '../../../helper/loader';
 import { ErrorToast, SuccessToast } from '../../../helper/ResourceToast';
 import DeleteConfirmationModal from '../../../helper/DeleteConfirmationModal';
+import { FiEye } from 'react-icons/fi';
+import InternTaskDetails from './InternTaskDetails';
 
 const InternList = () => {
     const navigate = useNavigate();
     const dispatch = useDispatch();
     const { interns, loading, error } = useSelector((state) => state.intern);
+    const [showViewTask, setShowViewTask] = useState(false);
     const [editingStatusId, setEditingStatusId] = useState(null);
     const [toast, setToast] = useState(null);
     const [formData, setFormData] = useState(null);
@@ -83,7 +86,7 @@ const InternList = () => {
             const matchesMentor = intern.mentor?.toLowerCase().includes(searchTerms.mentor.toLowerCase()) ?? true;
             const matchesStatus = searchTerms.status ? intern.status?.toLowerCase() === searchTerms.status.toLowerCase() : true;
             const matchesEmail = intern.email?.toLowerCase().includes(searchTerms.email.toLowerCase()) ?? true;
-            
+
             // Hired status filtering (fixed logic)
             let matchesHiredStatus = true;
             if (searchTerms.isOffered === "Hired") {
@@ -115,8 +118,8 @@ const InternList = () => {
                 }
             }
 
-            return matchesName && matchesMentor && matchesStatus && matchesEmail && 
-                   matchesStartDate && matchesEndDate && matchesHiredStatus;
+            return matchesName && matchesMentor && matchesStatus && matchesEmail &&
+                matchesStartDate && matchesEndDate && matchesHiredStatus;
         });
     }, [interns, searchTerms]);
 
@@ -124,14 +127,14 @@ const InternList = () => {
     const sortedInterns = useMemo(() => {
         return [...filteredInterns].sort((a, b) => {
             if (!sortConfig.key) return 0;
-            
+
             // Special handling for isOffered (hired status)
             if (sortConfig.key === 'isOffered') {
                 const valueA = a.isOffered ? 1 : 0;
                 const valueB = b.isOffered ? 1 : 0;
                 return sortConfig.direction === "ascending" ? valueA - valueB : valueB - valueA;
             }
-            
+
             // Default string comparison for other fields
             const valueA = a[sortConfig.key] || "";
             const valueB = b[sortConfig.key] || "";
@@ -165,19 +168,19 @@ const InternList = () => {
 
     const handleDeleteConfirm = async () => {
         try {
-          await dispatch(deleteIntern(deleteModal.internId));
-          setToast(
-            <SuccessToast 
-              message="Intern deleted successfully!" 
-              onClose={() => setToast(null)} 
-            />
-          );
-          setDeleteModal({ isOpen: false, internId: null, internName: "" });
-          dispatch(fetchInterns());
+            await dispatch(deleteIntern(deleteModal.internId));
+            setToast(
+                <SuccessToast
+                    message="Intern deleted successfully!"
+                    onClose={() => setToast(null)}
+                />
+            );
+            setDeleteModal({ isOpen: false, internId: null, internName: "" });
+            dispatch(fetchInterns());
         } catch (error) {
-          setToast(<ErrorToast message={error.message || "Failed to delete intern"} onClose={() => setToast(null)} />);
+            setToast(<ErrorToast message={error.message || "Failed to delete intern"} onClose={() => setToast(null)} />);
         }
-      };
+    };
 
     const handleUpdateStatus = async (e, event, publicId) => {
         setIsSubmitting(true);
@@ -213,6 +216,7 @@ const InternList = () => {
         { key: 'mentor', label: 'Mentored By' },
         { key: 'startDate', label: 'Start Date' },
         { key: 'endDate', label: 'End Date' },
+        { key: 'taskDetails', label: 'Task Details' },
         { key: 'status', label: 'Status' },
         { key: 'isOffered', label: 'Hired' }
     ];
@@ -223,7 +227,7 @@ const InternList = () => {
     return (
         <div className="p-6 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl shadow-lg mt-15">
             {toast}
-            
+
             <div className="mb-6">
                 <div className="flex items-center justify-between mb-2">
                     <h2 className="text-3xl font-bold text-blue-800">Interns Details</h2>
@@ -244,84 +248,90 @@ const InternList = () => {
                             {columns.map(column => (
                                 <th
                                     key={column.key}
-                                    className="p-1 text-left font-semibold text-sm border-b border-gray-200"
+                                    className={`p-1 text-center font-semibold text-sm border-b border-gray-200 ${column.key === "sno"
+                                            ? "w-1/20 h-6"  // Smaller width for S.No and Actions
+                                            : "w-1/12" // Default width for other columns
+                                        }`}
                                 >
-                                    <div className="flex items-center justify-between">
-                                        <span>{column.label}</span>
-                                        {column.key !== "sno" && (
-                                            <button
-                                                onClick={() => handleSort(column.key)}
-                                                className="ml-2 focus:outline-none"
-                                            >
-                                                {sortConfig.key === column.key ? (
-                                                    sortConfig.direction === "ascending" ? (
-                                                        <FaSortUp className="text-blue-600" />
+                                    <div className="flex flex-col items-center justify-center">
+                                        <div className="flex items-center justify-center w-full">
+                                            <span>{column.label}</span>
+                                            {column.key !== "sno" && column.key !== "taskDetails" && (  // Exclude sort for S.No and Actions
+                                                <button
+                                                    onClick={() => handleSort(column.key)}
+                                                    className="ml-2 focus:outline-none"
+                                                >
+                                                    {sortConfig.key === column.key ? (
+                                                        sortConfig.direction === "ascending" ? (
+                                                            <FaSortUp className="text-blue-600" />
+                                                        ) : (
+                                                            <FaSortDown className="text-blue-600" />
+                                                        )
                                                     ) : (
-                                                        <FaSortDown className="text-blue-600" />
-                                                    )
-                                                ) : (
-                                                    <FaSort className="text-gray-400 hover:text-blue-600" />
-                                                )}
-                                            </button>
-                                        )}
-                                    </div>
-                                    {column.key !== "sno" && (
-                                        <div className="relative mt-1">
-                                            {column.key === "startDate" || column.key === "endDate" ? (
-                                                <div className="relative">
-                                                    <DatePicker
-                                                        selected={searchTerms[column.key]}
-                                                        onChange={(date) => handleDateChange(column.key, date)}
-                                                        dateFormat="MM/dd/yyyy"
-                                                        placeholderText="Select date"
-                                                        className="w-full px-2 py-1 pr-6 text-xs border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
-                                                    />
-                                                    <FaCalendarAlt className="absolute right-2 top-2 text-gray-400 text-xs" />
-                                                </div>
-                                            ) : column.key === "status" ? (
-                                                <select
-                                                    value={searchTerms.status}
-                                                    onChange={(e) => handleSearchChange("status", e.target.value)}
-                                                    className="w-full px-2 py-1 text-xs border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
-                                                >
-                                                    <option value="">All Status</option>
-                                                    {statusOptions.map((option) => (
-                                                        <option key={option} value={option}>
-                                                            {option}
-                                                        </option>
-                                                    ))}
-                                                </select>
-                                            ) : column.key === "isOffered" ? (
-                                                <select
-                                                    value={searchTerms.isOffered}
-                                                    onChange={(e) => handleSearchChange("isOffered", e.target.value)}
-                                                    className="w-full px-2 py-1 text-xs border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
-                                                >
-                                                    {hiredOptions.map((option) => (
-                                                        <option key={option} value={option}>
-                                                            {option}
-                                                        </option>
-                                                    ))}
-                                                </select>
-                                            ) : (
-                                                <div className="relative">
-                                                    <input
-                                                        type="text"
-                                                        placeholder={`Search ${column.label}`}
-                                                        value={searchTerms[column.key] || ""}
-                                                        onChange={(e) => handleSearchChange(column.key, e.target.value)}
-                                                        className="w-full px-2 py-1 pr-6 text-xs border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
-                                                    />
-                                                    <FaSearch className="absolute right-2 top-2 text-gray-400 text-xs" />
-                                                </div>
+                                                        <FaSort className="text-gray-400 hover:text-blue-600" />
+                                                    )}
+                                                </button>
                                             )}
                                         </div>
-                                    )}
+                                        {column.key !== "taskDetails" && column.key !== "sno" && (
+                                            <div className="relative mt-1 w-full">
+                                                {/* Rest of your filter inputs remain exactly the same */}
+                                                {column.key === "startDate" || column.key === "endDate" ? (
+                                                    <div className="relative">
+                                                        <DatePicker
+                                                            selected={searchTerms[column.key]}
+                                                            onChange={(date) => handleDateChange(column.key, date)}
+                                                            dateFormat="MM/dd/yyyy"
+                                                            placeholderText="Select date"
+                                                            className="w-full px-2 py-1 pr-6 text-xs border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                                        />
+                                                        <FaCalendarAlt className="absolute right-2 top-2 text-gray-400 text-xs" />
+                                                    </div>
+                                                ) : column.key === "status" ? (
+                                                    <select
+                                                        value={searchTerms.status}
+                                                        onChange={(e) => handleSearchChange("status", e.target.value)}
+                                                        className="w-full px-2 py-1 text-xs border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                                    >
+                                                        <option value="">All Status</option>
+                                                        {statusOptions.map((option) => (
+                                                            <option key={option} value={option}>
+                                                                {option}
+                                                            </option>
+                                                        ))}
+                                                    </select>
+                                                ) : column.key === "isOffered" ? (
+                                                    <select
+                                                        value={searchTerms.isOffered}
+                                                        onChange={(e) => handleSearchChange("isOffered", e.target.value)}
+                                                        className="w-full px-2 py-1 text-xs border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                                    >
+                                                        {hiredOptions.map((option) => (
+                                                            <option key={option} value={option}>
+                                                                {option}
+                                                            </option>
+                                                        ))}
+                                                    </select>
+                                                ) : (
+                                                    <div className="relative">
+                                                        <input
+                                                            type="text"
+                                                            placeholder={`Search ${column.label}`}
+                                                            value={searchTerms[column.key] || ""}
+                                                            onChange={(e) => handleSearchChange(column.key, e.target.value)}
+                                                            className="w-full px-2 py-1 pr-6 text-xs border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                                        />
+                                                        <FaSearch className="absolute right-2 top-2 text-gray-400 text-xs" />
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
                                 </th>
                             ))}
-                            <th className="p-1 text-left font-semibold text-sm border-b border-gray-200">
+                            <th className="p-1 text-center font-semibold text-sm border-b border-gray-200 w-1/25">  {/* Smaller width for Actions */}
                                 Actions
-                                <div className="mt-1 h-8"></div>
+                                <div className="mt-1 h-6"></div>
                             </th>
                         </tr>
                     </thead>
@@ -348,6 +358,20 @@ const InternList = () => {
                                 </td>
                                 <td className="p-3 text-gray-700 text-sm border-r border-gray-200">
                                     {new Date(intern.endDate).toLocaleDateString()}
+                                </td>
+                                <td className="p-3 text-gray-700 text-sm border-r border-gray-200 flex justify-center items-center">
+                                    <button
+                                        onClick={() => {
+                                            setSelectedInterns(intern.publicId);
+                                            setShowViewTask(true);
+                                        }}
+                                        className="p-1.5 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors group relative"
+                                    >
+                                        <FiEye className="w-4 h-4 mx-auto" />
+                                        <span className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 text-xs bg-gray-800 text-white px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                                            View Task Details
+                                        </span>
+                                    </button>
                                 </td>
                                 <td className="p-3 text-gray-700 text-sm border-r border-gray-200 relative">
                                     <div
@@ -394,11 +418,10 @@ const InternList = () => {
                                     )}
                                 </td>
                                 <td className="p-3 text-gray-700 text-sm border-r border-gray-200">
-                                    <span className={`px-2 py-1 rounded-full text-xs ${
-                                        intern.isOffered 
-                                            ? 'bg-green-100 text-green-800' 
-                                            : 'bg-yellow-100 text-yellow-800'
-                                    }`}>
+                                    <span className={`px-2 py-1 rounded-full text-xs ${intern.isOffered
+                                        ? 'bg-green-100 text-green-800'
+                                        : 'bg-yellow-100 text-yellow-800'
+                                        }`}>
                                         {intern.isOffered ? 'Hired' : 'Not Hired'}
                                     </span>
                                 </td>
@@ -448,7 +471,7 @@ const InternList = () => {
                             >
                                 <FaAngleLeft />
                             </button>
-                            
+
                             {/* Dynamic Page Numbers */}
                             {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
                                 let pageNum;
@@ -491,13 +514,25 @@ const InternList = () => {
                     </div>
                 )}
 
-                {selectedInterns && (
+                {!showViewTask && selectedInterns && (
                     <InternDetail
                         key={selectedInterns}
                         publicId={selectedInterns}
                         onClose={() => {
                             dispatch(fetchInterns());
                             setSelectedInterns(null)
+                        }}
+                    />
+                )}
+
+                {showViewTask && selectedInterns && (
+                    <InternTaskDetails
+                        key={selectedInterns}
+                        publicId={selectedInterns}
+                        onClose={() => {
+                            dispatch(fetchInterns());
+                            setSelectedInterns(null)
+                            setShowViewTask(false)
                         }}
                     />
                 )}

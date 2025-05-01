@@ -86,8 +86,6 @@ const AddResource = ({ setActiveSection }) => {
         dispatch(fetchTechnologies());
     }, [dispatch]);
 
-    console.log(roles, "<<<<<<>>>>>>>>")
-
     const handleInputChange = (e) => {
         const { name, value } = e.target;
         setFormData((prev) => ({ ...prev, [name]: value }));
@@ -141,10 +139,8 @@ const AddResource = ({ setActiveSection }) => {
         e.preventDefault();
         try {
             setToast(<YRMSLoader message="Creating resource..." />);
-            console.log(formData, "formData")
             const createResult = await dispatch(createResource(formData));
 
-            console.log(createResult.payload, "createResult.payload?")
             if (!createResult.payload?.publicId) {
                 throw new Error("Failed to get publicId from response");
             }
@@ -494,7 +490,6 @@ const AddResource = ({ setActiveSection }) => {
                                     value={formData.designation}
                                     options={designations}
                                     onChange={(e) => {
-                                        console.log("Designation selected:", e.target.value);
                                         handleInputChange(e);
                                     }}
                                     setModalField={setModalField}

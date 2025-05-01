@@ -257,6 +257,7 @@ const InternDetail = ({ publicId, onClose }) => {
                         <input
                           type="date"
                           name="startDate"
+                          onClick={(e) => e.target.showPicker()}
                           value={formData.startDate}
                           onChange={handleInputChange}
                           className="bg-white border border-blue-200 rounded-md px-1 py-1 text-sm focus:ring-1 focus:ring-blue-300"
@@ -276,6 +277,7 @@ const InternDetail = ({ publicId, onClose }) => {
                         <input
                           type="date"
                           name="endDate"
+                          onClick={(e) => e.target.showPicker()}
                           value={formData.endDate}
                           onChange={handleInputChange}
                           className="bg-white border border-purple-200 rounded-md px-1 py-1 text-sm focus:ring-1 focus:ring-purple-300"
@@ -491,6 +493,7 @@ const InternDetail = ({ publicId, onClose }) => {
                       <input
                         type="date"
                         name="lastWorkingDay"
+                        onClick={(e) => e.target.showPicker()}
                         value={formData.lastWorkingDay}
                         onChange={handleInputChange}
                         className="w-full bg-white border border-blue-200 rounded-md px-2 py-1 text-sm focus:ring-1 focus:ring-blue-300"
