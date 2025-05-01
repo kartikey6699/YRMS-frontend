@@ -1,15 +1,15 @@
 import React from 'react';
 import { FaExclamationTriangle } from 'react-icons/fa';
 
-const ConfirmRoleChangeModal = ({ isOpen, onClose, onConfirm, userName, competencyName, actionType }) => {
+const ConfirmRoleChangeModal = ({ isOpen, onClose, onConfirm, userName, competencyName, actionType, roleName }) => {
     if (!isOpen) return null;
 
     const isAddAction = actionType === 1;
-    const title = isAddAction ? 'Confirm Role Assignment' : 'Confirm Admin Removal';
+    const title = isAddAction ? `Confirm ${roleName} Assignment` : `Confirm ${roleName} Removal`;
     const message = isAddAction
-        ? `Are you sure you want to assign the Admin role to ${userName}?`
-        : `Are you sure you want to remove ${userName} as an admin from ${competencyName}?`;
-    const confirmButtonText = isAddAction ? 'Yes, Assign' : 'Yes, Remove';
+        ? `Are you sure you want to assign the ${roleName} role to ${userName}?`
+        : `Are you sure you want to remove ${userName} as a ${roleName} from ${competencyName}?`;
+    const confirmButtonText = isAddAction ? `Yes, Assign ${roleName}` : `Yes, Remove ${roleName}`;
     const confirmButtonColor = isAddAction ? 'bg-purple-600 hover:bg-purple-700 focus:ring-purple-500' : 'bg-red-600 hover:bg-red-700 focus:ring-red-500';
 
     return (
@@ -41,14 +41,14 @@ const ConfirmRoleChangeModal = ({ isOpen, onClose, onConfirm, userName, competen
                     <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
                         <button
                             type="button"
-                            className={`w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 ${confirmButtonColor} text-base font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 sm:ml-3 sm:w-auto sm:text-sm`}
+                            className={`w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 ${confirmButtonColor} text-base font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 sm:ml-3 sm:w-auto sm:text-sm cursor-pointer`}
                             onClick={onConfirm}
                         >
                             {confirmButtonText}
                         </button>
                         <button
                             type="button"
-                            className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 sm:mt-0 sm:w-auto sm:text-sm"
+                            className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 sm:mt-0 sm:w-auto sm:text-sm cursor-pointer"
                             onClick={onClose}
                         >
                             Cancel

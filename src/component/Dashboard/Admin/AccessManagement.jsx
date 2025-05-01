@@ -140,7 +140,8 @@ const AccessManagement = ({ activeSection, setActiveSection }) => {
         onConfirm={confirmRoleChange}
         userName={actionType === 1 ? selectedUser?.name : selectedTrainer?.name}
         competencyName="this competency" // Replace with actual competency name if available
-        actionType={actionType}
+        actionType={actionType === 1 ? 1 : 2} // 1 for add, 2 for remove
+        roleName="trainer" // Added role name for clarity
       />
       
       {activeSection === "view" ? (
@@ -151,7 +152,7 @@ const AccessManagement = ({ activeSection, setActiveSection }) => {
             </h3>
             <button 
               onClick={handleFetchUsers}
-              className="px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg hover:from-blue-600 hover:to-blue-700 transition flex items-center"
+              className="px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg hover:from-blue-600 hover:to-blue-700 transition flex items-center cursor-pointer"
               disabled={apiLoading}
             >
               <FaUserPlus className="mr-2" /> Create New Trainer
@@ -183,13 +184,10 @@ const AccessManagement = ({ activeSection, setActiveSection }) => {
                       <div>
                         <h4 className="font-medium">{trainer.name}</h4>
                         <p className="text-sm text-gray-600">{trainer.email}</p>
-                        <span className="inline-block mt-1 px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full">
-                          {trainer.competency || "General"}
-                        </span>
                       </div>
                       <button
                         onClick={() => handleRemoveTrainer(trainer)}
-                        className="p-2 text-red-500 hover:text-red-700 transition"
+                        className="p-2 text-red-500 hover:text-red-700 transition cursor-pointer"
                         title="Remove Trainer"
                         disabled={apiLoading}
                       >
@@ -206,7 +204,7 @@ const AccessManagement = ({ activeSection, setActiveSection }) => {
         <div className="space-y-6">
           <button 
             onClick={() => setActiveSection("view")}
-            className="flex items-center text-blue-500 hover:text-blue-700 transition"
+            className="flex items-center text-blue-500 hover:text-blue-700 transition cursor-pointer"
             disabled={apiLoading}
           >
             <FaArrowLeft className="mr-1" /> Back to Trainers
@@ -270,7 +268,7 @@ const AccessManagement = ({ activeSection, setActiveSection }) => {
             <div className="p-4 bg-gray-50 border-t flex justify-end space-x-3">
               <button 
                 onClick={() => setActiveSection("view")}
-                className="px-4 py-2 border rounded-lg hover:bg-gray-100 transition"
+                className="px-4 py-2 border rounded-lg hover:bg-gray-100 transition cursor-pointer"
                 disabled={apiLoading}
               >
                 Cancel
@@ -278,7 +276,7 @@ const AccessManagement = ({ activeSection, setActiveSection }) => {
               <button 
                 onClick={handleCreateTrainer}
                 disabled={!selectedUser || apiLoading}
-                className={`px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg transition flex items-center ${!selectedUser ? 'opacity-50 cursor-not-allowed' : 'hover:from-blue-600 hover:to-blue-700'}`}
+                className={`px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg transition flex items-center ${!selectedUser ? 'opacity-50 cursor-not-allowed' : 'hover:from-blue-600 hover:to-blue-700 cursor-pointer'}`}
               >
                 {apiLoading ? (
                   <>
