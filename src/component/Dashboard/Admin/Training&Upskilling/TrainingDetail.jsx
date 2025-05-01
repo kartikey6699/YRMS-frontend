@@ -25,6 +25,7 @@ import {
   FaUserCircle
 } from 'react-icons/fa';
 import { format, parseISO } from 'date-fns';
+
 import {
   fetchProgramDetails,
   updateProgramDetails,
@@ -32,6 +33,7 @@ import {
   removeParticipants
 } from '../../../../features/program/programAction';
 import TextareaAutosize from 'react-textarea-autosize';
+import UpskillingDetailModal from './UpskillingDetailModal';
 import Select from 'react-select';
 import { SuccessToast, ErrorToast } from '../../../helper/ResourceToast';
 import { fetchTrainingTechnologies, fetchResources, fetchCompetencies } from "../../../../features/resource/resourceAction";
@@ -69,6 +71,8 @@ const TrainingDetail = () => {
   const [errorMessage, setErrorMessage] = useState('');
   const [showParticipantModal, setShowParticipantModal] = useState(false);
   const [selectedParticipantToAdd, setSelectedParticipantToAdd] = useState(null);
+  const [showUpskillingDetails, setShowUpskillingDetails] = useState(false);
+  const [selectedTraining, setSelectedTraining] = useState(null);
 
   // Fetch data on mount
   useEffect(() => {
@@ -388,6 +392,13 @@ const TrainingDetail = () => {
                 Edit Program
               </button>
             )}
+            <button
+              onClick={() => setShowUpskillingDetails(true)}
+              className="flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition shadow-md text-sm"
+            >
+              <FaUserFriends className="mr-2" />
+              View Participants
+            </button>
           </div>
         </div>
 
@@ -770,6 +781,47 @@ const TrainingDetail = () => {
           onClose={() => setShowErrorToast(false)}
         />
       )}
+
+      {showUpskillingDetails && (
+        <UpskillingDetailModal
+          onClose={() => setShowUpskillingDetails(false)}
+          training={{
+            ...program,
+            participants: program.participants,
+            participantCount: program.participants.length,
+          }}
+        />
+      )}
+
+      <div 
+        className="p-4 bg-blue-50 rounded-lg border border-blue-100 cursor-pointer hover:bg-blue-100 transition-colors"
+        onClick={() => {
+          setSelectedTraining({
+            ...program,
+            participants: program.participants,
+            participantCount: program.participants.length
+          });
+          setShowUpskillingDetails(true);
+        }}
+      >
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-lg font-medium text-blue-800">Participants</h3>
+            <div className="flex items-center space-x-2">
+              <span className="font-bold text-xl text-purple-600">
+                {program.participants.length}
+              </span>
+              <div className="text-xs text-gray-500">
+                ({/* You might want to calculate attended count here */} attended)
+              </div>
+            </div>
+          </div>
+          <FaUserFriends className="text-blue-500 text-2xl" />
+        </div>
+        <div className="mt-2 text-sm text-blue-700">
+          Click to view details
+        </div>
+      </div>
     </div>
   );
 };
