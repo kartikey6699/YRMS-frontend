@@ -1,19 +1,26 @@
 import React, { useState, useEffect } from 'react';
-import { FaPlus, FaSort, FaSortUp, FaSortDown, FaEdit, FaTrash, FaAngleDoubleLeft, FaAngleLeft, FaAngleRight, FaAngleDoubleRight } from 'react-icons/fa';
+import { FaPlus, FaSort, FaSortUp, FaSortDown, FaEdit, FaTrash, FaAngleDoubleLeft, FaAngleLeft, FaAngleRight, FaAngleDoubleRight, FaUserCircle, FaUserPlus, FaTimes, FaUserFriends, FaUserMinus } from 'react-icons/fa';
 import { useDispatch, useSelector } from 'react-redux';
 import { deleteCompetency, fetchCompetencies } from '../../../../features/resource/resourceAction';
+import { fetchCompetencyAdmins, updateUserRole, fetchAvailableAdmins } from '../../../../features/role/roleAction';
 import DeleteConfirmationModal from '../../../helper/DeleteConfirmationModal';
+import ConfirmRoleChangeModal from '../../../helper/ConfirmRoleChangeModal';
 import YRMSLoader from '../../../helper/loader';
 import { ErrorToast, SuccessToast } from '../../../helper/ResourceToast';
+import Select from 'react-select';
 
 const ListCompetency = ({ setActiveSection, setSelectedCompetency, onSort, sortConfig }) => {
-    const [toast, setToast] = useState(null);
+    const [toastState, setToastState] = useState(null);
     const dispatch = useDispatch();
     const { competencies } = useSelector((state) => state.resource);
+    const { competencyAdmins, availableAdmins, roleLoading } = useSelector((state) => state.role);
 
     const [deleteModal, setDeleteModal] = useState({ isOpen: false, competencyId: null, competencyName: "" });
+    const [adminModal, setAdminModal] = useState({ isOpen: false, competencyId: null, competencyName: "" });
+    const [confirmModal, setConfirmModal] = useState({ isOpen: false, user: null, competencyId: null, actionType: null });
     const [searchTerm, setSearchTerm] = useState("");
     const [currentPage, setCurrentPage] = useState(1);
+    const [selectedAdminToAdd, setSelectedAdminToAdd] = useState(null);
     const itemsPerPage = 10;
 
     useEffect(() => {
@@ -37,21 +44,101 @@ const ListCompetency = ({ setActiveSection, setSelectedCompetency, onSort, sortC
     };
 
     const handleDeleteConfirm = () => {
-        setToast(<YRMSLoader message="Deleting competency..." />);
+        setToastState({ type: "loading", message: "Deleting competency..." });
         dispatch(deleteCompetency(deleteModal.competencyId))
             .unwrap()
             .then(() => {
-                setToast(<SuccessToast message="Competency deleted successfully!" onClose={() => setToast(null)} />);
+                setToastState({
+                    type: "success",
+                    message: "Competency deleted successfully!",
+                });
+                setTimeout(() => setToastState(null), 3000);
             })
             .catch(error => {
-                setToast(<ErrorToast message={error.message || "Failed to delete competency"} onClose={() => setToast(null)} />);
+                setToastState({
+                    type: "error",
+                    message: error.message || "Failed to delete competency",
+                });
+                setTimeout(() => setToastState(null), 3000);
             });
         setDeleteModal({ isOpen: false, competencyId: null, competencyName: "" });
     };
 
+    const handleOpenAdminModal = (competency) => {
+        setAdminModal({
+            isOpen: true,
+            competencyId: competency.publicId,
+            competencyName: competency.name,
+        });
+        dispatch(fetchCompetencyAdmins(competency.publicId));
+        dispatch(fetchAvailableAdmins({ public_id: competency.publicId }));
+    };
+
+    const handleAddAdmin = () => {
+        if (!selectedAdminToAdd) return;
+        setConfirmModal({
+            isOpen: true,
+            user: selectedAdminToAdd,
+            competencyId: adminModal.competencyId,
+            actionType: 1,
+        });
+    };
+
+    const handleRemoveAdmin = (admin) => {
+        setConfirmModal({
+            isOpen: true,
+            user: { value: admin.userId, label: `${admin.name} (${admin.email})` },
+            competencyId: adminModal.competencyId,
+            actionType: 2,
+        });
+    };
+
+    const handleConfirmAction = () => {
+        const isAddAction = confirmModal.actionType === 1;
+        setToastState({ type: "loading", message: isAddAction ? "Adding admin..." : "Removing admin..." });
+        dispatch(
+            updateUserRole({
+                competency_id: confirmModal.competencyId,
+                user_id: confirmModal.user.value,
+                role: "Admin",
+                action_type: confirmModal.actionType,
+            })
+        )
+            .unwrap()
+            .then(() => {
+                dispatch(fetchCompetencyAdmins(adminModal.competencyId)).then(() => {
+                    dispatch(fetchAvailableAdmins({ public_id: adminModal.competencyId }));
+                    setToastState({
+                        type: "success",
+                        message: isAddAction ? "Admin added successfully!" : "Admin removed successfully!",
+                    });
+                    setTimeout(() => setToastState(null), 3000);
+                    if (isAddAction) {
+                        setSelectedAdminToAdd(null);
+                    }
+                    setConfirmModal({ isOpen: false, user: null, competencyId: null, actionType: null });
+                });
+            })
+            .catch((err) => {
+                setToastState({
+                    type: "error",
+                    message: err.message || `Failed to ${isAddAction ? 'add' : 'remove'} admin`,
+                });
+                setTimeout(() => setToastState(null), 3000);
+                setConfirmModal({ isOpen: false, user: null, competencyId: null, actionType: null });
+            });
+    };
+
+    const adminOptions = availableAdmins
+        .filter(user => !competencyAdmins.some(admin => admin.publicId === user.publicId))
+        .map(user => ({
+            value: user.userId,
+            label: `${user.name} (${user.email})`,
+        }));
+
     const columns = [
         { key: "sno", label: "S.No" },
-        { key: "name", label: "Competency Name" }
+        { key: "name", label: "Competency Name" },
     ];
 
     return (
@@ -86,12 +173,12 @@ const ListCompetency = ({ setActiveSection, setSelectedCompetency, onSort, sortC
                 </div>
             </div>
 
-            <div className={`overflow-x-auto rounded-lg shadow-lg border border-gray-200 ${deleteModal.isOpen ? 'filter blur-sm' : ''}`}>
-                <table className="w-full border-collapse">
+            <div className={`overflow-x-auto rounded-lg shadow-lg border border-gray-200 ${deleteModal.isOpen || adminModal.isOpen || confirmModal.isOpen ? 'filter blur-sm' : ''}`}>
+                <table className="w-full border-collapse" role="grid">
                     <thead>
                         <tr className="bg-gray-100 text-gray-800">
                             {columns.map(column => (
-                                <th key={column.key} className="p-3 text-left font-semibold text-sm border-b border-gray-200">
+                                <th key={column.key} className="p-3 text-left font-semibold text-sm border-b border-gray-200" scope="col" aria-sort={sortConfig.key === column.key ? sortConfig.direction : "none"}>
                                     <div className="flex items-center justify-between">
                                         <span>{column.label}</span>
                                         {column.key !== "sno" && (
@@ -113,17 +200,22 @@ const ListCompetency = ({ setActiveSection, setSelectedCompetency, onSort, sortC
                                     </div>
                                 </th>
                             ))}
-                            <th className="p-3 text-left font-semibold text-sm border-b border-gray-200">Actions</th>
+                            <th className="p-3 text-left font-semibold text-sm border-b border-gray-200" scope="col">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         {paginatedCompetencies.map((competency, index) => (
-                            <tr key={competency.publicId} className={`${index % 2 === 0 ? 'bg-gray-50' : 'bg-white'} hover:bg-gray-100 transition-colors`}>
+                            <tr key={competency.publicId} className={`${index % 2 === 0 ? 'bg-gray-50' : 'bg-white'} hover:bg-gray-100 transition-colors`} role="row">
                                 <td className="p-3 text-gray-700 text-sm text-center border-r border-gray-200">
                                     {(currentPage - 1) * itemsPerPage + index + 1}
                                 </td>
                                 <td className="p-3 text-blue-600 text-sm font-medium border-r border-gray-200">
-                                    {competency.name}
+                                    <button
+                                        onClick={() => handleOpenAdminModal(competency)}
+                                        className="hover:underline focus:outline-none"
+                                    >
+                                        {competency.name}
+                                    </button>
                                 </td>
                                 <td className="p-3 text-gray-700 text-sm">
                                     <div className="flex space-x-2">
@@ -190,7 +282,6 @@ const ListCompetency = ({ setActiveSection, setSelectedCompetency, onSort, sortC
                                 <FaAngleLeft className="text-sm sm:text-base" />
                             </button>
 
-                            {/* Dynamic Page Numbers */}
                             {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
                                 let pageNum;
                                 if (totalPages <= 5) {
@@ -244,7 +335,7 @@ const ListCompetency = ({ setActiveSection, setSelectedCompetency, onSort, sortC
                         </div>
                     </div>
                 )}
-                
+
                 {filteredCompetencies.length === 0 && (
                     <div className="text-center py-8 bg-white">
                         <div className="text-gray-500 mb-4">
@@ -260,6 +351,125 @@ const ListCompetency = ({ setActiveSection, setSelectedCompetency, onSort, sortC
                 )}
             </div>
 
+            {/* Admin Management Modal */}
+            {adminModal.isOpen && (
+                <div className="fixed inset-0 z-50 overflow-y-auto" role="dialog" aria-labelledby="admin-modal-title" aria-modal="true">
+                    <div
+                        className="fixed inset-0 bg-opacity-30 backdrop-blur-sm transition-opacity"
+                        onClick={() => setAdminModal({ isOpen: false, competencyId: null, competencyName: "" })}
+                    ></div>
+
+                    <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+                        <div className="inline-block align-bottom bg-white rounded-lg text-left shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                            <div className="bg-purple-600 px-4 py-3 sm:px-6 sm:flex sm:items-center sm:justify-between">
+                                <h3 className="text-lg leading-6 font-bold text-white" id="admin-modal-title">
+                                    <FaUserFriends className="inline mr-2" />
+                                    Manage Admins - {adminModal.competencyName}
+                                </h3>
+                                <button
+                                    type="button"
+                                    className="text-white hover:text-purple-200 focus:outline-none"
+                                    onClick={() => setAdminModal({ isOpen: false, competencyId: null, competencyName: "" })}
+                                >
+                                    <FaTimes className="h-5 w-5" />
+                                </button>
+                            </div>
+
+                            <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                                <div className="mb-6">
+                                    <h4 className="text-md font-semibold text-gray-800 mb-3">
+                                        Current Admins ({competencyAdmins.length})
+                                    </h4>
+
+                                    {roleLoading ? (
+                                        <div className="text-center py-4">
+                                            <YRMSLoader message="Loading admins..." />
+                                        </div>
+                                    ) : competencyAdmins.length > 0 ? (
+                                        <ul className="divide-y divide-gray-200 max-h-64 overflow-y-auto">
+                                            {competencyAdmins.map((admin) => (
+                                                <li key={admin.publicId} className="py-3 flex items-center justify-between">
+                                                    <div className="flex items-center">
+                                                        <FaUserCircle className="text-purple-500 text-xl mr-3" />
+                                                        <span className="text-gray-700">{admin.name} ({admin.email})</span>
+                                                    </div>
+                                                    <button
+                                                        onClick={() => handleRemoveAdmin(admin)}
+                                                        className="flex items-center justify-center w-8 h-8 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+                                                        title="Remove Admin"
+                                                    >
+                                                        <FaUserMinus size={14} />
+                                                    </button>
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    ) : (
+                                        <div className="text-center py-4 bg-gray-50 rounded-lg">
+                                            <p className="text-gray-500">No admins assigned yet</p>
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div>
+                                    <h4 className="text-md font-semibold text-gray-800 mb-3">Add New Admin</h4>
+                                    <div className="flex items-center gap-2">
+                                        <Select
+                                            options={adminOptions}
+                                            onChange={setSelectedAdminToAdd}
+                                            value={selectedAdminToAdd}
+                                            className="flex-1"
+                                            placeholder="Search admins to add..."
+                                            classNamePrefix="select"
+                                            styles={{
+                                                control: (provided) => ({
+                                                    ...provided,
+                                                    minHeight: '42px',
+                                                    borderColor: '#E5E7EB',
+                                                    boxShadow: 'none',
+                                                    '&:hover': {
+                                                        borderColor: '#A78BFA',
+                                                    },
+                                                }),
+                                                menu: (provided) => ({
+                                                    ...provided,
+                                                    zIndex: 60,
+                                                    marginTop: 4,
+                                                    borderRadius: '0.5rem',
+                                                }),
+                                                menuPortal: (provided) => ({
+                                                    ...provided,
+                                                    zIndex: 60,
+                                                }),
+                                            }}
+                                            menuPortalTarget={document.body}
+                                            menuPosition="fixed"
+                                        />
+                                        <button
+                                            onClick={handleAddAdmin}
+                                            className="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 transition-colors flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
+                                            disabled={!selectedAdminToAdd}
+                                        >
+                                            <FaUserPlus className="mr-1" />
+                                            Add
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                                <button
+                                    type="button"
+                                    className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-purple-600 text-base font-medium text-white hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 sm:ml-3 sm:w-auto sm:text-sm"
+                                    onClick={() => setAdminModal({ isOpen: false, competencyId: null, competencyName: "" })}
+                                >
+                                    Close
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             <DeleteConfirmationModal
                 isOpen={deleteModal.isOpen}
                 onClose={() => setDeleteModal({ isOpen: false, competencyId: null, competencyName: "" })}
@@ -267,6 +477,35 @@ const ListCompetency = ({ setActiveSection, setSelectedCompetency, onSort, sortC
                 resourceName={deleteModal.competencyName}
                 resourceType="competency"
             />
+
+            <ConfirmRoleChangeModal
+                isOpen={confirmModal.isOpen}
+                onClose={() => setConfirmModal({ isOpen: false, user: null, competencyId: null, actionType: null })}
+                onConfirm={handleConfirmAction}
+                userName={confirmModal.user?.label || ""}
+                competencyName={adminModal.competencyName}
+                actionType={confirmModal.actionType}
+            />
+
+            {toastState && (
+                <>
+                    {toastState.type === "loading" && (
+                        <YRMSLoader message={toastState.message} />
+                    )}
+                    {toastState.type === "success" && (
+                        <SuccessToast
+                            message={toastState.message}
+                            onClose={() => setToastState(null)}
+                        />
+                    )}
+                    {toastState.type === "error" && (
+                        <ErrorToast
+                            message={toastState.message}
+                            onClose={() => setToastState(null)}
+                        />
+                    )}
+                </>
+            )}
         </div>
     );
 };

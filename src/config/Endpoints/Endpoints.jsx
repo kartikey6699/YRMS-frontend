@@ -13,6 +13,9 @@ export const RESOURCE_API = {
     USER_DETAIL: `${ADMIN_API_BASE_URL}/user-detail`,
     UPDATE_RESOURCE: `${ADMIN_API_BASE_URL}/user-update`,
     DELETE_RESOURCE: `${ADMIN_API_BASE_URL}/user-delete`,
+    TIMELINE: `${API_BASE_URL}timeline`,
+    UPDATE_TIMELINE: `${API_BASE_URL}update-timeline`,
+
 
 };
 

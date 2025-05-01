@@ -191,7 +191,7 @@ const AssignTraining = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-purple-50 to-white p-4 md:p-8">
+    <div className="min-h-screen bg-gradient-to-b from-purple-50 to-white p-4 md:p-8 mt-15">
       <div className="mx-auto px-2 sm:px-6 lg:px-8 max-w-screen-2xl">
         <div className="flex justify-between items-center mb-8">
           <h2 className="text-2xl md:text-3xl font-bold text-purple-800">

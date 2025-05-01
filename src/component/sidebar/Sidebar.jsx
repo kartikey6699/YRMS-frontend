@@ -8,6 +8,7 @@ import {
   FaUsersCog,
   FaSignOutAlt,
   FaUserShield,
+  FaUserTie, // Added icon for Super Admin
 } from 'react-icons/fa';
 import { FiChevronRight, FiChevronLeft } from 'react-icons/fi';
 import logo from '../../assets/images/competency_logos/python.png';
@@ -16,6 +17,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [hoveredItem, setHoveredItem] = useState(null);
+  const competencyName = sessionStorage.getItem('competencyName') || 'Python';
 
   const menuItems = [
     { name: 'Dashboard', icon: <FaTachometerAlt />, path: '/dashboard' },
@@ -24,6 +26,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
     { name: 'Training', icon: <FaChalkboardTeacher />, path: '/manage-training' },
     { name: 'Interns', icon: <FaUsersCog />, path: '/interns'},
     { name: 'Admin Panel', icon: <FaUserShield />, path: '/admin-dashboard'},
+    { name: 'Super Admin', icon: <FaUserTie />, path: '/superuser-dashboard'}, // New Super Admin menu item
   ];
 
   const handleLogout = () => {
@@ -62,7 +65,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
           {isOpen && (
             <div className="ml-3 overflow-hidden">
               <span className="text-xl font-bold text-white tracking-wide whitespace-nowrap">
-                Python CMS 
+                {competencyName} CMS 
               </span>  
               <div className="h-1 mt-1 bg-white bg-opacity-50 rounded-full animate-pulse"></div>
             </div>

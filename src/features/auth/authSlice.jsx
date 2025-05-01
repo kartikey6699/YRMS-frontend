@@ -7,12 +7,14 @@ const initialState = {
   error: null,
   userData: null,
   token: null,
+  competencyName: null, // Add competencyName to the initial state
 };
 
 const resetAuthState = (state) => {
   state.isAuthenticated = false;
   state.token = null;
   state.userData = null;
+  state.competencyName = null; // Reset competencyName
   state.error = null;
   localStorage.removeItem("token");
   localStorage.removeItem("isAdmin");
@@ -40,11 +42,13 @@ const authSlice = createSlice({
         state.isAuthenticated = true;
         state.token = payload.token;
         state.userData = payload.data || {};
+        state.competencyName = payload.data.competencyName; // Set competency name in the store
         
         // Store all relevant data in sessionStorage
         sessionStorage.setItem("token", payload.token);
         sessionStorage.setItem("userName", payload.data.userName);
         sessionStorage.setItem("roleName", payload.data.rolesName);
+        sessionStorage.setItem("competencyName", payload.data.competencyName); // Set competency name in sessionStorage
       })
       .addCase(adminLogin.rejected, (state, { payload }) => {
         state.loading = false;

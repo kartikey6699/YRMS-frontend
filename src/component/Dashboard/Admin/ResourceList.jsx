@@ -12,7 +12,8 @@ import {
   FaAngleDoubleLeft,
   FaAngleLeft,
   FaAngleRight,
-  FaAngleDoubleRight
+  FaAngleDoubleRight,
+  FaUser
 } from "react-icons/fa";
 import { useSelector, useDispatch } from "react-redux";
 import DatePicker from "react-datepicker";
@@ -64,7 +65,7 @@ const ResourceList = ({ handleBaselineClick, handleOpportunitiesClick }) => {
       ...searchValues,
       [key]: value,
     });
-    setCurrentPage(1); // Reset to first page on new search
+    setCurrentPage(1);
   };
 
   const handleDateChange = (date) => {
@@ -148,7 +149,6 @@ const ResourceList = ({ handleBaselineClick, handleOpportunitiesClick }) => {
     });
   }, [filteredResources, sortConfig]);
 
-  // Pagination Logic
   const totalPages = Math.ceil(sortedResources.length / itemsPerPage);
   const paginatedResources = sortedResources.slice(
     (currentPage - 1) * itemsPerPage,
@@ -171,11 +171,11 @@ const ResourceList = ({ handleBaselineClick, handleOpportunitiesClick }) => {
   };
 
   const columns = [
-    { key: "sno", label: "S.No" },
+    { key: "profileImage", label: "Profile" },
     { key: "employeeName", label: "Employee Name" },
     { key: "joiningDate", label: "Joining Date" },
     { key: "designation", label: "Designation" },
-    { key: "assignedPrograms", label: "Assigned Programs" },
+    { key: "assignedPrograms", label: "Current Activity" },
     { key: "status", label: "Status" },
   ];
 
@@ -197,7 +197,7 @@ const ResourceList = ({ handleBaselineClick, handleOpportunitiesClick }) => {
                 >
                   <div className="flex items-center justify-between">
                     <span>{column.label}</span>
-                    {column.key !== "sno" && (
+                    {column.key !== "profileImage" && (
                       <button
                         onClick={() => handleSort(column.key)}
                         className="ml-2 focus:outline-none"
@@ -214,7 +214,7 @@ const ResourceList = ({ handleBaselineClick, handleOpportunitiesClick }) => {
                       </button>
                     )}
                   </div>
-                  {column.key !== "sno" && (
+                  {column.key !== "profileImage" && (
                     <div className="relative mt-1">
                       {column.key === "joiningDate" ? (
                         <div className="relative">
@@ -276,7 +276,17 @@ const ResourceList = ({ handleBaselineClick, handleOpportunitiesClick }) => {
           <tbody>
             {paginatedResources.map((resource, index) => (
               <tr key={resource.publicId} className={`h-8 ${index % 2 === 0 ? "bg-gray-100" : "bg-white"}`}>
-                <td className="p-1 text-gray-700 text-sm border-r border-gray-200 text-center">{index + 1}</td>
+                <td className="p-1 text-gray-700 text-sm border-r border-gray-200 text-center">
+                  {resource.profileImage ? (
+                    <img
+                      src={`data:image/png;base64,${resource.profileImage}`}
+                      alt="Profile"
+                      className="w-8 h-8 rounded-full object-cover border-2 border-blue-200 mx-auto"
+                    />
+                  ) : (
+                    <FaUser className="w-8 h-8 rounded-full text-gray-400 mx-auto" />
+                  )}
+                </td>
                 <td
                   className="p-1 text-blue-600 text-sm cursor-pointer hover:underline border-r border-gray-200"
                   onClick={() => setSelectedResource(resource.publicId)}
@@ -374,7 +384,6 @@ const ResourceList = ({ handleBaselineClick, handleOpportunitiesClick }) => {
           </tbody>
         </table>
 
-        {/* Pagination Controls */}
         {sortedResources.length > 0 && (
           <div className="flex items-center justify-between px-4 py-3 bg-white border-t border-gray-200">
             <div className="text-sm text-gray-700">
@@ -400,7 +409,6 @@ const ResourceList = ({ handleBaselineClick, handleOpportunitiesClick }) => {
                 <FaAngleLeft />
               </button>
 
-              {/* Dynamic Page Numbers */}
               {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
                 let pageNum;
                 if (totalPages <= 5) {
@@ -442,7 +450,6 @@ const ResourceList = ({ handleBaselineClick, handleOpportunitiesClick }) => {
           </div>
         )}
 
-        {/* Employee Detail Modal */}
         {selectedResource && (
           <EmployeeDetail
             publicId={selectedResource}
@@ -450,7 +457,6 @@ const ResourceList = ({ handleBaselineClick, handleOpportunitiesClick }) => {
           />
         )}
 
-        {/* Empty State */}
         {!loading && sortedResources.length === 0 && (
           <div className="text-center py-8 bg-white">
             <div className="text-gray-500 mb-4">
@@ -475,7 +481,6 @@ const ResourceList = ({ handleBaselineClick, handleOpportunitiesClick }) => {
         )}
       </div>
 
-      {/* Delete Confirmation Modal */}
       <DeleteConfirmationModal
         isOpen={deleteModal.isOpen}
         onClose={() => setDeleteModal({ isOpen: false, resourceId: null, resourceName: "" })}

@@ -1,8 +1,20 @@
 import React, { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import { FaInfoCircle, FaStar, FaTimes, FaChartLine, FaUser, FaEdit, FaSave, FaPlus } from "react-icons/fa";
+import { FaInfoCircle, FaStar, FaTimes, FaChartLine, FaUser, FaEdit, FaSave, FaPlus, FaChevronDown, FaChevronUp } from "react-icons/fa";
 import { updateBaseline, fetchBaselineHistories } from "../../../features/baseline/baselineAction";
 import { SuccessToast, ErrorToast } from '../../helper/ResourceToast';
+
+const groupSkillsByCategory = (technicalSkills) => {
+  if (!technicalSkills || technicalSkills.length === 0) return {};
+  
+  return technicalSkills.reduce((acc, skill) => {
+    if (!acc[skill.category]) {
+      acc[skill.category] = [];
+    }
+    acc[skill.category].push(skill);
+    return acc;
+  }, {});
+};
 
 export const BaselineHistories = ({ histories, employeeName, competency, gender, userId }) => {
     const dispatch = useDispatch();
@@ -10,11 +22,12 @@ export const BaselineHistories = ({ histories, employeeName, competency, gender,
     const { technologyCategoriesWithTech } = useSelector((state) => state.baseline);
     const profileImage = resourceDetails?.profileImage;
 
+    const [editingBaselineId, setEditingBaselineId] = useState(null);
     const [selectedBaseline, setSelectedBaseline] = useState(null);
-    const [isPopupOpen, setIsPopupOpen] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
     const [formData, setFormData] = useState(null);
     const [toast, setToast] = useState(null);
+    const [expandedAccordion, setExpandedAccordion] = useState(null);
 
     useEffect(() => {
         if (toast) {
@@ -198,16 +211,24 @@ export const BaselineHistories = ({ histories, employeeName, competency, gender,
         }));
     };
 
-    const openBaselineDetails = (baseline) => {
-        setSelectedBaseline(baseline);
-        setIsPopupOpen(true);
-        setIsEditing(false);
+    const toggleAccordion = (index) => {
+        setExpandedAccordion(expandedAccordion === index ? null : index);
     };
 
-    const closeBaselineDetails = () => {
-        setIsPopupOpen(false);
-        setIsEditing(false);
-        setTimeout(() => setSelectedBaseline(null), 300);
+    const startEditing = (baseline) => {
+        setEditingBaselineId(baseline.publicId);
+        setFormData({
+            ...baseline,
+            techSkills: convertToTechSkillsFormat(baseline.technicalSkills),
+            communication: baseline.communication === 'Average' ? 1 : 
+                         baseline.communication === 'Medium' ? 2 : 
+                         baseline.communication === 'Fluent' ? 3 : ''
+        });
+    };
+
+    const cancelEditing = () => {
+        setEditingBaselineId(null);
+        setFormData(null);
     };
 
     const handleSubmit = async () => {
@@ -234,541 +255,460 @@ export const BaselineHistories = ({ histories, employeeName, competency, gender,
                 upskillSuggestion: formData.upskillSuggestion
             };
 
-            const result = await dispatch(updateBaseline({
+            await dispatch(updateBaseline({
                 baselineId: formData.publicId,
                 baselineData
             })).unwrap();
-            
-            if (result) {
-                // Create the updated baseline object with all required fields
-                const updatedBaseline = {
-                    ...result,
-                    // Ensure all arrays exist and are properly formatted
-                    technologyExperience: result.technologyExperience || [],
-                    certification: result.certification || [],
-                    technicalSkills: result.technicalSkills || [],
-                    // Maintain the timestamp if not returned by API
-                    timestamp: result.timestamp || formData.timestamp
-                };
 
-                // Update both states with the new data
-                setSelectedBaseline(updatedBaseline);
-                setFormData({
-                    ...updatedBaseline,
-                    techSkills: convertToTechSkillsFormat(updatedBaseline.technicalSkills),
-                    communication: updatedBaseline.communication === 'Average' ? 1 : 
-                                   updatedBaseline.communication === 'Medium' ? 2 : 
-                                   updatedBaseline.communication === 'Fluent' ? 3 : ''
-                });
-
-                // Show success message and exit edit mode
-                setToast({ type: 'success', message: 'Baseline updated successfully!' });
-                setIsEditing(false);
-                
-                // Reload the page after successful update
-                window.location.reload();
-                
-            } else {
-                throw new Error("Failed to update baseline");
-            }
-        } catch (err) {
-            setToast({ 
-                type: 'error', 
-                message: err.message || "Failed to update baseline" 
-            });
+            setToast(<SuccessToast message="Baseline updated successfully!" onClose={() => setToast(null)} />);
+            setEditingBaselineId(null);
+            setFormData(null);
+            dispatch(fetchBaselineHistories(userId));
+        } catch (error) {
+            setToast(<ErrorToast message={error.message || "Failed to update baseline"} onClose={() => setToast(null)} />);
         }
     };
 
-    const handleCancel = () => {
-        setFormData({
-            ...selectedBaseline,
-            techSkills: convertToTechSkillsFormat(selectedBaseline.technicalSkills)
-        });
-        setIsEditing(false);
-    };
-
+    // Sort from oldest to newest
     const sortedHistories = [...histories].sort(
-        (a, b) => new Date(b.timestamp) - new Date(a.timestamp)
+        (a, b) => new Date(a.timestamp) - new Date(b.timestamp)
     );
+
+    // More compact section colors
+    const sectionColors = {
+        experience: "border-l-4 border-blue-300 bg-blue-50/50",
+        certification: "border-l-4 border-purple-300 bg-purple-50/50",
+        skills: "border-l-4 border-emerald-300 bg-emerald-50/50",
+        communication: "border-l-4 border-amber-300 bg-amber-50/50",
+        feedback: "border-l-4 border-indigo-300 bg-indigo-50/50",
+        suggestion: "border-l-4 border-teal-300 bg-teal-50/50"
+    };
 
     return (
         <>
             <div className="fixed top-4 right-4 z-60">
-                {toast?.type === 'success' && (
-                    <SuccessToast message={toast.message} onClose={() => setToast(null)} />
-                )}
-                {toast?.type === 'error' && (
-                    <ErrorToast message={toast.message} onClose={() => setToast(null)} />
-                )}
+                {toast}
             </div>
 
-            {sortedHistories.map((history, index) => {
-                const overallRating = Math.round(history.rating);
-                const statusStyles = getStatusStyles(overallRating);
+            <div className="space-y-3">
+                {sortedHistories.map((history, index) => {
+                    const overallRating = Math.round(history.rating);
+                    const statusStyles = getStatusStyles(overallRating);
+                    const isExpanded = expandedAccordion === index;
+                    const isEditing = editingBaselineId === history.publicId;
 
-                return (
-                    <div key={`${history.publicId}-${index}`} className="col-span-1">
-                        <div
-                            onClick={() => openBaselineDetails(history)}
-                            className={`relative rounded-xl shadow-lg overflow-hidden cursor-pointer transition-all duration-300 h-48 flex flex-col ${statusStyles.gradient} border-l-4 ${statusStyles.border} hover:shadow-xl hover:translate-y-[-4px]`}
-                        >
-                            <div className="p-4 flex-1 flex flex-col">
-                                <div className="mb-2 flex justify-between items-center">
-                                    <h3 className="text-lg font-semibold text-gray-800 break-words">
-                                        Baseline-{sortedHistories.length - index}
-                                    </h3>
-                                    <p className="text-sm text-gray-600">
-                                        {formatDate(history.timestamp)}
-                                    </p>
-                                </div>
-                                <div>
-                                    <p className="text-sm text-gray-600 mt-1">
-                                        <strong>Communication:</strong> {history.communication}
-                                    </p>
-                                </div>
-                                <div className="mt-auto flex justify-between items-center">
-                                    <div className="flex items-center text-sm text-gray-600">
-                                        <FaInfoCircle className="mr-1" />
-                                        <span>Skills: {history.technicalSkills?.length || 0}</span>
+                    return (
+                        <div key={`${history.publicId}-${index}`} 
+                             className={`rounded-lg overflow-hidden transition-all duration-300 ${statusStyles.gradient} border-l-4 ${statusStyles.border}`}>
+                            
+                            {/* Compact Accordion Header */}
+                            <div 
+                                onClick={() => !isEditing && toggleAccordion(index)}
+                                className="p-3 flex justify-between items-center cursor-pointer hover:bg-opacity-90 transition-colors"
+                            >
+                                <div className="flex items-center space-x-2">
+                                    <div className={`w-7 h-7 rounded-full flex items-center justify-center ${statusStyles.bg} border ${statusStyles.border}`}>
+                                        <span className="text-xs font-bold">{overallRating}</span>
                                     </div>
-                                    <div
-                                        className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${statusStyles.bg} border ${statusStyles.border}`}
-                                    >
-                                        <div className="flex items-center">
-                                            {[...Array(5)].map((_, i) => (
-                                                <FaStar
-                                                    key={i}
-                                                    className={`${i < overallRating ? statusStyles.star : "text-gray-300"} w-3 h-3 mr-0.5`}
-                                                />
-                                            ))}
-                                        </div>
-                                        <span className="ml-1">{overallRating}/5</span>
+                                    <div>
+                                        <h3 className="text-xs font-semibold text-gray-800">
+                                            Baseline #{index + 1} - {formatDate(history.timestamp)}
+                                        </h3>
+                                        <p className="text-2xs text-gray-500">
+                                            {history.technicalSkills?.length || 0} skills • {history.communication} • {history.totalExperience} yrs
+                                        </p>
                                     </div>
                                 </div>
-                            </div>
-                        </div>
-                    </div>
-                );
-            })}
-
-            {sortedHistories.length === 0 && (
-                <div className="col-span-full text-center py-10">
-                    <p className="text-gray-500 text-lg">No baseline histories available yet.</p>
-                </div>
-            )}
-
-            {formData && isPopupOpen && (
-                <div className="fixed inset-0 flex items-center justify-center z-50 backdrop-blur-sm bg-black/20 p-4">
-                    <div className="bg-white rounded-xl shadow-xl w-full max-w-4xl border border-gray-200 flex flex-col" 
-                        style={{ maxHeight: '90vh', margin: '20px' }}>
-                        
-                        {/* Fixed Header Section */}
-                        <div className={`sticky top-0 z-10 p-4 rounded-t-xl ${getStatusStyles(Math.round(formData.rating)).gradient}`}>
-                            <div className="flex justify-between items-center gap-4">
-                                <div className="flex items-center gap-3 min-w-0 flex-1 overflow-hidden">
-                                    {/* Profile Image */}
-                                    <div className="relative flex-shrink-0">
-                                        {profileImage ? (
-                                            <img
-                                                src={`data:image/png;base64,${profileImage}`}
-                                                alt="Profile"
-                                                className="w-12 h-12 rounded-full object-cover border-2 border-white shadow-lg"
-                                            />
-                                        ) : (
-                                            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-indigo-100 to-purple-100 flex items-center justify-center border-2 border-white shadow-lg">
-                                                <FaUser className="text-indigo-500 text-xl" />
-                                            </div>
-                                        )}
-                                    </div>
-
-                                    {/* Employee Details */}
-                                    <div className="flex items-center gap-3 min-w-0 overflow-hidden flex-wrap">
-                                        {/* Name (not editable) */}
-                                        <div className="bg-white/80 px-3 py-1 rounded-lg shadow-xs min-w-0 max-w-[200px] overflow-hidden border border-indigo-100">
-                                            <h3 className="text-lg font-semibold text-indigo-800 truncate">
-                                                {employeeName || "Unknown Employee"}
-                                            </h3>
-                                        </div>
-
-                                        {/* Competency (not editable) */}
-                                        <div className="bg-white/80 px-3 py-1 rounded-lg shadow-xs flex items-center gap-2 border border-purple-100">
-                                            <span className="text-xs text-purple-600 font-medium">Competency:</span>
-                                            <span className="text-sm text-purple-800 font-medium truncate max-w-[120px]">
-                                                {competency || 'N/A'}
-                                            </span>
-                                        </div>
-
-                                        {/* Rating */}
-                                        <div className={`px-3 py-1 rounded-lg shadow-xs flex items-center gap-2 border ${getStatusStyles(Math.round(formData.rating)).borderLight} bg-white/80`}>
-                                            <span className="text-xs font-medium">Rating:</span>
-                                            {isEditing ? (
-                                                <div className="flex items-center gap-1">
-                                                    <input
-                                                        type="number"
-                                                        name="rating"
-                                                        value={formData.rating}
-                                                        onChange={handleInputChange}
-                                                        min="0"
-                                                        max="5"
-                                                        step="0.1"
-                                                        className="w-12 bg-white border border-gray-200 rounded px-1 py-0.5 text-sm"
-                                                    />
-                                                    <span className="text-sm font-medium">/5</span>
-                                                </div>
-                                            ) : (
-                                                <div className="flex items-center">
-                                                    {[...Array(5)].map((_, i) => (
-                                                        <FaStar
-                                                            key={i}
-                                                            className={`${i < Math.floor(formData.rating) ? getStatusStyles(Math.round(formData.rating)).star : 'text-gray-300'} w-3.5 h-3.5`}
-                                                        />
-                                                    ))}
-                                                    <span className="ml-1 text-sm font-medium">
-                                                        ({formData.rating}/5)
-                                                    </span>
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* Action Buttons */}
-                                <div className="flex items-center gap-2">
-                                    {!isEditing ? (
-                                        <>
-                                            <button
-                                                onClick={() => setIsEditing(true)}
-                                                className="flex items-center px-3 py-1.5 bg-gradient-to-r from-indigo-100 to-blue-100 text-indigo-700 rounded-lg hover:from-indigo-200 hover:to-blue-200 text-sm font-medium transition-colors duration-200 shadow-xs border border-indigo-200"
-                                            >
-                                                <FaEdit className="mr-1" /> Edit
-                                            </button>
-                                            <button
-                                                onClick={closeBaselineDetails}
-                                                className="p-2 rounded-lg bg-white/80 hover:bg-white text-gray-600 flex-shrink-0 transition-colors duration-200 shadow-xs border border-gray-200"
-                                            >
-                                                <FaTimes size={16} />
-                                            </button>
-                                        </>
+                                <div className="flex items-center space-x-1">
+                                    {!isEditing && isExpanded ? (
+                                        <button 
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                startEditing(history);
+                                            }}
+                                            className="p-1.5 rounded-full bg-white/80 hover:bg-white text-indigo-600 transition-colors"
+                                            title="Edit"
+                                        >
+                                            <FaEdit className="w-3 h-3" />
+                                        </button>
                                     ) : (
                                         <>
-                                            <button
-                                                onClick={handleCancel}
-                                                className="flex items-center px-3 py-1.5 bg-gradient-to-r from-gray-100 to-red-50 text-gray-700 rounded-lg hover:from-red-500 hover:to-red-500 hover:text-gray-100 text-sm font-medium transition-colors duration-200 shadow-xs border border-gray-200"
-                                            >
-                                                <FaTimes className="mr-1" /> Cancel
-                                            </button>
-                                            <button
-                                                onClick={handleSubmit}
-                                                className="flex items-center px-3 py-1.5 bg-gradient-to-r from-indigo-600 to-blue-600 text-white rounded-lg hover:from-indigo-700 hover:to-blue-700 text-sm font-medium transition-colors duration-200 shadow-xs border border-indigo-700"
-                                            >
-                                                <FaSave className="mr-1" /> Save
-                                            </button>
+                                            {isEditing && (
+                                                <>
+                                                    <button 
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            cancelEditing();
+                                                        }}
+                                                        className="p-1.5 rounded-full bg-white/80 hover:bg-white text-red-600 transition-colors"
+                                                        title="Cancel"
+                                                    >
+                                                        <FaTimes className="w-3 h-3" />
+                                                    </button>
+                                                    <button 
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleSubmit();
+                                                        }}
+                                                        className="p-1.5 rounded-full bg-white/80 hover:bg-white text-green-600 transition-colors"
+                                                        title="Save"
+                                                    >
+                                                        <FaSave className="w-3 h-3" />
+                                                    </button>
+                                                </>
+                                            )}
                                         </>
+                                    )}
+                                    {!isEditing && (
+                                        isExpanded ? (
+                                            <FaChevronUp className="text-gray-600 w-4 h-4" />
+                                        ) : (
+                                            <FaChevronDown className="text-gray-600 w-4 h-4" />
+                                        )
                                     )}
                                 </div>
                             </div>
-                        </div>
 
-                        {/* Scrollable Content */}
-                        <div className="overflow-y-auto flex-1 p-4">
-                            <div className="grid grid-cols-1 md:grid-cols-7 gap-4">
-                                {/* Left Column - Basic Info */}
-                                <div className={`bg-gradient-to-b from-gray-50 to-white rounded-lg p-4 md:col-span-2 ${isEditing ? 'ring-2 ring-indigo-200' : 'ring-1 ring-indigo-200'}`}>
-                                    <h4 className="flex items-center text-sm font-medium text-indigo-700 mb-3 border-b border-indigo-100 pb-2">
-                                        <FaInfoCircle className="text-indigo-500 mr-2 text-xs" />
-                                        Basic Information
-                                    </h4>
-                                    
-                                    <div className="space-y-3">
-                                        {/* Total Experience */}
-                                        <div className="bg-indigo-50/50 p-2 rounded-lg border border-indigo-100">
-                                            <label className="block text-xs text-indigo-600 mb-1 font-semibold">Total Experience</label>
-                                            {isEditing ? (
-                                                <input
-                                                    type="number"
-                                                    name="totalExperience"
-                                                    value={formData.totalExperience || 0}
-                                                    onChange={handleInputChange}
-                                                    className="w-full bg-white border border-indigo-200 rounded-md px-2 py-1 text-sm focus:ring-1 focus:ring-indigo-300"
-                                                    min="0"
-                                                    step="0.5"
-                                                />
-                                            ) : (
-                                                <p className="text-sm font-medium text-indigo-800">
-                                                    {formData.totalExperience || 0} years
-                                                </p>
-                                            )}
-                                        </div>
-
-                                        {/* Communication */}
-                                        <div className="bg-indigo-50/50 p-2 rounded-lg border border-indigo-100">
-                                            <label className="block text-xs text-indigo-600 mb-1 font-semibold">Communication</label>
-                                            {isEditing ? (
-                                                <select
-                                                    name="communication"
-                                                    value={formData.communication || ''}
-                                                    onChange={handleInputChange}
-                                                    className="w-full bg-white border border-indigo-200 rounded-md px-2 py-1 text-sm focus:ring-1 focus:ring-indigo-300"
-                                                >
-                                                    <option value="">Select Communication Level</option>
-                                                    <option value="1">Average</option>
-                                                    <option value="2">Medium</option>
-                                                    <option value="3">Fluent</option>
-                                                </select>
-                                            ) : (
-                                                <p className="text-sm font-medium text-indigo-800">
-                                                    {formData.communication === 1 ? 'Average' : formData.communication === 2 ? 'Medium' : formData.communication === 3 ? 'Fluent' : 'N/A'}
-                                                </p>
-                                            )}
-                                        </div>
-
-                                        {/* Baseline Date */}
-                                        <div className="bg-indigo-50/50 p-2 rounded-lg border border-indigo-100">
-                                            <label className="block text-xs text-indigo-600 mb-1 font-semibold">Baseline Date</label>
-                                            <p className="text-sm font-medium text-indigo-800">
-                                                {formatDate(formData.timestamp)}
-                                            </p>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* Right Column - Detailed Info */}
-                                <div className={`bg-gradient-to-b from-gray-50 to-white rounded-lg p-4 md:col-span-5 ${isEditing ? 'ring-2 ring-indigo-200' : 'ring-1 ring-indigo-200'}`}>
-                                    <h4 className="flex items-center text-sm font-medium text-indigo-700 mb-3 border-b border-indigo-100 pb-2">
-                                        <FaChartLine className="text-indigo-500 mr-2 text-xs" />
-                                        Detailed Assessment
-                                    </h4>
-
-                                    <div className="space-y-3">
-                                        {/* Technology Experience */}
-                                        <div className="bg-gradient-to-r from-blue-50 to-cyan-50 p-3 rounded-lg border border-blue-100">
-                                            <h4 className="text-xs font-medium text-blue-700 mb-2">Technology Experience</h4>
-                                            {isEditing ? (
-                                                <div className="space-y-2">
-                                                    {formData.technologyExperience?.map((exp, i) => (
-                                                        <div key={i} className="flex items-center gap-2">
-                                                            <input
-                                                                type="text"
-                                                                value={exp.technology}
-                                                                onChange={(e) => handleExpChange(i, 'technology', e.target.value)}
-                                                                className="flex-1 bg-white border border-blue-200 rounded-md px-2 py-1 text-sm focus:ring-1 focus:ring-blue-300"
-                                                                placeholder="Technology"
-                                                            />
-                                                            <input
-                                                                type="number"
-                                                                value={exp.years}
-                                                                onChange={(e) => handleExpChange(i, 'years', e.target.value)}
-                                                                className="w-20 bg-white border border-blue-200 rounded-md px-2 py-1 text-sm focus:ring-1 focus:ring-blue-300"
-                                                                placeholder="Years"
-                                                                min="0"
-                                                                step="0.5"
-                                                            />
+                            {/* Compact Accordion Content */}
+                            {isExpanded && (
+                                <div className="p-3 bg-white/90 border-t border-gray-200">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-[350px] overflow-y-auto pr-2 custom-scrollbar">
+                                        
+                                        {/* Left Column - Experience & Certifications */}
+                                        <div className="space-y-3">
+                                            {/* Experience Section */}
+                                            <div className={`p-2 rounded ${sectionColors.experience}`}>
+                                                <h4 className="text-2xs font-semibold text-blue-600 mb-1 flex items-center">
+                                                    <FaChartLine className="mr-1 text-xs" /> EXPERIENCE
+                                                </h4>
+                                                <div className="grid grid-cols-2 gap-2">
+                                                    {isEditing ? (
+                                                        <div className="space-y-2">
+                                                            {formData.technologyExperience?.map((exp, i) => (
+                                                                <div key={i} className="flex items-center gap-2">
+                                                                    <input
+                                                                        type="text"
+                                                                        value={exp.technology}
+                                                                        onChange={(e) => {
+                                                                            const updated = [...formData.technologyExperience];
+                                                                            updated[i] = { ...updated[i], technology: e.target.value };
+                                                                            setFormData({...formData, technologyExperience: updated});
+                                                                        }}
+                                                                        className="flex-1 p-2 border rounded text-sm"
+                                                                        placeholder="Technology"
+                                                                    />
+                                                                    <input
+                                                                        type="number"
+                                                                        value={exp.years}
+                                                                        onChange={(e) => {
+                                                                            const updated = [...formData.technologyExperience];
+                                                                            updated[i] = { ...updated[i], years: parseInt(e.target.value) || 0 };
+                                                                            setFormData({...formData, technologyExperience: updated});
+                                                                        }}
+                                                                        className="w-20 p-2 border rounded text-sm"
+                                                                        placeholder="Years"
+                                                                    />
+                                                                    <button
+                                                                        onClick={() => {
+                                                                            const updated = formData.technologyExperience.filter((_, idx) => idx !== i);
+                                                                            setFormData({...formData, technologyExperience: updated});
+                                                                        }}
+                                                                        className="text-red-500 hover:text-red-700"
+                                                                        title="Remove"
+                                                                    >
+                                                                        <FaTimes className="w-3 h-3" />
+                                                                    </button>
+                                                                </div>
+                                                            ))}
                                                             <button
-                                                                type="button"
-                                                                onClick={() => removeExperience(i)}
-                                                                className="text-red-500 hover:text-red-700"
+                                                                onClick={() => {
+                                                                    setFormData({
+                                                                        ...formData,
+                                                                        technologyExperience: [
+                                                                            ...(formData.technologyExperience || []),
+                                                                            { technology: "", years: 0 }
+                                                                        ]
+                                                                    });
+                                                                }}
+                                                                className="text-blue-600 text-xs flex items-center hover:text-blue-800 mt-2"
                                                             >
-                                                                <FaTimes size={12} />
+                                                                <FaPlus className="mr-1" /> Add Experience
                                                             </button>
                                                         </div>
-                                                    ))}
-                                                    <button
-                                                        type="button"
-                                                        onClick={addExperience}
-                                                        className="flex items-center text-xs bg-blue-100 hover:bg-blue-200 text-blue-800 px-2 py-1 rounded"
-                                                    >
-                                                        <FaPlus className="mr-1" /> Add Experience
-                                                    </button>
-                                                </div>
-                                            ) : (
-                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                                                    {formData.technologyExperience?.map((exp, i) => (
-                                                        <div key={i} className="bg-white p-2 rounded-md border border-blue-200 shadow-xs">
-                                                            <div className="flex justify-between items-center">
-                                                                <span className="text-xs font-medium text-blue-800 truncate">{exp.technology}</span>
-                                                                <span className="text-xs bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded-full">
-                                                                    {exp.years} yrs
-                                                                </span>
-                                                            </div>
-                                                        </div>
-                                                    ))}
-                                                    {(!formData.technologyExperience || formData.technologyExperience.length === 0) && (
-                                                        <p className="text-blue-500 italic text-xs">No experience recorded</p>
+                                                    ) : (
+                                                        <>
+                                                            {history.technologyExperience?.map((exp, i) => (
+                                                                <div key={i} className="flex justify-between items-center bg-white p-2 rounded border border-blue-100">
+                                                                    <span className="text-sm text-gray-700">{exp.technology}</span>
+                                                                    <span className="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full">
+                                                                        {exp.years} yrs
+                                                                    </span>
+                                                                </div>
+                                                            ))}
+                                                            {(!history.technologyExperience || history.technologyExperience.length === 0) && (
+                                                                <p className="text-xs text-gray-400 italic">No experience recorded</p>
+                                                            )}
+                                                        </>
                                                     )}
                                                 </div>
-                                            )}
-                                        </div>
+                                            </div>
 
-                                        {/* Certifications */}
-                                        <div className="bg-gradient-to-r from-purple-50 to-pink-50 p-3 rounded-lg border border-purple-100">
-                                            <h4 className="text-xs font-medium text-purple-700 mb-2">Certifications</h4>
-                                            {isEditing ? (
-                                                <div className="space-y-2">
-                                                    {formData.certification?.map((cert, i) => (
-                                                        <div key={i} className="flex items-center gap-2">
-                                                            <input
-                                                                type="text"
-                                                                value={cert.title}
-                                                                onChange={(e) => handleCertChange(i, 'title', e.target.value)}
-                                                                className="flex-1 bg-white border border-purple-200 rounded-md px-2 py-1 text-sm focus:ring-1 focus:ring-purple-300"
-                                                                placeholder="Certification"
-                                                            />
-                                                            <input
-                                                                type="text"
-                                                                value={cert.technology}
-                                                                onChange={(e) => handleCertChange(i, 'technology', e.target.value)}
-                                                                className="flex-1 bg-white border border-purple-200 rounded-md px-2 py-1 text-sm focus:ring-1 focus:ring-purple-300"
-                                                                placeholder="Technology"
-                                                            />
+                                            {/* Certification Section */}
+                                            <div className={`p-2 rounded ${sectionColors.certification}`}>
+                                                <h4 className="text-2xs font-semibold text-purple-600 mb-1 flex items-center">
+                                                    <FaInfoCircle className="mr-1 text-xs" /> CERTIFICATIONS
+                                                </h4>
+                                                <div className="grid grid-cols-2 gap-2">
+                                                    {isEditing ? (
+                                                        <div className="space-y-2">
+                                                            {formData.certification?.map((cert, i) => (
+                                                                <div key={i} className="flex items-center gap-2">
+                                                                    <input
+                                                                        type="text"
+                                                                        value={cert.title}
+                                                                        onChange={(e) => {
+                                                                            const updated = [...formData.certification];
+                                                                            updated[i].title = e.target.value;
+                                                                            setFormData({...formData, certification: updated});
+                                                                        }}
+                                                                        className="flex-1 p-2 border rounded text-sm"
+                                                                        placeholder="Title"
+                                                                    />
+                                                                    <input
+                                                                        type="text"
+                                                                        value={cert.technology}
+                                                                        onChange={(e) => {
+                                                                            const updated = [...formData.certification];
+                                                                            updated[i].technology = e.target.value;
+                                                                            setFormData({...formData, certification: updated});
+                                                                        }}
+                                                                        className="flex-1 p-2 border rounded text-sm"
+                                                                        placeholder="Technology"
+                                                                    />
+                                                                    <button
+                                                                        onClick={() => {
+                                                                            const updated = formData.certification.filter((_, idx) => idx !== i);
+                                                                            setFormData({...formData, certification: updated});
+                                                                        }}
+                                                                        className="text-red-500 hover:text-red-700"
+                                                                        title="Remove"
+                                                                    >
+                                                                        <FaTimes className="w-3 h-3" />
+                                                                    </button>
+                                                                </div>
+                                                            ))}
                                                             <button
-                                                                type="button"
-                                                                onClick={() => removeCertification(i)}
-                                                                className="text-red-500 hover:text-red-700"
+                                                                onClick={() => {
+                                                                    setFormData({
+                                                                        ...formData,
+                                                                        certification: [
+                                                                            ...(formData.certification || []),
+                                                                            { title: "", technology: "" }
+                                                                        ]
+                                                                    });
+                                                                }}
+                                                                className="text-purple-600 text-xs flex items-center hover:text-purple-800 mt-2"
                                                             >
-                                                                <FaTimes size={12} />
+                                                                <FaPlus className="mr-1" /> Add Certification
                                                             </button>
                                                         </div>
-                                                    ))}
-                                                    <button
-                                                        type="button"
-                                                        onClick={addCertification}
-                                                        className="flex items-center text-xs bg-purple-100 hover:bg-purple-200 text-purple-800 px-2 py-1 rounded"
-                                                    >
-                                                        <FaPlus className="mr-1" /> Add Certification
-                                                    </button>
-                                                </div>
-                                            ) : (
-                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                                                    {formData.certification?.map((cert, i) => (
-                                                        <div key={i} className="bg-white p-2 rounded-md border border-purple-200 shadow-xs">
-                                                            <div className="flex justify-between items-center">
-                                                                <span className="text-xs font-medium text-purple-800 truncate">{cert.title}</span>
-                                                                <span className="text-xs bg-purple-100 text-purple-800 px-1.5 py-0.5 rounded-full truncate max-w-[80px]">
-                                                                    {cert.technology}
-                                                                </span>
-                                                            </div>
-                                                        </div>
-                                                    ))}
-                                                    {(!formData.certification || formData.certification.length === 0) && (
-                                                        <p className="text-purple-500 italic text-xs">No certifications recorded</p>
+                                                    ) : (
+                                                        <>
+                                                            {history.certification?.map((cert, i) => (
+                                                                <div key={i} className="flex justify-between items-center bg-white p-2 rounded border border-purple-100">
+                                                                    <span className="text-sm text-gray-700">{cert.title}</span>
+                                                                    <span className="text-xs bg-purple-100 text-purple-800 px-2 py-0.5 rounded-full">
+                                                                        {cert.technology}
+                                                                    </span>
+                                                                </div>
+                                                            ))}
+                                                            {(!history.certification || history.certification.length === 0) && (
+                                                                <p className="text-xs text-gray-400 italic">No certifications</p>
+                                                            )}
+                                                        </>
                                                     )}
                                                 </div>
-                                            )}
-                                        </div>
-
-                                        {/* Technical Skills */}
-                                        <div className="bg-gradient-to-r from-amber-50 to-yellow-50 p-3 rounded-lg border border-amber-100">
-                                            <h4 className="text-xs font-medium text-amber-700 mb-2">Technical Skills</h4>
-                                            <div className="space-y-2">
-                                                {formData.techSkills?.map((skill, i) => (
-                                                    <div key={i} className="bg-white p-2 rounded-md border border-amber-200 shadow-xs">
-                                                        {isEditing ? (
-                                                            <div className="space-y-2">
-                                                                <div className="flex justify-between items-center">
-                                                                    <span className="text-xs font-medium text-amber-800">
-                                                                        {technologyCategoriesWithTech.find(cat => cat.publicId === skill.category)?.name || 'Uncategorized'}
-                                                                    </span>
-                                                                </div>
-                                                                {skill.technologies.map((tech) => (
-                                                                    <div key={tech.technology} className="flex justify-between items-center">
-                                                                        <span className="text-xs text-amber-700">{tech.name}</span>
-                                                                        <div className="flex items-center gap-1">
-                                                                            <input
-                                                                                type="number"
-                                                                                value={tech.rating}
-                                                                                onChange={(e) => handleSkillRatingChange(tech.technology, e.target.value, i)}
-                                                                                min="0"
-                                                                                max="5"
-                                                                                step="0.1"
-                                                                                className="w-12 bg-white border border-amber-200 rounded px-1 py-0.5 text-xs"
-                                                                            />
-                                                                            <span className="text-xs text-amber-700">/5</span>
-                                                                        </div>
-                                                                    </div>
-                                                                ))}
-                                                            </div>
-                                                        ) : (
-                                                            <>
-                                                                <div className="flex justify-between items-center mb-1">
-                                                                    <span className="text-xs font-medium text-amber-800 truncate">
-                                                                        {technologyCategoriesWithTech.find(cat => cat.publicId === skill.category)?.name || 'Uncategorized'}
-                                                                    </span>
-                                                                    <span className="text-xs bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded-full">
-                                                                        {skill.technologies.length} skills
-                                                                    </span>
-                                                                </div>
-                                                                <div className="flex flex-wrap gap-1">
-                                                                    {skill.technologies.map((tech) => (
-                                                                        <div key={tech.technology} className="flex items-center">
-                                                                            <span className="text-xs text-amber-700 mr-1">{tech.name}</span>
-                                                                            <div className="flex items-center">
-                                                                                {[...Array(5)].map((_, i) => (
-                                                                                    <FaStar
-                                                                                        key={i}
-                                                                                        className={`${i < (parseInt(tech.rating) || 0) ? "text-amber-400" : "text-amber-200"} w-2.5 h-2.5`}
-                                                                                    />
-                                                                                ))}
-                                                                            </div>
-                                                                        </div>
-                                                                    ))}
-                                                                </div>
-                                                            </>
-                                                        )}
-                                                    </div>
-                                                ))}
-                                                {(!formData.techSkills || formData.techSkills.length === 0) && (
-                                                    <p className="text-amber-500 italic text-xs">No technical skills recorded</p>
-                                                )}
-                                            </div>
-                                        </div>
-
-                                        {/* Feedback & Upskill */}
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                            <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-3 rounded-lg border border-green-100">
-                                                <h4 className="text-xs font-medium text-green-700 mb-2">Feedback</h4>
-                                                {isEditing ? (
-                                                    <textarea
-                                                        name="feedback"
-                                                        value={formData.feedback || ''}
-                                                        onChange={handleInputChange}
-                                                        className="w-full bg-white border border-green-200 rounded-md px-2 py-1 text-sm h-20 focus:ring-1 focus:ring-green-300"
-                                                        placeholder="Enter feedback..."
-                                                    />
-                                                ) : (
-                                                    <div className="bg-white p-2 rounded-md border border-green-200 max-h-[100px] overflow-y-auto">
-                                                        <p className="text-xs text-green-800 italic">
-                                                            {formData.feedback || "No feedback provided"}
-                                                        </p>
-                                                    </div>
-                                                )}
                                             </div>
 
-                                            <div className="bg-gradient-to-r from-teal-50 to-cyan-50 p-3 rounded-lg border border-teal-100">
-                                                <h4 className="text-xs font-medium text-teal-700 mb-2">Upskill Suggestion</h4>
+                                            {/* Communication Section */}
+                                            <div className={`p-2 rounded ${sectionColors.communication}`}>
+                                                <h4 className="text-2xs font-semibold text-amber-600 mb-1 flex items-center">
+                                                    <FaUser className="mr-1 text-xs" /> COMMUNICATION
+                                                </h4>
                                                 {isEditing ? (
-                                                    <textarea
-                                                        name="upskillSuggestion"
-                                                        value={formData.upskillSuggestion || ''}
+                                                    <select
+                                                        name="communication"
+                                                        value={formData.communication}
                                                         onChange={handleInputChange}
-                                                        className="w-full bg-white border border-teal-200 rounded-md px-2 py-1 text-sm h-20 focus:ring-1 focus:ring-teal-300"
-                                                        placeholder="Enter upskill suggestions..."
-                                                    />
+                                                        className="w-full p-2 border rounded text-sm bg-white"
+                                                    >
+                                                        <option value="">Select Level</option>
+                                                        <option value="1">Average</option>
+                                                        <option value="2">Medium</option>
+                                                        <option value="3">Fluent</option>
+                                                    </select>
                                                 ) : (
-                                                    <div className="bg-white p-2 rounded-md border border-teal-200 max-h-[100px] overflow-y-auto">
-                                                        <p className="text-xs text-teal-800">
-                                                            {formData.upskillSuggestion || "No suggestions provided"}
+                                                    <div className="bg-white p-2 rounded border border-amber-100">
+                                                        <p className="text-sm text-gray-700 capitalize">
+                                                            {history.communication?.toLowerCase() || "Not specified"}
                                                         </p>
                                                     </div>
                                                 )}
                                             </div>
                                         </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+
+                                        {/* Right Column - Skills & Feedback */}
+                                        <div className="space-y-3">
+                                            {/* Skills Section */}
+                                            <div className={`p-2 rounded ${sectionColors.skills}`}>
+  <h4 className="text-2xs font-semibold text-emerald-600 mb-1 flex items-center">
+    <FaStar className="mr-1 text-xs" /> SKILLS
+  </h4>
+  <div>
+    {isEditing ? (
+      <div className="space-y-3">
+        {formData.techSkills?.map((skill, i) => (
+          <div key={i} className="space-y-2">
+            <div className="flex items-center gap-2">
+              <select
+                value={skill.category}
+                onChange={(e) => {
+                  const updated = [...formData.techSkills];
+                  updated[i].category = e.target.value;
+                  setFormData({...formData, techSkills: updated});
+                }}
+                className="flex-1 p-2 border rounded text-sm bg-white"
+              >
+                <option value="">Select Category</option>
+                {technologyCategoriesWithTech.map(cat => (
+                  <option key={cat.publicId} value={cat.publicId}>
+                    {cat.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            {skill.technologies.map((tech, techIdx) => (
+              <div key={techIdx} className="flex items-center gap-2 ml-4 bg-white p-2 rounded border border-emerald-100">
+                <span className="text-sm flex-1">{tech.name}</span>
+                <div className="flex items-center">
+                  <input
+                    type="number"
+                    value={tech.rating}
+                    onChange={(e) => {
+                      const updated = [...formData.techSkills];
+                      updated[i].technologies[techIdx].rating = e.target.value;
+                      setFormData({...formData, techSkills: updated});
+                    }}
+                    min="0"
+                    max="5"
+                    className="w-12 p-1 border rounded text-center"
+                  />
                 </div>
-            )}
+              </div>
+            ))}
+          </div>
+        ))}
+      </div>
+    ) : (
+      <div className="space-y-3">
+        {(() => {
+          const groupedSkills = groupSkillsByCategory(history.technicalSkills);
+          const categories = Object.keys(groupedSkills);
+          
+          if (categories.length === 0) {
+            return <p className="text-xs text-gray-400 italic">No skills recorded</p>;
+          }
+          
+          return categories.map((category) => (
+            <div key={category} className="space-y-2">
+              <h5 className="text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                {category}
+              </h5>
+              <div className="flex flex-wrap gap-2">
+                {groupedSkills[category].map((skill, i) => (
+                  <div 
+                    key={i} 
+                    className="flex items-center bg-white px-3 py-2 rounded border border-emerald-100"
+                    style={{ minWidth: '120px', maxWidth: '160px' }}
+                  >
+                    <span className="text-xs text-gray-700 truncate flex-1">{skill.technology}</span>
+                    <div className="flex items-center ml-2">
+                      {[...Array(5)].map((_, starIndex) => (
+                        <FaStar
+                          key={starIndex}
+                          className={`${starIndex < skill.rating ? "text-amber-400" : "text-gray-300"} w-3 h-3`}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ));
+        })()}
+      </div>
+    )}
+  </div>
+</div>
+
+                                            {/* Combined Feedback & Suggestion Section */}
+                                            <div className="space-y-3">
+                                                <div className={`p-2 rounded ${sectionColors.feedback}`}>
+                                                    <h4 className="text-2xs font-semibold text-indigo-600 mb-1 flex items-center">
+                                                        <FaEdit className="mr-1 text-xs" /> FEEDBACK
+                                                    </h4>
+                                                    {isEditing ? (
+                                                        <textarea
+                                                            value={formData.feedback}
+                                                            onChange={(e) => setFormData({...formData, feedback: e.target.value})}
+                                                            className="w-full p-2 border rounded text-sm bg-white"
+                                                            rows="3"
+                                                            placeholder="Enter feedback..."
+                                                        />
+                                                    ) : (
+                                                        <div className="bg-white p-3 rounded border border-indigo-100">
+                                                            <p className="text-sm text-gray-700">
+                                                                {history.feedback || <span className="text-gray-400 italic">No feedback provided</span>}
+                                                            </p>
+                                                        </div>
+                                                    )}
+                                                </div>
+
+                                                <div className={`p-2 rounded ${sectionColors.suggestion}`}>
+                                                    <h4 className="text-2xs font-semibold text-teal-600 mb-1 flex items-center">
+                                                        <FaInfoCircle className="mr-1 text-xs" /> SUGGESTION
+                                                    </h4>
+                                                    {isEditing ? (
+                                                        <textarea
+                                                            value={formData.upskillSuggestion}
+                                                            onChange={(e) => setFormData({...formData, upskillSuggestion: e.target.value})}
+                                                            className="w-full p-2 border rounded text-sm bg-white"
+                                                            rows="3"
+                                                            placeholder="Enter upskill suggestions..."
+                                                        />
+                                                    ) : (
+                                                        <div className="bg-white p-3 rounded border border-teal-100">
+                                                            <p className="text-sm text-gray-700">
+                                                                {history.upskillSuggestion || <span className="text-gray-400 italic">No suggestions provided</span>}
+                                                            </p>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    );
+                })}
+
+                {sortedHistories.length === 0 && (
+                    <div className="text-center py-10">
+                        <p className="text-gray-500 text-lg">No baseline histories available yet.</p>
+                    </div>
+                )}
+            </div>
         </>
     );
 };
