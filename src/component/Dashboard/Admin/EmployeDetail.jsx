@@ -595,7 +595,7 @@ const EmployeeDetail = ({ publicId, onClose }) => {
               ) : timeline?.length > 0 ? (
                 <div className="relative">
                   <div className="absolute left-5.5 top-0 bottom-0 w-0.5 bg-blue-200"></div>
-                  <div className="max-h-[200px] overflow-y-auto overflow-x-hidden -mr-4">
+                  <div className="max-h-[300px] overflow-y-auto overflow-x-hidden -mr-4">
                     {timeline.map((event) => (
                       <div
                         key={event.id}
