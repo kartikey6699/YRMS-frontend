@@ -31,41 +31,44 @@ const Header = ({ isLoggedIn }) => {
   const roleName = sessionStorage.getItem('roleName') || '';
 
   return (
-    <nav className="bg-gray-200 fixed top-0 z-50 shadow-md w-full">
-      <div className="pr-8 pl-0">
-        <div className="relative flex h-16 items-center justify-between">
-          {/* Logo */}
-          <div className="flex items-center justify-left sm:items-stretch sm:justify-start">
-            <div className="flex shrink-0 items-center">
-              <img className="h-[55px] w-[280px] ml-[5px] mb-[5px]" src={logo} alt="Your Company" />
+    <>
+      <nav className="bg-gray-200 fixed top-0 z-50 shadow-md w-full">
+        <div className="pr-8 pl-0">
+          <div className="relative flex h-16 items-center justify-between">
+            {/* Logo */}
+            <div className="flex items-center justify-left sm:items-stretch sm:justify-start">
+              <div className="flex shrink-0 items-center">
+                <img className="h-[55px] w-[280px] ml-[5px] mb-[5px]" src={logo} alt="Your Company" />
+              </div>
             </div>
-          </div>
 
-          {/* Right side - Profile and Time */}
-          <div className="absolute inset-y-0 right-0 flex items-center pr-2 sm:static sm:inset-auto sm:ml-6 sm:pr-0">
-            <div className="flex items-center">
-              {/* User Icon */}
-              <button 
-                className="text-gray-700 focus:outline-none hover:bg-gray-300 rounded-full p-1 transition-colors duration-200"
-              >
-                <img src={userManual} alt="User Manual" className="w-8 h-8" />
-              </button>
-              {/* Profile and Time Section */}
-              <div className="ml-2 flex flex-col items-start">
-                <p className="text-sm font-medium text-gray-700 bg-gray-100 px-2 py-1 rounded-md shadow-sm border border-gray-300">
-                  {userName} | <span className="text-blue-600 font-semibold">{roleName}</span>
-                </p>
-                {/* Date/Time Display */}
-                <p className="mt-1 text-sm font-medium text-gray-700 bg-gray-100 px-2 py-1 rounded-md shadow-sm border border-gray-300">
-                  <span>{formattedDate}</span>
-                  <span className="ml-2">{formattedTime}</span>
-                </p>
+            {/* Right side - Profile and Time */}
+            <div className="absolute inset-y-0 right-0 flex items-center pr-2 sm:static sm:inset-auto sm:ml-6 sm:pr-0">
+              <div className="flex items-center">
+                {/* User Icon */}
+                <button 
+                  className="text-gray-700 focus:outline-none hover:bg-gray-300 rounded-full p-1 transition-colors duration-200"
+                >
+                  <img src={userManual} alt="User Manual" className="w-8 h-8" />
+                </button>
+                {/* Profile and Time Section */}
+                <div className="ml-2 flex flex-col items-start">
+                  <p className="text-sm font-medium text-gray-700 bg-gray-100 px-2 py-1 rounded-md shadow-sm border border-gray-300">
+                    {userName} | <span className="text-blue-600 font-semibold">{roleName}</span>
+                  </p>
+                  {/* Date/Time Display */}
+                  <p className="mt-1 text-sm font-medium text-gray-700 bg-gray-100 px-2 py-1 rounded-md shadow-sm border border-gray-300">
+                    <span>{formattedDate}</span>
+                    <span className="ml-2">{formattedTime}</span>
+                  </p>
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
-    </nav>
+      </nav>
+      <div className="h-9" /> 
+    </>
   );
 }
 
