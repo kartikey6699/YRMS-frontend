@@ -373,8 +373,8 @@ const EmployeeDetail = ({ publicId, onClose }) => {
     switch (formData?.status) {
       case 'deployed':
         return (
-          <div className="mt-4 bg-white rounded-md shadow-sm p-3">
-            <label className="block text-xs text-gray-500 mb-1">Client Name</label>
+          <div className="mt-4 bg-purple-100 rounded-md shadow-sm p-3">
+            <label className="block text-xs text-purple-800 font-bold mb-1">Client Name</label>
             <input
               type="text"
               value={clientName}
@@ -382,7 +382,7 @@ const EmployeeDetail = ({ publicId, onClose }) => {
               className="w-full border rounded-md px-2 py-1 text-sm focus:ring-1 focus:ring-blue-300"
               placeholder="Enter client name"
             />
-            <label className="block text-xs text-gray-500 mt-2 mb-1">Description</label>
+            <label className="block text-xs text-purple-800 font-bold mt-2 mb-1">Description</label>
             <textarea
               value={statusDescription}
               onChange={(e) => setStatusDescription(e.target.value)}
@@ -395,8 +395,8 @@ const EmployeeDetail = ({ publicId, onClose }) => {
       case 'pool':
       case 'pip':
         return (
-          <div className="mt-4 bg-white rounded-md shadow-sm p-3">
-            <label className="block text-xs text-gray-500 mb-1">Description</label>
+          <div className="mt-4 bg-purple-100 rounded-md shadow-sm p-3">
+            <label className="block text-xs text-purple-800 font-bold mb-1">Description</label>
             <textarea
               value={statusDescription}
               onChange={(e) => setStatusDescription(e.target.value)}
@@ -934,7 +934,7 @@ const EmployeeDetail = ({ publicId, onClose }) => {
                         <option value="pool">Pool</option>
                         <option value="deployed">Deployed</option>
                         <option value="pip">PIP</option>
-                        <option value="hold">Hold</option>
+                        {/* <option value="hold">Hold</option> */}
                       </select>
                     ) : (
                       <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${formData.status === 'pool' ? 'bg-blue-100 text-blue-800' :
