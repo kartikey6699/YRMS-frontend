@@ -12,6 +12,7 @@ const InternTaskDetails = ({ onClose, userId }) => {
       id: 1,
       title: "Complete React Training",
       description: "Finish all modules of the advanced React course",
+      createdDate: "2023-05-01", // Added (1.5 months before deadline)
       deadline: "2023-06-15",
       status: "In Progress",
       feedback: ""
@@ -20,6 +21,7 @@ const InternTaskDetails = ({ onClose, userId }) => {
       id: 2,
       title: "API Integration Task",
       description: "Connect frontend to the new customer API endpoints",
+      createdDate: "2023-05-15", // Added (1 month before deadline)
       deadline: "2023-06-20",
       status: "Pending",
       feedback: ""
@@ -28,6 +30,7 @@ const InternTaskDetails = ({ onClose, userId }) => {
       id: 3,
       title: "Code Review",
       description: "Review pull requests for authentication module",
+      createdDate: "2023-05-25", // Added (2 weeks before deadline)
       deadline: "2023-06-10",
       status: "Completed",
       feedback: "Good work, just a few minor changes needed"
@@ -36,6 +39,7 @@ const InternTaskDetails = ({ onClose, userId }) => {
       id: 4,
       title: "UI Redesign",
       description: "Update dashboard components",
+      createdDate: "2023-06-01", // Added (3 weeks before deadline)
       deadline: "2023-06-25",
       status: "In Progress",
       feedback: ""
