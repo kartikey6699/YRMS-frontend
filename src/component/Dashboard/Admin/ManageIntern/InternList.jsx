@@ -12,7 +12,7 @@ import DeleteConfirmationModal from '../../../helper/DeleteConfirmationModal';
 import { FiEye } from 'react-icons/fi';
 import InternTaskDetails from './InternTaskDetails';
 import axios from 'axios';
-import { ADMIN_API_BASE_URL } from '../../../../config/Endpoints/BaseEndpoints';
+import { API_BASE_URL } from '../../../../config/Endpoints/BaseEndpoints';
 
 const InternList = () => {
     const navigate = useNavigate();
@@ -242,7 +242,7 @@ const InternList = () => {
 
             if (updateResult.payload?.publicId) {
                 setToast(<SuccessToast message="Status updated successfully!" onClose={() => setToast(null)} />);
-                dispatch(fetchInterns());
+                dispatch(fetchInterns())
             } else {
                 throw new Error("Failed to update intern");
             }
@@ -295,31 +295,30 @@ const InternList = () => {
         }
 
         try {
-            setToast(<YRMSLoader message="Processing CSV file..." />);
+            setToast(<YRMSLoader loadingMessage="Processing CSV file..." />);
             
             const formData = new FormData();
             formData.append('file', file);
 
             const token = sessionStorage.getItem("token");
-            const response = await axios.post(
-                `${ADMIN_API_BASE_URL}/interns/bulk-upload/`,
-                formData,
-                {
-                    headers: {
-                        'Content-Type': 'multipart/form-data',
-                        Authorization: `Bearer ${token}`,
-                    },
-                }
-            );
+            const response = await axios({
+                method: 'post',
+                url: `${API_BASE_URL}intern/create-interns-csv`,
+                data: formData,
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                    Authorization: `Bearer ${token}`,
+                },
+            });
 
-            setToast(<SuccessToast message={`${response.data.created_count} interns created successfully!`} onClose={() => setToast(null)} />);
+            setToast(<SuccessToast message={`${response.data.message} interns created successfully!`} onClose={() => setToast(null)} />);
             
             // Refresh the intern list
             dispatch(fetchInterns());
         } catch (error) {
             const errorMsg = error.response?.data?.message || "Failed to upload CSV";
-            setToast(<ErrorToast message={errorMsg} onClose={() => setToast(null)} />);
-            console.error("CSV upload error:", error);
+            setToast(<ErrorToast message={Array.isArray(errorMsg) ? errorMsg.join(', ') : errorMsg} onClose={() => setToast(null)} />);
+            // console.error("CSV upload error:", error);
         } finally {
             // Reset the file input
             e.target.value = '';
