@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { FaPlus, FaSort, FaSearch, FaCalendarAlt, FaSortUp, FaSortDown, FaTrash, FaAngleDoubleLeft, FaAngleLeft, FaAngleRight, FaAngleDoubleRight, FaFileDownload, FaFileUpload } from 'react-icons/fa';
-import { Link, useNavigate } from 'react-router';
+import { FaPlus, FaSort, FaSearch, FaCalendarAlt, FaSortUp, FaSortDown, FaTrash, FaAngleDoubleLeft, FaAngleLeft, FaAngleRight, FaAngleDoubleRight, FaFileDownload, FaFileUpload, FaUsers, FaCheckCircle, FaPlayCircle, FaClock, FaPauseCircle, FaTimes } from 'react-icons/fa';
+import { Link, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from "react-redux";
 import { fetchInterns, updateIntern, deleteIntern } from '../../../../features/intern/internAction';
 import "react-datepicker/dist/react-datepicker.css";
@@ -21,7 +21,6 @@ const InternList = () => {
     const [showViewTask, setShowViewTask] = useState(false);
     const [editingStatusId, setEditingStatusId] = useState(null);
     const [toast, setToast] = useState(null);
-    const [formData, setFormData] = useState(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [deleteModal, setDeleteModal] = useState({
         isOpen: false,
@@ -30,6 +29,7 @@ const InternList = () => {
     });
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 10;
+    const [statusFilter, setStatusFilter] = useState("");
 
     useEffect(() => {
         if (toast) {
@@ -42,7 +42,7 @@ const InternList = () => {
     const hiredOptions = ["All", "Hired", "Not Hired"];
 
     useEffect(() => {
-        dispatch(fetchInterns())
+        dispatch(fetchInterns());
     }, [dispatch]);
 
     const [searchTerms, setSearchTerms] = useState({
@@ -52,7 +52,7 @@ const InternList = () => {
         email: '',
         startDate: null,
         endDate: null,
-        isOffered: 'All', // Default to "All"
+        isOffered: 'All',
     });
     const [sortConfig, setSortConfig] = useState({
         key: null,
@@ -60,8 +60,35 @@ const InternList = () => {
     });
     const [selectedInterns, setSelectedInterns] = useState(null);
 
+    // Sync statusFilter with searchTerms.status
+    useEffect(() => {
+        setSearchTerms((prev) => ({ ...prev, status: statusFilter }));
+    }, [statusFilter]);
+
+    // Calculate status counts
+    const statusCounts = useMemo(() => {
+        const counts = {
+            all: interns?.length || 0,
+            complete: 0,
+            running: 0,
+            pending: 0,
+            hold: 0
+        };
+        (interns || []).forEach((intern) => {
+            const status = (intern.status || "running").toLowerCase();
+            if (status === "complete") counts.complete += 1;
+            else if (status === "running") counts.running += 1;
+            else if (status === "pending") counts.pending += 1;
+            else if (status === "hold") counts.hold += 1;
+        });
+        return counts;
+    }, [interns]);
+
     const handleSearchChange = (key, value) => {
         setSearchTerms(prev => ({ ...prev, [key]: value }));
+        if (key === "status") {
+            setStatusFilter(value); // Update statusFilter when status dropdown changes
+        }
         setCurrentPage(1);
     };
 
@@ -81,6 +108,21 @@ const InternList = () => {
         setCurrentPage(1);
     };
 
+    const clearFilters = () => {
+        setSearchTerms({
+            name: '',
+            mentor: '',
+            status: '',
+            email: '',
+            startDate: null,
+            endDate: null,
+            isOffered: 'All',
+        });
+        setStatusFilter("");
+        setSortConfig({ key: null, direction: 'ascending' });
+        setCurrentPage(1);
+    };
+
     // Filter interns based on search values
     const filteredInterns = useMemo(() => {
         return (interns || []).filter((intern) => {
@@ -89,7 +131,7 @@ const InternList = () => {
             const matchesStatus = searchTerms.status ? intern.status?.toLowerCase() === searchTerms.status.toLowerCase() : true;
             const matchesEmail = intern.email?.toLowerCase().includes(searchTerms.email.toLowerCase()) ?? true;
 
-            // Hired status filtering (fixed logic)
+            // Hired status filtering
             let matchesHiredStatus = true;
             if (searchTerms.isOffered === "Hired") {
                 matchesHiredStatus = intern.isOffered === true;
@@ -199,8 +241,8 @@ const InternList = () => {
             }));
 
             if (updateResult.payload?.publicId) {
-                setToast(<SuccessToast message="status updated successfully!" onClose={() => setToast(null)} />);
-                dispatch(fetchInterns())
+                setToast(<SuccessToast message="Status updated successfully!" onClose={() => setToast(null)} />);
+                dispatch(fetchInterns());
             } else {
                 throw new Error("Failed to update intern");
             }
@@ -339,6 +381,96 @@ const InternList = () => {
                         </Link>
                     </div>
                 </div>
+
+                {/* Status Count Cards */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-5 gap-4 mb-6">
+                    {[
+                        {
+                            status: "all",
+                            label: "All Interns",
+                            count: statusCounts.all,
+                            icon: <FaUsers className={`text-2xl ${statusFilter === "" ? "text-white" : "text-purple-600"}`} />,
+                            color: "purple-600",
+                            gradient: "from-purple-600 to-purple-800",
+                            hoverBg: "hover:bg-purple-50",
+                            selected: statusFilter === ""
+                        },
+                        {
+                            status: "complete",
+                            label: "Complete",
+                            count: statusCounts.complete,
+                            icon: <FaCheckCircle className={`text-2xl ${statusFilter === "complete" ? "text-white" : "text-green-600"}`} />,
+                            color: "green-600",
+                            gradient: "from-green-600 to-green-800",
+                            hoverBg: "hover:bg-green-50",
+                            selected: statusFilter === "complete"
+                        },
+                        {
+                            status: "running",
+                            label: "Running",
+                            count: statusCounts.running,
+                            icon: <FaPlayCircle className={`text-2xl ${statusFilter === "running" ? "text-white" : "text-blue-600"}`} />,
+                            color: "blue-600",
+                            gradient: "from-blue-600 to-blue-800",
+                            hoverBg: "hover:bg-blue-50",
+                            selected: statusFilter === "running"
+                        },
+                        {
+                            status: "pending",
+                            label: "Pending",
+                            count: statusCounts.pending,
+                            icon: <FaClock className={`text-2xl ${statusFilter === "pending" ? "text-white" : "text-orange-600"}`} />,
+                            color: "orange-600",
+                            gradient: "from-orange-600 to-orange-800",
+                            hoverBg: "hover:bg-orange-50",
+                            selected: statusFilter === "pending"
+                        },
+                        {
+                            status: "hold",
+                            label: "Hold",
+                            count: statusCounts.hold,
+                            icon: <FaPauseCircle className={`text-2xl ${statusFilter === "hold" ? "text-white" : "text-gray-600"}`} />,
+                            color: "gray-600",
+                            gradient: "from-gray-600 to-gray-800",
+                            hoverBg: "hover:bg-gray-50",
+                            selected: statusFilter === "hold"
+                        }
+                    ].map(({ status, label, count, icon, color, gradient, hoverBg, selected }) => (
+                        <div
+                            key={status}
+                            onClick={() => setStatusFilter(status === "all" ? "" : status)}
+                            className={`cursor-pointer p-3 rounded-xl shadow-md transition-all transform hover:scale-105 ${
+                                selected
+                                    ? `bg-gradient-to-r ${gradient} text-white`
+                                    : `bg-white ${hoverBg}`
+                            }`}
+                        >
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <h3 className="text-lg font-semibold">{label}</h3>
+                                    <p className={`text-2xl font-bold ${selected ? "text-white" : `text-${color}`}`}>
+                                        {count}
+                                    </p>
+                                </div>
+                                {icon}
+                            </div>
+                        </div>
+                    ))}
+                </div>
+
+                {/* Clear Filters Button */}
+                {(searchTerms.name || searchTerms.mentor || searchTerms.status || searchTerms.email ||
+                  searchTerms.startDate || searchTerms.endDate || searchTerms.isOffered !== "All") && (
+                    <div className="flex justify-end mb-4">
+                        <button
+                            onClick={clearFilters}
+                            className="px-2 py-1 rounded-md text-xs flex items-center bg-red-100 text-red-800 hover:bg-red-200 transition-all"
+                        >
+                            <FaTimes className="mr-1" />
+                            Clear Filters
+                        </button>
+                    </div>
+                )}
             </div>
 
             <div className={`overflow-x-auto rounded-lg shadow-lg border border-gray-200 ${deleteModal.isOpen ? 'filter blur-sm' : ''}`}>
@@ -349,14 +481,14 @@ const InternList = () => {
                                 <th
                                     key={column.key}
                                     className={`p-1 text-center font-semibold text-sm border-b border-gray-200 ${column.key === "sno"
-                                            ? "w-1/20 h-6"  // Smaller width for S.No and Actions
-                                            : "w-1/12" // Default width for other columns
+                                            ? "w-1/20 h-6"
+                                            : "w-1/12"
                                         }`}
                                 >
                                     <div className="flex flex-col items-center justify-center">
                                         <div className="flex items-center justify-center w-full">
                                             <span>{column.label}</span>
-                                            {column.key !== "sno" && column.key !== "taskDetails" && (  // Exclude sort for S.No and Actions
+                                            {column.key !== "sno" && column.key !== "taskDetails" && (
                                                 <button
                                                     onClick={() => handleSort(column.key)}
                                                     className="ml-2 focus:outline-none"
@@ -375,7 +507,6 @@ const InternList = () => {
                                         </div>
                                         {column.key !== "taskDetails" && column.key !== "sno" && (
                                             <div className="relative mt-1 w-full">
-                                                {/* Rest of your filter inputs remain exactly the same */}
                                                 {column.key === "startDate" || column.key === "endDate" ? (
                                                     <div className="relative">
                                                         <DatePicker
@@ -429,7 +560,7 @@ const InternList = () => {
                                     </div>
                                 </th>
                             ))}
-                            <th className="p-1 text-center font-semibold text-sm border-b border-gray-200 w-1/25">  {/* Smaller width for Actions */}
+                            <th className="p-1 text-center font-semibold text-sm border-b border-gray-200 w-1/25">
                                 Actions
                                 <div className="mt-1 h-6"></div>
                             </th>

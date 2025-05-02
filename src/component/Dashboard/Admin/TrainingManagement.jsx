@@ -20,8 +20,8 @@ import {
   updateProgramStatusD 
 } from "../../../features/program/programAction";
 import { fetchCompetencies } from "../../../features/resource/resourceAction";
-import YRMSLoader from "../../helper/Loader";
 import { ErrorToast, SuccessToast } from '../../helper/ResourceToast';
+import YRMSLoader from "../../helper/loader";
 
 const TrainingManagement = () => {
   const dispatch = useDispatch();
@@ -122,7 +122,7 @@ const TrainingManagement = () => {
   };
 
   const getTypeBadge = (type) => (
-    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+    <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
       type === 1 ? 'bg-purple-100 text-purple-800' : 'bg-indigo-100 text-indigo-800'
     }`}>
       {type === 1 ? 'Training' : 'Upskilling'}
@@ -130,7 +130,7 @@ const TrainingManagement = () => {
   );
 
   const getApprovalBadge = (isApproved) => (
-    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+    <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
       isApproved ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
     }`}>
       {isApproved ? 'Approved' : 'Pending'}
@@ -167,207 +167,8 @@ const TrainingManagement = () => {
         </div>
       </div>
 
-      {/* Filters Section */}
-      <div className="bg-white shadow rounded-lg p-4 mb-6">
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-          {/* Approval Status Filter */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Approval Status</label>
-            <select
-              value={filters.approvalStatus}
-              onChange={(e) => setFilters({...filters, approvalStatus: e.target.value})}
-              className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-purple-500 focus:border-purple-500 sm:text-sm rounded-md"
-            >
-              <option value="active">Approved</option>
-              <option value="inactive">Pending Approval</option>
-            </select>
-          </div>
-
-          {/* Program Status Filter */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Program Status</label>
-            <select
-              value={filters.programStatus}
-              onChange={(e) => setFilters({...filters, programStatus: e.target.value})}
-              className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-purple-500 focus:border-purple-500 sm:text-sm rounded-md"
-            >
-              <option value="all">All Statuses</option>
-              <option value="running">Running</option>
-              <option value="pending">Pending</option>
-              <option value="hold">On Hold</option>
-              <option value="completed">Completed</option>
-            </select>
-          </div>
-
-          {/* Program Type Filter */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Program Type</label>
-            <select
-              value={filters.programType}
-              onChange={(e) => setFilters({...filters, programType: e.target.value})}
-              className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-purple-500 focus:border-purple-500 sm:text-sm rounded-md"
-            >
-              <option value="all">All Types</option>
-              <option value="training">Training</option>
-              <option value="upskilling">Upskilling</option>
-            </select>
-          </div>
-
-          {/* Competency Filter */}
-          {/* <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Competency</label>
-            <select
-              value={filters.competency}
-              onChange={(e) => setFilters({...filters, competency: e.target.value})}
-              className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-purple-500 focus:border-purple-500 sm:text-sm rounded-md"
-            >
-              <option value="all">All Competencies</option>
-              {competencies.map(comp => (
-                <option key={comp.publicId} value={comp.publicId}>{comp.name}</option>
-              ))}
-            </select>
-          </div> */}
-
-          {/* Search */}
-          {/* <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Search</label>
-            <div className="mt-1 relative rounded-md shadow-sm">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <FaSearch className="text-gray-400" />
-              </div>
-              <input
-                type="text"
-                value={filters.searchQuery}
-                onChange={(e) => setFilters({...filters, searchQuery: e.target.value})}
-                className="focus:ring-purple-500 focus:border-purple-500 block w-full pl-10 sm:text-sm border-gray-300 rounded-md"
-                placeholder="Search programs..."
-              />
-            </div>
-          </div> */}
-        </div>
-      </div>
-
-      {/* Programs List */}
-      <div className="bg-white shadow overflow-hidden sm:rounded-lg">
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                {filters.approvalStatus === 'inactive' && (
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Select
-                  </th>
-                )}
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Program
-                </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Type
-                </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Trainer
-                </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Dates
-                </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Status
-                </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Approval
-                </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {filteredPrograms.length === 0 ? (
-                <tr>
-                  <td colSpan="8" className="px-6 py-4 text-center text-sm text-gray-500">
-                    No programs found matching your criteria
-                  </td>
-                </tr>
-              ) : (
-                filteredPrograms.map((program) => (
-                  <tr key={program.publicId} className="hover:bg-gray-50">
-                    {filters.approvalStatus === 'inactive' && (
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <input
-                          type="checkbox"
-                          checked={selectedPrograms.includes(program.publicId)}
-                          onChange={() => toggleProgramSelection(program.publicId)}
-                          className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
-                        />
-                      </td>
-                    )}
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        <div className="flex-shrink-0 h-10 w-10 flex items-center justify-center rounded-full bg-purple-100">
-                          {getStatusIcon(program.status)}
-                        </div>
-                        <div className="ml-4">
-                          <div className="text-sm font-medium text-gray-900">{program.programName}</div>
-                          <div className="text-sm text-gray-500">{program.technology}</div>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {getTypeBadge(program.type)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">{program.trainerName}</div>
-                      <div className="text-sm text-gray-500">{program.competencyName}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">
-                        {new Date(program.startDate).toLocaleDateString()} - {new Date(program.endDate).toLocaleDateString()}
-                      </div>
-                      <div className="text-sm text-gray-500">{program.duration} days</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(program.status)}`}>
-                        {program.status.charAt(0).toUpperCase() + program.status.slice(1)}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {getApprovalBadge(program.isApproved)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {!program.isApproved && (
-                        <button
-                          onClick={() => handleApprovePrograms([program.publicId])}
-                          className="text-green-600 hover:text-green-900 mr-3"
-                          title="Approve"
-                        >
-                          <FaCheckCircle />
-                        </button>
-                      )}
-                      {program.isApproved && program.status !== 'completed' && (
-                        <div className="flex space-x-2">
-                          <select
-                            value={program.status}
-                            onChange={(e) => handleStatusChange(program.publicId, e.target.value)}
-                            className="text-xs border-gray-300 rounded focus:ring-purple-500 focus:border-purple-500"
-                          >
-                            <option value="running">Running</option>
-                            <option value="pending">Pending</option>
-                            <option value="hold">Hold</option>
-                            <option value="completed">Complete</option>
-                          </select>
-                        </div>
-                      )}
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
       {/* Stats Cards */}
-      <div className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-4">
+      <div className="mb-6 grid grid-cols-1 gap-5 sm:grid-cols-4">
         <div className="bg-white overflow-hidden shadow rounded-lg">
           <div className="px-4 py-5 sm:p-6">
             <div className="flex items-center">
@@ -446,6 +247,178 @@ const TrainingManagement = () => {
               </div>
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* Filters Section */}
+      <div className="bg-white shadow rounded-lg p-4 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+          {/* Approval Status Filter */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Approval Status</label>
+            <select
+              value={filters.approvalStatus}
+              onChange={(e) => setFilters({...filters, approvalStatus: e.target.value})}
+              className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-purple-500 focus:border-purple-500 sm:text-sm rounded-md"
+            >
+              <option value="active">Approved</option>
+              <option value="inactive">Pending Approval</option>
+            </select>
+          </div>
+
+          {/* Program Status Filter */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Program Status</label>
+            <select
+              value={filters.programStatus}
+              onChange={(e) => setFilters({...filters, programStatus: e.target.value})}
+              className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-purple-500 focus:border-purple-500 sm:text-sm rounded-md"
+            >
+              <option value="all">All Statuses</option>
+              <option value="running">Running</option>
+              <option value="pending">Pending</option>
+              <option value="hold">On Hold</option>
+              <option value="completed">Completed</option>
+            </select>
+          </div>
+
+          {/* Program Type Filter */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Program Type</label>
+            <select
+              value={filters.programType}
+              onChange={(e) => setFilters({...filters, programType: e.target.value})}
+              className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-purple-500 focus:border-purple-500 sm:text-sm rounded-md"
+            >
+              <option value="all">All Types</option>
+              <option value="training">Training</option>
+              <option value="upskilling">Upskilling</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      {/* Programs List */}
+      <div className="bg-white shadow-lg rounded-xl overflow-hidden border border-gray-200">
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-300">
+            <thead className="bg-gradient-to-r from-purple-50 to-indigo-50">
+              <tr>
+                {filters.approvalStatus === 'inactive' && (
+                  <th scope="col" className="px-6 py-4 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">
+                    Select
+                  </th>
+                )}
+                <th scope="col" className="px-6 py-4 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">
+                  Program
+                </th>
+                <th scope="col" className="px-6 py-4 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">
+                  Type
+                </th>
+                <th scope="col" className="px-6 py-4 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">
+                  Trainer
+                </th>
+                <th scope="col" className="px-6 py-4 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">
+                  Dates
+                </th>
+                <th scope="col" className="px-6 py-4 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">
+                  Status
+                </th>
+                <th scope="col" className="px-6 py-4 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">
+                  Approval
+                </th>
+                <th scope="col" className="px-6 py-4 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200">
+              {filteredPrograms.length === 0 ? (
+                <tr>
+                  <td colSpan="8" className="px-6 py-6 text-center text-sm text-gray-500 bg-gray-50">
+                    No programs found matching your criteria
+                  </td>
+                </tr>
+              ) : (
+                filteredPrograms.map((program, index) => (
+                  <tr 
+                    key={program.publicId} 
+                    className={`transition-colors duration-200 ${
+                      index % 2 === 0 ? 'bg-white' : 'bg-gray-50'
+                    } hover:bg-purple-50`}
+                  >
+                    {filters.approvalStatus === 'inactive' && (
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <input
+                          type="checkbox"
+                          checked={selectedPrograms.includes(program.publicId)}
+                          onChange={() => toggleProgramSelection(program.publicId)}
+                          className="h-5 w-5 text-purple-600 focus:ring-purple-500 border-gray-300 rounded cursor-pointer"
+                        />
+                      </td>
+                    )}
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center">
+                        <div className="flex-shrink-0 h-12 w-12 flex items-center justify-center rounded-full bg-purple-100 shadow-sm">
+                          {getStatusIcon(program.status)}
+                        </div>
+                        <div className="ml-4">
+                          <div className="text-base font-medium text-gray-900">{program.programName}</div>
+                          <div className="text-sm text-gray-500">{program.technology}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {getTypeBadge(program.type)}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-base text-gray-900">{program.trainerName}</div>
+                      <div className="text-sm text-gray-500">{program.competencyName}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-base text-gray-900">
+                        {new Date(program.startDate).toLocaleDateString()} - {new Date(program.endDate).toLocaleDateString()}
+                      </div>
+                      <div className="text-sm text-gray-500">{program.duration} days</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`px-3 py-1 inline-flex text-sm font-semibold rounded-full shadow-sm ${getStatusColor(program.status)}`}>
+                        {program.status.charAt(0).toUpperCase() + program.status.slice(1)}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {getApprovalBadge(program.isApproved)}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {!program.isApproved && (
+                        <button
+                          onClick={() => handleApprovePrograms([program.publicId])}
+                          className="text-green-600 hover:text-green-900 p-2 rounded-full hover:bg-green-100 transition-colors"
+                          title="Approve"
+                        >
+                          <FaCheckCircle className="h-5 w-5" />
+                        </button>
+                      )}
+                      {program.isApproved && program.status !== 'completed' && (
+                        <div className="flex space-x-2">
+                          <select
+                            value={program.status}
+                            onChange={(e) => handleStatusChange(program.publicId, e.target.value)}
+                            className="text-sm border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500 bg-white py-2 px-3 shadow-sm hover:bg-gray-50 transition-colors"
+                          >
+                            <option value="running">Running</option>
+                            <option value="pending">Pending</option>
+                            <option value="hold">Hold</option>
+                            <option value="completed">Complete</option>
+                          </select>
+                        </div>
+                      )}
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
 
