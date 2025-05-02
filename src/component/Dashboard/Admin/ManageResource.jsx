@@ -381,22 +381,22 @@ const ManageResource = () => {
   const handleCSVUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
-
+    
     // Validate file type
     if (!file.name.endsWith('.csv')) {
       setToast(<ErrorToast message="Please upload a CSV file" onClose={() => setToast(null)} />);
       return;
     }
-
+    
     try {
-      setToast(<YRMSLoader message="Processing CSV file..." />);
+      setToast(<YRMSLoader loadingMessage="Processing CSV file..." />);
       
       const formData = new FormData();
       formData.append('file', file);
-
+      
       const token = sessionStorage.getItem("token");
       const response = await axios.post(
-        `${ADMIN_API_BASE_URL}/resources/bulk-upload/`,
+        `${ADMIN_API_BASE_URL}/register-users-csv`,
         formData,
         {
           headers: {
@@ -406,16 +406,21 @@ const ManageResource = () => {
         }
       );
 
-      setToast(<SuccessToast message={`${response.data.created_count} resources created successfully!`} onClose={() => setToast(null)} />);
+      if (response.data.success) {
+        setToast(<SuccessToast message={response.data.message} onClose={() => setToast(null)} />);
+      } else {
+        const errorMessage = response.data.error.details[0].error;
+        setToast(<ErrorToast message={errorMessage} onClose={() => setToast(null)} />);
+      }
       
       // Refresh the resource list
       dispatch(fetchResources());
     } catch (error) {
-      const errorMsg = error.response?.data?.message || "Failed to upload CSV";
+      var primaryErrorMessage = error.response?.data?.message;
+      var secondaryErrorMessage = error.response?.data?.error?.details?.[0]?.error;
+      const errorMsg = primaryErrorMessage ? `${primaryErrorMessage}: ${secondaryErrorMessage || "Failed to upload CSV"}` : "Failed to upload CSV";
       setToast(<ErrorToast message={errorMsg} onClose={() => setToast(null)} />);
-      console.error("CSV upload error:", error);
     } finally {
-      // Reset the file input
       e.target.value = '';
     }
   };

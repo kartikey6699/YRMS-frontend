@@ -218,14 +218,14 @@ const UserList = ({ setActiveSection }) => {
     }
 
     try {
-      setToast(<YRMSLoader message="Processing CSV file..." />);
+      setToast(<YRMSLoader loadingMessage="Processing CSV file..." />);
       
       const formData = new FormData();
       formData.append('file', file);
 
       const token = sessionStorage.getItem("token");
       const response = await axios.post(
-        `${ADMIN_API_BASE_URL}/users/bulk-upload/`,
+        `${ADMIN_API_BASE_URL}/register-users-csv`,
         formData,
         {
           headers: {
@@ -235,14 +235,20 @@ const UserList = ({ setActiveSection }) => {
         }
       );
 
-      setToast(<SuccessToast message={`${response.data.created_count} users created successfully!`} onClose={() => setToast(null)} />);
+      if (response.data.success) {
+        setToast(<SuccessToast message={response.data.message} onClose={() => setToast(null)} />);
+      } else {
+        const errorMessage = response.data.error.details[0].error;
+        setToast(<ErrorToast message={errorMessage} onClose={() => setToast(null)} />);
+      }
       
       // Refresh the user list
       dispatch(fetchResources());
     } catch (error) {
-      const errorMsg = error.response?.data?.message || "Failed to upload CSV";
+      const primaryErrorMessage = error.response?.data?.message;
+      const secondaryErrorMessage = error.response?.data?.error?.details?.[0]?.error;
+      const errorMsg = primaryErrorMessage ? `${primaryErrorMessage}: ${secondaryErrorMessage || "Failed to upload CSV"}` : "Failed to upload CSV";
       setToast(<ErrorToast message={errorMsg} onClose={() => setToast(null)} />);
-      console.error("CSV upload error:", error);
     } finally {
       // Reset the file input
       e.target.value = '';
