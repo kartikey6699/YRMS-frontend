@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { FaPlus, FaArrowLeft, FaFilter, FaTimes, FaCogs, FaCalendar, FaComments } from "react-icons/fa";
+import { FaPlus, FaArrowLeft, FaFilter, FaTimes, FaCogs, FaCalendar, FaComments, FaFileDownload, FaFileUpload } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import ResourceList from "./ResourceList";
@@ -314,6 +314,79 @@ const ManageResource = () => {
     }
   };
 
+  const downloadSampleCSV = async () => {
+    try {
+      setToast(<YRMSLoader message="Preparing sample CSV..." />);
+      
+      const token = sessionStorage.getItem("token");
+      const response = await axios.get(
+        `${ADMIN_API_BASE_URL}/resources/sample-csv/`,
+        {
+          responseType: 'blob',
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      // Create download link
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'resource_sample.csv');
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+
+      setToast(<SuccessToast message="Sample CSV downloaded successfully!" onClose={() => setToast(null)} />);
+    } catch (error) {
+      setToast(<ErrorToast message="Failed to download sample CSV" onClose={() => setToast(null)} />);
+      console.error("CSV download error:", error);
+    }
+  };
+
+  const handleCSVUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.name.endsWith('.csv')) {
+      setToast(<ErrorToast message="Please upload a CSV file" onClose={() => setToast(null)} />);
+      return;
+    }
+
+    try {
+      setToast(<YRMSLoader message="Processing CSV file..." />);
+      
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const token = sessionStorage.getItem("token");
+      const response = await axios.post(
+        `${ADMIN_API_BASE_URL}/resources/bulk-upload/`,
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      setToast(<SuccessToast message={`${response.data.created_count} resources created successfully!`} onClose={() => setToast(null)} />);
+      
+      // Refresh the resource list
+      dispatch(fetchResources());
+    } catch (error) {
+      const errorMsg = error.response?.data?.message || "Failed to upload CSV";
+      setToast(<ErrorToast message={errorMsg} onClose={() => setToast(null)} />);
+      console.error("CSV upload error:", error);
+    } finally {
+      // Reset the file input
+      e.target.value = '';
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     
@@ -451,13 +524,38 @@ const ManageResource = () => {
         <div className="mb-6">
           <div className="flex items-center justify-between mb-2">
             <h2 className="text-3xl font-bold text-blue-800">Resource Details</h2>
-            <button
-              className="px-4 py-2 rounded-lg font-semibold text-sm flex items-center bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 transition-all transform hover:scale-105"
-              onClick={() => setActiveSection("add")}
-            >
-              <FaPlus className="mr-2" />
-              Add Resource
-            </button>
+            <div className="flex items-center space-x-2">
+              <div className="relative">
+                <input
+                  type="file"
+                  id="csvUpload"
+                  accept=".csv"
+                  onChange={handleCSVUpload}
+                  className="hidden"
+                />
+                <label
+                  htmlFor="csvUpload"
+                  className="px-4 py-2 rounded-lg font-semibold text-sm flex items-center bg-gradient-to-r from-green-600 to-teal-600 text-white hover:from-green-700 hover:to-teal-700 transition-all transform hover:scale-105 cursor-pointer"
+                >
+                  <FaFileUpload className="mr-2" />
+                  Bulk Upload
+                </label>
+              </div>
+              <button
+                onClick={downloadSampleCSV}
+                className="px-4 py-2 rounded-lg font-semibold text-sm flex items-center bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:from-purple-700 hover:to-indigo-700 transition-all transform hover:scale-105"
+              >
+                <FaFileDownload className="mr-2" />
+                Sample CSV
+              </button>
+              <button
+                className="px-4 py-2 rounded-lg font-semibold text-sm flex items-center bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 transition-all transform hover:scale-105"
+                onClick={() => setActiveSection("add")}
+              >
+                <FaPlus className="mr-2" />
+                Add Resource
+              </button>
+            </div>
           </div>
 
           {/* Compact Filter Section */}
