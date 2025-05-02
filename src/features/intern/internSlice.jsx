@@ -126,6 +126,7 @@ const internSlice = createSlice({
             lastWorkingDay: payload.lastWorkingDay,
             hiredCompetency: payload.hiredCompetency,
             competencyId: payload.competencyId,
+            profileImage: payload.profileImage
           };
         }
       })

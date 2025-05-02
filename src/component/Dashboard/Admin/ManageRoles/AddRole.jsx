@@ -13,6 +13,7 @@ const AddRoleForm = ({ setActiveSection, setSelectedRole, selectedRole, onSucces
         role: '',
         features: ''
     });
+    const [featureSearchTerm, setFeatureSearchTerm] = useState('');
 
     useEffect(() => {
         dispatch(fetchFeatures());
@@ -29,7 +30,7 @@ const AddRoleForm = ({ setActiveSection, setSelectedRole, selectedRole, onSucces
 
     const validateForm = () => {
         const newErrors = {};
-        
+
         if (!formData.role.trim()) {
             newErrors.role = 'Role name is required';
         } else if (formData.role.length < 3) {
@@ -37,11 +38,11 @@ const AddRoleForm = ({ setActiveSection, setSelectedRole, selectedRole, onSucces
         } else if (formData.role.length > 50) {
             newErrors.role = 'Role name cannot exceed 50 characters';
         }
-        
+
         if (formData.features.length === 0) {
             newErrors.features = 'At least one feature must be selected';
         }
-        
+
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
     };
@@ -67,12 +68,12 @@ const AddRoleForm = ({ setActiveSection, setSelectedRole, selectedRole, onSucces
         const optionHeight = 40; // px - height of each option
         const minVisibleOptions = 4;
         const maxHeight = 240; // px - maximum dropdown height
-        
+
         const requiredHeight = Math.min(
             Math.max(featuresOptions.length * optionHeight, minVisibleOptions * optionHeight),
             maxHeight
         );
-        
+
         return `${requiredHeight}px`;
     };
 
@@ -115,11 +116,11 @@ const AddRoleForm = ({ setActiveSection, setSelectedRole, selectedRole, onSucces
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        
+
         if (!validateForm()) {
             return;
         }
-        
+
         setIsSubmitting(true);
         try {
             setToast(<YRMSLoader message={selectedRole ? "Updating role..." : "Creating role..."} />);
@@ -169,14 +170,13 @@ const AddRoleForm = ({ setActiveSection, setSelectedRole, selectedRole, onSucces
     const isFormValid = Object.keys(errors).length === 0 && formData.role && formData.features.length > 0;
 
     return (
-        <div
-            className="fixed inset-0 bg-opacity-50 flex items-center justify-center z-50 backdrop-blur-sm bg-black/20 p-4 overflow-y-auto"
+        <div className="fixed inset-0 bg-opacity-50 flex items-center justify-center z-50 backdrop-blur-sm bg-black/20 p-4 overflow-y-auto"
             onClick={handleOverlayClick}
         >
-            <div className="bg-white rounded-xl shadow-xl w-full max-w-lg transform transition-all h-full max-h-130 flex flex-col">
+            <div className="bg-white rounded-xl shadow-xl w-full max-w-3xl transform transition-all h-full max-h-[90vh] flex flex-col">
                 {/* Header */}
-                <div className="flex justify-between items-center border-b border-gray-200 p-4 flex-shrink-0">
-                    <h3 className="text-xl font-semibold text-gray-800">
+                <div className="flex justify-between items-center border-b border-gray-200 p-6 flex-shrink-0">
+                    <h3 className="text-2xl font-semibold text-gray-800">
                         {selectedRole ? "Update Role" : "Add New Role"}
                     </h3>
                     <button
@@ -184,19 +184,19 @@ const AddRoleForm = ({ setActiveSection, setSelectedRole, selectedRole, onSucces
                         className="text-gray-500 hover:text-gray-700 transition-colors"
                         aria-label="Close"
                     >
-                        <FaTimes className="text-lg" />
+                        <FaTimes className="text-xl" />
                     </button>
                 </div>
 
                 {/* Scrollable Form Content */}
                 <form
                     onSubmit={handleSubmit}
-                    className="p-6 overflow-y-auto flex-1"
+                    className="p-8 overflow-y-auto flex-1"
                     ref={formRef}
                 >
-                    {/* Role Field */}
-                    <div className="mb-6">
-                        <label className="block text-gray-700 font-medium mb-2">
+                    {/* Role Field (unchanged) */}
+                    <div className="mb-8">
+                        <label className="block text-gray-700 font-medium mb-3 text-lg">
                             Role Name <span className="text-red-500">*</span>
                         </label>
                         <input
@@ -204,83 +204,109 @@ const AddRoleForm = ({ setActiveSection, setSelectedRole, selectedRole, onSucces
                             name="role"
                             value={formData.role}
                             onChange={handleInputChange}
-                            className={`w-full p-3 border ${errors.role ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-transparent transition-all`}
+                            className={`w-full p-4 border text-lg ${errors.role ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-transparent transition-all`}
                             placeholder="Enter role name (3-50 characters)"
                             required
                             minLength={3}
                             maxLength={50}
                         />
                         {errors.role && (
-                            <p className="mt-1 text-sm text-red-600">{errors.role}</p>
+                            <p className="mt-2 text-base text-red-600">{errors.role}</p>
                         )}
                     </div>
 
-                    {/* Features Field */}
-                    <div className="mb-8" ref={featuresRef}>
-                        <label className="block text-gray-700 font-medium mb-2">
+                    {/* Enhanced Features Field with Search */}
+                    <div className="mb-10" ref={featuresRef}>
+                        <label className="block text-gray-700 font-medium mb-3 text-lg">
                             Features <span className="text-red-500">*</span>
                         </label>
                         <div className="relative">
+                            {/* Search and Selected Features Area */}
                             <div
-                                className={`w-full min-h-12 p-2 border ${errors.features ? 'border-red-500' : 'border-gray-300'} rounded-lg flex flex-wrap items-center cursor-pointer ${isFeaturesOpen ? 'ring-2 ring-indigo-300 border-transparent' : ''}`}
+                                className={`w-full min-h-16 p-3 border ${errors.features ? 'border-red-500' : 'border-gray-300'} rounded-lg flex flex-wrap items-center cursor-pointer ${isFeaturesOpen ? 'ring-2 ring-indigo-300 border-transparent' : ''}`}
                                 onClick={() => setIsFeaturesOpen(!isFeaturesOpen)}
                                 aria-expanded={isFeaturesOpen}
                                 aria-haspopup="listbox"
                             >
+                                {/* Selected Features Tags */}
                                 {formData.features.length === 0 ? (
-                                    <span className="text-gray-400 ml-2">Select features...</span>
+                                    <span className="text-gray-400 ml-2 text-lg">Select features...</span>
                                 ) : (
                                     formData.features.map(feature => (
                                         <div
                                             key={feature.value}
-                                            className="bg-indigo-100 text-indigo-800 text-sm px-2 py-1 rounded m-1 flex items-center"
+                                            className="bg-indigo-100 text-indigo-800 text-base px-3 py-1.5 rounded-lg m-1 flex items-center"
                                         >
                                             {feature.label}
                                             <button
                                                 type="button"
                                                 onClick={(e) => removeFeature(feature.value, e)}
-                                                className="ml-1 text-indigo-500 hover:text-indigo-700"
+                                                className="ml-2 text-indigo-500 hover:text-indigo-700"
                                                 aria-label={`Remove ${feature.label}`}
                                             >
-                                                <FaTimes className="text-xs" />
+                                                <FaTimes className="text-sm" />
                                             </button>
                                         </div>
                                     ))
                                 )}
                                 <div className="ml-auto pr-2">
-                                    <FaChevronDown className={`text-gray-400 transition-transform ${isFeaturesOpen ? 'transform rotate-180' : ''}`} />
+                                    <FaChevronDown className={`text-gray-400 transition-transform text-xl ${isFeaturesOpen ? 'transform rotate-180' : ''}`} />
                                 </div>
                             </div>
+
                             {errors.features && (
-                                <p className="mt-1 text-sm text-red-600">{errors.features}</p>
+                                <p className="mt-2 text-base text-red-600">{errors.features}</p>
                             )}
 
+                            {/* Dropdown with Search */}
                             {isFeaturesOpen && (
                                 <div
-                                    className="absolute z-10 mt-1 w-full bg-white shadow-lg rounded-lg py-1 border border-gray-200 overflow-auto"
+                                    className="absolute z-10 mt-2 w-full bg-white shadow-xl rounded-lg border border-gray-200 overflow-hidden"
                                     role="listbox"
-                                    style={{ height: getDropdownHeight() }}
                                 >
-                                    {featuresOptions.map(feature => (
-                                        <div 
-                                            key={feature.value}
-                                            className="h-10 flex items-center px-4 hover:bg-gray-50 cursor-pointer"
-                                            role="option"
-                                            aria-selected={formData.features.some(f => f.value === feature.value)}
-                                        >
-                                            <label className="flex items-center w-full h-full cursor-pointer">
-                                                <input
-                                                    type="checkbox"
-                                                    className="form-checkbox h-4 w-4 text-indigo-600 transition duration-150 ease-in-out rounded"
-                                                    checked={formData.features.some(f => f.value === feature.value)}
-                                                    onChange={() => handleFeatureToggle(feature)}
-                                                    onClick={(e) => e.stopPropagation()}
-                                                    aria-label={`Select ${feature.label}`}
-                                                />
-                                                <span className="ml-3 text-gray-700">{feature.label}</span>
-                                            </label>
-                                        </div>
-                                    ))}
+                                    {/* Search Input */}
+                                    <div className="p-3 border-b border-gray-200">
+                                        <input
+                                            type="text"
+                                            placeholder="Search features..."
+                                            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-300 text-lg"
+                                            value={featureSearchTerm}
+                                            onChange={(e) => setFeatureSearchTerm(e.target.value)}
+                                            onClick={(e) => e.stopPropagation()}
+                                        />
+                                    </div>
+
+                                    {/* Filtered Features List */}
+                                    <div
+                                        className="overflow-auto"
+                                        style={{ maxHeight: '400px' }}
+                                    >
+                                        {featuresOptions
+                                            .filter(feature =>
+                                                feature.label.toLowerCase().includes(featureSearchTerm.toLowerCase())
+                                            )
+                                            .map(feature => (
+                                                <div
+                                                    key={feature.value}
+                                                    className="h-14 flex items-center px-5 hover:bg-gray-50 cursor-pointer text-lg"
+                                                    role="option"
+                                                    aria-selected={formData.features.some(f => f.value === feature.value)}
+                                                >
+                                                    <label className="flex items-center w-full h-full cursor-pointer">
+                                                        <input
+                                                            type="checkbox"
+                                                            className="form-checkbox h-5 w-5 text-indigo-600 transition duration-150 ease-in-out rounded"
+                                                            checked={formData.features.some(f => f.value === feature.value)}
+                                                            onChange={() => handleFeatureToggle(feature)}
+                                                            onClick={(e) => e.stopPropagation()}
+                                                            aria-label={`Select ${feature.label}`}
+                                                        />
+                                                        <span className="ml-4 text-gray-700">{feature.label}</span>
+                                                    </label>
+                                                </div>
+                                            ))
+                                        }
+                                    </div>
                                 </div>
                             )}
                         </div>
@@ -288,18 +314,18 @@ const AddRoleForm = ({ setActiveSection, setSelectedRole, selectedRole, onSucces
                 </form>
 
                 {/* Fixed Footer */}
-                <div className="flex justify-end space-x-3 border-t border-gray-200 p-4 flex-shrink-0">
+                <div className="flex justify-end space-x-4 border-t border-gray-200 p-6 flex-shrink-0">
                     <button
                         type="button"
                         onClick={() => setActiveSection("view")}
-                        className="px-4 py-2.5 text-gray-700 font-medium rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors"
+                        className="px-6 py-3 text-gray-700 font-medium rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors text-lg"
                     >
                         Cancel
                     </button>
                     <button
                         type="submit"
                         onClick={handleSubmit}
-                        className="px-6 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-medium rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-all shadow-md disabled:opacity-70 disabled:cursor-not-allowed"
+                        className="px-8 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-medium rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-all shadow-md disabled:opacity-70 disabled:cursor-not-allowed text-lg"
                         disabled={isSubmitting || !isFormValid}
                     >
                         {isSubmitting ? 'Processing...' : (selectedRole ? 'Update Role' : 'Save Role')}

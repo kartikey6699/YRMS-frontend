@@ -8,6 +8,8 @@ import { fetchCompetencies, fetchResources } from '../../../../features/resource
 import { resetInternDetails } from '../../../../features/intern/internSlice';
 import { updateIntern } from '../../../../features/intern/internAction';
 import { useNavigate } from 'react-router-dom';
+import { API_BASE_URL } from '../../../../config/Endpoints/BaseEndpoints';
+import axios from 'axios';
 
 const InternDetail = ({ publicId, onClose }) => {
   const navigate = useNavigate();
@@ -157,7 +159,7 @@ const InternDetail = ({ publicId, onClose }) => {
       uploadFormData.append('payload', profilePic);
       const token = sessionStorage.getItem('token');
       const response = await axios.post(
-        `${ADMIN_API_BASE_URL}/user-profile-upload/?user_id=${publicId}`,
+        `${API_BASE_URL}image/upload?upload_type=intern&type_id=${publicId?.publicId}`,
         uploadFormData,
         {
           headers: {
@@ -168,7 +170,7 @@ const InternDetail = ({ publicId, onClose }) => {
         }
       );
       if (response.status === 200) {
-        await dispatch(fetchResourceDetails(publicId)).unwrap();
+        await dispatch(fetchInternDetails(publicId?.publicId)).unwrap();
         setToast({
           type: 'success',
           message: 'Profile picture updated successfully!'
@@ -211,6 +213,10 @@ const InternDetail = ({ publicId, onClose }) => {
         publicId: internDetails?.publicId,
         internData
       }));
+
+      if (profilePic) {
+        await uploadProfilePicture();
+      }
 
       if (updateResult.payload?.publicId) {
         setToast({ type: 'success', message: 'Intern updated successfully!' });
