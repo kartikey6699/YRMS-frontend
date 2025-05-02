@@ -283,7 +283,7 @@ const ManageResource = () => {
       certifications: "",
       communication: "",
     });
-    setShowFilters(false);
+    // setShowFilters(false);
   };
 
   const uploadProfilePicture = async (userId) => {
