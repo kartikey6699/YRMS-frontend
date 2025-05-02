@@ -7,7 +7,7 @@ import DeleteConfirmationModal from '../../../helper/DeleteConfirmationModal';
 import YRMSLoader from '../../../helper/loader';
 import { ErrorToast, SuccessToast } from '../../../helper/ResourceToast';
 
-const RoleList = ({ setActiveSection, onDelete, onEdit, onSort, sortConfig, setSelectedRole }) => {
+const RoleList = ({ setActiveSection, onSort, sortConfig, setSelectedRole }) => {
     const [toast, setToast] = useState(null);
     const dispatch = useDispatch();
     const { roles } = useSelector(
