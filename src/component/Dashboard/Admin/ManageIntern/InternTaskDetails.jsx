@@ -20,7 +20,7 @@ const InternTaskDetails = ({ userId, onClose }) => {
   const { interntask, loading, error } = useSelector((state) => state.internTask);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [toast, setToast] = useState(null);
-    const [deleteModal, setDeleteModal] = useState({ isOpen: false, taskId: null, taskName: "" });
+  const [deleteModal, setDeleteModal] = useState({ isOpen: false, taskId: null, taskName: "" });
 
   // View state
   const [currentView, setCurrentView] = useState('list');
@@ -39,7 +39,7 @@ const InternTaskDetails = ({ userId, onClose }) => {
     if (userId) {
       dispatch(fetchInternTask(userId));
     }
-  }, [dispatch], interntask);
+  }, [dispatch, userId]);
 
   useEffect(() => {
     if (error) {
@@ -61,20 +61,19 @@ const InternTaskDetails = ({ userId, onClose }) => {
     return acc;
   }, {});
 
-    // Handle delete confirmation
-    const handleDeleteConfirm = () => {
-      setToast(<YRMSLoader message="Deleting Task..." />);
-      dispatch(deleteInternTask(deleteModal.taskId))
-        .unwrap()
-        .then(() => {
-          setToast(<SuccessToast message="Task deleted successfully!" onClose={() => setToast(null)} />);
-        })
-        dispatch(fetchInternTask(userId))
-        .catch(error => {
-          setToast(<ErrorToast message={error.message || "Failed to delete task"} onClose={() => setToast(null)} />);
-        });
-      setDeleteModal({ isOpen: false, taskId: null, taskName: "" });
-    };
+  // Handle delete confirmation
+  const handleDeleteConfirm = async () => {
+    setToast(<YRMSLoader message="Deleting Task..." />);
+    try {
+      await dispatch(deleteInternTask(deleteModal.taskId)).unwrap();
+      setToast(<SuccessToast message="Task deleted successfully!" onClose={() => setToast(null)} />);
+      // Refresh the task list after successful deletion
+      dispatch(fetchInternTask(userId));
+    } catch (error) {
+      setToast(<ErrorToast message={error.message || "Failed to delete task"} onClose={() => setToast(null)} />);
+    }
+    setDeleteModal({ isOpen: false, taskId: null, taskName: "" });
+  };
 
   const validateTaskField = (name, value, formData) => {
     const newErrors = {};
@@ -185,7 +184,6 @@ const InternTaskDetails = ({ userId, onClose }) => {
         ...formData,
         ...(formMode === 'edit' && { id: editingTaskId })
       };
-      console.log("object: ",payload)
 
       const result = await dispatch(createInternTask(payload));
       
@@ -206,11 +204,14 @@ const InternTaskDetails = ({ userId, onClose }) => {
 
   // Handle edit button click
   const handleEditClick = (task) => {
+    // Format the deadline to YYYY-MM-DD for the date input
+    const formattedDeadline = task.deadline ? new Date(task.deadline).toISOString().split('T')[0] : '';
+    
     setFormData({
       intern_id: userId,
       title: task.title,
       description: task.description,
-      deadline: task.deadline,
+      deadline: formattedDeadline,
       status: task.status,
       feedback: task.feedback || ''
     });
