@@ -371,3 +371,42 @@ export const removeParticipants = createAsyncThunk(
     }
   }
 );
+
+
+// Dummy action for testing
+export const approveProgram = createAsyncThunk(
+  "program/approveProgram",
+  async (programId, { rejectWithValue }) => {
+    try {
+      // Simulate an API call
+      return { message: `Program ${programId} approved successfully` };
+    } catch (error) {
+      return rejectWithValue("Failed to approve program");
+    }
+  }
+);
+
+export const fetchProgramListD = createAsyncThunk(
+  "program/fetchProgramList",
+  async (_, { rejectWithValue }) => {
+    try {
+      // Simulate fetching program list
+      return { message: "Program list fetched successfully", data: [] };
+    } catch (error) {
+      return rejectWithValue("Failed to fetch program list");
+    }
+  }
+);
+
+export const updateProgramStatusD = createAsyncThunk(
+  "program/updateProgramStatus",
+  async ({ programId, status }, { rejectWithValue }) => {
+    try {
+      // Simulate updating program status
+      return { message: `Program ${programId} status updated to ${status}` };
+    } catch (error) {
+      return rejectWithValue("Failed to update program status");
+    }
+  }
+);
+

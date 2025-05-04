@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo , useEffect } from "react";
 import {
   FaChartLine,
   FaLightbulb,
@@ -24,7 +24,7 @@ import { SuccessToast } from "../../helper/ResourceToast";
 import EmployeeDetail from "./EmployeDetail";
 import { useNavigate } from "react-router-dom";
 
-const ResourceList = ({ handleBaselineClick, handleOpportunitiesClick }) => {
+const ResourceList = ({ handleBaselineClick, handleOpportunitiesClick, setStatusFilter, statusFilter }) => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { resources, loading, error } = useSelector((state) => state.resource);
@@ -38,7 +38,7 @@ const ResourceList = ({ handleBaselineClick, handleOpportunitiesClick }) => {
     employeeName: "",
     joiningDate: null,
     designation: "",
-    status: "",
+    status: statusFilter,
     assignedPrograms: ""
   });
   const [deleteModal, setDeleteModal] = useState({
@@ -50,7 +50,12 @@ const ResourceList = ({ handleBaselineClick, handleOpportunitiesClick }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
-  const statusOptions = ["Pool", "Deployed", "PIP"];
+  const statusOptions = ["Pool", "PIP", "Deployed"];
+
+  // Sync searchValues.status with statusFilter from parent
+  useEffect(() => {
+    setSearchValues((prev) => ({ ...prev, status: statusFilter }));
+  }, [statusFilter]);
 
   const handleSort = (key) => {
     let direction = "ascending";
@@ -61,10 +66,14 @@ const ResourceList = ({ handleBaselineClick, handleOpportunitiesClick }) => {
   };
 
   const handleSearchChange = (key, value) => {
-    setSearchValues({
+    const newSearchValues = {
       ...searchValues,
       [key]: value,
-    });
+    };
+    setSearchValues(newSearchValues);
+    if (key === "status") {
+      setStatusFilter(value); // Update parent status filter
+    }
     setCurrentPage(1);
   };
 
@@ -87,7 +96,7 @@ const ResourceList = ({ handleBaselineClick, handleOpportunitiesClick }) => {
   const handleDeleteConfirm = async () => {
     try {
       await dispatch(deleteResource(deleteModal.resourceId));
-      setToast(
+       setToast(
         <SuccessToast
           message="Resource deleted successfully!"
           onClose={() => setToast(null)}
@@ -471,7 +480,7 @@ const ResourceList = ({ handleBaselineClick, handleOpportunitiesClick }) => {
                   strokeLinecap="round"
                   strokeLinejoin="round"
                   strokeWidth={1}
-                  d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                  d="M9.172 16.172a4 4 0 015.656 0M9 10 اختیار M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
                 />
               </svg>
             </div>

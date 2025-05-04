@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { FaPlus, FaSort, FaSearch, FaCalendarAlt, FaSortUp, FaSortDown, FaAngleDoubleLeft, FaAngleLeft, FaAngleRight, FaAngleDoubleRight, FaTrash } from 'react-icons/fa';
+import { FaPlus, FaSort, FaSearch, FaCalendarAlt, FaSortUp, FaSortDown, FaAngleDoubleLeft, FaAngleLeft, FaAngleRight, FaAngleDoubleRight, FaTrash, FaFileDownload, FaFileUpload } from 'react-icons/fa';
 import { Link } from 'react-router';
 import DatePicker from "react-datepicker";
 import EmployeeDetailPage from './UserDetails';
@@ -8,6 +8,9 @@ import { deleteResource, fetchCompetencies, fetchDesignations, fetchResources, u
 import { ErrorToast, SuccessToast } from '../../../helper/ResourceToast';
 import YRMSLoader from '../../../helper/loader';
 import DeleteConfirmationModal from '../../../helper/DeleteConfirmationModal';
+import axios from 'axios'; // Ensure axios is imported
+import { ADMIN_API_BASE_URL } from "../../../../config/Endpoints/BaseEndpoints";
+
 
 const UserList = ({ setActiveSection }) => {
   const dispatch = useDispatch();
@@ -168,9 +171,88 @@ const UserList = ({ setActiveSection }) => {
         setToast(<SuccessToast message="Resource deleted successfully!" onClose={() => setToast(null)} />);
       })
       .catch(error => {
-        setToast(<ErrorToast message={err.message || "Failed to delete resource"} onClose={() => setToast(null)} />);
+        setToast(<ErrorToast message={error.message || "Failed to delete resource"} onClose={() => setToast(null)} />);
       });
     setDeleteModal({ isOpen: false, resourceId: null, resourceName: '' });
+  };
+
+  const downloadSampleCSV = async () => {
+    try {
+      setToast(<YRMSLoader message="Preparing sample CSV..." />);
+      
+      const token = sessionStorage.getItem("token");
+      const response = await axios.get(
+        `${ADMIN_API_BASE_URL}/users/sample-csv/`,
+        {
+          responseType: 'blob',
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      // Create download link
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'user_sample.csv');
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+
+      setToast(<SuccessToast message="Sample CSV downloaded successfully!" onClose={() => setToast(null)} />);
+    } catch (error) {
+      setToast(<ErrorToast message="Failed to download sample CSV" onClose={() => setToast(null)} />);
+      console.error("CSV download error:", error);
+    }
+  };
+
+  const handleCSVUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.name.endsWith('.csv')) {
+      setToast(<ErrorToast message="Please upload a CSV file" onClose={() => setToast(null)} />);
+      return;
+    }
+
+    try {
+      setToast(<YRMSLoader loadingMessage="Processing CSV file..." />);
+      
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const token = sessionStorage.getItem("token");
+      const response = await axios.post(
+        `${ADMIN_API_BASE_URL}/register-users-csv`,
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (response.data.success) {
+        setToast(<SuccessToast message={response.data.message} onClose={() => setToast(null)} />);
+      } else {
+        const errorMessage = response.data.error.details[0].error;
+        setToast(<ErrorToast message={errorMessage} onClose={() => setToast(null)} />);
+      }
+      
+      // Refresh the user list
+      dispatch(fetchResources());
+    } catch (error) {
+      const primaryErrorMessage = error.response?.data?.message;
+      const secondaryErrorMessage = error.response?.data?.error?.details?.[0]?.error;
+      const errorMsg = primaryErrorMessage ? `${primaryErrorMessage}: ${secondaryErrorMessage || "Failed to upload CSV"}` : "Failed to upload CSV";
+      setToast(<ErrorToast message={errorMsg} onClose={() => setToast(null)} />);
+    } finally {
+      // Reset the file input
+      e.target.value = '';
+    }
   };
 
   const columns = [
@@ -186,16 +268,42 @@ const UserList = ({ setActiveSection }) => {
 
   return (
     <div className="p-6 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl shadow-lg">
+      {toast}
       <div className="mb-6">
         <div className="flex items-center justify-between mb-2">
           <h2 className="text-3xl font-bold text-blue-800">All Users</h2>
-          <button
-            className="btn px-6 py-3 rounded-lg font-semibold text-lg flex items-center bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 transition-all transform hover:scale-105"
-            onClick={() => setActiveSection('add')}
-          >
-            <FaPlus className="mr-2" />
-            Add User
-          </button>
+          <div className="flex items-center space-x-2">
+            <div className="relative">
+              <input
+                type="file"
+                id="csvUpload"
+                accept=".csv"
+                onChange={handleCSVUpload}
+                className="hidden"
+              />
+              <label
+                htmlFor="csvUpload"
+                className="px-4 py-2 rounded-lg font-semibold text-sm flex items-center bg-gradient-to-r from-green-600 to-teal-600 text-white hover:from-green-700 hover:to-teal-700 transition-all transform hover:scale-105 cursor-pointer"
+              >
+                <FaFileUpload className="mr-2" />
+                Bulk Upload
+              </label>
+            </div>
+            <button
+              onClick={downloadSampleCSV}
+              className="px-4 py-2 rounded-lg font-semibold text-sm flex items-center bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:from-purple-700 hover:to-indigo-700 transition-all transform hover:scale-105"
+            >
+              <FaFileDownload className="mr-2" />
+              Sample CSV
+            </button>
+            <button
+              className="px-4 py-2 rounded-lg font-semibold text-sm flex items-center bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 transition-all transform hover:scale-105"
+              onClick={() => setActiveSection('add')}
+            >
+              <FaPlus className="mr-2" />
+              Add User
+            </button>
+          </div>
         </div>
       </div>
       <table className="w-full border-collapse">

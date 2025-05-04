@@ -4,21 +4,22 @@ import { useDispatch, useSelector } from "react-redux";
 import ProfileCard from "../../helper/ProfileCard";
 import { FaArrowLeft, FaInfoCircle, FaTrash, FaPlusCircle, FaEdit, FaCheckCircle, FaTimes, FaPlus, FaChevronDown, FaChevronUp } from "react-icons/fa";
 import { BaselineHistories } from "./BaselineHistory";
-import BaselineTimeline from "./BaselineTimeline"; // Import BaselineTimeline
+import BaselineTimeline from "./BaselineTimeline";
 import AddOptionModal from "../../helper/OptionalModal";
 import {
   fetchCertificationAuthorities,
   fetchTechnologyCategoriesStack,
   fetchBaselineHistories,
-  createBaseline
+  createBaseline,
 } from "../../../features/baseline/baselineAction";
+import { fetchTrainingTechnologies } from "../../../features/resource/resourceAction";
 import { SuccessToast, ErrorToast } from "../../helper/ResourceToast";
+import Select from "react-select";
 
 const TechSkillSelector = ({ techSkills, setTechSkills, technologyCategoriesWithTech, loading, setModalField, setSelectedCategoryId }) => {
   const [openTechDropdowns, setOpenTechDropdowns] = useState({});
-  const dropdownRefs = useRef({}); // Store refs for each dropdown
+  const dropdownRefs = useRef({});
 
-  // Handle click outside to close technologies dropdown
   useEffect(() => {
     const handleClickOutside = (event) => {
       Object.keys(dropdownRefs.current).forEach((cardIndex) => {
@@ -114,9 +115,8 @@ const TechSkillSelector = ({ techSkills, setTechSkills, technologyCategoriesWith
           )}
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-start">
-            {/* Category Selector */}
             <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-700">Category</label>
+              <label className="block text-sm font-medium text-gray-700">Category <span className="text-red-500">*</span></label>
               <div className="relative">
                 <select
                   value={card.category}
@@ -144,7 +144,6 @@ const TechSkillSelector = ({ techSkills, setTechSkills, technologyCategoriesWith
               </div>
             </div>
 
-            {/* Technology Dropdown */}
             <div className="space-y-2" ref={(el) => (dropdownRefs.current[cardIndex] = el)}>
               <label className="block text-sm font-medium text-gray-700">Technologies</label>
               <button
@@ -163,7 +162,6 @@ const TechSkillSelector = ({ techSkills, setTechSkills, technologyCategoriesWith
                 )}
               </button>
 
-              {/* Dropdown Content */}
               {openTechDropdowns[cardIndex] && card.category && (
                 <div className="mt-1 p-3 bg-white border border-gray-200 rounded-lg shadow-lg z-10">
                   <div className="space-y-2 max-h-60 overflow-y-auto">
@@ -205,7 +203,6 @@ const TechSkillSelector = ({ techSkills, setTechSkills, technologyCategoriesWith
               )}
             </div>
 
-            {/* Selected Technologies */}
             <div className="space-y-2">
               <label className="block text-sm font-medium text-gray-700">
                 Selected ({card.technologies.length})
@@ -253,6 +250,61 @@ const TechSkillSelector = ({ techSkills, setTechSkills, technologyCategoriesWith
   );
 };
 
+const TechExperienceSelector = ({ value, onChange, setModalField, loading, options, errors }) => {
+  const handleAddNew = () => {
+    setModalField("trainingtechnology");
+  };
+
+  const MenuList = (props) => {
+    return (
+      <div>
+        {props.children}
+        <div style={{
+          position: "sticky",
+          bottom: 0,
+          background: "white",
+          borderTop: "1px solid #eee",
+          padding: "8px",
+          zIndex: 1,
+        }}>
+          <button
+            type="button"
+            onClick={handleAddNew}
+            className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-300 flex items-center justify-center text-sm"
+          >
+            Add Technology
+          </button>
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <div className="flex flex-col">
+      <Select
+        options={options}
+        value={value}
+        onChange={onChange}
+        className={`basic-single ${errors ? "border-red-500" : ""}`}
+        classNamePrefix="select"
+        placeholder="Select technology..."
+        isLoading={loading}
+        components={{ MenuList }}
+        styles={{
+          menu: (provided) => ({
+            ...provided,
+            maxHeight: 200,
+            overflowY: "auto",
+          }),
+        }}
+      />
+      {errors && (
+        <p className="mt-1 text-sm text-red-600">{errors}</p>
+      )}
+    </div>
+  );
+};
+
 const ManageBaseline = () => {
   const { publicId } = useParams();
   const { state } = useLocation();
@@ -265,8 +317,14 @@ const ManageBaseline = () => {
     certificationAuthorityLoading = false,
     technologyCategoriesStackLoading = false,
     baselineHistories = [],
-    baselineLoading = false
+    baselineLoading = false,
+
   } = useSelector((state) => state.baseline);
+
+  const {  trainingTechnologies = [], trainingTechnologyLoading = false } = useSelector(
+    (state) => state.resource
+  );
+  
 
   const resourceDetails = useSelector((state) =>
     state.resource.resources.find(res => res.publicId === publicId) ||
@@ -280,9 +338,10 @@ const ManageBaseline = () => {
   const [formStep, setFormStep] = useState(1);
   const [toast, setToast] = useState(null);
   const [hasFetchedInitialData, setHasFetchedInitialData] = useState(false);
+  const [errors, setErrors] = useState({});
 
   const [formData, setFormData] = useState({
-    experience: [{ technology: "", years: "" }],
+    experience: [{ technology: null, years: "" }],
     totalExperience: "",
     communication: "",
     techSkills: [{ category: "", technologies: [] }],
@@ -292,30 +351,100 @@ const ManageBaseline = () => {
     upskillSuggestion: "",
   });
 
+  const technologyOptions = trainingTechnologies.map(tech => ({
+    value: tech.publicId,
+    label: tech.name,
+  }));
+
   useEffect(() => {
     if (!hasFetchedInitialData) {
       dispatch(fetchCertificationAuthorities());
       dispatch(fetchTechnologyCategoriesStack());
       dispatch(fetchBaselineHistories(publicId));
+      dispatch(fetchTrainingTechnologies());
       setHasFetchedInitialData(true);
     }
   }, [dispatch, hasFetchedInitialData, publicId]);
 
+  const validateForm = () => {
+    const newErrors = {};
+
+    // Experience validations
+    formData.experience.forEach((exp, index) => {
+      if (!exp.technology) {
+        newErrors[`experience[${index}].technology`] = "Technology is required";
+      }
+      if (!exp.years || parseInt(exp.years) <= 0) {
+        newErrors[`experience[${index}].years`] = "Valid years (>0) required";
+      }
+    });
+
+    // Total Experience
+    if (!formData.totalExperience || parseInt(formData.totalExperience) < 0) {
+      newErrors.totalExperience = "Valid total experience (≥0) is required";
+    }
+
+    // Communication
+    if (!formData.communication) {
+      newErrors.communication = "Communication level is required";
+    }
+
+    // Tech Skills
+    formData.techSkills.forEach((skill, index) => {
+      if (!skill.category) {
+        newErrors[`techSkills[${index}].category`] = "Category is required";
+      }
+      if (skill.technologies.length === 0) {
+        newErrors[`techSkills[${index}].technologies`] = "At least one technology required";
+      }
+      skill.technologies.forEach((tech, techIndex) => {
+        if (!tech.rating || parseInt(tech.rating) <= 0 || parseInt(tech.rating) > 5) {
+          newErrors[`techSkills[${index}].technologies[${techIndex}].rating`] = "Rating (1-5) required";
+        }
+      });
+    });
+
+    // Certifications
+    formData.certification.forEach((cert, index) => {
+      if (!cert.name) {
+        newErrors[`certification[${index}].name`] = "Certification name required";
+      }
+      if (!cert.issuingAuthority) {
+        newErrors[`certification[${index}].issuingAuthority`] = "Issuing authority required";
+      }
+    });
+
+    // Rating
+    if (!formData.rating || parseInt(formData.rating) < 0 || parseInt(formData.rating) > 5) {
+      newErrors.rating = "Overall rating (0-5) required";
+    }
+
+    // Feedback
+    if (!formData.feedback) {
+      newErrors.feedback = "Feedback is required";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+    setErrors((prev) => ({ ...prev, [name]: null }));
   };
 
   const handleExpChange = (index, field, value) => {
     const updatedExp = [...formData.experience];
     updatedExp[index][field] = value;
     setFormData((prev) => ({ ...prev, experience: updatedExp }));
+    setErrors((prev) => ({ ...prev, [`experience[${index}].${field}`]: null }));
   };
 
   const addExperience = () => {
     setFormData((prev) => ({
       ...prev,
-      experience: [...prev.experience, { technology: "", years: "" }],
+      experience: [...prev.experience, { technology: null, years: "" }],
     }));
   };
 
@@ -324,12 +453,20 @@ const ManageBaseline = () => {
       ...prev,
       experience: prev.experience.filter((_, i) => i !== index),
     }));
+    const updatedErrors = { ...errors };
+    Object.keys(updatedErrors).forEach((key) => {
+      if (key.startsWith(`experience[${index}]`)) {
+        delete updatedErrors[key];
+      }
+    });
+    setErrors(updatedErrors);
   };
 
   const handleCertChange = (index, field, value) => {
     const updatedCert = [...formData.certification];
     updatedCert[index][field] = value;
     setFormData((prev) => ({ ...prev, certification: updatedCert }));
+    setErrors((prev) => ({ ...prev, [`certification[${index}].${field}`]: null }));
   };
 
   const addCertification = () => {
@@ -344,12 +481,19 @@ const ManageBaseline = () => {
       ...prev,
       certification: prev.certification.filter((_, i) => i !== index),
     }));
+    const updatedErrors = { ...errors };
+    Object.keys(updatedErrors).forEach((key) => {
+      if (key.startsWith(`certification[${index}]`)) {
+        delete updatedErrors[key];
+      }
+    });
+    setErrors(updatedErrors);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.communication || !formData.feedback || !formData.rating) {
-      setToast(<ErrorToast message="Please fill all required fields" onClose={() => setToast(null)} />);
+    if (!validateForm()) {
+      setToast(<ErrorToast message="Please fill all required fields correctly" onClose={() => setToast(null)} />);
       return;
     }
 
@@ -363,7 +507,7 @@ const ManageBaseline = () => {
       const technologyExperience = formData.experience
         .filter(exp => exp.technology && exp.years)
         .map(exp => ({
-          technology: exp.technology,
+          technology: technologyOptions.find(opt => opt.value === exp.technology.value)?.label || exp.technology.label,
           years: parseInt(exp.years) || 0
         }));
 
@@ -408,7 +552,7 @@ const ManageBaseline = () => {
       await dispatch(createBaseline({ userId: publicId, baselineData })).unwrap();
 
       setFormData({
-        experience: [{ technology: "", years: "" }],
+        experience: [{ technology: null, years: "" }],
         totalExperience: "",
         communication: "",
         techSkills: [{ category: "", technologies: [] }],
@@ -418,6 +562,7 @@ const ManageBaseline = () => {
         upskillSuggestion: "",
       });
 
+      setErrors({});
       setShowForm(false);
       setFormStep(1);
       setActiveSection("view");
@@ -440,6 +585,8 @@ const ManageBaseline = () => {
           cat => cat.publicId === selectedCategoryId
         );
         return category?.technologies || [];
+      case "trainingtechnology":
+        return trainingTechnologies;
       default:
         return [];
     }
@@ -449,6 +596,7 @@ const ManageBaseline = () => {
   const closeAddForm = () => {
     setShowForm(false);
     setFormStep(1);
+    setErrors({});
   };
   const nextStep = () => setFormStep(2);
   const prevStep = () => setFormStep(1);
@@ -516,35 +664,38 @@ const ManageBaseline = () => {
             </div>
 
             <div className="flex">
-              {/* Form Section (2/3 width) */}
               <div className="w-full lg:w-2/3 p-6">
                 <form onSubmit={handleSubmit} className="space-y-4">
                   {formStep === 1 ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Tech Experience</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Tech Experiencee <span className="text-red-500">*</span></label>
                         {formData.experience.map((exp, index) => (
                           <div key={index} className="flex items-center space-x-2 mb-2">
                             <div className="w-full">
-                              <label className="block text-sm font-medium text-gray-700 mb-1">Technology</label>
-                              <input
-                                type="text"
+                              <label className="block text-sm font-medium text-gray-700 mb-1">Technology <span className="text-red-500">*</span></label>
+                              <TechExperienceSelector
                                 value={exp.technology}
-                                onChange={(e) => handleExpChange(index, "technology", e.target.value)}
-                                className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                placeholder="Enter technology"
+                                onChange={(selected) => handleExpChange(index, "technology", selected)}
+                                setModalField={setModalField}
+                                loading={trainingTechnologyLoading}
+                                options={technologyOptions}
+                                errors={errors[`experience[${index}].technology`]}
                               />
                             </div>
                             <div className="w-1/4">
-                              <label className="block text-sm font-medium text-gray-700 mb-1">Years</label>
+                              <label className="block text-sm font-medium text-gray-700 mb-1">Years <span className="text-red-500">*</span></label>
                               <input
                                 type="number"
                                 value={exp.years}
                                 onChange={(e) => handleExpChange(index, "years", e.target.value)}
-                                className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                className={`w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors[`experience[${index}].years`] ? "border-red-500" : "border-gray-300"}`}
                                 placeholder="0"
                                 min="0"
                               />
+                              {errors[`experience[${index}].years`] && (
+                                <p className="mt-1 text-sm text-red-600">{errors[`experience[${index}].years`]}</p>
+                              )}
                             </div>
                             {formData.experience.length > 1 && (
                               <button
@@ -567,21 +718,24 @@ const ManageBaseline = () => {
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Certification Details</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Certification Details <span className="text-red-500">*</span></label>
                         {formData.certification.map((cert, index) => (
                           <div key={index} className="flex items-center space-x-2 mb-2">
                             <div className="w-full">
-                              <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                              <label className="block text-sm font-medium text-gray-700 mb-1">Name <span className="text-red-500">*</span></label>
                               <input
                                 type="text"
                                 value={cert.name}
                                 onChange={(e) => handleCertChange(index, "name", e.target.value)}
-                                className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                className={`w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors[`certification[${index}].name`] ? "border-red-500" : "border-gray-300"}`}
                                 placeholder="Enter certification name"
                               />
+                              {errors[`certification[${index}].name`] && (
+                                <p className="mt-1 text-sm text-red-600">{errors[`certification[${index}].name`]}</p>
+                              )}
                             </div>
                             <div className="w-full">
-                              <label className="block text-sm font-medium text-gray-700 mb-1">Authority Name</label>
+                              <label className="block text-sm font-medium text-gray-700 mb-1">Authority Name <span className="text-red-500">*</span></label>
                               <select
                                 value={cert.issuingAuthority}
                                 onChange={(e) => {
@@ -591,7 +745,7 @@ const ManageBaseline = () => {
                                     handleCertChange(index, "issuingAuthority", e.target.value);
                                   }
                                 }}
-                                className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                className={`w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors[`certification[${index}].issuingAuthority`] ? "border-red-500" : "border-gray-300"}`}
                               >
                                 <option value="">Select Certification Authority</option>
                                 {certificationAuthorities.map((auth) => (
@@ -603,6 +757,9 @@ const ManageBaseline = () => {
                                   + Add New Authority
                                 </option>
                               </select>
+                              {errors[`certification[${index}].issuingAuthority`] && (
+                                <p className="mt-1 text-sm text-red-600">{errors[`certification[${index}].issuingAuthority`]}</p>
+                              )}
                             </div>
                             {formData.certification.length > 1 && (
                               <button
@@ -631,20 +788,23 @@ const ManageBaseline = () => {
                           name="totalExperience"
                           value={formData.totalExperience}
                           onChange={handleInputChange}
-                          className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className={`w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.totalExperience ? "border-red-500" : "border-gray-300"}`}
                           placeholder="e.g., 5"
                           min="0"
                           required
                         />
+                        {errors.totalExperience && (
+                          <p className="mt-1 text-sm text-red-600">{errors.totalExperience}</p>
+                        )}
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Communication Level*</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Communication Level* <span className="text-red-500">*</span></label>
                         <select
                           name="communication"
                           value={formData.communication}
                           onChange={handleInputChange}
-                          className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className={`w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.communication ? "border-red-500" : "border-gray-300"}`}
                           required
                         >
                           <option value="">Select Communication Level</option>
@@ -652,12 +812,15 @@ const ManageBaseline = () => {
                           <option value="2">Medium</option>
                           <option value="3">Fluent</option>
                         </select>
+                        {errors.communication && (
+                          <p className="mt-1 text-sm text-red-600">{errors.communication}</p>
+                        )}
                       </div>
                     </div>
                   ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="md:col-span-2">
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Tech Skills*</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Tech Skills* <span className="text-red-500">*</span></label>
                         <TechSkillSelector
                           techSkills={formData.techSkills}
                           setTechSkills={(newTechSkills) => setFormData(prev => ({ ...prev, techSkills: newTechSkills }))}
@@ -666,34 +829,55 @@ const ManageBaseline = () => {
                           setModalField={setModalField}
                           setSelectedCategoryId={setSelectedCategoryId}
                         />
+                        {formData.techSkills.map((skill, index) => (
+                          <div key={index}>
+                            {errors[`techSkills[${index}].category`] && (
+                              <p className="mt-1 text-sm text-red-600">{errors[`techSkills[${index}].category`]}</p>
+                            )}
+                            {errors[`techSkills[${index}].technologies`] && (
+                              <p className="mt-1 text-sm text-red-600">{errors[`techSkills[${index}].technologies`]}</p>
+                            )}
+                            {skill.technologies.map((tech, techIndex) => (
+                              <div key={techIndex}>
+                                {errors[`techSkills[${index}].technologies[${techIndex}].rating`] && (
+                                  <p className="mt-1 text-sm text-red-600">{errors[`techSkills[${index}].technologies[${techIndex}].rating`]}</p>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        ))}
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Overall Rating*</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Overall Rating <span className="text-red-500">*</span></label>
                         <input
                           type="number"
                           name="rating"
                           value={formData.rating}
                           onChange={handleInputChange}
-                          className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className={`w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.rating ? "border-red-500" : "border-gray-300"}`}
                           placeholder="0-5"
                           min="0"
                           max="5"
-                          required
                         />
+                        {errors.rating && (
+                          <p className="mt-1 text-sm text-red-600">{errors.rating}</p>
+                        )}
                       </div>
 
                       <div className="md:col-span-2">
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Feedback*</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Feedback <span className="text-red-500">*</span></label>
                         <textarea
                           name="feedback"
                           value={formData.feedback}
                           onChange={handleInputChange}
-                          className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className={`w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.feedback ? "border-red-500" : "border-gray-300"}`}
                           placeholder="Add feedback here"
                           rows="3"
-                          required
                         />
+                        {errors.feedback && (
+                          <p className="mt-1 text-sm text-red-600">{errors.feedback}</p>
+                        )}
                       </div>
 
                       <div className="md:col-span-2">
@@ -749,13 +933,10 @@ const ManageBaseline = () => {
                 </form>
               </div>
 
-              {/* Timeline Section (1/3 width) - Only visible when form is open */}
               <div className="hidden lg:block w-1/3 bg-gray-50 border-l p-6 overflow-y-auto">
                 <BaselineTimeline 
                   histories={baselineHistories}
-                  onSelect={(id) => {
-                    // Optional: Add logic to highlight or focus on a specific baseline
-                  }}
+                  onSelect={(id) => {}}
                 />
               </div>
             </div>

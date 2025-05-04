@@ -1,5 +1,19 @@
-import React, { useEffect, useState } from "react";
-import { FaPlus, FaArrowLeft, FaFilter, FaTimes, FaCogs, FaCalendar, FaComments } from "react-icons/fa";
+import React, { useEffect, useState, useMemo } from "react";
+import {
+  FaPlus,
+  FaArrowLeft,
+  FaFilter,
+  FaTimes,
+  FaCogs,
+  FaCalendar,
+  FaComments,
+  FaFileDownload,
+  FaFileUpload,
+  FaUsers,
+  FaUserClock,
+  FaExclamationCircle,
+  FaUserCheck
+} from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import ResourceList from "./ResourceList";
@@ -54,6 +68,25 @@ const ManageResource = () => {
     certifications: "",
     communication: "",
   });
+
+  const [statusFilter, setStatusFilter] = useState("");
+
+  // Calculate status counts
+  const statusCounts = useMemo(() => {
+    const counts = {
+      all: resources?.length || 0,
+      pool: 0,
+      pip: 0,
+      deployed: 0
+    };
+    (resources || []).forEach((resource) => {
+      const status = (resource.status || "pool").toLowerCase();
+      if (status === "pool") counts.pool += 1;
+      else if (status === "pip") counts.pip += 1;
+      else if (status === "deployed") counts.deployed += 1;
+    });
+    return counts;
+  }, [resources]);
 
   // Validation rules
   const validate = {
@@ -146,7 +179,7 @@ const ManageResource = () => {
   // Get unique categories
   const categories = [...new Set(technologies.map(tech => tech.technologyCategoryName))];
 
-  // Fetch resources whenever filterData changes
+  // Fetch resources whenever filterData or statusFilter changes
   useEffect(() => {
     dispatch(fetchResources({
       experience: filterData.experience || undefined,
@@ -154,7 +187,7 @@ const ManageResource = () => {
       certification: filterData.certifications || undefined,
       technology: filterData.technologies.length > 0 ? filterData.technologies : undefined,
     }));
-  }, [dispatch, filterData]);
+  }, [dispatch, filterData, statusFilter]);
 
   // Initial fetch for designations, competencies, and technologies
   useEffect(() => {
@@ -283,7 +316,7 @@ const ManageResource = () => {
       certifications: "",
       communication: "",
     });
-    setShowFilters(false);
+    setStatusFilter(""); // Clear status filter as well
   };
 
   const uploadProfilePicture = async (userId) => {
@@ -311,6 +344,84 @@ const ManageResource = () => {
     } catch (error) {
       console.error("Profile upload failed:", error);
       throw error;
+    }
+  };
+
+  const downloadSampleCSV = async () => {
+    try {
+      setToast(<YRMSLoader message="Preparing sample CSV..." />);
+      
+      const token = sessionStorage.getItem("token");
+      const response = await axios.get(
+        `${ADMIN_API_BASE_URL}/resources/sample-csv/`,
+        {
+          responseType: 'blob',
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      // Create download link
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'resource_sample.csv');
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+
+      setToast(<SuccessToast message="Sample CSV downloaded successfully!" onClose={() => setToast(null)} />);
+    } catch (error) {
+      setToast(<ErrorToast message="Failed to download sample CSV" onClose={() => setToast(null)} />);
+      console.error("CSV download error:", error);
+    }
+  };
+
+  const handleCSVUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    // Validate file type
+    if (!file.name.endsWith('.csv')) {
+      setToast(<ErrorToast message="Please upload a CSV file" onClose={() => setToast(null)} />);
+      return;
+    }
+    
+    try {
+      setToast(<YRMSLoader loadingMessage="Processing CSV file..." />);
+      
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      const token = sessionStorage.getItem("token");
+      const response = await axios.post(
+        `${ADMIN_API_BASE_URL}/register-users-csv`,
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (response.data.success) {
+        setToast(<SuccessToast message={response.data.message} onClose={() => setToast(null)} />);
+      } else {
+        const errorMessage = response.data.error.details[0].error;
+        setToast(<ErrorToast message={errorMessage} onClose={() => setToast(null)} />);
+      }
+      
+      // Refresh the resource list
+      dispatch(fetchResources());
+    } catch (error) {
+      var primaryErrorMessage = error.response?.data?.message;
+      var secondaryErrorMessage = error.response?.data?.error?.details?.[0]?.error;
+      const errorMsg = primaryErrorMessage ? `${primaryErrorMessage}: ${secondaryErrorMessage || "Failed to upload CSV"}` : "Failed to upload CSV";
+      setToast(<ErrorToast message={errorMsg} onClose={() => setToast(null)} />);
+    } finally {
+      e.target.value = '';
     }
   };
 
@@ -451,13 +562,104 @@ const ManageResource = () => {
         <div className="mb-6">
           <div className="flex items-center justify-between mb-2">
             <h2 className="text-3xl font-bold text-blue-800">Resource Details</h2>
-            <button
-              className="px-4 py-2 rounded-lg font-semibold text-sm flex items-center bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 transition-all transform hover:scale-105"
-              onClick={() => setActiveSection("add")}
-            >
-              <FaPlus className="mr-2" />
-              Add Resource
-            </button>
+            <div className="flex items-center space-x-2">
+              <div className="relative">
+                <input
+                  type="file"
+                  id="csvUpload"
+                  accept=".csv"
+                  onChange={handleCSVUpload}
+                  className="hidden"
+                />
+                <label
+                  htmlFor="csvUpload"
+                  className="px-4 py-2 rounded-lg font-semibold text-sm flex items-center bg-gradient-to-r from-green-600 to-teal-600 text-white hover:from-green-700 hover:to-teal-700 transition-all transform hover:scale-105 cursor-pointer"
+                >
+                  <FaFileUpload className="mr-2" />
+                  Bulk Upload
+                </label>
+              </div>
+              <button
+                onClick={downloadSampleCSV}
+                className="px-4 py-2 rounded-lg font-semibold text-sm flex items-center bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:from-purple-700 hover:to-indigo-700 transition-all transform hover:scale-105"
+              >
+                <FaFileDownload className="mr-2" />
+                Sample CSV
+              </button>
+              <button
+                className="px-4 py-2 rounded-lg font-semibold text-sm flex items-center bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 transition-all transform hover:scale-105"
+                onClick={() => setActiveSection("add")}
+              >
+                <FaPlus className="mr-2" />
+                Add Resource
+              </button>
+            </div>
+          </div>
+
+          {/* Status Count Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+            {[
+              {
+                status: "all",
+                label: "All Resources",
+                count: statusCounts.all,
+                icon: <FaUsers className={`text-3xl ${statusFilter === "all" ? "text-white" : "text-purple-600"}`} />,
+                color: "purple-600",
+                gradient: "from-purple-600 to-purple-800",
+                hoverBg: "hover:bg-purple-50",
+                selected: statusFilter === "all"
+              },
+              {
+                status: "pool",
+                label: "Pool",
+                count: statusCounts.pool,
+                icon: <FaUserClock className={`text-3xl ${statusFilter === "pool" ? "text-white" : "text-blue-600"}`} />,
+                color: "blue-600",
+                gradient: "from-blue-600 to-blue-800",
+                hoverBg: "hover:bg-blue-50",
+                selected: statusFilter === "pool"
+              },
+              {
+                status: "pip",
+                label: "PIP",
+                count: statusCounts.pip,
+                icon: <FaExclamationCircle className={`text-3xl ${statusFilter === "pip" ? "text-white" : "text-orange-600"}`} />,
+                color: "orange-600",
+                gradient: "from-orange-600 to-orange-800",
+                hoverBg: "hover:bg-orange-50",
+                selected: statusFilter === "pip"
+              },
+              {
+                status: "deployed",
+                label: "Deployed",
+                count: statusCounts.deployed,
+                icon: <FaUserCheck className={`text-3xl ${statusFilter === "deployed" ? "text-white" : "text-green-600"}`} />,
+                color: "green-600",
+                gradient: "from-green-600 to-green-800",
+                hoverBg: "hover:bg-green- ills50",
+                selected: statusFilter === "deployed"
+              }
+            ].map(({ status, label, count, icon, color, gradient, hoverBg, selected }) => (
+              <div
+                key={status}
+                onClick={() => setStatusFilter(status === "all" ? "" : status)}
+                className={`cursor-pointer p-4 rounded-xl shadow-md transition-all transform hover:scale-105 ${
+                  selected
+                    ? `bg-gradient-to-r ${gradient} text-white`
+                    : `bg-white ${hoverBg}`
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-lg font-semibold">{label}</h3>
+                    <p className={`text-2xl font-bold ${selected ? "text-white" : `text-${color}`}`}>
+                      {count}
+                    </p>
+                  </div>
+                  {icon}
+                </div>
+              </div>
+            ))}
           </div>
 
           {/* Compact Filter Section */}
@@ -469,7 +671,8 @@ const ManageResource = () => {
                   filterData.categories.length > 0 ||
                   filterData.experience ||
                   filterData.certifications ||
-                  filterData.communication ? (
+                  filterData.communication ||
+                  statusFilter ? (
                   <button
                     onClick={clearFilters}
                     className="px-2 py-1 rounded-md text-xs flex items-center bg-red-100 text-red-800 hover:bg-red-200 transition-all"
@@ -633,6 +836,8 @@ const ManageResource = () => {
           <ResourceList
             handleBaselineClick={handleBaselineClick}
             handleOpportunitiesClick={handleOpportunitiesClick}
+            setStatusFilter={setStatusFilter}
+            statusFilter={statusFilter}
           />
         </div>
       ) : (

@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { FaPlus, FaSort, FaSearch, FaCalendarAlt, FaSortUp, FaSortDown, FaTrash, FaAngleDoubleLeft, FaAngleLeft, FaAngleRight, FaAngleDoubleRight } from 'react-icons/fa';
-import { Link, useNavigate } from 'react-router';
+import { FaPlus, FaSort, FaSearch, FaCalendarAlt, FaSortUp, FaSortDown, FaTrash, FaAngleDoubleLeft, FaAngleLeft, FaAngleRight, FaAngleDoubleRight, FaFileDownload, FaFileUpload, FaUsers, FaCheckCircle, FaPlayCircle, FaClock, FaPauseCircle, FaTimes } from 'react-icons/fa';
+import { Link, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from "react-redux";
 import { fetchInterns, updateIntern, deleteIntern } from '../../../../features/intern/internAction';
 import "react-datepicker/dist/react-datepicker.css";
@@ -11,6 +11,8 @@ import { ErrorToast, SuccessToast } from '../../../helper/ResourceToast';
 import DeleteConfirmationModal from '../../../helper/DeleteConfirmationModal';
 import { FiEye } from 'react-icons/fi';
 import InternTaskDetails from './InternTaskDetails';
+import axios from 'axios';
+import { API_BASE_URL } from '../../../../config/Endpoints/BaseEndpoints';
 
 const InternList = () => {
     const navigate = useNavigate();
@@ -19,7 +21,6 @@ const InternList = () => {
     const [showViewTask, setShowViewTask] = useState(false);
     const [editingStatusId, setEditingStatusId] = useState(null);
     const [toast, setToast] = useState(null);
-    const [formData, setFormData] = useState(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [deleteModal, setDeleteModal] = useState({
         isOpen: false,
@@ -28,6 +29,7 @@ const InternList = () => {
     });
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 10;
+    const [statusFilter, setStatusFilter] = useState("");
 
     useEffect(() => {
         if (toast) {
@@ -40,7 +42,7 @@ const InternList = () => {
     const hiredOptions = ["All", "Hired", "Not Hired"];
 
     useEffect(() => {
-        dispatch(fetchInterns())
+        dispatch(fetchInterns());
     }, [dispatch]);
 
     const [searchTerms, setSearchTerms] = useState({
@@ -50,7 +52,7 @@ const InternList = () => {
         email: '',
         startDate: null,
         endDate: null,
-        isOffered: 'All', // Default to "All"
+        isOffered: 'All',
     });
     const [sortConfig, setSortConfig] = useState({
         key: null,
@@ -58,8 +60,35 @@ const InternList = () => {
     });
     const [selectedInterns, setSelectedInterns] = useState(null);
 
+    // Sync statusFilter with searchTerms.status
+    useEffect(() => {
+        setSearchTerms((prev) => ({ ...prev, status: statusFilter }));
+    }, [statusFilter]);
+
+    // Calculate status counts
+    const statusCounts = useMemo(() => {
+        const counts = {
+            all: interns?.length || 0,
+            complete: 0,
+            running: 0,
+            pending: 0,
+            hold: 0
+        };
+        (interns || []).forEach((intern) => {
+            const status = (intern.status || "running").toLowerCase();
+            if (status === "complete") counts.complete += 1;
+            else if (status === "running") counts.running += 1;
+            else if (status === "pending") counts.pending += 1;
+            else if (status === "hold") counts.hold += 1;
+        });
+        return counts;
+    }, [interns]);
+
     const handleSearchChange = (key, value) => {
         setSearchTerms(prev => ({ ...prev, [key]: value }));
+        if (key === "status") {
+            setStatusFilter(value); // Update statusFilter when status dropdown changes
+        }
         setCurrentPage(1);
     };
 
@@ -79,6 +108,21 @@ const InternList = () => {
         setCurrentPage(1);
     };
 
+    const clearFilters = () => {
+        setSearchTerms({
+            name: '',
+            mentor: '',
+            status: '',
+            email: '',
+            startDate: null,
+            endDate: null,
+            isOffered: 'All',
+        });
+        setStatusFilter("");
+        setSortConfig({ key: null, direction: 'ascending' });
+        setCurrentPage(1);
+    };
+
     // Filter interns based on search values
     const filteredInterns = useMemo(() => {
         return (interns || []).filter((intern) => {
@@ -87,7 +131,7 @@ const InternList = () => {
             const matchesStatus = searchTerms.status ? intern.status?.toLowerCase() === searchTerms.status.toLowerCase() : true;
             const matchesEmail = intern.email?.toLowerCase().includes(searchTerms.email.toLowerCase()) ?? true;
 
-            // Hired status filtering (fixed logic)
+            // Hired status filtering
             let matchesHiredStatus = true;
             if (searchTerms.isOffered === "Hired") {
                 matchesHiredStatus = intern.isOffered === true;
@@ -197,7 +241,7 @@ const InternList = () => {
             }));
 
             if (updateResult.payload?.publicId) {
-                setToast(<SuccessToast message="status updated successfully!" onClose={() => setToast(null)} />);
+                setToast(<SuccessToast message="Status updated successfully!" onClose={() => setToast(null)} />);
                 dispatch(fetchInterns())
             } else {
                 throw new Error("Failed to update intern");
@@ -206,6 +250,78 @@ const InternList = () => {
             setToast(<ErrorToast message={err.message || "Failed to update status"} onClose={() => setToast(null)} />);
         } finally {
             setIsSubmitting(false);
+        }
+    };
+
+    const downloadSampleCSV = async () => {
+        try {
+            setToast(<YRMSLoader message="Preparing sample CSV..." />);
+            
+            const token = sessionStorage.getItem("token");
+            const response = await axios.get(
+                `${ADMIN_API_BASE_URL}/interns/sample-csv/`,
+                {
+                    responseType: 'blob',
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
+            );
+
+            // Create download link
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', 'intern_sample.csv');
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+
+            setToast(<SuccessToast message="Sample CSV downloaded successfully!" onClose={() => setToast(null)} />);
+        } catch (error) {
+            setToast(<ErrorToast message="Failed to download sample CSV" onClose={() => setToast(null)} />);
+            console.error("CSV download error:", error);
+        }
+    };
+
+    const handleCSVUpload = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        // Validate file type
+        if (!file.name.endsWith('.csv')) {
+            setToast(<ErrorToast message="Please upload a CSV file" onClose={() => setToast(null)} />);
+            return;
+        }
+
+        try {
+            setToast(<YRMSLoader loadingMessage="Processing CSV file..." />);
+            
+            const formData = new FormData();
+            formData.append('file', file);
+
+            const token = sessionStorage.getItem("token");
+            const response = await axios({
+                method: 'post',
+                url: `${API_BASE_URL}intern/create-interns-csv`,
+                data: formData,
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+
+            setToast(<SuccessToast message={`${response.data.message} interns created successfully!`} onClose={() => setToast(null)} />);
+            
+            // Refresh the intern list
+            dispatch(fetchInterns());
+        } catch (error) {
+            const errorMsg = error.response?.data?.message || "Failed to upload CSV";
+            setToast(<ErrorToast message={Array.isArray(errorMsg) ? errorMsg.join(', ') : errorMsg} onClose={() => setToast(null)} />);
+            // console.error("CSV upload error:", error);
+        } finally {
+            // Reset the file input
+            e.target.value = '';
         }
     };
 
@@ -231,14 +347,129 @@ const InternList = () => {
             <div className="mb-6">
                 <div className="flex items-center justify-between mb-2">
                     <h2 className="text-3xl font-bold text-blue-800">Interns Details</h2>
-                    <Link
-                        className="btn px-6 py-3 rounded-lg font-semibold text-lg flex items-center bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 transition-all transform hover:scale-105"
-                        to='/interns/add'
-                    >
-                        <FaPlus className="mr-2" />
-                        Add Intern
-                    </Link>
+                    <div className="flex items-center space-x-2">
+                        <div className="relative">
+                            <input
+                                type="file"
+                                id="csvUpload"
+                                accept=".csv"
+                                onChange={handleCSVUpload}
+                                className="hidden"
+                            />
+                            <label
+                                htmlFor="csvUpload"
+                                className="px-4 py-2 rounded-lg font-semibold text-sm flex items-center bg-gradient-to-r from-green-600 to-teal-600 text-white hover:from-green-700 hover:to-teal-700 transition-all transform hover:scale-105 cursor-pointer"
+                            >
+                                <FaFileUpload className="mr-2" />
+                                Bulk Upload
+                            </label>
+                        </div>
+                        <button
+                            onClick={downloadSampleCSV}
+                            className="px-4 py-2 rounded-lg font-semibold text-sm flex items-center bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:from-purple-700 hover:to-indigo-700 transition-all transform hover:scale-105"
+                        >
+                            <FaFileDownload className="mr-2" />
+                            Sample CSV
+                        </button>
+                        <Link
+                            className="px-4 py-2 rounded-lg font-semibold text-sm flex items-center bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 transition-all transform hover:scale-105"
+                            to='/interns/add'
+                        >
+                            <FaPlus className="mr-2" />
+                            Add Intern
+                        </Link>
+                    </div>
                 </div>
+
+                {/* Status Count Cards */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-5 gap-4 mb-6">
+                    {[
+                        {
+                            status: "all",
+                            label: "All Interns",
+                            count: statusCounts.all,
+                            icon: <FaUsers className={`text-2xl ${statusFilter === "" ? "text-white" : "text-purple-600"}`} />,
+                            color: "purple-600",
+                            gradient: "from-purple-600 to-purple-800",
+                            hoverBg: "hover:bg-purple-50",
+                            selected: statusFilter === ""
+                        },
+                        {
+                            status: "complete",
+                            label: "Complete",
+                            count: statusCounts.complete,
+                            icon: <FaCheckCircle className={`text-2xl ${statusFilter === "complete" ? "text-white" : "text-green-600"}`} />,
+                            color: "green-600",
+                            gradient: "from-green-600 to-green-800",
+                            hoverBg: "hover:bg-green-50",
+                            selected: statusFilter === "complete"
+                        },
+                        {
+                            status: "running",
+                            label: "Running",
+                            count: statusCounts.running,
+                            icon: <FaPlayCircle className={`text-2xl ${statusFilter === "running" ? "text-white" : "text-blue-600"}`} />,
+                            color: "blue-600",
+                            gradient: "from-blue-600 to-blue-800",
+                            hoverBg: "hover:bg-blue-50",
+                            selected: statusFilter === "running"
+                        },
+                        {
+                            status: "pending",
+                            label: "Pending",
+                            count: statusCounts.pending,
+                            icon: <FaClock className={`text-2xl ${statusFilter === "pending" ? "text-white" : "text-orange-600"}`} />,
+                            color: "orange-600",
+                            gradient: "from-orange-600 to-orange-800",
+                            hoverBg: "hover:bg-orange-50",
+                            selected: statusFilter === "pending"
+                        },
+                        {
+                            status: "hold",
+                            label: "Hold",
+                            count: statusCounts.hold,
+                            icon: <FaPauseCircle className={`text-2xl ${statusFilter === "hold" ? "text-white" : "text-gray-600"}`} />,
+                            color: "gray-600",
+                            gradient: "from-gray-600 to-gray-800",
+                            hoverBg: "hover:bg-gray-50",
+                            selected: statusFilter === "hold"
+                        }
+                    ].map(({ status, label, count, icon, color, gradient, hoverBg, selected }) => (
+                        <div
+                            key={status}
+                            onClick={() => setStatusFilter(status === "all" ? "" : status)}
+                            className={`cursor-pointer p-3 rounded-xl shadow-md transition-all transform hover:scale-105 ${
+                                selected
+                                    ? `bg-gradient-to-r ${gradient} text-white`
+                                    : `bg-white ${hoverBg}`
+                            }`}
+                        >
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <h3 className="text-lg font-semibold">{label}</h3>
+                                    <p className={`text-2xl font-bold ${selected ? "text-white" : `text-${color}`}`}>
+                                        {count}
+                                    </p>
+                                </div>
+                                {icon}
+                            </div>
+                        </div>
+                    ))}
+                </div>
+
+                {/* Clear Filters Button */}
+                {(searchTerms.name || searchTerms.mentor || searchTerms.status || searchTerms.email ||
+                  searchTerms.startDate || searchTerms.endDate || searchTerms.isOffered !== "All") && (
+                    <div className="flex justify-end mb-4">
+                        <button
+                            onClick={clearFilters}
+                            className="px-2 py-1 rounded-md text-xs flex items-center bg-red-100 text-red-800 hover:bg-red-200 transition-all"
+                        >
+                            <FaTimes className="mr-1" />
+                            Clear Filters
+                        </button>
+                    </div>
+                )}
             </div>
 
             <div className={`overflow-x-auto rounded-lg shadow-lg border border-gray-200 ${deleteModal.isOpen ? 'filter blur-sm' : ''}`}>
@@ -249,14 +480,14 @@ const InternList = () => {
                                 <th
                                     key={column.key}
                                     className={`p-1 text-center font-semibold text-sm border-b border-gray-200 ${column.key === "sno"
-                                            ? "w-1/20 h-6"  // Smaller width for S.No and Actions
-                                            : "w-1/12" // Default width for other columns
+                                            ? "w-1/20 h-6"
+                                            : "w-1/12"
                                         }`}
                                 >
                                     <div className="flex flex-col items-center justify-center">
                                         <div className="flex items-center justify-center w-full">
                                             <span>{column.label}</span>
-                                            {column.key !== "sno" && column.key !== "taskDetails" && (  // Exclude sort for S.No and Actions
+                                            {column.key !== "sno" && column.key !== "taskDetails" && (
                                                 <button
                                                     onClick={() => handleSort(column.key)}
                                                     className="ml-2 focus:outline-none"
@@ -275,7 +506,6 @@ const InternList = () => {
                                         </div>
                                         {column.key !== "taskDetails" && column.key !== "sno" && (
                                             <div className="relative mt-1 w-full">
-                                                {/* Rest of your filter inputs remain exactly the same */}
                                                 {column.key === "startDate" || column.key === "endDate" ? (
                                                     <div className="relative">
                                                         <DatePicker
@@ -329,7 +559,7 @@ const InternList = () => {
                                     </div>
                                 </th>
                             ))}
-                            <th className="p-1 text-center font-semibold text-sm border-b border-gray-200 w-1/25">  {/* Smaller width for Actions */}
+                            <th className="p-1 text-center font-semibold text-sm border-b border-gray-200 w-1/25">
                                 Actions
                                 <div className="mt-1 h-6"></div>
                             </th>
