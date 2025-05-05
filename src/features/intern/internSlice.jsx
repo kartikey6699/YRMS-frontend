@@ -77,6 +77,7 @@ const internSlice = createSlice({
       .addCase(fetchInterns.fulfilled, (state, { payload }) => {
         state.loading = false;
         state.interns = payload?.interns?.map(intern => ({
+          id: intern.id,
           publicId: intern.publicId,
           name: intern.name,
           email: intern.email,
@@ -109,6 +110,7 @@ const internSlice = createSlice({
         state.loading = false;
         if (isInternDetailsDifferent(state.internDetails, payload)) {
           state.internDetails = {
+            id: payload.id,
             publicId: payload.publicId,
             name: payload.name,
             email: payload.email,
@@ -126,6 +128,7 @@ const internSlice = createSlice({
             lastWorkingDay: payload.lastWorkingDay,
             hiredCompetency: payload.hiredCompetency,
             competencyId: payload.competencyId,
+            profileImage: payload.profileImage
           };
         }
       })

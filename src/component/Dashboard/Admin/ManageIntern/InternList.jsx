@@ -592,7 +592,7 @@ const InternList = () => {
                                 <td className="p-3 text-gray-700 text-sm border-r border-gray-200 flex justify-center items-center">
                                     <button
                                         onClick={() => {
-                                            setSelectedInterns(intern.publicId);
+                                            setSelectedInterns(intern.id);
                                             setShowViewTask(true);
                                         }}
                                         className="p-1.5 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors group relative"
@@ -758,7 +758,7 @@ const InternList = () => {
                 {showViewTask && selectedInterns && (
                     <InternTaskDetails
                         key={selectedInterns}
-                        publicId={selectedInterns}
+                        userId={selectedInterns}
                         onClose={() => {
                             dispatch(fetchInterns());
                             setSelectedInterns(null)

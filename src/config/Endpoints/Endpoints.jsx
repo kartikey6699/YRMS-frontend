@@ -132,3 +132,9 @@ export const ROLE_API = {
 export const FEATURE_API = {
     LIST: `${API_BASE_URL}feature-list`
 };
+
+export const INTERN_TASK_API = {
+    LIST: `${API_BASE_URL}intern-tasks/`,
+    CREATE: `${API_BASE_URL}intern-tasks/upsert`,
+    DELETE: `${API_BASE_URL}intern-tasks/`,
+};

@@ -13,20 +13,10 @@ const RolesPage = ({ setActiveSection, setSelectedRole }) => {
         setSortConfig({ key, direction });
     };
 
-    const handleDelete = (roleId) => {
-        // Your delete logic here
-    };
-
-    const handleEdit = (role) => {
-        // Your edit logic here
-    };
-
     return (
         <RoleList
             setSelectedRole={setSelectedRole}
             setActiveSection={setActiveSection}
-            onDelete={handleDelete}
-            onEdit={handleEdit}
             onSort={handleSort}
             sortConfig={sortConfig}
         />

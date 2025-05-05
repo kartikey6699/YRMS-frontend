@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { FaUser, FaBriefcase, FaChartLine, FaComment, FaTimes, FaEdit, FaSave, FaPlus, FaStar } from 'react-icons/fa';
+import { FaUser, FaUpload, FaChartLine, FaComment, FaTimes, FaEdit, FaSave, FaPlus, FaStar } from 'react-icons/fa';
 import { useDispatch, useSelector } from 'react-redux';
 import AddOptionModal from "../../../helper/OptionalModal";
 import { SuccessToast, ErrorToast } from '../../../helper/ResourceToast';
@@ -8,6 +8,8 @@ import { fetchCompetencies, fetchResources } from '../../../../features/resource
 import { resetInternDetails } from '../../../../features/intern/internSlice';
 import { updateIntern } from '../../../../features/intern/internAction';
 import { useNavigate } from 'react-router-dom';
+import { API_BASE_URL } from '../../../../config/Endpoints/BaseEndpoints';
+import axios from 'axios';
 
 const InternDetail = ({ publicId, onClose }) => {
   const navigate = useNavigate();
@@ -22,6 +24,9 @@ const InternDetail = ({ publicId, onClose }) => {
   const [modalField, setModalField] = useState(null);
   const [formData, setFormData] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [profilePic, setProfilePic] = useState(null);
+  const [profilePicPreview, setProfilePicPreview] = useState(null);
 
   useEffect(() => {
     if (toast) {
@@ -59,6 +64,9 @@ const InternDetail = ({ publicId, onClose }) => {
         hiredCompetency: internDetails.hiredCompetency || null,
         competencyId: internDetails.competencyId || null
       });
+      if (internDetails.profileImage) {
+        setProfilePicPreview(`data:image/png;base64,${internDetails.profileImage}`);
+      }
     }
   }, [internDetails, publicId]);
 
@@ -111,6 +119,77 @@ const InternDetail = ({ publicId, onClose }) => {
     }
   };
 
+  const handleProfilePicChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      if (!file.type.match('image.*')) {
+        setToast({
+          type: 'error',
+          message: 'Only image files are allowed'
+        });
+        return;
+      }
+      if (file.size > 2 * 1024 * 1024) {
+        setToast({
+          type: 'error',
+          message: 'Image must be less than 2MB'
+        });
+        return;
+      }
+      setProfilePic(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setProfilePicPreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const removeProfilePic = () => {
+    setProfilePic(null);
+    setProfilePicPreview(null);
+    setFormData(prev => ({ ...prev, profileImage: null }));
+  };
+
+  const uploadProfilePicture = async () => {
+    if (!profilePic) return;
+    try {
+      setIsUploading(true);
+      const uploadFormData = new FormData();
+      uploadFormData.append('payload', profilePic);
+      const token = sessionStorage.getItem('token');
+      const response = await axios.post(
+        `${API_BASE_URL}image/upload?upload_type=intern&type_id=${publicId?.publicId}`,
+        uploadFormData,
+        {
+          headers: {
+            accept: 'application/json',
+            'Content-Type': 'multipart/form-data',
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      if (response.status === 200) {
+        await dispatch(fetchInternDetails(publicId?.publicId)).unwrap();
+        setToast({
+          type: 'success',
+          message: 'Profile picture updated successfully!'
+        });
+        setProfilePic(null);
+      } else {
+        throw new Error('Failed to upload profile picture');
+      }
+    } catch (error) {
+      setToast({
+        type: 'error',
+        message: error.message || 'Failed to update profile picture'
+      });
+      console.error('Profile upload failed:', error);
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -134,6 +213,10 @@ const InternDetail = ({ publicId, onClose }) => {
         publicId: internDetails?.publicId,
         internData
       }));
+
+      if (profilePic) {
+        await uploadProfilePicture();
+      }
 
       if (updateResult.payload?.publicId) {
         setToast({ type: 'success', message: 'Intern updated successfully!' });
@@ -204,16 +287,35 @@ const InternDetail = ({ publicId, onClose }) => {
             <div className="flex justify-between items-start w-full">
               {/* Profile Image */}
               <div className="relative flex-shrink-0">
-                {formData.profileImage ? (
-                  <img
-                    src={`data:image/png;base64,${formData.profileImage}`}
-                    alt="Profile"
-                    className="w-14 h-14 rounded-full object-cover border-2 border-white shadow-lg"
-                  />
+                {profilePicPreview ? (
+                  <>
+                    <img
+                      src={profilePicPreview}
+                      alt="Profile"
+                      className="w-12 h-12 rounded-full mr-3 object-cover border-2 border-blue-200"
+                    />
+                    {profilePic && (
+                      <button
+                        onClick={removeProfilePic}
+                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
+                        disabled={loading || isUploading}
+                      >
+                        <FaTimes className="text-xs" />
+                      </button>
+                    )}
+                  </>
                 ) : (
-                  <div className="w-14 h-14 rounded-full bg-gradient-to-br from-indigo-100 to-purple-100 flex items-center justify-center border-2 border-white shadow-lg">
-                    <FaUser className="text-indigo-500 text-2xl" />
-                  </div>
+                  formData.profileImage ? (
+                    <img
+                      src={`data:image/png;base64,${formData.profileImage}`}
+                      alt="Profile"
+                      className="w-14 h-14 rounded-full object-cover border-2 border-white shadow-lg"
+                    />
+                  ) : (
+                    <div className="w-14 h-14 rounded-full bg-gradient-to-br from-indigo-100 to-purple-100 flex items-center justify-center border-2 border-white shadow-lg">
+                      <FaUser className="text-indigo-500 text-2xl" />
+                    </div>
+                  )
                 )}
               </div>
 
@@ -223,13 +325,33 @@ const InternDetail = ({ publicId, onClose }) => {
                   {/* Name */}
                   <div className="min-w-0 max-w-[70%]">
                     {isEditing ? (
-                      <input
-                        name="employeeName"
-                        value={formData.employeeName}
-                        onChange={handleInputChange}
-                        className="text-2xl font-bold text-indigo-900 bg-transparent w-full focus:outline-none focus:ring-2 focus:ring-indigo-300 rounded px-2 py-1"
-                        disabled={loading}
-                      />
+                      <div className="flex flex-col">
+                        <input
+                          name="employeeName"
+                          value={formData.employeeName}
+                          onChange={handleInputChange}
+                          className="text-xl font-semibold text-gray-800 border rounded-md px-2 py-1 focus:ring-1 focus:ring-blue-300 bg-white bg-opacity-90"
+                          disabled={loading}
+                        />
+                        <div className="mt-2">
+                          <input
+                            type="file"
+                            id="profilePic"
+                            name="profilePic"
+                            accept="image/*"
+                            onChange={handleProfilePicChange}
+                            className="hidden"
+                            disabled={loading || isUploading}
+                          />
+                          <label
+                            htmlFor="profilePic"
+                            className={`flex items-center px-3 py-1 rounded-md text-sm cursor-pointer transition-all ${isUploading ? 'bg-gray-100 text-gray-500' : 'bg-blue-100 text-blue-700 hover:bg-blue-200 active:scale-95'}`}
+                          >
+                            <FaUpload className="mr-1 text-xs" />
+                            {isUploading ? 'Uploading...' : 'Update Profile Picture'}
+                          </label>
+                        </div>
+                      </div>
                     ) : (
                       <h3 className="text-2xl font-bold text-indigo-900 truncate">
                         {formData.employeeName}
