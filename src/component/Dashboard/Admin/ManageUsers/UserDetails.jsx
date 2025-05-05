@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from "react-redux";
 import {
   FaUser,
@@ -29,19 +29,48 @@ const EmployeeDetailPage = ({ publicId, onClose }) => {
   const [toast, setToast] = useState(null);
   const [showAdditionalInfo, setShowAdditionalInfo] = useState(false);
   const [isRolesOpen, setIsRolesOpen] = useState(false);
+  const [errors, setErrors] = useState({});
   const [deleteModal, setDeleteModal] = useState({
     isOpen: false,
     resourceId: null,
     resourceName: ''
   });
 
+  // Get roles from sessionStorage
+  const storedRoles = sessionStorage.getItem('role');
+  const roles = JSON.parse(storedRoles);
+
+  // Validation function
+  const validateField = (name, value) => {
+    if (!value) return ""; // Not required in edit form
+    
+    switch (name) {
+      case 'employeeId':
+        if (!/^[a-zA-Z0-9]+$/.test(value)) return "Only alphanumeric characters allowed";
+        break;
+      case 'employeeName':
+        if (value.length < 2) return "Name must be at least 2 characters";
+        break;
+      case 'email':
+        if (!/^[a-zA-Z0-9._%+-]+@yash\.com$/i.test(value)) return "Only yash.com emails allowed";
+        break;
+      case 'phoneNumber':
+        if (!/^[0-9]{7,15}$/.test(value)) return "Phone must be 7-15 digits";
+        break;
+      default:
+        break;
+    }
+    
+    return "";
+  };
+
   const handleRoleToggle = (roleId) => {
-    setFormData(prev => ({
-      ...prev,
-      roleIds: prev.roleIds.includes(roleId)
-        ? prev.roleIds.filter(id => id !== roleId)
-        : [...prev.roleIds, roleId]
-    }));
+    const newRoleIds = formData.roleIds?.includes(roleId)
+      ? formData.roleIds.filter(id => id !== roleId)
+      : [...(formData.roleIds || []), roleId];
+    
+    setFormData(prev => ({ ...prev, roleIds: newRoleIds }));
+    setErrors(prev => ({ ...prev, roleIds: validateField('roleIds', newRoleIds) }));
   };
 
   useEffect(() => {
@@ -50,36 +79,8 @@ const EmployeeDetailPage = ({ publicId, onClose }) => {
       dispatch(fetchCompetencies());
       dispatch(fetchDesignations());
     }
-  }, [dispatch]);
+  }, [dispatch, publicId]);
 
-  // Get roles from sessionStorage (expecting a stringified array of roles)
-  const storedRoles = sessionStorage.getItem('role');
-  const roles = JSON.parse(storedRoles); // Parse the stored string into an array
-
-  const getRoleName = (roleIds) => {
-    if (!roleIds) return { names: "N/A", ids: "N/A" };
-    if (!storedRoles) return { names: "N/A", ids: "N/A" };
-
-    try {
-      // Handle both single ID and array of IDs
-      const result = Array.isArray(roleIds)
-        ? {
-          names: roleIds.map(id => roles.find(r => r.id === id)?.role || "Unknown").join(", "),
-          ids: roleIds.join(", ")
-        }
-        : {
-          names: roles.find(r => r.id === roleIds)?.role || "Unknown",
-          ids: roleIds
-        };
-
-      return result;
-    } catch (e) {
-      console.error("Error parsing roles:", e);
-      return { names: "N/A", ids: "N/A" };
-    }
-  };
-
-  // Initialize form data when resourceDetails changes
   useEffect(() => {
     if (resourceDetails) {
       setFormData({
@@ -90,7 +91,6 @@ const EmployeeDetailPage = ({ publicId, onClose }) => {
     }
   }, [resourceDetails]);
 
-  // Auto-dismiss toast after 3 seconds
   useEffect(() => {
     if (toast) {
       const timer = setTimeout(() => setToast(null), 3000);
@@ -100,13 +100,51 @@ const EmployeeDetailPage = ({ publicId, onClose }) => {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    setFormData(prev => ({ ...prev, [name]: value }));
+    
+    // Validate only if there's already an error or we're leaving the field
+    if (errors[name]) {
+      setErrors(prev => ({ ...prev, [name]: validateField(name, value) }));
+    }
+  };
+
+  const handleBlur = (e) => {
+    const { name, value } = e.target;
+    setErrors(prev => ({ ...prev, [name]: validateField(name, value) }));
+  };
+
+  const handleRoleBlur = () => {
+    setErrors(prev => ({ ...prev, roleIds: validateField('roleIds', formData.roleIds) }));
+  };
+
+  const validateForm = () => {
+    const newErrors = {};
+    let isValid = true;
+
+    // Validate all editable fields
+    if (formData.employeeName) {
+      newErrors.employeeName = validateField('employeeName', formData.employeeName);
+    }
+    if (formData.employeeId) {
+      newErrors.employeeId = validateField('employeeId', formData.employeeId);
+    }
+    if (formData.phoneNumber) {
+      newErrors.phoneNumber = validateField('phoneNumber', formData.phoneNumber);
+    }
+    if (formData.email) {
+      newErrors.email = validateField('email', formData.email);
+    }
+
+    setErrors(newErrors);
+    return !Object.values(newErrors).some(error => error);
   };
 
   const handleSubmit = async () => {
+    if (!validateForm()) {
+      setToast({ type: 'error', message: 'Please fix validation errors' });
+      return;
+    }
+
     try {
       const transformData = {
         employeeName: formData.employeeName || '',
@@ -143,7 +181,36 @@ const EmployeeDetailPage = ({ publicId, onClose }) => {
       joiningDate: resourceDetails.joiningDate?.split('T')[0] || '',
       roleIds: resourceDetails.roleIds || []
     });
+    setErrors({});
     setIsEditing(false);
+  };
+
+  const getRoleName = (roleIds) => {
+    if (!roleIds) return { names: "N/A", ids: "N/A" };
+    if (!storedRoles) return { names: "N/A", ids: "N/A" };
+
+    try {
+      const result = Array.isArray(roleIds)
+        ? {
+          names: roleIds.map(id => roles.find(r => r.id === id)?.role || "Unknown").join(", "),
+          ids: roleIds.join(", ")
+        }
+        : {
+          names: roles.find(r => r.id === roleIds)?.role || "Unknown",
+          ids: roleIds
+        };
+
+      return result;
+    } catch (e) {
+      console.error("Error parsing roles:", e);
+      return { names: "N/A", ids: "N/A" };
+    }
+  };
+
+  const getInputClasses = (fieldName) => {
+    return errors[fieldName] 
+      ? "w-full bg-white border border-red-300 rounded-md px-2 py-1.5 text-sm focus:ring-1 focus:ring-red-300"
+      : "w-full bg-white border border-indigo-200 rounded-md px-2 py-1.5 text-sm focus:ring-1 focus:ring-indigo-300";
   };
 
   if (!resourceDetails) {
@@ -199,13 +266,19 @@ const EmployeeDetailPage = ({ publicId, onClose }) => {
                 {/* Name */}
                 <div className="bg-gradient-to-r from-white to-indigo-50 px-4 py-2 rounded-lg shadow-xs min-w-0 max-w-80 overflow-hidden border border-indigo-100">
                   {isEditing ? (
-                    <input
-                      name="employeeName"
-                      value={formData.employeeName}
-                      onChange={handleInputChange}
-                      className="text-xl font-semibold text-indigo-800 bg-transparent w-full min-w-0 focus:outline-none focus:ring-2 focus:ring-indigo-300"
-                      disabled={loading}
-                    />
+                    <div>
+                      <input
+                        name="employeeName"
+                        value={formData.employeeName}
+                        onChange={handleInputChange}
+                        onBlur={handleBlur}
+                        className={`text-xl font-semibold text-indigo-800 bg-transparent w-full min-w-0 focus:outline-none ${errors.employeeName ? 'border-red-300 focus:ring-red-300' : 'border-indigo-200 focus:ring-indigo-300'} border rounded px-2 py-1`}
+                        disabled={loading}
+                      />
+                      {errors.employeeName && (
+                        <p className="text-red-500 text-xs mt-1">{errors.employeeName}</p>
+                      )}
+                    </div>
                   ) : (
                     <h3 className="text-xl font-semibold text-indigo-800 truncate">
                       {resourceDetails.employeeName}
@@ -217,9 +290,26 @@ const EmployeeDetailPage = ({ publicId, onClose }) => {
                 <div className="bg-gradient-to-r from-indigo-50 to-blue-50 px-3 py-2 rounded-lg shadow-xs flex items-center gap-2 border border-indigo-100">
                   <FaIdBadge className="text-indigo-500" />
                   <span className="text-sm text-indigo-600 font-medium">Employee ID:</span>
-                  <span className="text-base text-indigo-800 font-medium">
-                    {resourceDetails.employeeId}
-                  </span>
+                  {isEditing ? (
+                    <div className="flex flex-col">
+                      <input
+                        type="text"
+                        name="employeeId"
+                        value={formData.employeeId}
+                        onChange={handleInputChange}
+                        onBlur={handleBlur}
+                        className={getInputClasses('employeeId')}
+                        disabled={loading}
+                      />
+                      {errors.employeeId && (
+                        <p className="text-red-500 text-xs mt-1">{errors.employeeId}</p>
+                      )}
+                    </div>
+                  ) : (
+                    <span className="text-base text-indigo-800 font-medium">
+                      {resourceDetails.employeeId}
+                    </span>
+                  )}
                 </div>
 
                 {/* Status */}
@@ -243,6 +333,7 @@ const EmployeeDetailPage = ({ publicId, onClose }) => {
                         name="joiningDate"
                         value={formData.joiningDate}
                         onChange={handleInputChange}
+                        onBlur={handleBlur}
                         className="w-full bg-white border border-blue-200 rounded-md px-1 py-1 text-sm focus:ring-1 focus:ring-blue-300"
                         disabled={loading}
                       />
@@ -299,9 +390,26 @@ const EmployeeDetailPage = ({ publicId, onClose }) => {
                   <label className="block text-xs text-indigo-600 mb-1 font-semibold flex items-center">
                     <FaEnvelope className="mr-2" /> Email
                   </label>
-                  <p className="text-sm font-medium text-indigo-800">
-                    {resourceDetails.email || 'Not specified'}
-                  </p>
+                  {isEditing ? (
+                    <div>
+                      <input
+                        type="email"
+                        name="email"
+                        value={formData.email}
+                        onChange={handleInputChange}
+                        onBlur={handleBlur}
+                        className={getInputClasses('email')}
+                        disabled={loading}
+                      />
+                      {errors.email && (
+                        <p className="text-red-500 text-xs mt-1">{errors.email}</p>
+                      )}
+                    </div>
+                  ) : (
+                    <p className="text-sm font-medium text-indigo-800">
+                      {resourceDetails.email || 'Not specified'}
+                    </p>
+                  )}
                 </div>
 
                 {/* Phone Number */}
@@ -310,14 +418,20 @@ const EmployeeDetailPage = ({ publicId, onClose }) => {
                     <FaPhone className="mr-2" /> Phone Number
                   </label>
                   {isEditing ? (
-                    <input
-                      type="tel"
-                      name="phoneNumber"
-                      value={formData.phoneNumber}
-                      onChange={handleInputChange}
-                      className="w-full bg-white border border-indigo-200 rounded-md px-2 py-1.5 text-sm focus:ring-1 focus:ring-indigo-300"
-                      disabled={loading}
-                    />
+                    <div>
+                      <input
+                        type="tel"
+                        name="phoneNumber"
+                        value={formData.phoneNumber}
+                        onChange={handleInputChange}
+                        onBlur={handleBlur}
+                        className={getInputClasses('phoneNumber')}
+                        disabled={loading}
+                      />
+                      {errors.phoneNumber && (
+                        <p className="text-red-500 text-xs mt-1">{errors.phoneNumber}</p>
+                      )}
+                    </div>
                   ) : (
                     <p className="text-sm font-medium text-indigo-800">
                       {resourceDetails.phoneNumber || 'Not specified'}
@@ -335,6 +449,7 @@ const EmployeeDetailPage = ({ publicId, onClose }) => {
                       name="gender"
                       value={formData.gender}
                       onChange={handleInputChange}
+                      onBlur={handleBlur}
                       className="w-full bg-white border border-indigo-200 rounded-md px-2 py-1.5 text-sm focus:ring-1 focus:ring-indigo-300"
                       disabled={loading}
                     >
@@ -369,8 +484,10 @@ const EmployeeDetailPage = ({ publicId, onClose }) => {
                     <div className="relative">
                       {/* Input-like container that shows selected roles */}
                       <div
-                        className={`w-full min-h-12 p-2 bg-white border border-indigo-200 rounded-md flex flex-wrap items-center cursor-pointer ${isRolesOpen ? 'ring-1 ring-indigo-300 border-transparent' : ''}`}
+                        className={`w-full min-h-12 p-2 bg-white border ${errors.roleIds ? 'border-red-300' : 'border-indigo-200'} rounded-md flex flex-wrap items-center cursor-pointer ${isRolesOpen ? 'ring-1 ring-indigo-300 border-transparent' : ''}`}
                         onClick={() => setIsRolesOpen(!isRolesOpen)}
+                        onBlur={handleRoleBlur}
+                        tabIndex={0}
                       >
                         {formData.roleIds?.length === 0 ? (
                           <span className="text-gray-400 ml-2">Select roles...</span>
@@ -422,6 +539,9 @@ const EmployeeDetailPage = ({ publicId, onClose }) => {
                           ))}
                         </div>
                       )}
+                      {errors.roleIds && (
+                        <p className="text-red-500 text-xs mt-1">{errors.roleIds}</p>
+                      )}
                     </div>
                   ) : (
                     <p className="text-sm font-medium text-indigo-800">
@@ -440,6 +560,7 @@ const EmployeeDetailPage = ({ publicId, onClose }) => {
                       name="location"
                       value={formData.location}
                       onChange={handleInputChange}
+                      onBlur={handleBlur}
                       className="w-full bg-white border border-indigo-200 rounded-md px-2 py-1.5 text-sm focus:ring-1 focus:ring-indigo-300"
                       disabled={loading}
                     >
@@ -469,6 +590,7 @@ const EmployeeDetailPage = ({ publicId, onClose }) => {
                       name='designation'
                       value={formData.designation || ''}
                       onChange={handleInputChange}
+                      onBlur={handleBlur}
                       className="w-full bg-white border border-indigo-200 rounded-md px-2 py-1.5 text-sm focus:ring-1 focus:ring-indigo-300"
                       disabled={loading}
                     >
@@ -506,6 +628,7 @@ const EmployeeDetailPage = ({ publicId, onClose }) => {
                       name="businessGroup"
                       value={formData.businessGroup}
                       onChange={handleInputChange}
+                      onBlur={handleBlur}
                       className="w-full bg-white border border-indigo-200 rounded-md px-2 py-1.5 text-sm focus:ring-1 focus:ring-indigo-300"
                       disabled={loading}
                     >
@@ -531,6 +654,7 @@ const EmployeeDetailPage = ({ publicId, onClose }) => {
                       name="businessUnit"
                       value={formData.businessUnit}
                       onChange={handleInputChange}
+                      onBlur={handleBlur}
                       className="w-full bg-white border border-indigo-200 rounded-md px-2 py-1.5 text-sm focus:ring-1 focus:ring-indigo-300"
                       disabled={loading}
                     >
@@ -556,6 +680,7 @@ const EmployeeDetailPage = ({ publicId, onClose }) => {
                       name='competency'
                       value={formData.competency || ''}
                       onChange={handleInputChange}
+                      onBlur={handleBlur}
                       className="w-full bg-white border border-indigo-200 rounded-md px-2 py-1.5 text-sm focus:ring-1 focus:ring-indigo-300"
                       disabled={loading}
                     >
