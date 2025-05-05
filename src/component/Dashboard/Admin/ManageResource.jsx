@@ -349,7 +349,7 @@ const ManageResource = () => {
 
   const downloadSampleCSV = async () => {
     try {
-      setToast(<YRMSLoader message="Preparing sample CSV..." />);
+      setToast(<YRMSLoader loadingMessage="Preparing sample CSV..." />);
       
       const token = sessionStorage.getItem("token");
       const response = await axios.get(
@@ -442,7 +442,7 @@ const ManageResource = () => {
     }
 
     try {
-      setToast(<YRMSLoader message="Creating resource..." />);
+      setToast(<YRMSLoader loadingMessage="Creating resource..." />);
 
       const createResult = await dispatch(createResource(formData));
 
@@ -453,13 +453,13 @@ const ManageResource = () => {
       const publicId = createResult.payload.publicId;
 
       if (profilePic) {
-        setToast(<YRMSLoader message="Uploading profile picture..." />);
+        setToast(<YRMSLoader loadingMessage="Uploading profile picture..." />);
         await uploadProfilePicture(publicId);
       }
 
       setToast(<SuccessToast message="Resource created successfully!" onClose={() => setToast(null)} />);
 
-      setToast(<YRMSLoader message="Refreshing data..." />);
+      setToast(<YRMSLoader loadingMessage="Refreshing data..." />);
       await dispatch(fetchResources());
 
       setFormData({
@@ -556,7 +556,7 @@ const ManageResource = () => {
 
   return (
     <div className="p-6 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl shadow-lg mt-15">
-      {loading && <YRMSLoader />}
+      {loading && <YRMSLoader loadingMessage="Loading Resources"/>}
       {toast}
       {activeSection !== "add" ? (
         <div className="mb-6">
