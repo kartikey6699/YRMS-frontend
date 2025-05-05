@@ -25,7 +25,6 @@ const MultiSelectTechnology = ({ value, onChange, setModalField, loading, option
     setModalField("trainingtechnology");
   };
 
-  // Custom dropdown menu with sticky "Add" button at the bottom
   const MenuList = (props) => {
     return (
       <div>
@@ -61,7 +60,7 @@ const MultiSelectTechnology = ({ value, onChange, setModalField, loading, option
         classNamePrefix="select"
         placeholder="Select technologies..."
         isLoading={loading}
-        components={{ MenuList }} // Inject custom MenuList
+        components={{ MenuList }}
         styles={{
           menu: (provided) => ({
             ...provided,
@@ -70,7 +69,6 @@ const MultiSelectTechnology = ({ value, onChange, setModalField, loading, option
           }),
         }}
       />
-
     </div>
   );
 };
@@ -81,13 +79,11 @@ const AddTraining = ({ onClose, onSave, isUpskilling = false }) => {
     (state) => state.resource
   );
 
-  // Trainer options (ONLY role_id=4)
   const trainerOptions = trainers.map(user => ({
     value: user.publicId,
     label: user.employeeName,
   }));
 
-  // Participant options (role_id=3, regardless of other roles)
   const participantOptions = participants.map(user => ({
     value: user.publicId,
     label: user.employeeName,
@@ -100,9 +96,9 @@ const AddTraining = ({ onClose, onSave, isUpskilling = false }) => {
 
   const requesterOptions = [
     { value: 1, label: "Python" },
-    { value: 2, label: "Data Engineering " },
+    { value: 2, label: "Data Engineering" },
     { value: 3, label: "Data Analytics" },
-    { value: 3, label: "Project_Management_Office" },
+    { value: 4, label: "Project_Management_Office" },
   ];
 
   const technologyOptions = trainingTechnologies.map(tech => ({
@@ -128,14 +124,12 @@ const AddTraining = ({ onClose, onSave, isUpskilling = false }) => {
   const [modalField, setModalField] = useState(null);
   const [toast, setToast] = useState(null);
 
-  // Fetch training technologies, resources, and competencies on mount
   useEffect(() => {
     dispatch(fetchResources({}));
     dispatch(fetchTrainingTechnologies());
     dispatch(fetchCompetencies());
   }, [dispatch]);
 
-  // Calculate end date when start date or duration changes
   useEffect(() => {
     if (formData.startDate && formData.duration && formData.duration > 0) {
       const calculatedEndDate = calculateEndDate(
@@ -146,29 +140,89 @@ const AddTraining = ({ onClose, onSave, isUpskilling = false }) => {
         ...prev,
         endDate: calculatedEndDate,
       }));
+      validateField("endDate", calculatedEndDate);
+    } else {
+      setFormData((prev) => ({ ...prev, endDate: "" }));
+      setErrors((prev) => ({ ...prev, endDate: undefined }));
     }
   }, [formData.startDate, formData.duration]);
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData({
-      ...formData,
-      [name]: value,
-    });
-  };
+  const validateField = (name, value) => {
+    const newErrors = { ...errors };
 
-  const handleSelectChange = (name, selectedOption) => {
-    setFormData({
-      ...formData,
-      [name]: selectedOption,
-    });
-  };
+    switch (name) {
+      case "programName":
+        newErrors.programName = !value.trim()
+          ? `${isUpskilling ? 'Upskilling' : 'Training'} name is required`
+          : undefined;
+        break;
+      case "trainerName":
+        newErrors.trainerName = !value
+          ? "Trainer name is required"
+          : undefined;
+        break;
+      case "startDate":
+        if (!value) {
+          newErrors.startDate = "Start date is required";
+        } else {
+          const today = new Date(formatDate(new Date()));
+          const selectedDate = new Date(value);
+          newErrors.startDate = selectedDate < today
+            ? "Start date cannot be in the past"
+            : undefined;
+        }
+        break;
+      case "duration":
+        newErrors.duration = !value || value <= 0
+          ? "Duration must be a positive number"
+          : undefined;
+        break;
+      case "endDate":
+        if (formData.startDate && value) {
+          const start = new Date(formData.startDate);
+          const end = new Date(value);
+          newErrors.endDate = end < start
+            ? "End date must be on or after start date"
+            : undefined;
+        }
+        break;
+      case "requester":
+        newErrors.requester = !value
+          ? "Requester is required"
+          : undefined;
+        break;
+      case "competency":
+        newErrors.competency = !value
+          ? "Competency is required"
+          : undefined;
+        break;
+      case "technologies":
+        newErrors.technologies = value.length === 0
+          ? "At least one technology is required"
+          : undefined;
+        break;
+      case "purpose":
+        newErrors.purpose = !value.trim()
+          ? "Purpose is required"
+          : undefined;
+        break;
+      case "participants":
+        newErrors.participants = value.length === 0
+          ? "At least one participant is required"
+          : undefined;
+        break;
+      case "projectDescription":
+        if (!isUpskilling && !value.trim()) {
+          newErrors.projectDescription = "Project description is required";
+        } else {
+          newErrors.projectDescription = undefined;
+        }
+        break;
+      default:
+        break;
+    }
 
-  const handleMultiSelectChange = (name, selectedOptions) => {
-    setFormData({
-      ...formData,
-      [name]: selectedOptions,
-    });
+    setErrors(newErrors);
   };
 
   const validateForm = () => {
@@ -176,24 +230,57 @@ const AddTraining = ({ onClose, onSave, isUpskilling = false }) => {
     if (!formData.programName) newErrors.programName = `${isUpskilling ? 'Upskilling' : 'Training'} name is required`;
     if (!formData.trainerName) newErrors.trainerName = "Trainer name is required";
     if (!formData.startDate) newErrors.startDate = "Start date is required";
-    if (!formData.duration || formData.duration <= 0)
-      newErrors.duration = "Valid duration is required";
-    if (!formData.endDate) newErrors.endDate = "End date is required";
+    else {
+      const today = new Date(formatDate(new Date()));
+      const selectedDate = new Date(formData.startDate);
+      if (selectedDate < today) newErrors.startDate = "Start date cannot be in the past";
+    }
+    if (!formData.duration || formData.duration <= 0) newErrors.duration = "Duration must be a positive number";
     if (!formData.requester) newErrors.requester = "Requester is required";
     if (!formData.competency) newErrors.competency = "Competency is required";
+    if (formData.technologies.length === 0) newErrors.technologies = "At least one technology is required";
     if (!formData.purpose) newErrors.purpose = "Purpose is required";
-    if (formData.technologies.length === 0)
-      newErrors.technologies = "At least one technology is required";
-    if (formData.participants.length === 0)
-      newErrors.participants = "At least one participant is required";
+    if (formData.participants.length === 0) newErrors.participants = "At least one participant is required";
+    if (!isUpskilling && !formData.projectDescription) newErrors.projectDescription = "Project description is required";
+    if (formData.startDate && formData.endDate) {
+      const start = new Date(formData.startDate);
+      const end = new Date(formData.endDate);
+      if (end < start) newErrors.endDate = "End date must be on or after start date";
+    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
+    validateField(name, value);
+  };
+
+  const handleSelectChange = (name, selectedOption) => {
+    setFormData({ ...formData, [name]: selectedOption });
+    validateField(name, selectedOption);
+  };
+
+  const handleMultiSelectChange = (name, selectedOptions) => {
+    setFormData({ ...formData, [name]: selectedOptions });
+    validateField(name, selectedOptions);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validateForm()) return;
+
+    if (trainerOptions.length === 0 || participantOptions.length === 0) {
+      setToast(
+        <ErrorToast
+          message="No trainers or participants available. Please contact the administrator."
+          onClose={() => setToast(null)}
+        />
+      );
+      return;
+    }
 
     try {
       setToast(<YRMSLoader message="Creating program..." />);
@@ -205,16 +292,13 @@ const AddTraining = ({ onClose, onSave, isUpskilling = false }) => {
         endDate: formData.endDate,
         duration: parseInt(formData.duration),
         requester: formData.requester.value,
-        // technology: formData.technologies.map(t => t.label), // Combine technologies into a string
-        technology: formData.technologies.map(t => t.label).join(", "), // Combine technologies into a string
+        technology: formData.technologies.map(t => t.label).join(", "),
         projectDescription: formData.projectDescription,
         competencyId: formData.competency.value,
         trainerId: formData.trainerName.value,
         purpose: formData.purpose,
         participantIds: formData.participants.map((p) => p.value)
       };
-
-      console.log('payload >>>', programData);
 
       const createResult = await dispatch(createProgram(programData)).unwrap();
 
@@ -227,10 +311,23 @@ const AddTraining = ({ onClose, onSave, isUpskilling = false }) => {
       setToast(<YRMSLoader message="Refreshing programs..." />);
       await dispatch(fetchProgramList());
 
+      onSave();
       onClose();
       setToast(null);
     } catch (err) {
-      setToast(<ErrorToast message={err.message || "Failed to create program"} onClose={() => setToast(null)} />);
+      let errorMessage = "Failed to create program";
+      if (err.message) {
+        if (err.message.includes("duplicate")) {
+          errorMessage = "A program with this name already exists";
+        } else if (err.message.includes("trainer")) {
+          errorMessage = "Invalid or unavailable trainer selected";
+        } else if (err.message.includes("participant")) {
+          errorMessage = "Invalid or unavailable participants selected";
+        } else {
+          errorMessage = err.message;
+        }
+      }
+      setToast(<ErrorToast message={errorMessage} onClose={() => setToast(null)} />);
     }
   };
 
@@ -264,8 +361,17 @@ const AddTraining = ({ onClose, onSave, isUpskilling = false }) => {
         </div>
 
         <form onSubmit={handleSubmit} className="p-6">
+          {trainerOptions.length === 0 && (
+            <p className="mb-4 text-red-600 text-sm">
+              No trainers available. Please contact the administrator.
+            </p>
+          )}
+          {participantOptions.length === 0 && (
+            <p className="mb-4 text-red-600 text-sm">
+              No participants available. Please contact the administrator.
+            </p>
+          )}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Program Name */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 {isUpskilling ? 'Upskilling Name' : 'Training Name'} <span className="text-red-500">*</span>
@@ -280,14 +386,11 @@ const AddTraining = ({ onClose, onSave, isUpskilling = false }) => {
                   placeholder={isUpskilling ? "e.g. Leadership Development" : "e.g. React Fundamentals"}
                 />
                 {errors.programName && (
-                  <p className="mt-1 text-sm text-red-600">
-                    {errors.programName}
-                  </p>
+                  <p className="mt-1 text-sm text-red-600">{errors.programName}</p>
                 )}
               </div>
             </div>
 
-            {/* Trainer Name */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Trainer Name <span className="text-red-500">*</span>
@@ -298,19 +401,15 @@ const AddTraining = ({ onClose, onSave, isUpskilling = false }) => {
                 onChange={(selected) => handleSelectChange("trainerName", selected)}
                 className={`basic-single ${errors.trainerName ? "border-red-500" : ""}`}
                 placeholder="Select trainer..."
-                required
+                isDisabled={trainerOptions.length === 0}
               />
               {errors.trainerName && (
-                <p className="mt-1 text-sm text-red-600">
-                  {errors.trainerName}
-                </p>
+                <p className="mt-1 text-sm text-red-600">{errors.trainerName}</p>
               )}
             </div>
 
-            {/* Date Section - Single Row */}
             <div className="md:col-span-2">
               <div className="flex items-end space-x-4">
-                {/* Start Date */}
                 <div className="flex-1">
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Start Date <span className="text-red-500">*</span>
@@ -329,14 +428,11 @@ const AddTraining = ({ onClose, onSave, isUpskilling = false }) => {
                       onClick={(e) => e.target.showPicker()}
                     />
                     {errors.startDate && (
-                      <p className="mt-1 text-sm text-red-600">
-                        {errors.startDate}
-                      </p>
+                      <p className="mt-1 text-sm text-red-600">{errors.startDate}</p>
                     )}
                   </div>
                 </div>
 
-                {/* Duration */}
                 <div className="w-28">
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Duration <span className="text-red-500">*</span>
@@ -355,17 +451,14 @@ const AddTraining = ({ onClose, onSave, isUpskilling = false }) => {
                       placeholder="Days"
                     />
                     {errors.duration && (
-                      <p className="mt-1 text-sm text-red-600">
-                        {errors.duration}
-                      </p>
+                      <p className="mt-1 text-sm text-red-600">{errors.duration}</p>
                     )}
                   </div>
                 </div>
 
-                {/* Estimated End Date */}
                 <div className="flex-1 relative">
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Estimated End Date <span className="text-red-500">*</span>
+                    Estimated End Date
                   </label>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -380,9 +473,7 @@ const AddTraining = ({ onClose, onSave, isUpskilling = false }) => {
                       onClick={(e) => e.target.showPicker()}
                     />
                     {errors.endDate && (
-                      <p className="mt-1 text-sm text-red-600">
-                        {errors.endDate}
-                      </p>
+                      <p className="mt-1 text-sm text-red-600">{errors.endDate}</p>
                     )}
                   </div>
                   {formData.endDate && (
@@ -394,7 +485,6 @@ const AddTraining = ({ onClose, onSave, isUpskilling = false }) => {
               </div>
             </div>
 
-            {/* Requester Field */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Requester <span className="text-red-500">*</span>
@@ -412,7 +502,6 @@ const AddTraining = ({ onClose, onSave, isUpskilling = false }) => {
               )}
             </div>
 
-            {/* Competency */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Competency <span className="text-red-500">*</span>
@@ -430,9 +519,7 @@ const AddTraining = ({ onClose, onSave, isUpskilling = false }) => {
               )}
             </div>
 
-            {/* Training Technology and Project Details */}
             <div className="flex flex-col md:flex-row md:col-span-2 gap-6">
-              {/* Multi-Select Technology */}
               <div className="flex-1">
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   {isUpskilling ? 'Upskilling Technologies' : 'Training Technologies'} <span className="text-red-500">*</span>
@@ -445,13 +532,10 @@ const AddTraining = ({ onClose, onSave, isUpskilling = false }) => {
                   options={technologyOptions}
                 />
                 {errors.technologies && (
-                  <p className="mt-1 text-sm text-red-600">
-                    {errors.technologies}
-                  </p>
+                  <p className="mt-1 text-sm text-red-600">{errors.technologies}</p>
                 )}
               </div>
 
-              {/* Project Details */}
               <div className="flex-1">
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Project Details {!isUpskilling && <span className="text-red-500">*</span>}
@@ -474,10 +558,9 @@ const AddTraining = ({ onClose, onSave, isUpskilling = false }) => {
               </div>
             </div>
 
-            {/* Purpose/Description Field */}
             <div className="md:col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Purpose/Description {isUpskilling && <span className="text-red-500">*</span>}
+                Purpose/Description <span className="text-red-500">*</span>
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 pt-3 flex items-start pointer-events-none">
@@ -500,7 +583,6 @@ const AddTraining = ({ onClose, onSave, isUpskilling = false }) => {
               </div>
             </div>
 
-            {/* Participants */}
             <div className="md:col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Participants <span className="text-red-500">*</span>
@@ -521,11 +603,10 @@ const AddTraining = ({ onClose, onSave, isUpskilling = false }) => {
                       overflowY: "auto",
                     }),
                   }}
+                  isDisabled={participantOptions.length === 0}
                 />
                 {errors.participants && (
-                  <p className="mt-1 text-sm text-red-600">
-                    {errors.participants}
-                  </p>
+                  <p className="mt-1 text-sm text-red-600">{errors.participants}</p>
                 )}
               </div>
             </div>
@@ -542,6 +623,7 @@ const AddTraining = ({ onClose, onSave, isUpskilling = false }) => {
             <button
               type="submit"
               className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"
+              disabled={trainerOptions.length === 0 || participantOptions.length === 0}
             >
               <FaCheck className="mr-2" />
               {isUpskilling ? 'Save Upskilling Program' : 'Save Training Program'}
@@ -553,7 +635,6 @@ const AddTraining = ({ onClose, onSave, isUpskilling = false }) => {
   );
 };
 
-// Helper function to calculate end date excluding weekends and holidays
 function calculateEndDate(startDate, duration) {
   if (!startDate || !duration || duration <= 0) return "";
 
@@ -576,7 +657,6 @@ function calculateEndDate(startDate, duration) {
   return date.toISOString().split("T")[0];
 }
 
-// Helper function to format date as YYYY-MM-DD
 function formatDate(date) {
   if (!date) return "";
   const d = new Date(date);
