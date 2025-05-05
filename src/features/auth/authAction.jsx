@@ -9,6 +9,18 @@ const apiClient = axios.create({
   },
 });
 
+apiClient.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response && error.response.status === 401) {
+      sessionStorage.clear();
+      window.location.href = '/login';
+    }
+    return Promise.reject(error);
+  }
+);
+
+
 export const adminLogin = createAsyncThunk(
   "auth/adminLogin",
   async (payload, { rejectWithValue }) => {

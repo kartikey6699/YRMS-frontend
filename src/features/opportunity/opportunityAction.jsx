@@ -16,6 +16,17 @@ opportunityApiClient.interceptors.request.use((config) => {
   return config;
 });
 
+opportunityApiClient.interceptors.response.use(
+  (response) => response,
+  (error) => {
+      if (error.response && error.response.status === 401) {
+          sessionStorage.clear();
+          window.location.href = '/login';
+      }
+      return Promise.reject(error);
+  }
+);
+
 export const createOpportunity = createAsyncThunk(
   "opportunity/createOpportunity",
   async (opportunityData, { rejectWithValue }) => {

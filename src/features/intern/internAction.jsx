@@ -16,6 +16,17 @@ internApiClient.interceptors.request.use((config) => {
   return config;
 });
 
+internApiClient.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response && error.response.status === 401) {
+      sessionStorage.clear();
+      window.location.href = '/login';
+    }
+    return Promise.reject(error);
+  }
+);
+
 export const createIntern = createAsyncThunk(
   "intern/createIntern",
   async (internData, { rejectWithValue }) => {
