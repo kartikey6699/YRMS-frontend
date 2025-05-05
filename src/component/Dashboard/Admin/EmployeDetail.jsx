@@ -56,12 +56,15 @@ const EmployeeDetail = ({ publicId, onClose }) => {
 
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState(null);
+  const [formErrors, setFormErrors] = useState({});
   const [toast, setToast] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
   const [profilePic, setProfilePic] = useState(null);
   const [profilePicPreview, setProfilePicPreview] = useState(null);
   const [clientName, setClientName] = useState('');
+  const [clientNameError, setClientNameError] = useState('');
   const [statusDescription, setStatusDescription] = useState('');
+  const [statusDescriptionError, setStatusDescriptionError] = useState('');
   const [editingTimelineId, setEditingTimelineId] = useState(null);
   const [timelineEditData, setTimelineEditData] = useState({
     description: '',
@@ -71,12 +74,14 @@ const EmployeeDetail = ({ publicId, onClose }) => {
     createdAt: '',
     updatedAt: ''
   });
+  const [timelineEditErrors, setTimelineEditErrors] = useState({});
   const [isTimelineEditMode, setIsTimelineEditMode] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [timelineToDelete, setTimelineToDelete] = useState(null);
 
   const initialLoadDone = useRef(false);
   const gradeOptions = ['E1', 'E2', 'E3', 'E4', 'E5', 'E6', 'E7'];
+  const MAX_UPLOAD_RETRIES = 3;
 
   useEffect(() => {
     if (toast) {
@@ -123,6 +128,126 @@ const EmployeeDetail = ({ publicId, onClose }) => {
     }
   }, [resourceDetails, publicId]);
 
+  const validateFormField = (name, value) => {
+    switch (name) {
+      case 'employeeName':
+        if (!value.trim()) return 'Employee name is required';
+        if (value.length > 50) return 'Employee name must be 50 characters or less';
+        return '';
+      case 'employeeId':
+        if (!value.trim()) return 'Employee ID is required';
+        if (!/^[a-zA-Z0-9]{4,20}$/.test(value)) return 'Employee ID must be 4-20 alphanumeric characters';
+        return '';
+      case 'designation':
+        if (!value) return 'Designation is required';
+        return '';
+      case 'grade':
+        if (!value) return 'Grade is required';
+        return '';
+      case 'joiningDate':
+        if (!value) return 'Joining date is required';
+        if (new Date(value) > new Date()) return 'Joining date cannot be in the future';
+        return '';
+      case 'status':
+        if (!value) return 'Status is required';
+        return '';
+      default:
+        return '';
+    }
+  };
+
+  const validateClientName = (value) => {
+    if (!value.trim()) return 'Client name is required for deployed status';
+    if (value.length > 100) return 'Client name must be 100 characters or less';
+    return '';
+  };
+
+  const validateStatusDescription = (value) => {
+    if (!value.trim()) return 'Description is required';
+    if (value.length > 500) return 'Description must be 500 characters or less';
+    return '';
+  };
+
+  const validateTimelineField = (name, value, otherFields) => {
+    switch (name) {
+      case 'description':
+        if (!value.trim()) return 'Description is required';
+        if (value.length > 500) return 'Description must be 500 characters or less';
+        return '';
+      case 'clientName':
+        if (otherFields.status === 'deployed' && !value.trim()) return 'Client name is required for deployed status';
+        if (value.length > 100) return 'Client name must be 100 characters or less';
+        return '';
+      case 'status':
+        if (!value) return 'Status is required';
+        return '';
+      case 'createdAt':
+        if (!value) return 'Created date is required';
+        if (otherFields.updatedAt && new Date(value) >= new Date(otherFields.updatedAt)) {
+          return 'Created date must be before updated date';
+        }
+        return '';
+      case 'updatedAt':
+        if (value && otherFields.createdAt && new Date(value) <= new Date(otherFields.createdAt)) {
+          return 'Updated date must be after created date';
+        }
+        return '';
+      default:
+        return '';
+    }
+  };
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormErrors(prev => ({ ...prev, [name]: validateFormField(name, value) }));
+  };
+
+  const handleInputBlur = (e) => {
+    const { name, value } = e.target;
+    setFormErrors(prev => ({ ...prev, [name]: validateFormField(name, value) }));
+  };
+
+  const handleClientNameChange = (e) => {
+    const value = e.target.value;
+    setClientName(value);
+    setClientNameError(validateClientName(value));
+  };
+
+  const handleClientNameBlur = () => {
+    setClientNameError(validateClientName(clientName));
+  };
+
+  const handleStatusDescriptionChange = (e) => {
+    const value = e.target.value;
+    setStatusDescription(value);
+    setStatusDescriptionError(validateStatusDescription(value));
+  };
+
+  const handleStatusDescriptionBlur = () => {
+    setStatusDescriptionError(validateStatusDescription(statusDescription));
+  };
+
+  const handleTimelineEditChange = (e) => {
+    const { name, value } = e.target;
+    setTimelineEditData(prev => ({
+      ...prev,
+      [name]: name === 'status' ? normalizeStatus(value) : value
+    }));
+    setTimelineEditErrors(prev => ({
+      ...prev,
+      [name]: validateTimelineField(name, value, { ...timelineEditData, [name]: value })
+    }));
+  };
+
+  const handleTimelineEditBlur = (e) => {
+    const { name, value } = e.target;
+    setTimelineEditErrors(prev => ({
+      ...prev,
+      [name]: validateTimelineField(name, value, timelineEditData)
+    }));
+  };
+
   const renderRatingStars = (rating) => {
     return (
       <div className="flex items-center ml-1">
@@ -148,11 +273,6 @@ const EmployeeDetail = ({ publicId, onClose }) => {
       }
     };
   }, [dispatch, publicId]);
-
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
 
   const handleProfilePicChange = (e) => {
     const file = e.target.files[0];
@@ -186,7 +306,7 @@ const EmployeeDetail = ({ publicId, onClose }) => {
     setFormData(prev => ({ ...prev, profileImage: null }));
   };
 
-  const uploadProfilePicture = async () => {
+  const uploadProfilePicture = async (retryCount = 0) => {
     if (!profilePic) return;
     try {
       setIsUploading(true);
@@ -215,9 +335,36 @@ const EmployeeDetail = ({ publicId, onClose }) => {
         throw new Error('Failed to upload profile picture');
       }
     } catch (error) {
+      if (retryCount < MAX_UPLOAD_RETRIES - 1) {
+        setToast({
+          type: 'error',
+          message: `Retrying profile picture upload... (Attempt ${retryCount + 2})`
+        });
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        return uploadProfilePicture(retryCount + 1);
+      }
+      let errorMessage = 'Failed to update profile picture';
+      if (error.response) {
+        switch (error.response.status) {
+          case 400:
+            errorMessage = 'Invalid request. Please check the uploaded file.';
+            break;
+          case 401:
+            errorMessage = 'Unauthorized. Please log in again.';
+            break;
+          case 413:
+            errorMessage = 'File too large. Maximum size is 2MB.';
+            break;
+          case 500:
+            errorMessage = 'Server error. Please try again later.';
+            break;
+          default:
+            errorMessage = error.response.data.message || errorMessage;
+        }
+      }
       setToast({
         type: 'error',
-        message: error.message || 'Failed to update profile picture'
+        message: errorMessage
       });
       console.error('Profile upload failed:', error);
     } finally {
@@ -225,7 +372,35 @@ const EmployeeDetail = ({ publicId, onClose }) => {
     }
   };
 
+  const validateForm = () => {
+    const errors = {};
+    errors.employeeName = validateFormField('employeeName', formData.employeeName);
+    errors.employeeId = validateFormField('employeeId', formData.employeeId);
+    errors.designation = validateFormField('designation', formData.designation);
+    errors.grade = validateFormField('grade', formData.grade);
+    errors.joiningDate = validateFormField('joiningDate', formData.joiningDate);
+    errors.status = validateFormField('status', formData.status);
+
+    if (formData.status === 'deployed') {
+      setClientNameError(validateClientName(clientName));
+      if (clientNameError) errors.clientName = clientNameError;
+    }
+    setStatusDescriptionError(validateStatusDescription(statusDescription));
+    if (statusDescriptionError) errors.statusDescription = statusDescriptionError;
+
+    setFormErrors(errors);
+    return Object.values(errors).every(error => !error);
+  };
+
   const handleSubmit = async () => {
+    if (!validateForm()) {
+      setToast({
+        type: 'error',
+        message: 'Please fix the form errors before submitting'
+      });
+      return;
+    }
+
     try {
       const updatedData = {
         employeeName: formData.employeeName,
@@ -255,14 +430,30 @@ const EmployeeDetail = ({ publicId, onClose }) => {
       dispatch(fetchUserTimeline(publicId));
 
     } catch (error) {
+      let errorMessage = 'Failed to update employee details';
+      if (error.response) {
+        switch (error.response.status) {
+          case 400:
+            errorMessage = 'Invalid data provided. Please check your inputs.';
+            break;
+          case 401:
+            errorMessage = 'Unauthorized. Please log in again.';
+            break;
+          case 500:
+            errorMessage = 'Server error. Please try again later.';
+            break;
+          default:
+            errorMessage = error.response.data.message || errorMessage;
+        }
+      }
       setToast({
         type: 'error',
-        message: error || 'Failed to update employee details'
+        message: errorMessage
       });
     }
   };
 
-  const handleResumeUpload = async (e) => {
+  const handleResumeUpload = async (e, retryCount = 0) => {
     const file = e.target.files[0];
     if (!file) return;
     const validTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
@@ -307,16 +498,39 @@ const EmployeeDetail = ({ publicId, onClose }) => {
         });
         window.location.reload();
       } else {
-        const errorData = await response.json();
-        setToast({
-          type: 'error',
-          message: errorData.message || 'Failed to upload resume'
-        });
+        throw new Error('Failed to upload resume');
       }
     } catch (error) {
+      if (retryCount < MAX_UPLOAD_RETRIES - 1) {
+        setToast({
+          type: 'error',
+          message: `Retrying resume upload... (Attempt ${retryCount + 2})`
+        });
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        return handleResumeUpload(e, retryCount + 1);
+      }
+      let errorMessage = 'Failed to upload resume';
+      if (error.response) {
+        switch (error.response.status) {
+          case 400:
+            errorMessage = 'Invalid file format or data.';
+            break;
+          case 401:
+            errorMessage = 'Unauthorized. Please log in again.';
+            break;
+          case 413:
+            errorMessage = 'File too large. Maximum size is 5MB.';
+            break;
+          case 500:
+            errorMessage = 'Server error. Please try again later.';
+            break;
+          default:
+            errorMessage = error.response.data.message || errorMessage;
+        }
+      }
       setToast({
         type: 'error',
-        message: 'Error uploading resume'
+        message: errorMessage
       });
       console.error('Error uploading resume:', error);
     } finally {
@@ -350,16 +564,28 @@ const EmployeeDetail = ({ publicId, onClose }) => {
           message: 'Resume download started!'
         });
       } else {
-        const errorData = await response.json();
-        setToast({
-          type: 'error',
-          message: errorData.message || 'Failed to download resume'
-        });
+        throw new Error('Failed to download resume');
       }
     } catch (error) {
+      let errorMessage = 'Error downloading resume';
+      if (error.response) {
+        switch (error.response.status) {
+          case 404:
+            errorMessage = 'Resume file not found.';
+            break;
+          case 401:
+            errorMessage = 'Unauthorized. Please log in again.';
+            break;
+          case 500:
+            errorMessage = 'Server error. Please try again later.';
+            break;
+          default:
+            errorMessage = error.response.data.message || errorMessage;
+        }
+      }
       setToast({
         type: 'error',
-        message: 'Error downloading resume'
+        message: errorMessage
       });
       console.error('Error downloading resume:', error);
     }
@@ -378,18 +604,22 @@ const EmployeeDetail = ({ publicId, onClose }) => {
             <input
               type="text"
               value={clientName}
-              onChange={(e) => setClientName(e.target.value)}
-              className="w-full border rounded-md px-2 py-1 text-sm focus:ring-1 focus:ring-blue-300"
+              onChange={handleClientNameChange}
+              onBlur={handleClientNameBlur}
+              className={`w-full border rounded-md px-2 py-1 text-sm focus:ring-1 focus:ring-blue-300 ${clientNameError ? 'border-red-500' : ''}`}
               placeholder="Enter client name"
             />
+            {clientNameError && <p className="text-xs text-red-500 mt-1">{clientNameError}</p>}
             <label className="block text-xs text-purple-800 font-bold mt-2 mb-1">Description</label>
             <textarea
               value={statusDescription}
-              onChange={(e) => setStatusDescription(e.target.value)}
-              className="w-full border rounded-md px-2 py-1 text-sm focus:ring-1 focus:ring-blue-300"
+              onChange={handleStatusDescriptionChange}
+              onBlur={handleStatusDescriptionBlur}
+              className={`w-full border rounded-md px-2 py-1 text-sm focus:ring-1 focus:ring-blue-300 ${statusDescriptionError ? 'border-red-500' : ''}`}
               placeholder="Enter description"
               rows={2}
             />
+            {statusDescriptionError && <p className="text-xs text-red-500 mt-1">{statusDescriptionError}</p>}
           </div>
         );
       case 'pool':
@@ -399,11 +629,13 @@ const EmployeeDetail = ({ publicId, onClose }) => {
             <label className="block text-xs text-purple-800 font-bold mb-1">Description</label>
             <textarea
               value={statusDescription}
-              onChange={(e) => setStatusDescription(e.target.value)}
-              className="w-full border rounded-md px-2 py-1 text-sm focus:ring-1 focus:ring-blue-300"
+              onChange={handleStatusDescriptionChange}
+              onBlur={handleStatusDescriptionBlur}
+              className={`w-full border rounded-md px-2 py-1 text-sm focus:ring-1 focus:ring-blue-300 ${statusDescriptionError ? 'border-red-500' : ''}`}
               placeholder="Enter description"
               rows={2}
             />
+            {statusDescriptionError && <p className="text-xs text-red-500 mt-1">{statusDescriptionError}</p>}
           </div>
         );
       default:
@@ -425,17 +657,30 @@ const EmployeeDetail = ({ publicId, onClose }) => {
       createdAt: timelineItem.createdAt.split('T')[0] || '',
       updatedAt: timelineItem.updatedAt ? timelineItem.updatedAt.split('T')[0] : ''
     });
+    setTimelineEditErrors({});
   };
 
-  const handleTimelineEditChange = (e) => {
-    const { name, value } = e.target;
-    setTimelineEditData(prev => ({
-      ...prev,
-      [name]: name === 'status' ? normalizeStatus(value) : value
-    }));
+  const validateTimelineForm = () => {
+    const errors = {};
+    errors.description = validateTimelineField('description', timelineEditData.description, timelineEditData);
+    errors.clientName = validateTimelineField('clientName', timelineEditData.clientName, timelineEditData);
+    errors.status = validateTimelineField('status', timelineEditData.status, timelineEditData);
+    errors.createdAt = validateTimelineField('createdAt', timelineEditData.createdAt, timelineEditData);
+    errors.updatedAt = validateTimelineField('updatedAt', timelineEditData.updatedAt, timelineEditData);
+
+    setTimelineEditErrors(errors);
+    return Object.values(errors).every(error => !error);
   };
 
   const handleTimelineUpdate = async (timelineId) => {
+    if (!validateTimelineForm()) {
+      setToast({
+        type: 'error',
+        message: 'Please fix the timeline form errors before submitting'
+      });
+      return;
+    }
+
     try {
       const payload = {
         description: timelineEditData.description || '',
@@ -458,9 +703,25 @@ const EmployeeDetail = ({ publicId, onClose }) => {
       setEditingTimelineId(null);
       dispatch(fetchUserTimeline(publicId));
     } catch (error) {
+      let errorMessage = 'Failed to update timeline';
+      if (error.response) {
+        switch (error.response.status) {
+          case 400:
+            errorMessage = 'Invalid timeline data provided.';
+            break;
+          case 401:
+            errorMessage = 'Unauthorized. Please log in again.';
+            break;
+          case 500:
+            errorMessage = 'Server error. Please try again later.';
+            break;
+          default:
+            errorMessage = error.response.data.message || errorMessage;
+        }
+      }
       setToast({
         type: 'error',
-        message: error.message || 'Failed to update timeline'
+        message: errorMessage
       });
     }
   };
@@ -480,9 +741,25 @@ const EmployeeDetail = ({ publicId, onClose }) => {
       });
       dispatch(fetchUserTimeline(publicId));
     } catch (error) {
+      let errorMessage = 'Failed to delete timeline entry';
+      if (error.response) {
+        switch (error.response.status) {
+          case 401:
+            errorMessage = 'Unauthorized. Please log in again.';
+            break;
+          case 404:
+            errorMessage = 'Timeline entry not found.';
+            break;
+          case 500:
+            errorMessage = 'Server error. Please try again later.';
+            break;
+          default:
+            errorMessage = error.response.data.message || errorMessage;
+        }
+      }
       setToast({
         type: 'error',
-        message: error.message || 'Failed to delete timeline entry'
+        message: errorMessage
       });
     } finally {
       setIsDeleteConfirmOpen(false);
@@ -593,9 +870,11 @@ const EmployeeDetail = ({ publicId, onClose }) => {
                       name="employeeName"
                       value={formData.employeeName}
                       onChange={handleInputChange}
-                      className="text-xl font-semibold text-gray-800 border rounded-md px-2 py-1 focus:ring-1 focus:ring-blue-300 bg-white bg-opacity-90"
+                      onBlur={handleInputBlur}
+                      className={`text-xl font-semibold text-gray-800 border rounded-md px-2 py-1 focus:ring-1 focus:ring-blue-300 bg-white bg-opacity-90 ${formErrors.employeeName ? 'border-red-500' : ''}`}
                       disabled={loading}
                     />
+                    {formErrors.employeeName && <p className="text-xs text-red-500 mt-1">{formErrors.employeeName}</p>}
                     <div className="mt-2">
                       <input
                         type="file"
@@ -694,13 +973,14 @@ const EmployeeDetail = ({ publicId, onClose }) => {
                                 name="status"
                                 value={timelineEditData.status}
                                 onChange={handleTimelineEditChange}
-                                className="text-xs font-medium text-gray-800 border rounded px-2 py-1 focus:ring-1 focus:ring-blue-300"
+                                onBlur={handleTimelineEditBlur}
+                                className={`text-xs font-medium text-gray-800 border rounded px-2 py-1 focus:ring-1 focus:ring-blue-300 ${timelineEditErrors.status ? 'border-red-500' : ''}`}
                                 title="Select status"
                               >
+                                <option value="">Select Status</option>
                                 <option value="deployed">Deployed</option>
                                 <option value="pool">Pool</option>
                                 <option value="pip">PIP</option>
-                                {/* <option value="hold">Hold</option> */}
                               </select>
                             ) : (
                               <h5 className="text-xs font-medium text-gray-800 capitalize">
@@ -733,22 +1013,30 @@ const EmployeeDetail = ({ publicId, onClose }) => {
                           <div className="flex flex-wrap gap-1 mt-1">
                             {editingTimelineId === event.id ? (
                               <>
-                                <input
-                                  type="date"
-                                  name="createdAt"
-                                  value={timelineEditData.createdAt}
-                                  onChange={handleTimelineEditChange}
-                                  className="text-xs border rounded px-1.5 py-0.5 focus:ring-1 focus:ring-blue-300"
-                                  title="Select created date"
-                                />
-                                <input
-                                  type="date"
-                                  name="updatedAt"
-                                  value={timelineEditData.updatedAt}
-                                  onChange={handleTimelineEditChange}
-                                  className="text-xs border rounded px-1.5 py-0.5 focus:ring-1 focus:ring-blue-300"
-                                  title="Select updated date"
-                                />
+                                <div>
+                                  <input
+                                    type="date"
+                                    name="createdAt"
+                                    value={timelineEditData.createdAt}
+                                    onChange={handleTimelineEditChange}
+                                    onBlur={handleTimelineEditBlur}
+                                    className={`text-xs border rounded px-1.5 py-0.5 focus:ring-1 focus:ring-blue-300 ${timelineEditErrors.createdAt ? 'border-red-500' : ''}`}
+                                    title="Select created date"
+                                  />
+                                  {timelineEditErrors.createdAt && <p className="text-xs text-red-500 mt-1">{timelineEditErrors.createdAt}</p>}
+                                </div>
+                                <div>
+                                  <input
+                                    type="date"
+                                    name="updatedAt"
+                                    value={timelineEditData.updatedAt}
+                                    onChange={handleTimelineEditChange}
+                                    onBlur={handleTimelineEditBlur}
+                                    className={`text-xs border rounded px-1.5 py-0.5 focus:ring-1 focus:ring-blue-300 ${timelineEditErrors.updatedAt ? 'border-red-500' : ''}`}
+                                    title="Select updated date"
+                                  />
+                                  {timelineEditErrors.updatedAt && <p className="text-xs text-red-500 mt-1">{timelineEditErrors.updatedAt}</p>}
+                                </div>
                               </>
                             ) : (
                               <>
@@ -765,25 +1053,33 @@ const EmployeeDetail = ({ publicId, onClose }) => {
                           </div>
                           {editingTimelineId === event.id ? (
                             <div className="mt-2 space-y-1">
-                              <textarea
-                                name="description"
-                                value={timelineEditData.description}
-                                onChange={handleTimelineEditChange}
-                                className="w-full border rounded px-2 py-1 text-xs focus:ring-1 focus:ring-blue-300"
-                                placeholder="Description"
-                                rows={3}
-                                title="Enter description"
-                              />
-                              {timelineEditData.status === 'deployed' && (
-                                <input
-                                  type="text"
-                                  name="clientName"
-                                  value={timelineEditData.clientName}
+                              <div>
+                                <textarea
+                                  name="description"
+                                  value={timelineEditData.description}
                                   onChange={handleTimelineEditChange}
-                                  className="w-full border rounded px-2 py-1 text-xs focus:ring-1 focus:ring-blue-300"
-                                  placeholder="Client Name"
-                                  title="Enter client name"
+                                  onBlur={handleTimelineEditBlur}
+                                  className={`w-full border rounded px-2 py-1 text-xs focus:ring-1 focus:ring-blue-300 ${timelineEditErrors.description ? 'border-red-500' : ''}`}
+                                  placeholder="Description"
+                                  rows={3}
+                                  title="Enter description"
                                 />
+                                {timelineEditErrors.description && <p className="text-xs text-red-500 mt-1">{timelineEditErrors.description}</p>}
+                              </div>
+                              {timelineEditData.status === 'deployed' && (
+                                <div>
+                                  <input
+                                    type="text"
+                                    name="clientName"
+                                    value={timelineEditData.clientName}
+                                    onChange={handleTimelineEditChange}
+                                    onBlur={handleTimelineEditBlur}
+                                    className={`w-full border rounded px-2 py-1 text-xs focus:ring-1 focus:ring-blue-300 ${timelineEditErrors.clientName ? 'border-red-500' : ''}`}
+                                    placeholder="Client Name"
+                                    title="Enter client name"
+                                  />
+                                  {timelineEditErrors.clientName && <p className="text-xs text-red-500 mt-1">{timelineEditErrors.clientName}</p>}
+                                </div>
                               )}
                               <div className="flex gap-1">
                                 <button
@@ -836,14 +1132,18 @@ const EmployeeDetail = ({ publicId, onClose }) => {
                   <div>
                     <label className="block text-xs text-gray-500 mb-1">Employee ID</label>
                     {isEditing ? (
-                      <input
-                        name="employeeId"
-                        value={formData.employeeId}
-                        onChange={handleInputChange}
-                        className="w-full border rounded-md px-2 py-1 text-sm focus:ring-1 focus:ring-blue-300"
-                        disabled={loading}
-                        title="Enter employee ID"
-                      />
+                      <div>
+                        <input
+                          name="employeeId"
+                          value={formData.employeeId}
+                          onChange={handleInputChange}
+                          onBlur={handleInputBlur}
+                          className={`w-full border rounded-md px-2 py-1 text-sm focus:ring-1 focus:ring-blue-300 ${formErrors.employeeId ? 'border-red-500' : ''}`}
+                          disabled={loading}
+                          title="Enter employee ID"
+                        />
+                        {formErrors.employeeId && <p className="text-xs text-red-500 mt-1">{formErrors.employeeId}</p>}
+                      </div>
                     ) : (
                       <p className="text-sm font-medium text-gray-800">{formData.employeeId || 'N/A'}</p>
                     )}
@@ -851,21 +1151,25 @@ const EmployeeDetail = ({ publicId, onClose }) => {
                   <div>
                     <label className="block text-xs text-gray-500 mb-1">Designation</label>
                     {isEditing ? (
-                      <select
-                        name="designation"
-                        value={formData.designation}
-                        onChange={handleInputChange}
-                        className="w-full border rounded-md px-2 py-1 text-sm focus:ring-1 focus:ring-blue-300"
-                        disabled={loading}
-                        title="Select designation"
-                      >
-                        <option value="">Select Designation</option>
-                        {designations.map(designation => (
-                          <option key={designation.publicId} value={designation.name}>
-                            {designation.name}
-                          </option>
-                        ))}
-                      </select>
+                      <div>
+                        <select
+                          name="designation"
+                          value={formData.designation}
+                          onChange={handleInputChange}
+                          onBlur={handleInputBlur}
+                          className={`w-full border rounded-md px-2 py-1 text-sm focus:ring-1 focus:ring-blue-300 ${formErrors.designation ? 'border-red-500' : ''}`}
+                          disabled={loading}
+                          title="Select designation"
+                        >
+                          <option value="">Select Designation</option>
+                          {designations.map(designation => (
+                            <option key={designation.publicId} value={designation.name}>
+                              {designation.name}
+                            </option>
+                          ))}
+                        </select>
+                        {formErrors.designation && <p className="text-xs text-red-500 mt-1">{formErrors.designation}</p>}
+                      </div>
                     ) : (
                       <p className="text-sm font-medium text-gray-800">{formData.designation || 'N/A'}</p>
                     )}
@@ -875,21 +1179,25 @@ const EmployeeDetail = ({ publicId, onClose }) => {
                   <div>
                     <label className="block text-xs text-gray-500 mb-1">Grade</label>
                     {isEditing ? (
-                      <select
-                        name="grade"
-                        value={formData.grade}
-                        onChange={handleInputChange}
-                        className="w-full border rounded-md px-2 py-1 text-sm focus:ring-1 focus:ring-blue-300"
-                        disabled={loading}
-                        title="Select grade"
-                      >
-                        <option value="">Select Grade</option>
-                        {gradeOptions.map(grade => (
-                          <option key={grade} value={grade}>
-                            {grade}
-                          </option>
-                        ))}
-                      </select>
+                      <div>
+                        <select
+                          name="grade"
+                          value={formData.grade}
+                          onChange={handleInputChange}
+                          onBlur={handleInputBlur}
+                          className={`w-full border rounded-md px-2 py-1 text-sm focus:ring-1 focus:ring-blue-300 ${formErrors.grade ? 'border-red-500' : ''}`}
+                          disabled={loading}
+                          title="Select grade"
+                        >
+                          <option value="">Select Grade</option>
+                          {gradeOptions.map(grade => (
+                            <option key={grade} value={grade}>
+                              {grade}
+                            </option>
+                          ))}
+                        </select>
+                        {formErrors.grade && <p className="text-xs text-red-500 mt-1">{formErrors.grade}</p>}
+                      </div>
                     ) : (
                       <p className="text-sm font-medium text-gray-800">{formData.grade || 'N/A'}</p>
                     )}
@@ -897,15 +1205,19 @@ const EmployeeDetail = ({ publicId, onClose }) => {
                   <div>
                     <label className="block text-xs text-gray-500 mb-1">Joining Date</label>
                     {isEditing ? (
-                      <input
-                        type="date"
-                        name="joiningDate"
-                        value={formData.joiningDate}
-                        onChange={handleInputChange}
-                        className="w-full border rounded-md px-2 py-1 text-sm focus:ring-1 focus:ring-blue-300"
-                        disabled={loading}
-                        title="Select joining date"
-                      />
+                      <div>
+                        <input
+                          type="date"
+                          name="joiningDate"
+                          value={formData.joiningDate}
+                          onChange={handleInputChange}
+                          onBlur={handleInputBlur}
+                          className={`w-full border rounded-md px-2 py-1 text-sm focus:ring-1 focus:ring-blue-300 ${formErrors.joiningDate ? 'border-red-500' : ''}`}
+                          disabled={loading}
+                          title="Select joining date"
+                        />
+                        {formErrors.joiningDate && <p className="text-xs text-red-500 mt-1">{formErrors.joiningDate}</p>}
+                      </div>
                     ) : (
                       <p className="text-sm font-medium text-gray-800">
                         {formData.joiningDate ? new Date(formData.joiningDate).toLocaleDateString() : 'N/A'}
@@ -923,25 +1235,28 @@ const EmployeeDetail = ({ publicId, onClose }) => {
                   <div>
                     <label className="block text-xs text-gray-500 mb-1">Status</label>
                     {isEditing ? (
-                      <select
-                        name="status"
-                        value={formData.status}
-                        onChange={handleInputChange}
-                        className="w-full border rounded-md px-2 py-1 text-sm focus:ring-1 focus:ring-blue-300"
-                        disabled={loading}
-                        title="Select status"
-                      >
-                        <option value="pool">Pool</option>
-                        <option value="deployed">Deployed</option>
-                        <option value="pip">PIP</option>
-                        {/* <option value="hold">Hold</option> */}
-                      </select>
+                      <div>
+                        <select
+                          name="status"
+                          value={formData.status}
+                          onChange={handleInputChange}
+                          onBlur={handleInputBlur}
+                          className={`w-full border rounded-md px-2 py-1 text-sm focus:ring-1 focus:ring-blue-300 ${formErrors.status ? 'border-red-500' : ''}`}
+                          disabled={loading}
+                          title="Select status"
+                        >
+                          <option value="">Select Status</option>
+                          <option value="pool">Pool</option>
+                          <option value="deployed">Deployed</option>
+                          <option value="pip">PIP</option>
+                        </select>
+                        {formErrors.status && <p className="text-xs text-red-500 mt-1">{formErrors.status}</p>}
+                      </div>
                     ) : (
                       <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${formData.status === 'pool' ? 'bg-blue-100 text-blue-800' :
                         formData.status === 'deployed' ? 'bg-green-100 text-green-800' :
                           formData.status === 'pip' ? 'bg-yellow-100 text-yellow-800' :
-                            formData.status === 'hold' ? 'bg-gray-100 text-gray-800' :
-                              'bg-red-100 text-red-800'
+                            'bg-red-100 text-red-800'
                         }`}>
                         {formData.status.charAt(0).toUpperCase() + formData.status.slice(1)}
                       </span>
