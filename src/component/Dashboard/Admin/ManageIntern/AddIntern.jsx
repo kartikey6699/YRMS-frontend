@@ -34,7 +34,7 @@ const AddIntern = () => {
     const [formData, setFormData] = useState({
         name: "",
         gender: "",
-        location: "indore",
+        location: "",
         email: "",
         phoneNumber: "",
         startDate: "",
@@ -180,7 +180,7 @@ const AddIntern = () => {
 
         // Validate the changed field and related fields
         const fieldErrors = validateField(name, value);
-        if (name === 'startDate' || name === 'duration') {
+        if (name === 'startDate' && name === 'duration') {
             const endDateErrors = validateField('endDate', newFormData.endDate);
             Object.assign(fieldErrors, endDateErrors);
         }
@@ -211,7 +211,7 @@ const AddIntern = () => {
             setFormData({
                 name: "",
                 gender: "",
-                location: "indore",
+                location: "",
                 email: "",
                 phoneNumber: "",
                 startDate: "",
