@@ -197,41 +197,43 @@ const AddIntern = () => {
 
         setIsSubmitting(true);
         try {
-            setToast(<YRMSLoader message="Creating intern..." />);
+            setToast(<YRMSLoader loadingMessage="Creating intern..." />);
 
-            const createResult = await dispatch(createIntern(formData));
+            const resultAction = await dispatch(createIntern(formData));
+            
+            if (createIntern.fulfilled.match(resultAction)) {
+                const { message } = resultAction.payload;
+                setToast(<SuccessToast message={message} onClose={() => setToast(null)} />);
+                dispatch(fetchInterns());
 
-            if (!createResult.payload?.publicId) {
-                throw new Error("Failed to get publicId from response");
+                setFormData({
+                    name: "",
+                    gender: "",
+                    location: "indore",
+                    email: "",
+                    phoneNumber: "",
+                    startDate: "",
+                    duration: "",
+                    endDate: "",
+                    mentorId: "",
+                    status: "",
+                    competencyId: "",
+                });
+                setErrors({});
+
+                setTimeout(() => {
+                    navigate('/interns');
+                }, 1500);
+            } else if (createIntern.rejected.match(resultAction)) {
+                setToast(<ErrorToast message={resultAction.payload} onClose={() => setToast(null)} />);
             }
-
-            setToast(<SuccessToast message="Intern created successfully!" onClose={() => setToast(null)} />);
-            dispatch(fetchInterns());
-
-            setFormData({
-                name: "",
-                gender: "",
-                location: "indore",
-                email: "",
-                phoneNumber: "",
-                startDate: "",
-                duration: "",
-                endDate: "",
-                mentorId: "",
-                status: "",
-                competencyId: "",
-            });
-            setErrors({});
-
-            setTimeout(() => {
-                navigate('/interns');
-            }, 1500);
         } catch (err) {
-            setToast(<ErrorToast message={err.message || "Failed to create intern"} onClose={() => setToast(null)} />);
+            setToast(<ErrorToast message={err.message} onClose={() => setToast(null)} />);
         } finally {
             setIsSubmitting(false);
         }
     };
+
 
     const isFormValid = () => {
         return Object.keys(formData).every((key) => !validateField(key, formData[key])[key]);
@@ -488,8 +490,8 @@ const AddIntern = () => {
                         type="submit"
                         disabled={isSubmitting || !isFormValid()}
                         className={`px-8 py-3 rounded-lg font-semibold text-white transition-all transform hover:scale-105 flex items-center ${isSubmitting || !isFormValid()
-                                ? "bg-gray-400 cursor-not-allowed"
-                                : "bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                            ? "bg-gray-400 cursor-not-allowed"
+                            : "bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
                             }`}
                     >
                         {isSubmitting ? (

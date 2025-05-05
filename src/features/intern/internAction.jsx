@@ -35,10 +35,10 @@ export const createIntern = createAsyncThunk(
       const { success, data, message } = response.data;
 
       if (!success) {
-        throw new Error(message || "Failed to create intern");
+        return rejectWithValue(message || "Failed to create intern");
       }
 
-      return data;
+      return { data, message };
     } catch (error) {
       const errorMessage =
         error.response?.data?.message ||
@@ -112,7 +112,12 @@ export const updateIntern = createAsyncThunk(
   async ({ publicId, internData }, { rejectWithValue }) => {
     try {
       const response = await internApiClient.patch(`${INTERN_API.UPDATE}/${publicId}`, internData);
-      return response.data.data;
+      const { success, data, message } = response.data;
+      
+      if (!success) {
+        return rejectWithValue(message || "Failed to update intern");
+      }
+      return { data, message };
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || error.message);
     }
@@ -123,8 +128,13 @@ export const deleteIntern = createAsyncThunk(
   "intern/deleteIntern",
   async (id, { rejectWithValue }) => {
     try {
-      await internApiClient.delete(`${INTERN_API.DELETE}/${id}`);
-      return id;
+      const response = await internApiClient.delete(`${INTERN_API.DELETE}/${id}`);
+      const { success, message } = response.data;
+      
+      if (!success) {
+        return rejectWithValue(message || "Failed to delete intern");
+      }
+      return { id, message };
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || error.message);
     }

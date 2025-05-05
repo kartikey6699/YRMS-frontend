@@ -212,15 +212,23 @@ const InternList = () => {
 
     const handleDeleteConfirm = async () => {
         try {
-            await dispatch(deleteIntern(deleteModal.internId));
-            setToast(
-                <SuccessToast
-                    message="Intern deleted successfully!"
-                    onClose={() => setToast(null)}
-                />
-            );
-            setDeleteModal({ isOpen: false, internId: null, internName: "" });
-            dispatch(fetchInterns());
+            const resultAction = await dispatch(deleteIntern(deleteModal.internId));
+
+            if (deleteIntern.fulfilled.match(resultAction)) {
+                const { message } = resultAction.payload;
+                setToast(
+                    <SuccessToast
+                        message={message}
+                        onClose={() => setToast(null)}
+                    />
+                );
+                setDeleteModal({ isOpen: false, internId: null, internName: "" });
+                dispatch(fetchInterns());
+            }
+            else if (deleteIntern.rejected.match(resultAction)) {
+                setToast(<ErrorToast message={resultAction.payload} onClose={() => setToast(null)} />);
+            }
+
         } catch (error) {
             setToast(<ErrorToast message={error.message || "Failed to delete intern"} onClose={() => setToast(null)} />);
         }
@@ -256,7 +264,7 @@ const InternList = () => {
     const downloadSampleCSV = async () => {
         try {
             setToast(<YRMSLoader message="Preparing sample CSV..." />);
-            
+
             const token = sessionStorage.getItem("token");
             const response = await axios.get(
                 `${ADMIN_API_BASE_URL}/interns/sample-csv/`,
@@ -296,7 +304,7 @@ const InternList = () => {
 
         try {
             setToast(<YRMSLoader loadingMessage="Processing CSV file..." />);
-            
+
             const formData = new FormData();
             formData.append('file', file);
 
@@ -312,7 +320,7 @@ const InternList = () => {
             });
 
             setToast(<SuccessToast message={`${response.data.message} interns created successfully!`} onClose={() => setToast(null)} />);
-            
+
             // Refresh the intern list
             dispatch(fetchInterns());
         } catch (error) {
@@ -337,12 +345,12 @@ const InternList = () => {
         { key: 'isOffered', label: 'Hired' }
     ];
 
-    if (loading) return <div className="text-center py-8">Loading interns...</div>;
     if (error) return <div className="text-red-500 text-center py-8">Error: {error}</div>;
 
     return (
         <div className="p-6 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl shadow-lg mt-15">
             {toast}
+            {loading && <YRMSLoader loadingMessage="Interns Loading..." />}
 
             <div className="mb-6">
                 <div className="flex items-center justify-between mb-2">
@@ -438,11 +446,10 @@ const InternList = () => {
                         <div
                             key={status}
                             onClick={() => setStatusFilter(status === "all" ? "" : status)}
-                            className={`cursor-pointer p-3 rounded-xl shadow-md transition-all transform hover:scale-105 ${
-                                selected
+                            className={`cursor-pointer p-3 rounded-xl shadow-md transition-all transform hover:scale-105 ${selected
                                     ? `bg-gradient-to-r ${gradient} text-white`
                                     : `bg-white ${hoverBg}`
-                            }`}
+                                }`}
                         >
                             <div className="flex items-center justify-between">
                                 <div>
@@ -458,18 +465,18 @@ const InternList = () => {
                 </div>
 
                 {/* Clear Filters Button */}
-                {(searchTerms.name || searchTerms.mentor || searchTerms.status || searchTerms.email ||
-                  searchTerms.startDate || searchTerms.endDate || searchTerms.isOffered !== "All") && (
-                    <div className="flex justify-end mb-4">
-                        <button
-                            onClick={clearFilters}
-                            className="px-2 py-1 rounded-md text-xs flex items-center bg-red-100 text-red-800 hover:bg-red-200 transition-all"
-                        >
-                            <FaTimes className="mr-1" />
-                            Clear Filters
-                        </button>
-                    </div>
-                )}
+                {/* {(searchTerms.name || searchTerms.mentor || searchTerms.status || searchTerms.email ||
+                    searchTerms.startDate || searchTerms.endDate || searchTerms.isOffered !== "All") && (
+                        <div className="flex justify-end mb-4">
+                            <button
+                                onClick={clearFilters}
+                                className="px-2 py-1 rounded-md text-xs flex items-center bg-red-100 text-red-800 hover:bg-red-200 transition-all"
+                            >
+                                <FaTimes className="mr-1" />
+                                Clear Filters
+                            </button>
+                        </div>
+                    )} */}
             </div>
 
             <div className={`overflow-x-auto rounded-lg shadow-lg border border-gray-200 ${deleteModal.isOpen ? 'filter blur-sm' : ''}`}>
@@ -480,8 +487,8 @@ const InternList = () => {
                                 <th
                                     key={column.key}
                                     className={`p-1 text-center font-semibold text-sm border-b border-gray-200 ${column.key === "sno"
-                                            ? "w-1/20 h-6"
-                                            : "w-1/12"
+                                        ? "w-1/20 h-6"
+                                        : "w-1/12"
                                         }`}
                                 >
                                     <div className="flex flex-col items-center justify-center">
