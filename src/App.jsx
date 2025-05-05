@@ -21,6 +21,7 @@ import TrainingDetail from './component/Dashboard/Admin/Training&Upskilling/Trai
 import AddResource from './component/Dashboard/Admin/ManageUsers/AddResources';
 import AdminDashboard from './component/Dashboard/Admin/AdminDashboard';
 import SuperAdminDashboard from './component/Dashboard/Admin/SuperAdminDashboard'; // Import SuperAdminDashboard
+import UserDashboard from './component/Dashboard/Admin/User/UserDashboard';
 
 function App() {
   return (
@@ -42,6 +43,8 @@ function App() {
               <Route path="/admin/resources" element={<UserList />} />
               <Route path='/interns/add' element={<AddIntern />} />
               <Route path='/training-detail/:id' element={<TrainingDetail />} />
+              <Route path='/user-dashboard' element={<UserDashboard />} />
+
             </Route>
           </Route>
           <Route path='/' element={<LandingPage />} />

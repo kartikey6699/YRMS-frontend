@@ -9,6 +9,7 @@ import {
   FaSignOutAlt,
   FaUserShield,
   FaUserTie,
+  FaUser,
 } from 'react-icons/fa';
 import { FiChevronRight, FiChevronLeft } from 'react-icons/fi';
 import logo from '../../assets/images/competency_logos/python.png';
@@ -23,8 +24,6 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
   let userRoles = [];
   try {
     const roleName = sessionStorage.getItem('roleName');
-    userRoles = roleName.split(",")
-
     if (roleName) {
       userRoles = roleName.split(",");
     }
@@ -32,7 +31,6 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
     console.error('Error parsing roleName from sessionStorage:', error);
     userRoles = []; // Fallback to empty array
   }
-
 
   // Define all possible menu items
   const allMenuItems = [
@@ -43,6 +41,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
     { name: 'Interns', icon: <FaUsersCog />, path: '/interns' },
     { name: 'Admin Panel', icon: <FaUserShield />, path: '/admin-dashboard' },
     { name: 'Super Admin', icon: <FaUserTie />, path: '/superuser-dashboard' },
+    { name: 'User Dashboard', icon: <FaUser />, path: '/user-dashboard' },
   ];
 
   // Determine which menu items to show based on roles
@@ -50,13 +49,11 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
     if (!userRoles || userRoles.length === 0) return [];
 
     if (userRoles.includes('SuperAdmin')) {
-      return allMenuItems;
+      return allMenuItems.filter((item) => item.name !== 'User Dashboard');
     }
 
-
     if (userRoles.includes('Admin')) {
-      const filteredItems = allMenuItems.filter((item) => item.name !== 'Super Admin');
-      return filteredItems;
+      return allMenuItems.filter((item) => item.name !== 'Super Admin' && item.name !== 'User Dashboard');
     }
 
     // For Trainer and User, collect their specific items
@@ -68,19 +65,19 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
       }
     }
     if (userRoles.includes('User')) {
-      const analyticsItem = allMenuItems.find((item) => item.name === 'Analytics');
-      if (analyticsItem && !visibleItems.some((item) => item.name === 'Analytics')) {
-        visibleItems.push(analyticsItem);
-      }
+      const userItems = allMenuItems.filter((item) => ['Analytics', 'User Dashboard'].includes(item.name));
+      userItems.forEach((item) => {
+        if (!visibleItems.some((i) => i.name === item.name)) {
+          visibleItems.push(item);
+        }
+      });
     }
 
     return visibleItems;
   };
 
-
   const menuItems = getVisibleMenuItems();
 
-  console.log('<<<<<<<', menuItems);
   const handleLogout = () => {
     sessionStorage.clear();
     navigate('/login');
