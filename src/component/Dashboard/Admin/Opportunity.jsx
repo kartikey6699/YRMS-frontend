@@ -76,8 +76,23 @@ const Opportunities = () => {
     setNewOpportunity((prev) => ({ ...prev, [name]: value }));
   };
 
+  const validateOpportunity = (opportunity) => {
+    if (!opportunity.clientName || !opportunity.dateOfInterview || !opportunity.jobDescription || 
+        !opportunity.totalRounds || !opportunity.clearedRounds) {
+      return "All fields are required.";
+    }
+    if (parseInt(opportunity.clearedRounds) > parseInt(opportunity.totalRounds)) {
+      return "Cleared rounds cannot exceed total rounds.";
+    }
+    return null;
+  };
   const handleAddOpportunity = async (e) => {
     e.preventDefault();
+    const validationError = validateOpportunity(newOpportunity);
+    if (validationError) {
+      setToast(<ErrorToast message={validationError} onClose={() => setToast(null)} />);
+      return;
+    }
     setToast(<YRMSLoader message="Creating opportunity..." />);
     try {
       const result = await dispatch(createOpportunity(newOpportunity)); 
@@ -108,6 +123,11 @@ const Opportunities = () => {
 
   const handleEditOpportunity = async (e) => {
     e.preventDefault();
+    const validationError = validateOpportunity(selectedOpportunity);
+    if (validationError) {
+      setToast(<ErrorToast message={validationError} onClose={() => setToast(null)} />);
+      return;
+    }
     setToast(<YRMSLoader message="Updating opportunity..." />);
     selectedOpportunity.userId = userId;
     try {
@@ -377,6 +397,7 @@ const Opportunities = () => {
                 name="clientName"
                 value={selectedOpportunity.clientName}
                 onChange={handleEditInputChange}
+                required
                 className="w-full p-3 bg-white rounded-lg border border-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-transparent transition-all"
               />
             ) : (
@@ -395,6 +416,7 @@ const Opportunities = () => {
                   name="dateOfInterview"
                   value={selectedOpportunity.dateOfInterview}
                   onChange={handleEditInputChange}
+                  required
                   className="w-full p-3 bg-white rounded-lg border border-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-transparent transition-all appearance-none"
                   onClick={(e) => e.target.showPicker()}
                 />
@@ -427,6 +449,7 @@ const Opportunities = () => {
               name="jobDescription"
               value={selectedOpportunity.jobDescription}
               onChange={handleEditInputChange}
+              required
               className="w-full p-4 bg-white rounded-lg border border-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-transparent transition-all min-h-[120px]"
               rows="3"
             />
@@ -446,6 +469,7 @@ const Opportunities = () => {
                 name="finalResult"
                 value={selectedOpportunity.finalResult}
                 onChange={handleEditInputChange}
+                required
                 className={`w-full p-3 rounded-lg border focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-transparent transition-all ${
                   selectedOpportunity.finalResult === 'Cleared' ? 'bg-green-100 border-green-200 text-green-800' :
                   selectedOpportunity.finalResult === 'Rejected' ? 'bg-red-100 border-red-200 text-red-800' :
@@ -483,6 +507,7 @@ const Opportunities = () => {
                   <input
                     type="number"
                     name="totalRounds"
+                    required
                     value={selectedOpportunity.totalRounds}
                     onChange={(e) => {
                       const newTotal = parseInt(e.target.value);
