@@ -16,6 +16,17 @@ rolesApiClient.interceptors.request.use((config) => {
   return config;
 });
 
+rolesApiClient.interceptors.response.use(
+  (response) => response,
+  (error) => {
+      if (error.response && error.response.status === 401) {
+          sessionStorage.clear();
+          window.location.href = '/login';
+      }
+      return Promise.reject(error);
+  }
+);
+
 export const fetchRoles = createAsyncThunk(
   "role/fetchRoles",
   async (_, { rejectWithValue }) => {

@@ -17,6 +17,17 @@ resourceApiClient.interceptors.request.use((config) => {
   return config;
 });
 
+resourceApiClient.interceptors.response.use(
+  (response) => response,
+  (error) => {
+      if (error.response && error.response.status === 401) {
+          sessionStorage.clear();
+          window.location.href = '/login';
+      }
+      return Promise.reject(error);
+  }
+);
+
 export const createResource = createAsyncThunk(
   "resource/createResource",
   async (resourceData, { rejectWithValue }) => {

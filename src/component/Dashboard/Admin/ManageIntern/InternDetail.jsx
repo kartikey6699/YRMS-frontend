@@ -10,6 +10,7 @@ import { updateIntern } from '../../../../features/intern/internAction';
 import { useNavigate } from 'react-router-dom';
 import { API_BASE_URL } from '../../../../config/Endpoints/BaseEndpoints';
 import axios from 'axios';
+import YRMSLoader from '../../../helper/loader';
 
 const InternDetail = ({ publicId, onClose }) => {
   const navigate = useNavigate();
@@ -276,13 +277,19 @@ const InternDetail = ({ publicId, onClose }) => {
         await uploadProfilePicture();
       }
 
-      if (updateResult.payload?.publicId) {
-        setToast({ type: 'success', message: 'Intern updated successfully!' });
+      if (updateIntern.fulfilled.match(updateResult)) {
+        const { message } = updateResult.payload;
+
+        setToast({ type: 'success', message: message });
         setIsEditing(false);
-        dispatch(fetchInternDetails(updateResult.payload?.publicId));
+        dispatch(fetchInternDetails(updateResult.payload?.data?.publicId))
         navigate('/interns');
-      } else {
-        throw new Error("Failed to update intern: No publicId returned");
+      }
+      else if (updateIntern.rejected.match(updateResult)) {
+        setToast(<ErrorToast message={updateResult.payload} onClose={() => setToast(null)} />);
+      }
+      else {
+        throw new Error("Failed to update intern");
       }
     } catch (err) {
       let errorMessage = 'Failed to update intern';
@@ -328,11 +335,7 @@ const InternDetail = ({ publicId, onClose }) => {
 
   if (!formData) {
     return (
-      <div className="fixed inset-0 flex items-center justify-center z-50 backdrop-blur-sm bg-black/20 p-4">
-        <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-3xl">
-          Loading employee details...
-        </div>
-      </div>
+      <YRMSLoader loadingMessage="Loading Intern Detail..." />
     );
   }
 

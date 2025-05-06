@@ -16,6 +16,17 @@ programApiClient.interceptors.request.use((config) => {
   return config;
 });
 
+programApiClient.interceptors.response.use(
+  (response) => response,
+  (error) => {
+      if (error.response && error.response.status === 401) {
+          sessionStorage.clear();
+          window.location.href = '/login';
+      }
+      return Promise.reject(error);
+  }
+);
+
 // Action to fetch training feedback
 export const fetchTrainingFeedback = createAsyncThunk(
   "training/fetchFeedback",
