@@ -252,6 +252,7 @@ const EmployeeDetail = ({ publicId, onClose }) => {
         message: 'Employee details updated successfully!'
       });
       setIsEditing(false);
+      dispatch(fetchResourceDetails(publicId));
       dispatch(fetchUserTimeline(publicId));
 
     } catch (error) {
@@ -294,18 +295,23 @@ const EmployeeDetail = ({ publicId, onClose }) => {
         body: uploadFormData,
       });
       if (response.ok) {
+        // dispatch(fetchResourceDetails(publicId));
+        // console.log('rrrr'resourceDetails);
         const responseData = await response.json();
+
+
         const newResumeFileName = responseData.fileName || file.name;
         setFormData(prev => ({
           ...prev,
           resumeFile: newResumeFileName
         }));
-        await dispatch(fetchResourceDetails(publicId)).unwrap();
+
         setToast({
           type: 'success',
           message: 'Resume uploaded successfully!'
         });
-        window.location.reload();
+
+        // window.location.reload();
       } else {
         const errorData = await response.json();
         setToast({
