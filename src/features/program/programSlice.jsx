@@ -16,7 +16,8 @@ import {
   fetchProgramDetails,
   updateProgramDetails,
   addParticipants,
-  removeParticipants
+  removeParticipants,
+  updateApprovalStatus // Added this action
 } from "./programAction";
 
 const initialState = {
@@ -39,7 +40,8 @@ const initialState = {
     data: null,
     loading: false,
     error: null
-  }
+  },
+  userTrainings: []
 };
 
 const programSlice = createSlice({
@@ -325,6 +327,22 @@ const programSlice = createSlice({
         state.loading = false;
         state.error = payload;
       })
+
+      // Update Approval Status
+      .addCase(updateApprovalStatus.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(updateApprovalStatus.fulfilled, (state, { payload }) => {
+        state.loading = false;
+        state.programs = state.programs.map(program =>
+          program.public_id === payload.public_id ? payload : program
+        );
+      })
+      .addCase(updateApprovalStatus.rejected, (state, { payload }) => {
+        state.loading = false;
+        state.error = payload;
+      });
   }
 });
 

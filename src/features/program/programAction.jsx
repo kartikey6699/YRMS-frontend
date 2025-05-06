@@ -302,6 +302,25 @@ export const updateProgramStatus = createAsyncThunk(
   }
 );
 
+
+export const updateApprovalStatus = createAsyncThunk(
+  "program/updateApprovalStatus",
+  async ({ publicId, approvalStatus }, { rejectWithValue }) => { 
+    try {
+      const response = await programApiClient.patch(
+        `${PROGRAM_API.UPDATE_STATUS}${publicId}/approval-status/${approvalStatus}`
+      );
+      if (!response.data.success) {
+        throw new Error("Failed to update program approval status");
+      }
+      return response.data.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || error.message);
+    }
+  }
+);
+
+
 // Action to fetch program details by ID
 export const fetchProgramDetails = createAsyncThunk(
   "program/fetchDetails",
@@ -397,27 +416,4 @@ export const approveProgram = createAsyncThunk(
   }
 );
 
-export const fetchProgramListD = createAsyncThunk(
-  "program/fetchProgramList",
-  async (_, { rejectWithValue }) => {
-    try {
-      // Simulate fetching program list
-      return { message: "Program list fetched successfully", data: [] };
-    } catch (error) {
-      return rejectWithValue("Failed to fetch program list");
-    }
-  }
-);
-
-export const updateProgramStatusD = createAsyncThunk(
-  "program/updateProgramStatus",
-  async ({ programId, status }, { rejectWithValue }) => {
-    try {
-      // Simulate updating program status
-      return { message: `Program ${programId} status updated to ${status}` };
-    } catch (error) {
-      return rejectWithValue("Failed to update program status");
-    }
-  }
-);
 
