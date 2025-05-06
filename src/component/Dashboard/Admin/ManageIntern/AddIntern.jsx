@@ -19,8 +19,6 @@ import { fetchCompetencies, fetchResources } from '../../../../features/resource
 import { ErrorToast, SuccessToast } from '../../../helper/ResourceToast';
 import { createIntern, fetchInterns } from '../../../../features/intern/internAction';
 import YRMSLoader from '../../../helper/loader';
-import Dropdown from '../../../helper/Dropdown';
-import AddOptionModal from '../../../helper/OptionalModal';
 
 const AddIntern = () => {
     const navigate = useNavigate();
@@ -29,7 +27,6 @@ const AddIntern = () => {
     const { loading } = useSelector((state) => state.intern);
     const [toast, setToast] = useState(null);
     const { resources, competencies } = useSelector((state) => state.resource);
-    const [modalField, setModalField] = useState(null);
 
     const [formData, setFormData] = useState({
         name: "",
@@ -234,7 +231,6 @@ const AddIntern = () => {
         }
     };
 
-
     const isFormValid = () => {
         return Object.keys(formData).every((key) => !validateField(key, formData[key])[key]);
     };
@@ -243,14 +239,6 @@ const AddIntern = () => {
         <div className='p-6 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl shadow-lg mb-6'>
             {loading && <YRMSLoader />}
             {toast}
-            {modalField && (
-                <AddOptionModal
-                    field={modalField}
-                    options={modalField === 'mentor' ? resources : competencies}
-                    onClose={() => setModalField(null)}
-                    setToast={setToast}
-                />
-            )}
 
             <div className="flex justify-between items-center mb-6">
                 <Link
@@ -372,15 +360,20 @@ const AddIntern = () => {
                         <label className="block text-gray-700 font-medium mb-2 flex items-center">
                             <FaCode className="mr-2 text-blue-500" /> Competency
                         </label>
-                        <Dropdown
+                        <select
                             name="competencyId"
                             value={formData.competencyId}
-                            options={competencies}
                             onChange={handleInputChange}
-                            setModalField={() => setModalField('competency')}
-                            placeholder="Select Competency"
-                            className={errors.competencyId ? 'border-red-500' : ''}
-                        />
+                            className={`w-full h-12 p-3 border-2 rounded-lg focus:outline-none transition-colors ${errors.competencyId ? 'border-red-500' : 'border-gray-200 focus:border-blue-500'}`}
+                            required
+                        >
+                            <option value="" disabled>Select Competency</option>
+                            {competencies.map((competency) => (
+                                <option value={competency.publicId} key={competency.publicId}>
+                                    {competency.name}
+                                </option>
+                            ))}
+                        </select>
                         {errors.competencyId && <p className="text-red-500 text-sm mt-1">{errors.competencyId}</p>}
                     </div>
 
