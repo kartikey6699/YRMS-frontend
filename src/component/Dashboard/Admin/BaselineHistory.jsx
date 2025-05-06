@@ -16,6 +16,78 @@ const groupSkillsByCategory = (technicalSkills) => {
     }, {});
 };
 
+const validateForm = (formData) => {
+    const errors = {};
+
+    // Validate technology experience
+    if (formData.technologyExperience) {
+        formData.technologyExperience.forEach((exp, index) => {
+            if (exp.technology && !exp.years) {
+                errors[`exp_years_${index}`] = "Years of experience is required";
+            } else if (exp.years < 0 || exp.years > 50) {
+                errors[`exp_years_${index}`] = "Years must be between 0 and 50";
+            }
+            if (exp.years && !exp.technology) {
+                errors[`exp_tech_${index}`] = "Technology name is required";
+            } else if (exp.technology && exp.technology.length < 2) {
+                errors[`exp_tech_${index}`] = "Technology name must be at least 2 characters";
+            }
+        });
+    }
+
+    // Validate certifications
+    if (formData.certification) {
+        formData.certification.forEach((cert, index) => {
+            if (cert.title && !cert.technology) {
+                errors[`cert_tech_${index}`] = "Technology is required";
+            } else if (cert.technology && cert.technology.length < 2) {
+                errors[`cert_tech_${index}`] = "Technology must be at least 2 characters";
+            }
+            if (cert.technology && !cert.title) {
+                errors[`cert_title_${index}`] = "Certification title is required";
+            } else if (cert.title && cert.title.length < 3) {
+                errors[`cert_title_${index}`] = "Title must be at least 3 characters";
+            }
+        });
+    }
+
+    // Validate technical skills
+    if (formData.techSkills) {
+        formData.techSkills.forEach((skill, index) => {
+            if (!skill.category) {
+                errors[`skill_category_${index}`] = "Category is required";
+            }
+            skill.technologies.forEach((tech, techIndex) => {
+                if (!tech.rating) {
+                    errors[`skill_rating_${index}_${techIndex}`] = "Rating is required";
+                } else if (tech.rating < 0 || tech.rating > 5) {
+                    errors[`skill_rating_${index}_${techIndex}`] = "Rating must be between 0 and 5";
+                }
+            });
+        });
+    }
+
+    // Validate communication
+    if (!formData.communication) {
+        errors.communication = "Communication level is required";
+    }
+
+    // Validate feedback and suggestion
+    if (formData.feedback && formData.feedback.length < 5) {
+        errors.feedback = "Feedback must be at least 5 characters";
+    }
+    if (formData.upskillSuggestion && formData.upskillSuggestion.length < 5) {
+        errors.upskillSuggestion = "Upskill suggestion must be at least 5 characters";
+    }
+
+    // Validate total experience
+    if (formData.totalExperience && (formData.totalExperience < 0 || formData.totalExperience > 50)) {
+        errors.totalExperience = "Total experience must be between 0 and 50 years";
+    }
+
+    return errors;
+};
+
 export const BaselineHistories = ({ histories, employeeName, competency, gender, userId }) => {
     const dispatch = useDispatch();
     const { resourceDetails } = useSelector((state) => state.resource);
@@ -26,9 +98,9 @@ export const BaselineHistories = ({ histories, employeeName, competency, gender,
     const [selectedBaseline, setSelectedBaseline] = useState(null);
     const [isEditing, setIsEditing] = useState(false);
     const [formData, setFormData] = useState(null);
-    const [errors, setErrors] = useState({});
     const [toast, setToast] = useState(null);
     const [expandedAccordion, setExpandedAccordion] = useState(null);
+    const [formErrors, setFormErrors] = useState({});
 
     useEffect(() => {
         if (toast) {
@@ -46,7 +118,6 @@ export const BaselineHistories = ({ histories, employeeName, competency, gender,
                     selectedBaseline.communication === 'Medium' ? 2 :
                         selectedBaseline.communication === 'Fluent' ? 3 : ''
             });
-            setErrors({}); // Reset errors when selecting a new baseline
         }
     }, [selectedBaseline]);
 
@@ -154,86 +225,25 @@ export const BaselineHistories = ({ histories, employeeName, competency, gender,
         }
     };
 
-    const validateField = (name, value, index = null, field = null) => {
-        let error = '';
-        if (name === 'communication') {
-            if (!value || ![1, 2, 3].includes(parseInt(value))) {
-                error = 'Please select a valid communication level';
-            }
-        } else if (name === 'totalExperience') {
-            if (!value || parseInt(value) <= 0) {
-                error = 'Total experience must be a positive number';
-            }
-        } else if (name === 'rating') {
-            if (!value || parseInt(value) < 0 || parseInt(value) > 5) {
-                error = 'Rating must be between 0 and 5';
-            }
-        } else if (name === 'feedback' && value && value.trim() === '') {
-            error = 'Feedback cannot be empty if provided';
-        } else if (name === 'upskillSuggestion' && value && value.trim() === '') {
-            error = 'Upskill suggestion cannot be empty if provided';
-        } else if (name === 'technologyExperience') {
-            if (field === 'technology' && (!value || value.trim() === '')) {
-                error = 'Technology name is required';
-            } else if (field === 'years' && (!value || parseInt(value) <= 0)) {
-                error = 'Years must be a positive number';
-            }
-        } else if (name === 'certification') {
-            if (field === 'title' && (!value || value.trim() === '')) {
-                error = 'Certification title is required';
-            } else if (field === 'technology' && (!value || value.trim() === '')) {
-                error = 'Technology name is required';
-            }
-        } else if (name === 'techSkills') {
-            if (field === 'category' && (!value || value.trim() === '')) {
-                error = 'Category is required';
-            } else if (field === 'rating' && (value < 0 || value > 5)) {
-                error = 'Rating must be between 0 and 5';
-            }
-        }
-        return error;
-    };
-
     const handleInputChange = (e) => {
         const { name, value } = e.target;
         const updatedValue = name === 'communication' ? parseInt(value) : value;
         setFormData(prev => ({ ...prev, [name]: updatedValue }));
-
-        // Validate on key press
-        const error = validateField(name, updatedValue);
-        setErrors(prev => ({ ...prev, [name]: error }));
+        // Clear error when user starts typing
+        setFormErrors(prev => ({ ...prev, [name]: null }));
     };
 
     const handleExpChange = (index, field, value) => {
         const updatedExp = [...formData.technologyExperience];
         updatedExp[index] = { ...updatedExp[index], [field]: value };
         setFormData(prev => ({ ...prev, technologyExperience: updatedExp }));
-
-        // Validate on key press
-        const error = validateField('technologyExperience', value, index, field);
-        setErrors(prev => ({
-            ...prev,
-            technologyExperience: {
-                ...prev.technologyExperience,
-                [index]: {
-                    ...prev.technologyExperience?.[index],
-                    [field]: error
-                }
-            }
-        }));
+        setFormErrors(prev => ({ ...prev, [`exp_${field}_${index}`]: null }));
     };
 
     const addExperience = () => {
         setFormData(prev => ({
             ...prev,
             technologyExperience: [...(prev.technologyExperience || []), { technology: "", years: 0 }]
-        }));
-        setErrors(prev => ({
-            ...prev,
-            technologyExperience: {
-                ...prev.technologyExperience,
-                [(prev.technologyExperience?.length || 0)]: {}
-            }
         }));
     };
 
@@ -242,10 +252,12 @@ export const BaselineHistories = ({ histories, employeeName, competency, gender,
             ...prev,
             technologyExperience: prev.technologyExperience.filter((_, i) => i !== index)
         }));
-        setErrors(prev => {
-            const updated = { ...prev.technologyExperience };
-            delete updated[index];
-            return { ...prev, technologyExperience: updated };
+        // Clear errors for removed experience
+        setFormErrors(prev => {
+            const newErrors = { ...prev };
+            delete newErrors[`exp_tech_${index}`];
+            delete newErrors[`exp_years_${index}`];
+            return newErrors;
         });
     };
 
@@ -253,32 +265,13 @@ export const BaselineHistories = ({ histories, employeeName, competency, gender,
         const updatedCert = [...formData.certification];
         updatedCert[index] = { ...updatedCert[index], [field]: value };
         setFormData(prev => ({ ...prev, certification: updatedCert }));
-
-        // Validate on key press
-        const error = validateField('certification', value, index, field);
-        setErrors(prev => ({
-            ...prev,
-            certification: {
-                ...prev.certification,
-                [index]: {
-                    ...prev.certification?.[index],
-                    [field]: error
-                }
-            }
-        }));
+        setFormErrors(prev => ({ ...prev, [`cert_${field}_${index}`]: null }));
     };
 
     const addCertification = () => {
         setFormData(prev => ({
             ...prev,
             certification: [...(prev.certification || []), { title: "", technology: "" }]
-        }));
-        setErrors(prev => ({
-            ...prev,
-            certification: {
-                ...prev.certification,
-                [(prev.certification?.length || 0)]: {}
-            }
         }));
     };
 
@@ -287,10 +280,12 @@ export const BaselineHistories = ({ histories, employeeName, competency, gender,
             ...prev,
             certification: prev.certification.filter((_, i) => i !== index)
         }));
-        setErrors(prev => {
-            const updated = { ...prev.certification };
-            delete updated[index];
-            return { ...prev, certification: updated };
+        // Clear errors for removed certification
+        setFormErrors(prev => {
+            const newErrors = { ...prev };
+            delete newErrors[`cert_title_${index}`];
+            delete newErrors[`cert_tech_${index}`];
+            return newErrors;
         });
     };
 
@@ -300,42 +295,8 @@ export const BaselineHistories = ({ histories, employeeName, competency, gender,
         if (tech) {
             tech.rating = newRating.toString();
         }
-        setFormData(prev => ({
-            ...prev,
-            techSkills: updatedTechSkills
-        }));
-
-        // Validate on key press
-        const error = validateField('techSkills', newRating, cardIndex, 'rating');
-        setErrors(prev => ({
-            ...prev,
-            techSkills: {
-                ...prev.techSkills,
-                [cardIndex]: {
-                    ...prev.techSkills?.[cardIndex],
-                    rating: error
-                }
-            }
-        }));
-    };
-
-    const handleSkillCategoryChange = (index, value) => {
-        const updatedTechSkills = [...formData.techSkills];
-        updatedTechSkills[index].category = value;
         setFormData(prev => ({ ...prev, techSkills: updatedTechSkills }));
-
-        // Validate on key press
-        const error = validateField('techSkills', value, index, 'category');
-        setErrors(prev => ({
-            ...prev,
-            techSkills: {
-                ...prev.techSkills,
-                [index]: {
-                    ...prev.techSkills?.[index],
-                    category: error
-                }
-            }
-        }));
+        setFormErrors(prev => ({ ...prev, [`skill_rating_${cardIndex}_${techId}`]: null }));
     };
 
     const toggleAccordion = (index) => {
@@ -344,80 +305,28 @@ export const BaselineHistories = ({ histories, employeeName, competency, gender,
 
     const startEditing = (baseline) => {
         setEditingBaselineId(baseline.publicId);
-        setSelectedBaseline(baseline);
-        setIsEditing(true);
+        setFormData({
+            ...baseline,
+            techSkills: convertToTechSkillsFormat(baseline.technicalSkills),
+            communication: baseline.communication === 'Average' ? 1 :
+                baseline.communication === 'Medium' ? 2 :
+                    baseline.communication === 'Fluent' ? 3 : ''
+        });
+        setFormErrors({});
     };
 
     const cancelEditing = () => {
         setEditingBaselineId(null);
-        setSelectedBaseline(null);
-        setIsEditing(false);
         setFormData(null);
-        setErrors({});
-    };
-
-    const validateForm = () => {
-        const newErrors = {};
-
-        // Validate communication
-        newErrors.communication = validateField('communication', formData.communication);
-
-        // Validate totalExperience
-        newErrors.totalExperience = validateField('totalExperience', formData.totalExperience);
-
-        // Validate rating
-        newErrors.rating = validateField('rating', formData.rating);
-
-        // Validate feedback
-        newErrors.feedback = validateField('feedback', formData.feedback);
-
-        // Validate upskillSuggestion
-        newErrors.upskillSuggestion = validateField('upskillSuggestion', formData.upskillSuggestion);
-
-        // Validate technologyExperience
-        newErrors.technologyExperience = {};
-        formData.technologyExperience?.forEach((exp, index) => {
-            newErrors.technologyExperience[index] = {
-                technology: validateField('technologyExperience', exp.technology, index, 'technology'),
-                years: validateField('technologyExperience', exp.years, index, 'years')
-            };
-        });
-
-        // Validate certification
-        newErrors.certification = {};
-        formData.certification?.forEach((cert, index) => {
-            newErrors.certification[index] = {
-                title: validateField('certification', cert.title, index, 'title'),
-                technology: validateField('certification', cert.technology, index, 'technology')
-            };
-        });
-
-        // Validate techSkills
-        newErrors.techSkills = {};
-        formData.techSkills?.forEach((skill, index) => {
-            newErrors.techSkills[index] = {
-                category: validateField('techSkills', skill.category, index, 'category'),
-                rating: skill.technologies.some(tech => validateField('techSkills', tech.rating, index, 'rating'))
-                    ? 'Invalid rating in technologies'
-                    : ''
-            };
-        });
-
-        setErrors(newErrors);
-
-        // Check if there are any errors
-        return !Object.values(newErrors).some(error => 
-            typeof error === 'string' ? error : 
-            Object.values(error).some(e => 
-                typeof e === 'string' ? e : 
-                Object.values(e).some(ee => ee)
-            )
-        );
+        setFormErrors({});
     };
 
     const handleSubmit = async () => {
-        if (!validateForm()) {
-            setToast(<ErrorToast message="Please fix all validation errors before saving" onClose={() => setToast(null)} />);
+        const errors = validateForm(formData);
+        setFormErrors(errors);
+
+        if (Object.keys(errors).length > 0) {
+            setToast(<ErrorToast message="Please fix the form errors" onClose={() => setToast(null)} />);
             return;
         }
 
@@ -451,24 +360,13 @@ export const BaselineHistories = ({ histories, employeeName, competency, gender,
 
             setToast(<SuccessToast message="Baseline updated successfully!" onClose={() => setToast(null)} />);
             setEditingBaselineId(null);
-            setSelectedBaseline(null);
-            setIsEditing(false);
             setFormData(null);
-            setErrors({});
+            setFormErrors({});
             dispatch(fetchBaselineHistories(userId));
         } catch (error) {
             setToast(<ErrorToast message={error.message || "Failed to update baseline"} onClose={() => setToast(null)} />);
         }
     };
-
-    // Check if Save button should be disabled
-    const isSaveDisabled = Object.values(errors).some(error => 
-        typeof error === 'string' ? error : 
-        Object.values(error).some(e => 
-            typeof e === 'string' ? e : 
-            Object.values(e).some(ee => ee)
-        )
-    );
 
     // Sort from oldest to newest
     const sortedHistories = [...histories].sort(
@@ -554,9 +452,8 @@ export const BaselineHistories = ({ histories, employeeName, competency, gender,
                                                             e.stopPropagation();
                                                             handleSubmit();
                                                         }}
-                                                        className={`p-2 rounded-full bg-white/80 hover:bg-white transition-colors ${isSaveDisabled ? 'text-gray-400 cursor-not-allowed' : 'text-green-600'}`}
+                                                        className="p-2 rounded-full bg-white/80 hover:bg-white text-green-600 transition-colors"
                                                         title="Save"
-                                                        disabled={isSaveDisabled}
                                                     >
                                                         <FaSave className="w-4 h-4" />
                                                     </button>
@@ -589,22 +486,32 @@ export const BaselineHistories = ({ histories, employeeName, competency, gender,
                                                 {isEditing ? (
                                                     <div className="space-y-2">
                                                         {formData.technologyExperience?.map((exp, i) => (
-                                                            <div key={i} className="space-y-1">
+                                                            <div key={i} className="flex flex-col gap-2">
                                                                 <div className="flex items-center gap-2">
-                                                                    <input
-                                                                        type="text"
-                                                                        value={exp.technology}
-                                                                        onChange={(e) => handleExpChange(i, 'technology', e.target.value)}
-                                                                        className={`flex-1 p-2 border rounded text-sm ${errors.technologyExperience?.[i]?.technology ? 'border-red-500' : ''}`}
-                                                                        placeholder="Technology"
-                                                                    />
-                                                                    <input
-                                                                        type="number"
-                                                                        value={exp.years}
-                                                                        onChange={(e) => handleExpChange(i, 'years', parseInt(e.target.value) || 0)}
-                                                                        className={`w-20 p-2 border rounded text-sm ${errors.technologyExperience?.[i]?.years ? 'border-red-500' : ''}`}
-                                                                        placeholder="Years"
-                                                                    />
+                                                                    <div className="flex-1">
+                                                                        <input
+                                                                            type="text"
+                                                                            value={exp.technology}
+                                                                            onChange={(e) => handleExpChange(i, 'technology', e.target.value)}
+                                                                            className={`flex-1 p-2 border rounded text-sm ${formErrors[`exp_tech_${i}`] ? 'border-red-500' : ''}`}
+                                                                            placeholder="Technology"
+                                                                        />
+                                                                        {formErrors[`exp_tech_${i}`] && (
+                                                                            <p className="text-red-500 text-xs mt-1">{formErrors[`exp_tech_${i}`]}</p>
+                                                                        )}
+                                                                    </div>
+                                                                    <div>
+                                                                        <input
+                                                                            type="number"
+                                                                            value={exp.years}
+                                                                            onChange={(e) => handleExpChange(i, 'years', parseInt(e.target.value) || 0)}
+                                                                            className={`w-20 p-2 border rounded text-sm ${formErrors[`exp_years_${i}`] ? 'border-red-500' : ''}`}
+                                                                            placeholder="Years"
+                                                                        />
+                                                                        {formErrors[`exp_years_${i}`] && (
+                                                                            <p className="text-red-500 text-xs mt-1">{formErrors[`exp_years_${i}`]}</p>
+                                                                        )}
+                                                                    </div>
                                                                     <button
                                                                         onClick={() => removeExperience(i)}
                                                                         className="text-red-500 hover:text-red-700"
@@ -613,12 +520,6 @@ export const BaselineHistories = ({ histories, employeeName, competency, gender,
                                                                         <FaTimes className="w-3 h-3" />
                                                                     </button>
                                                                 </div>
-                                                                {errors.technologyExperience?.[i]?.technology && (
-                                                                    <p className="text-xs text-red-500">{errors.technologyExperience[i].technology}</p>
-                                                                )}
-                                                                {errors.technologyExperience?.[i]?.years && (
-                                                                    <p className="text-xs text-red-500">{errors.technologyExperience[i].years}</p>
-                                                                )}
                                                             </div>
                                                         ))}
                                                         <button
@@ -655,22 +556,32 @@ export const BaselineHistories = ({ histories, employeeName, competency, gender,
                                                 {isEditing ? (
                                                     <div className="space-y-2">
                                                         {formData.certification?.map((cert, i) => (
-                                                            <div key={i} className="space-y-1">
+                                                            <div key={i} className="flex flex-col gap-2">
                                                                 <div className="flex items-center gap-2">
-                                                                    <input
-                                                                        type="text"
-                                                                        value={cert.title}
-                                                                        onChange={(e) => handleCertChange(i, 'title', e.target.value)}
-                                                                        className={`flex-1 p-2 border rounded text-sm ${errors.certification?.[i]?.title ? 'border-red-500' : ''}`}
-                                                                        placeholder="Title"
-                                                                    />
-                                                                    <input
-                                                                        type="text"
-                                                                        value={cert.technology}
-                                                                        onChange={(e) => handleCertChange(i, 'technology', e.target.value)}
-                                                                        className={`flex-1 p-2 border rounded text-sm ${errors.certification?.[i]?.technology ? 'border-red-500' : ''}`}
-                                                                        placeholder="Technology"
-                                                                    />
+                                                                    <div className="flex-1">
+                                                                        <input
+                                                                            type="text"
+                                                                            value={cert.title}
+                                                                            onChange={(e) => handleCertChange(i, 'title', e.target.value)}
+                                                                            className={`flex-1 p-2 border rounded text-sm ${formErrors[`cert_title_${i}`] ? 'border-red-500' : ''}`}
+                                                                            placeholder="Title"
+                                                                        />
+                                                                        {formErrors[`cert_title_${i}`] && (
+                                                                            <p className="text-red-500 text-xs mt-1">{formErrors[`cert_title_${i}`]}</p>
+                                                                        )}
+                                                                    </div>
+                                                                    <div className="flex-1">
+                                                                        <input
+                                                                            type="text"
+                                                                            value={cert.technology}
+                                                                            onChange={(e) => handleCertChange(i, 'technology', e.target.value)}
+                                                                            className={`flex-1 p-2 border rounded text-sm ${formErrors[`cert_tech_${i}`] ? 'border-red-500' : ''}`}
+                                                                            placeholder="Technology"
+                                                                        />
+                                                                        {formErrors[`cert_tech_${i}`] && (
+                                                                            <p className="text-red-500 text-xs mt-1">{formErrors[`cert_tech_${i}`]}</p>
+                                                                        )}
+                                                                    </div>
                                                                     <button
                                                                         onClick={() => removeCertification(i)}
                                                                         className="text-red-500 hover:text-red-700"
@@ -679,12 +590,6 @@ export const BaselineHistories = ({ histories, employeeName, competency, gender,
                                                                         <FaTimes className="w-3 h-3" />
                                                                     </button>
                                                                 </div>
-                                                                {errors.certification?.[i]?.title && (
-                                                                    <p className="text-xs text-red-500">{errors.certification[i].title}</p>
-                                                                )}
-                                                                {errors.certification?.[i]?.technology && (
-                                                                    <p className="text-xs text-red-500">{errors.certification[i].technology}</p>
-                                                                )}
                                                             </div>
                                                         ))}
                                                         <button
@@ -718,54 +623,26 @@ export const BaselineHistories = ({ histories, employeeName, competency, gender,
                                                 <FaUser className="mr-1 text-xs" /> COMMUNICATION
                                             </h4>
                                             {isEditing ? (
-                                                <div className="space-y-1">
+                                                <div>
                                                     <select
                                                         name="communication"
                                                         value={formData.communication}
                                                         onChange={handleInputChange}
-                                                        className={`w-full p-2 border rounded text-sm bg-white ${errors.communication ? 'border-red-500' : ''}`}
+                                                        className={`w-full p-2 border rounded text-sm bg-white ${formErrors.communication ? 'border-red-500' : ''}`}
                                                     >
                                                         <option value="">Select Level</option>
                                                         <option value="1">Average</option>
                                                         <option value="2">Medium</option>
                                                         <option value="3">Fluent</option>
                                                     </select>
-                                                    {errors.communication && (
-                                                        <p className="text-xs text-red-500">{errors.communication}</p>
-                                                    )}
-                                                </div>
-                                            )  : (
-                                                <div className="bg-white p-2 rounded border border-amber-100">
-                                                    <p className="text-sm text-gray-700 capitalize">
-                                                        {history.communication?.toLowerCase() || "Not specified"}
-                                                    </p>
-                                                </div>
-                                            )}
-                                        </div>
-
-                                        {/* Total Experience */}
-                                        <div className={`p-2 rounded ${sectionColors.experience}`}>
-                                            <h4 className="text-2xs font-semibold text-blue-600 mb-1 flex items-center">
-                                                <FaChartLine className="mr-1 text-xs" /> TOTAL EXPERIENCE
-                                            </h4>
-                                            {isEditing ? (
-                                                <div className="space-y-1">
-                                                    <input
-                                                        type="number"
-                                                        name="totalExperience"
-                                                        value={formData.totalExperience || ''}
-                                                        onChange={handleInputChange}
-                                                        className={`w-full p-2 border rounded text-sm ${errors.totalExperience ? 'border-red-500' : ''}`}
-                                                        placeholder="Total Years"
-                                                    />
-                                                    {errors.totalExperience && (
-                                                        <p className="text-xs text-red-500">{errors.totalExperience}</p>
+                                                    {formErrors.communication && (
+                                                        <p className="text-red-500 text-xs mt-1">{formErrors.communication}</p>
                                                     )}
                                                 </div>
                                             ) : (
-                                                <div className="bg-white p-2 rounded border border-blue-100">
-                                                    <p className="text-sm text-gray-700">
-                                                        {history.totalExperience} years
+                                                <div className="bg-white p-2 rounded border border-amber-100">
+                                                    <p className="text-sm text-gray-700 capitalize">
+                                                        {history.communication?.toLowerCase() || "Not specified"}
                                                     </p>
                                                 </div>
                                             )}
@@ -784,39 +661,53 @@ export const BaselineHistories = ({ histories, employeeName, competency, gender,
                                                     <div className="space-y-3">
                                                         {formData.techSkills?.map((skill, i) => (
                                                             <div key={i} className="space-y-2">
-                                                                <div className="space-y-1">
-                                                                    <select
-                                                                        value={skill.category}
-                                                                        onChange={(e) => handleSkillCategoryChange(i, e.target.value)}
-                                                                        className={`flex-1 p-2 border rounded text-sm bg-white ${errors.techSkills?.[i]?.category ? 'border-red-500' : ''}`}
-                                                                    >
-                                                                        <option value="">Select Category</option>
-                                                                        {technologyCategoriesWithTech.map(cat => (
-                                                                            <option key={cat.publicId} value={cat.publicId}>
-                                                                                {cat.name}
-                                                                            </option>
-                                                                        ))}
-                                                                    </select>
-                                                                    {errors.techSkills?.[i]?.category && (
-                                                                        <p className="text-xs text-red-500">{errors.techSkills[i].category}</p>
-                                                                    )}
+                                                                <div className="flex items-center gap-2">
+                                                                    <div className="flex-1">
+                                                                        <select
+                                                                            value={skill.category}
+                                                                            onChange={(e) => {
+                                                                                const updated = [...formData.techSkills];
+                                                                                updated[i].category = e.target.value;
+                                                                                setFormData({ ...formData, techSkills: updated });
+                                                                                setFormErrors(prev => ({ ...prev, [`skill_category_${i}`]: null }));
+                                                                            }}
+                                                                            className={`flex-1 p-2 border rounded text-sm bg-white ${formErrors[`skill_category_${i}`] ? 'border-red-500' : ''}`}
+                                                                        >
+                                                                            <option value="">Select Category</option>
+                                                                            {technologyCategoriesWithTech.map(cat => (
+                                                                                <option key={cat.publicId} value={cat.publicId}>
+                                                                                    {cat.name}
+                                                                                </option>
+                                                                            ))}
+                                                                        </select>
+                                                                        {formErrors[`skill_category_${i}`] && (
+                                                                            <p className="text-red-500 text-xs mt-1">{formErrors[`skill_category_${i}`]}</p>
+                                                                        )}
+                                                                    </div>
                                                                 </div>
                                                                 {skill.technologies.map((tech, techIdx) => (
-                                                                    <div key={techIdx} className="flex items-center gap-2 ml-4 bg-white p-2 rounded border border-emerald-100">
-                                                                        <span className="text-sm flex-1">{tech.name}</span>
-                                                                        <div className="flex items-center">
-                                                                            <input
-                                                                                type="number"
-                                                                                value={tech.rating}
-                                                                                onChange={(e) => handleSkillRatingChange(tech.technology, e.target.value, i)}
-                                                                                min="0"
-                                                                                max="5"
-                                                                                className={`w-12 p-1 border rounded text-center ${errors.techSkills?.[i]?.rating ? 'border-red-500' : ''}`}
-                                                                            />
-                                                                            {errors.techSkills?.[i]?.rating && (
-                                                                                <p className="text-xs text-red-500 ml-2">{errors.techSkills[i].rating}</p>
-                                                                            )}
+                                                                    <div key={techIdx} className="flex flex-col ml-4">
+                                                                        <div className="flex items-center gap-2 bg-white p-2 rounded border border-emerald-100">
+                                                                            <span className="text-sm flex-1">{tech.name}</span>
+                                                                            <div className="flex items-center">
+                                                                                <input
+                                                                                    type="number"
+                                                                                    value={tech.rating}
+                                                                                    onChange={(e) => {
+                                                                                        const updated = [...formData.techSkills];
+                                                                                        updated[i].technologies[techIdx].rating = e.target.value;
+                                                                                        setFormData({ ...formData, techSkills: updated });
+                                                                                        setFormErrors(prev => ({ ...prev, [`skill_rating_${i}_${techIdx}`]: null }));
+                                                                                    }}
+                                                                                    min="0"
+                                                                                    max="5"
+                                                                                    className={`w-12 p-1 border rounded text-center ${formErrors[`skill_rating_${i}_${techIdx}`] ? 'border-red-500' : ''}`}
+                                                                                />
+                                                                            </div>
                                                                         </div>
+                                                                        {formErrors[`skill_rating_${i}_${techIdx}`] && (
+                                                                            <p className="text-red-500 text-xs mt-1 ml-4">{formErrors[`skill_rating_${i}_${techIdx}`]}</p>
+                                                                        )}
                                                                     </div>
                                                                 ))}
                                                             </div>
@@ -849,7 +740,7 @@ export const BaselineHistories = ({ histories, employeeName, competency, gender,
                                                                                     {[...Array(5)].map((_, starIndex) => (
                                                                                         <FaStar
                                                                                             key={starIndex}
-                                                                                            className={`${starIndex < skill.rating ? "text-amber-400" : "text-gray-300"} w-3 h-3`}
+                                                                                            className={`${starIndex < skill.rating ? "text-amber-400" : "text-gray-300"} w-3 h-3 `}
                                                                                         />
                                                                                     ))}
                                                                                 </div>
@@ -871,16 +762,19 @@ export const BaselineHistories = ({ histories, employeeName, competency, gender,
                                                     <FaEdit className="mr-1 text-xs" /> FEEDBACK
                                                 </h4>
                                                 {isEditing ? (
-                                                    <div className="space-y-1">
+                                                    <div>
                                                         <textarea
                                                             value={formData.feedback}
-                                                            onChange={(e) => handleInputChange({ target: { name: 'feedback', value: e.target.value } })}
-                                                            className={`w-full p-2 border rounded text-sm bg-white ${errors.feedback ? 'border-red-500' : ''}`}
+                                                            onChange={(e) => {
+                                                                setFormData({ ...formData, feedback: e.target.value });
+                                                                setFormErrors(prev => ({ ...prev, feedback: null }));
+                                                            }}
+                                                            className={`w-full p-2 border rounded text-sm bg-white ${formErrors.feedback ? 'border-red-500' : ''}`}
                                                             rows="3"
                                                             placeholder="Enter feedback..."
                                                         />
-                                                        {errors.feedback && (
-                                                            <p className="text-xs text-red-500">{errors.feedback}</p>
+                                                        {formErrors.feedback && (
+                                                            <p className="text-red-500 text-xs mt-1">{formErrors.feedback}</p>
                                                         )}
                                                     </div>
                                                 ) : (
@@ -897,16 +791,19 @@ export const BaselineHistories = ({ histories, employeeName, competency, gender,
                                                     <FaInfoCircle className="mr-1 text-xs" /> SUGGESTION
                                                 </h4>
                                                 {isEditing ? (
-                                                    <div className="space-y-1">
+                                                    <div>
                                                         <textarea
                                                             value={formData.upskillSuggestion}
-                                                            onChange={(e) => handleInputChange({ target: { name: 'upskillSuggestion', value: e.target.value } })}
-                                                            className={`w-full p-2 border rounded text-sm bg-white ${errors.upskillSuggestion ? 'border-red-500' : ''}`}
+                                                            onChange={(e) => {
+                                                                setFormData({ ...formData, upskillSuggestion: e.target.value });
+                                                                setFormErrors(prev => ({ ...prev, upskillSuggestion: null }));
+                                                            }}
+                                                            className={`w-full p-2 border rounded text-sm bg-white ${formErrors.upskillSuggestion ? 'border-red-500' : ''}`}
                                                             rows="3"
                                                             placeholder="Enter upskill suggestions..."
                                                         />
-                                                        {errors.upskillSuggestion && (
-                                                            <p className="text-xs text-red-500">{errors.upskillSuggestion}</p>
+                                                        {formErrors.upskillSuggestion && (
+                                                            <p className="text-red-500 text-xs mt-1">{formErrors.upskillSuggestion}</p>
                                                         )}
                                                     </div>
                                                 ) : (
