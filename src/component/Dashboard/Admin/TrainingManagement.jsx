@@ -10,14 +10,18 @@ import {
   FaPauseCircle,
   FaCheck,
   FaTimes,
-  FaSearch
+  FaSearch,
+  FaBan,
+  FaTrash,
+  FaEdit
 } from "react-icons/fa";
 import { useDispatch, useSelector } from "react-redux";
-import AddTraining from "../Admin/Training&Upskilling/AddTraining";
+import AdminAddTraining from "../Admin/Training&Upskilling/AddTrainingAdmin";
 import { 
   approveProgram, 
-  fetchProgramListD,
-  updateProgramStatusD 
+  fetchProgramList,
+  updateProgramStatus,
+  updateApprovalStatus
 } from "../../../features/program/programAction";
 import { fetchCompetencies } from "../../../features/resource/resourceAction";
 import { ErrorToast, SuccessToast } from '../../helper/ResourceToast';
@@ -29,31 +33,63 @@ const TrainingManagement = () => {
   const { competencies } = useSelector((state) => state.resource);
   const [showAddModal, setShowAddModal] = useState(false);
   const [filters, setFilters] = useState({
-    approvalStatus: 'active', // active/inactive
-    programStatus: 'all', // running/pending/hold/completed/all
-    programType: 'all', // training/upskilling/all
+    approvalStatus: 'all',
+    programStatus: 'all',
+    programType: 'all',
     competency: 'all',
     searchQuery: ''
   });
   const [selectedPrograms, setSelectedPrograms] = useState([]);
+  const [activeCard, setActiveCard] = useState(null);
+  const [editingStatus, setEditingStatus] = useState(null);
+  const [editingApproval, setEditingApproval] = useState(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(null);
+  const [toast, setToast] = useState(null);
+
+  useEffect(() => {
+    if (toast) {
+        const timer = setTimeout(() => setToast(null), 2000);
+        return () => clearTimeout(timer);
+    }
+}, [toast]);
+
+  // Status options for dropdowns
+  const statusOptions = [
+    { value: 'Hold', label: 'Hold' },
+    { value: 'Pending', label: 'Pending' },
+    { value: 'Running', label: 'Running' },
+    { value: 'Completed', label: 'Completed' }
+  ];
+
+  const approvalOptions = [
+    { value: 'approved', label: 'Approved' },
+    { value: 'pending', label: 'Pending' },
+    { value: 'rejected', label: 'Rejected' }
+  ];
 
   // Fetch programs and competencies on mount
   useEffect(() => {
-    dispatch(fetchProgramListD());
-    dispatch(fetchCompetencies());
+    const fetchData = async () => {
+      try {
+        await dispatch(fetchProgramList()).unwrap();
+        await dispatch(fetchCompetencies()).unwrap();
+      } catch (error) {
+        setToast(<ErrorToast message="Failed to load training programs data" />);
+      }
+    };
+    fetchData();
   }, [dispatch]);
 
   // Filter programs based on current filters
   const filteredPrograms = programs.filter(program => {
     // Filter by approval status
-    if (filters.approvalStatus === 'active' && !program.isApproved) return false;
-    if (filters.approvalStatus === 'inactive' && program.isApproved) return false;
+    if (filters.approvalStatus !== 'all' && program.approvalStatus !== filters.approvalStatus) return false;
     
     // Filter by program status
-    if (filters.programStatus !== 'all' && program.status !== filters.programStatus) return false;
+    if (filters.programStatus !== 'all' && program.status?.toLowerCase() !== filters.programStatus.toLowerCase()) return false;
     
     // Filter by program type
-    if (filters.programType !== 'all' && program.type !== (filters.programType === 'training' ? 1 : 2)) return false;
+    if (filters.programType !== 'all' && program.type?.toLowerCase() !== filters.programType.toLowerCase()) return false;
     
     // Filter by competency
     if (filters.competency !== 'all' && program.competencyId !== filters.competency) return false;
@@ -75,21 +111,53 @@ const TrainingManagement = () => {
           dispatch(approveProgram({ programId })).unwrap()
         )
       );
-      dispatch(fetchProgramListD());
+      dispatch(fetchProgramList());
       setSelectedPrograms([]);
-      SuccessToast("Programs approved successfully!");
+      setToast(<SuccessToast message="Programs approved successfully!" />);
     } catch (error) {
-      ErrorToast(error.message || "Failed to approve programs");
+      setToast(<ErrorToast message={error.message || "Failed to approve programs"} />);
     }
   };
 
-  const handleStatusChange = async (programId, newStatus) => {
+  const handleStatusChange = async (publicId, newStatus) => {
+    const statusMap = {
+      Hold: 1,
+      Pending: 2,
+      Running: 3,
+      Completed: 4
+    };
+
+    const mappedStatus = statusMap[newStatus] || newStatus;
+
     try {
-      await dispatch(updateProgramStatusD({ programId, status: newStatus })).unwrap();
-      dispatch(fetchProgramListD());
-      SuccessToast("Status updated successfully!");
+      await dispatch(updateProgramStatus({ publicId, status: mappedStatus })).unwrap();
+      dispatch(fetchProgramList());
+      setToast(<SuccessToast message="Status updated successfully!" />);
+      setEditingStatus(null);
     } catch (error) {
-      ErrorToast(error.message || "Failed to update status");
+      setToast(<ErrorToast message={error.message || "Failed to update status"} />);
+    }
+  };
+
+  const handleApprovalChange = async (publicId, newApprovalStatus) => {
+    try {
+      await dispatch(updateApprovalStatus({ publicId, approvalStatus: newApprovalStatus })).unwrap();
+      dispatch(fetchProgramList());
+      setToast(<SuccessToast message="Approval status updated successfully!" />);
+      setEditingApproval(null);
+    } catch (error) {
+      setToast(<ErrorToast message={error.message || "Failed to update approval status"} />);
+    }
+  };
+
+  const handleDelete = async (programId) => {
+    try {
+      await dispatch(deleteProgram(programId)).unwrap();
+      dispatch(fetchProgramList());
+      setToast(<SuccessToast message="Program deleted successfully!" />);
+      setShowDeleteConfirm(null);
+    } catch (error) {
+      setToast(<ErrorToast message={error.message || "Failed to delete program"} />);
     }
   };
 
@@ -102,7 +170,8 @@ const TrainingManagement = () => {
   };
 
   const getStatusIcon = (status) => {
-    switch (status) {
+    if (typeof status !== 'string') return null;
+    switch (status.toLowerCase()) {
       case 'running': return <FaCheckCircle className="text-green-500" />;
       case 'pending': return <FaHourglassHalf className="text-yellow-500" />;
       case 'hold': return <FaPauseCircle className="text-orange-500" />;
@@ -112,7 +181,8 @@ const TrainingManagement = () => {
   };
 
   const getStatusColor = (status) => {
-    switch (status) {
+    if (typeof status !== 'string') return 'bg-gray-100 text-gray-800';
+    switch (status.toLowerCase()) {
       case 'running': return 'bg-green-100 text-green-800';
       case 'pending': return 'bg-yellow-100 text-yellow-800';
       case 'hold': return 'bg-orange-100 text-orange-800';
@@ -121,26 +191,101 @@ const TrainingManagement = () => {
     }
   };
 
-  const getTypeBadge = (type) => (
-    <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
-      type === 1 ? 'bg-purple-100 text-purple-800' : 'bg-indigo-100 text-indigo-800'
-    }`}>
-      {type === 1 ? 'Training' : 'Upskilling'}
-    </span>
-  );
+  const getTypeBadge = (type) => {
+    if (!type) return null;
+    return (
+      <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
+        type.toLowerCase() === 'training' ? 'bg-purple-100 text-purple-800' : 'bg-indigo-100 text-indigo-800'
+      }`}>
+        {type}
+      </span>
+    );
+  };
 
-  const getApprovalBadge = (isApproved) => (
-    <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
-      isApproved ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-    }`}>
-      {isApproved ? 'Approved' : 'Pending'}
-    </span>
-  );
+  const getApprovalBadge = (approvalStatus) => {
+    if (!approvalStatus) return null;
+    switch (approvalStatus.toLowerCase()) {
+      case 'approved':
+        return (
+          <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
+            Approved
+          </span>
+        );
+      case 'rejected':
+        return (
+          <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800">
+            Rejected
+          </span>
+        );
+      case 'pending':
+        return (
+          <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-yellow-100 text-yellow-800">
+            Pending
+          </span>
+        );
+      default:
+        return null;
+    }
+  };
 
-  if (loading) return <YRMSLoader message="Loading training programs..." />;
+  const handleCardClick = (cardType) => {
+    setActiveCard(cardType);
+    switch (cardType) {
+      case 'total':
+        setFilters({
+          ...filters,
+          approvalStatus: 'all',
+          programStatus: 'all',
+          programType: 'all'
+        });
+        break;
+      case 'approved':
+        setFilters({
+          ...filters,
+          approvalStatus: 'approved',
+          programStatus: 'all',
+          programType: 'all'
+        });
+        break;
+      case 'pending':
+        setFilters({
+          ...filters,
+          approvalStatus: 'pending',
+          programStatus: 'all',
+          programType: 'all'
+        });
+        break;
+      case 'active':
+        setFilters({
+          ...filters,
+          approvalStatus: 'all',
+          programStatus: 'running',
+          programType: 'all'
+        });
+        break;
+      default:
+        break;
+    }
+  };
+
+  const getCardBgColor = (cardType) => {
+    return activeCard === cardType ? 'ring-2 ring-purple-500' : '';
+  };
+
+  const countByApprovalStatus = (status) => {
+    return programs.filter(p => p.approvalStatus?.toLowerCase() === status.toLowerCase()).length;
+  };
+
+  const countByProgramStatus = (status) => {
+    return programs.filter(p => typeof p.status === 'string' && p.status.toLowerCase() === status.toLowerCase()).length;
+  };
+
+  // if (loading) return <YRMSLoader message="Loading training programs..." />;
 
   return (
     <div className="px-4 sm:px-6 lg:px-8 py-6">
+      {toast}
+      {loading && <YRMSLoader message="Loading training programs..." />}
       {/* Header and Actions */}
       <div className="sm:flex sm:items-center sm:justify-between mb-6">
         <div className="flex items-center">
@@ -148,7 +293,7 @@ const TrainingManagement = () => {
           <h1 className="text-2xl font-bold text-gray-900">Training Management</h1>
         </div>
         <div className="mt-4 sm:mt-0 flex space-x-3">
-          {selectedPrograms.length > 0 && filters.approvalStatus === 'inactive' && (
+          {selectedPrograms.length > 0 && filters.approvalStatus === 'pending' && (
             <button
               onClick={handleApprovePrograms}
               className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
@@ -169,7 +314,10 @@ const TrainingManagement = () => {
 
       {/* Stats Cards */}
       <div className="mb-6 grid grid-cols-1 gap-5 sm:grid-cols-4">
-        <div className="bg-white overflow-hidden shadow rounded-lg">
+        <div 
+          className={`bg-white overflow-hidden shadow rounded-lg cursor-pointer transition-all ${getCardBgColor('total')}`}
+          onClick={() => handleCardClick('total')}
+        >
           <div className="px-4 py-5 sm:p-6">
             <div className="flex items-center">
               <div className="flex-shrink-0 bg-purple-500 rounded-md p-3">
@@ -189,7 +337,10 @@ const TrainingManagement = () => {
           </div>
         </div>
 
-        <div className="bg-white overflow-hidden shadow rounded-lg">
+        <div 
+          className={`bg-white overflow-hidden shadow rounded-lg cursor-pointer transition-all ${getCardBgColor('approved')}`}
+          onClick={() => handleCardClick('approved')}
+        >
           <div className="px-4 py-5 sm:p-6">
             <div className="flex items-center">
               <div className="flex-shrink-0 bg-green-500 rounded-md p-3">
@@ -200,7 +351,7 @@ const TrainingManagement = () => {
                   <dt className="text-sm font-medium text-gray-500 truncate">Approved</dt>
                   <dd className="flex items-baseline">
                     <div className="text-2xl font-semibold text-gray-900">
-                      {programs.filter(p => p.isApproved).length}
+                      {countByApprovalStatus('approved')}
                     </div>
                   </dd>
                 </dl>
@@ -209,7 +360,10 @@ const TrainingManagement = () => {
           </div>
         </div>
 
-        <div className="bg-white overflow-hidden shadow rounded-lg">
+        <div 
+          className={`bg-white overflow-hidden shadow rounded-lg cursor-pointer transition-all ${getCardBgColor('pending')}`}
+          onClick={() => handleCardClick('pending')}
+        >
           <div className="px-4 py-5 sm:p-6">
             <div className="flex items-center">
               <div className="flex-shrink-0 bg-yellow-500 rounded-md p-3">
@@ -220,7 +374,7 @@ const TrainingManagement = () => {
                   <dt className="text-sm font-medium text-gray-500 truncate">Pending Approval</dt>
                   <dd className="flex items-baseline">
                     <div className="text-2xl font-semibold text-gray-900">
-                      {programs.filter(p => !p.isApproved).length}
+                      {countByApprovalStatus('pending')}
                     </div>
                   </dd>
                 </dl>
@@ -229,7 +383,10 @@ const TrainingManagement = () => {
           </div>
         </div>
 
-        <div className="bg-white overflow-hidden shadow rounded-lg">
+        <div 
+          className={`bg-white overflow-hidden shadow rounded-lg cursor-pointer transition-all ${getCardBgColor('active')}`}
+          onClick={() => handleCardClick('active')}
+        >
           <div className="px-4 py-5 sm:p-6">
             <div className="flex items-center">
               <div className="flex-shrink-0 bg-blue-500 rounded-md p-3">
@@ -240,7 +397,7 @@ const TrainingManagement = () => {
                   <dt className="text-sm font-medium text-gray-500 truncate">Active Programs</dt>
                   <dd className="flex items-baseline">
                     <div className="text-2xl font-semibold text-gray-900">
-                      {programs.filter(p => p.status === 'running').length}
+                      {countByProgramStatus('running')}
                     </div>
                   </dd>
                 </dl>
@@ -258,11 +415,16 @@ const TrainingManagement = () => {
             <label className="block text-sm font-medium text-gray-700 mb-1">Approval Status</label>
             <select
               value={filters.approvalStatus}
-              onChange={(e) => setFilters({...filters, approvalStatus: e.target.value})}
+              onChange={(e) => {
+                setFilters({...filters, approvalStatus: e.target.value});
+                setActiveCard(null);
+              }}
               className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-purple-500 focus:border-purple-500 sm:text-sm rounded-md"
             >
-              <option value="active">Approved</option>
-              <option value="inactive">Pending Approval</option>
+              <option value="all">All</option>
+              <option value="approved">Approved</option>
+              <option value="rejected">Rejected</option>
+              <option value="pending">Pending</option>
             </select>
           </div>
 
@@ -271,7 +433,10 @@ const TrainingManagement = () => {
             <label className="block text-sm font-medium text-gray-700 mb-1">Program Status</label>
             <select
               value={filters.programStatus}
-              onChange={(e) => setFilters({...filters, programStatus: e.target.value})}
+              onChange={(e) => {
+                setFilters({...filters, programStatus: e.target.value});
+                setActiveCard(null);
+              }}
               className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-purple-500 focus:border-purple-500 sm:text-sm rounded-md"
             >
               <option value="all">All Statuses</option>
@@ -287,13 +452,51 @@ const TrainingManagement = () => {
             <label className="block text-sm font-medium text-gray-700 mb-1">Program Type</label>
             <select
               value={filters.programType}
-              onChange={(e) => setFilters({...filters, programType: e.target.value})}
+              onChange={(e) => {
+                setFilters({...filters, programType: e.target.value});
+                setActiveCard(null);
+              }}
               className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-purple-500 focus:border-purple-500 sm:text-sm rounded-md"
             >
               <option value="all">All Types</option>
               <option value="training">Training</option>
               <option value="upskilling">Upskilling</option>
             </select>
+          </div>
+
+          {/* Competency Filter */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Competency</label>
+            <select
+              value={filters.competency}
+              onChange={(e) => {
+                setFilters({...filters, competency: e.target.value});
+                setActiveCard(null);
+              }}
+              className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-purple-500 focus:border-purple-500 sm:text-sm rounded-md"
+            >
+              <option value="all">All Competencies</option>
+              {competencies.map((comp, index) => (
+                <option key={`${comp.publicId}-${index}`} value={comp.publicId}>{comp.name}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Search */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Search</label>
+            <div className="mt-1 relative rounded-md shadow-sm">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <FaSearch className="text-gray-400" />
+              </div>
+              <input
+                type="text"
+                value={filters.searchQuery}
+                onChange={(e) => setFilters({...filters, searchQuery: e.target.value})}
+                className="focus:ring-purple-500 focus:border-purple-500 block w-full pl-10 sm:text-sm border-gray-300 rounded-md"
+                placeholder="Search programs..."
+              />
+            </div>
           </div>
         </div>
       </div>
@@ -304,7 +507,7 @@ const TrainingManagement = () => {
           <table className="min-w-full divide-y divide-gray-300">
             <thead className="bg-gradient-to-r from-purple-50 to-indigo-50">
               <tr>
-                {filters.approvalStatus === 'inactive' && (
+                {filters.approvalStatus === 'pending' && (
                   <th scope="col" className="px-6 py-4 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">
                     Select
                   </th>
@@ -318,36 +521,30 @@ const TrainingManagement = () => {
                 <th scope="col" className="px-6 py-4 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">
                   Trainer
                 </th>
-                <th scope="col" className="px-6 py-4 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">
-                  Dates
-                </th>
-                <th scope="col" className="px-6 py-4 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">
+                <th scope="col" className="px-7 py-4 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">
                   Status
                 </th>
                 <th scope="col" className="px-6 py-4 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">
                   Approval
-                </th>
-                <th scope="col" className="px-6 py-4 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">
-                  Actions
                 </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
               {filteredPrograms.length === 0 ? (
                 <tr>
-                  <td colSpan="8" className="px-6 py-6 text-center text-sm text-gray-500 bg-gray-50">
+                  <td colSpan={filters.approvalStatus === 'pending' ? 6 : 5} className="px-6 py-6 text-center text-sm text-gray-500 bg-gray-50">
                     No programs found matching your criteria
                   </td>
                 </tr>
               ) : (
                 filteredPrograms.map((program, index) => (
                   <tr 
-                    key={program.publicId} 
+                    key={`${program.publicId}-${index}`}
                     className={`transition-colors duration-200 ${
                       index % 2 === 0 ? 'bg-white' : 'bg-gray-50'
                     } hover:bg-purple-50`}
                   >
-                    {filters.approvalStatus === 'inactive' && (
+                    {filters.approvalStatus === 'pending' && (
                       <td className="px-6 py-4 whitespace-nowrap">
                         <input
                           type="checkbox"
@@ -373,45 +570,66 @@ const TrainingManagement = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-base text-gray-900">{program.trainerName}</div>
-                      <div className="text-sm text-gray-500">{program.competencyName}</div>
+                      <div className="text-sm text-gray-500">{program.competency}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-base text-gray-900">
-                        {new Date(program.startDate).toLocaleDateString()} - {new Date(program.endDate).toLocaleDateString()}
-                      </div>
-                      <div className="text-sm text-gray-500">{program.duration} days</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-3 py-1 inline-flex text-sm font-semibold rounded-full shadow-sm ${getStatusColor(program.status)}`}>
-                        {program.status.charAt(0).toUpperCase() + program.status.slice(1)}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {getApprovalBadge(program.isApproved)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {!program.isApproved && (
-                        <button
-                          onClick={() => handleApprovePrograms([program.publicId])}
-                          className="text-green-600 hover:text-green-900 p-2 rounded-full hover:bg-green-100 transition-colors"
-                          title="Approve"
+                      {editingStatus === program.publicId ? (
+                        <select
+                          className="border border-purple-300 rounded p-1 text-sm focus:ring-purple-500 focus:border-purple-500 w-full"
+                          value={program.status}
+                          onChange={(e) => handleStatusChange(program.publicId, e.target.value)}
+                          autoFocus
+                          onBlur={() => setEditingStatus(null)}
                         >
-                          <FaCheckCircle className="h-5 w-5" />
+                          {statusOptions.map((option, idx) => (
+                            <option key={`${option.value}-${idx}`} value={option.value}>
+                              {option.label}
+                            </option>
+                          ))}
+                        </select>
+                      ) : (
+                        <button
+                          onClick={() => setEditingStatus(program.publicId)}
+                          className="hover:bg-purple-100 rounded p-1 transition-colors w-full text-center"
+                        >
+                          <span className={`px-3 py-1 inline-flex text-sm font-semibold rounded-full shadow-sm ${getStatusColor(program.status)}`}>
+                            {program.status}
+                          </span>
                         </button>
                       )}
-                      {program.isApproved && program.status !== 'completed' && (
-                        <div className="flex space-x-2">
-                          <select
-                            value={program.status}
-                            onChange={(e) => handleStatusChange(program.publicId, e.target.value)}
-                            className="text-sm border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500 bg-white py-2 px-3 shadow-sm hover:bg-gray-50 transition-colors"
-                          >
-                            <option value="running">Running</option>
-                            <option value="pending">Pending</option>
-                            <option value="hold">Hold</option>
-                            <option value="completed">Complete</option>
-                          </select>
-                        </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {editingApproval === program.publicId ? (
+                        <select
+                          className="border border-purple-300 rounded p-1 text-sm focus:ring-purple-500 focus:border-purple-500 w-full"
+                          value={program.approvalStatus}
+                          onChange={(e) => handleApprovalChange(program.publicId, e.target.value)}
+                          autoFocus
+                          onBlur={() => setEditingApproval(null)}
+                        >
+                          {program.approvalStatus === 'pending' && approvalOptions.map((option, idx) => (
+                            <option key={`${option.value}-${idx}`} value={option.value}>
+                              {option.label}
+                            </option>
+                          ))}
+                          {program.approvalStatus === 'approved' && approvalOptions.filter(option => option.value === 'approved').map((option, idx) => (
+                            <option key={`${option.value}-${idx}`} value={option.value}>
+                              {option.label}
+                            </option>
+                          ))}
+                          {program.approvalStatus === 'rejected' && approvalOptions.filter(option => option.value !== 'pending').map((option, idx) => (
+                            <option key={`${option.value}-${idx}`} value={option.value}>
+                              {option.label}
+                            </option>
+                          ))}
+                        </select>
+                      ) : (
+                        <button
+                          onClick={() => setEditingApproval(program.publicId)}
+                          className="hover:bg-purple-100 rounded p-1 transition-colors w-full text-center"
+                        >
+                          {getApprovalBadge(program.approvalStatus)}
+                        </button>
                       )}
                     </td>
                   </tr>
@@ -424,11 +642,14 @@ const TrainingManagement = () => {
 
       {/* Add Training Modal */}
       {showAddModal && (
-        <AddTraining 
+        <AdminAddTraining 
           onClose={() => setShowAddModal(false)}
           onSave={() => {
             setShowAddModal(false);
-            dispatch(fetchProgramListD());
+            dispatch(fetchProgramList())
+              .unwrap()
+              .then(() => setToast(<SuccessToast message="Training program created successfully!" />))
+              .catch(error => setToast(<ErrorToast message={error.message || "Failed to create training program"} />));
           }}
           isUpskilling={false}
         />
