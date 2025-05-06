@@ -16,7 +16,7 @@ import {
   fetchProgramDetails,
   updateProgramDetails,
   addParticipants,
-  removeParticipants
+  removeParticipants,
 } from "./programAction";
 
 const initialState = {
@@ -39,7 +39,8 @@ const initialState = {
     data: null,
     loading: false,
     error: null
-  }
+  },
+  userTrainings: []
 };
 
 const programSlice = createSlice({
