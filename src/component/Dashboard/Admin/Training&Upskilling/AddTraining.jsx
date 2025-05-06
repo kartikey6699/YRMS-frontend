@@ -310,8 +310,8 @@ const AddTraining = ({ onClose, onSave, isUpskilling = false }) => {
 
       setToast(<YRMSLoader message="Refreshing programs..." />);
       await dispatch(fetchProgramList());
-
-      onSave();
+      
+      onSave(createResult);
       onClose();
       setToast(null);
     } catch (err) {

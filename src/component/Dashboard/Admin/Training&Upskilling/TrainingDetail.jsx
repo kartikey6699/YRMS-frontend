@@ -26,6 +26,7 @@ import {
   FaExclamationTriangle
 } from 'react-icons/fa';
 import { format, parseISO, addDays, isValid, differenceInDays } from 'date-fns';
+import { holidays, isHoliday } from "../../../helper/holidays";
 
 import {
   fetchProgramDetails,
@@ -151,6 +152,22 @@ const TrainingDetail = () => {
     }
   }, [program, resources, competencies, trainingTechnologies]);
 
+  useEffect(() => {
+    if (editedData.startDate && editedData.duration && editedData.duration > 0) {
+      const calculatedEndDate = calculateEndDate(
+        editedData.startDate,
+        parseInt(editedData.duration)
+      );
+      setEditedData((prev) => ({
+        ...prev,
+        endDate: calculatedEndDate,
+      }));
+    } else {
+      setEditedData((prev) => ({ ...prev, endDate: "" }));
+      setFormErrors((prev) => ({ ...prev, endDate: undefined }));
+    }
+  }, [editedData.startDate, editedData.duration]);
+
   // Form validation
   const validateForm = () => {
     const errors = {};
@@ -194,7 +211,10 @@ const TrainingDetail = () => {
     } else if (editedData.endDate < editedData.startDate) {
       errors.endDate = 'End date cannot be before start date';
     } else if (editedData.duration && !errors.duration) {
-      const expectedEndDate = addDays(parseISO(editedData.startDate), editedData.duration - 1);
+      const expectedEndDate = calculateEndDate(
+        editedData.startDate,
+        parseInt(editedData.duration)
+      );
       const actualEndDate = parseISO(editedData.endDate);
       if (differenceInDays(actualEndDate, expectedEndDate) !== 0) {
         errors.endDate = `End date must match start date + duration (${format(expectedEndDate, 'yyyy-MM-dd')})`;
@@ -1005,7 +1025,7 @@ const TrainingDetail = () => {
         />
       )}
 
-      <div 
+      <div
         className="p-4 bg-blue-50 rounded-lg border border-blue-100 cursor-pointer hover:bg-blue-100 transition-colors"
         onClick={() => {
           setSelectedTraining({
@@ -1037,5 +1057,27 @@ const TrainingDetail = () => {
     </div>
   );
 };
+
+function calculateEndDate(startDate, duration) {
+  if (!startDate || !duration || duration <= 0) return "";
+
+  const date = new Date(startDate);
+  let daysAdded = 0;
+  let businessDays = 0;
+
+  while (businessDays < duration) {
+    date.setDate(date.getDate() + 1);
+    daysAdded++;
+
+    const dayOfWeek = date.getDay();
+    const dateStr = date.toISOString().split("T")[0];
+
+    if (dayOfWeek !== 0 && dayOfWeek !== 6 && !isHoliday(dateStr)) {
+      businessDays++;
+    }
+  }
+
+  return date.toISOString().split("T")[0];
+}
 
 export default TrainingDetail;
