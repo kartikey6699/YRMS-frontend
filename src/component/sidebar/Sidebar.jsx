@@ -65,7 +65,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
       }
     }
     if (userRoles.includes('User')) {
-      const userItems = allMenuItems.filter((item) => ['User Dashboard'].includes(item.name));
+      const userItems = allMenuItems.filter((item) => ['Dashboard','User Dashboard'].includes(item.name));
       userItems.forEach((item) => {
         if (!visibleItems.some((i) => i.name === item.name)) {
           visibleItems.push(item);
