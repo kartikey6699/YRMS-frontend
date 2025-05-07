@@ -102,12 +102,12 @@ export const PARTICIPANT_DETAIL_API = {
 
 
 export const PROGRAM_API = {
-    CREATE: `${PROGRAM_API_BASE_URL}add-program/`,
-    LIST: `${PROGRAM_API_BASE_URL}program-list/`,
-    UPDATE_STATUS: `${PROGRAM_API_BASE_URL}program/`,
-    DETAILS: `${PROGRAM_API_BASE_URL}program-detail/`,
-    DELETE: `${PROGRAM_API_BASE_URL}program/`,
-    UPDATE: `${PROGRAM_API_BASE_URL}update-program/`,
+    CREATE: `${PROGRAM_API_BASE_URL}programs/add-program/`,
+    LIST: `${PROGRAM_API_BASE_URL}programs/program-list/`,
+    UPDATE_STATUS: `${PROGRAM_API_BASE_URL}programs/program/`,
+    DETAILS: `${PROGRAM_API_BASE_URL}programs/program-detail/`,
+    DELETE: `${PROGRAM_API_BASE_URL}programs/program/`,
+    UPDATE: `${PROGRAM_API_BASE_URL}programs/update-program/`,
     ADD_PARTICIPANT: `${PROGRAM_API_BASE_URL}program-participant/add`,
     DELETE_PARTICIPANT: `${PROGRAM_API_BASE_URL}program-participant/remove`,
 };
@@ -124,7 +124,7 @@ export const TECHNOLOGY_BASELINE_API = {
 };
 
 export const ROLE_API = {
-    LIST: `${API_BASE_URL}roles-list`,
+    LIST: `${API_BASE_URL}roles/roles-list`,
     CREATE: `${API_BASE_URL}roles`,
     DELETE: `${API_BASE_URL}roles`,
 };
