@@ -473,7 +473,7 @@ export const BaselineHistories = ({ histories, employeeName, competency, gender,
 
                             {/* Compact Accordion Content */}
                             <div className={`p-3 bg-white/90 border-t border-gray-200 transition-all duration-300 ${isExpanded ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0 overflow-hidden'}`}>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pr-2 custom-scrollbar">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pr-2 max-h-[450px] overflow-y-auto custom-scrollbar">
 
                                     {/* Left Column - Experience & Certifications */}
                                     <div className="space-y-3">

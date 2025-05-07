@@ -199,7 +199,7 @@ const ManageResource = () => {
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
-    
+
     // Validate on change if the field has been touched
     if (touched[name]) {
       setErrors((prev) => ({
@@ -229,7 +229,7 @@ const ManageResource = () => {
         }));
         return;
       }
-      
+
       // Validate file size (max 2MB)
       if (file.size > 2 * 1024 * 1024) {
         setErrors((prev) => ({
@@ -260,13 +260,13 @@ const ManageResource = () => {
       const newTechs = prev.technologies.includes(tech)
         ? prev.technologies.filter((t) => t !== tech)
         : [...prev.technologies, tech];
-      
+
       // Update categories based on selected technologies
       const techCategories = technologies
         .filter(t => newTechs.includes(t.name))
         .map(t => t.technologyCategoryName);
       const uniqueCategories = [...new Set(techCategories)];
-      
+
       return {
         ...prev,
         technologies: newTechs,
@@ -280,13 +280,13 @@ const ManageResource = () => {
       const categoryTechs = technologies
         .filter(tech => tech.technologyCategoryName === category)
         .map(tech => tech.name);
-      
+
       const newCategories = prev.categories.includes(category)
         ? prev.categories.filter((c) => c !== category)
         : [...prev.categories, category];
-      
+
       let newTechs = [...prev.technologies];
-      
+
       if (newCategories.includes(category)) {
         // Add all technologies from this category
         newTechs = [...new Set([...newTechs, ...categoryTechs])];
@@ -294,7 +294,7 @@ const ManageResource = () => {
         // Remove all technologies from this category
         newTechs = newTechs.filter(tech => !categoryTechs.includes(tech));
       }
-      
+
       return {
         ...prev,
         categories: newCategories,
@@ -350,20 +350,17 @@ const ManageResource = () => {
   const downloadSampleCSV = async () => {
     try {
       setToast(<YRMSLoader loadingMessage="Preparing sample CSV..." />);
-      
-      const token = sessionStorage.getItem("token");
-      const response = await axios.get(
-        `${ADMIN_API_BASE_URL}/resources/sample-csv/`,
-        {
-          responseType: 'blob',
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
 
-      // Create download link
-      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const filePath = "/assets/sample_csv/valid_users.csv";
+      const response = await fetch(filePath);
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch the CSV file");
+      }
+
+      const blob = await response.blob();
+
+      const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
       link.setAttribute('download', 'resource_sample.csv');
@@ -381,19 +378,19 @@ const ManageResource = () => {
   const handleCSVUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
-    
+
     // Validate file type
     if (!file.name.endsWith('.csv')) {
       setToast(<ErrorToast message="Please upload a CSV file" onClose={() => setToast(null)} />);
       return;
     }
-    
+
     try {
       setToast(<YRMSLoader loadingMessage="Processing CSV file..." />);
-      
+
       const formData = new FormData();
       formData.append('file', file);
-      
+
       const token = sessionStorage.getItem("token");
       const response = await axios.post(
         `${ADMIN_API_BASE_URL}/register-users-csv`,
@@ -412,7 +409,7 @@ const ManageResource = () => {
         const errorMessage = response.data.error.details[0].error;
         setToast(<ErrorToast message={errorMessage} onClose={() => setToast(null)} />);
       }
-      
+
       // Refresh the resource list
       dispatch(fetchResources());
     } catch (error) {
@@ -427,14 +424,14 @@ const ManageResource = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     // Mark all fields as touched to show all errors
     const allTouched = {};
     Object.keys(formData).forEach((field) => {
       allTouched[field] = true;
     });
     setTouched(allTouched);
-    
+
     // Validate the form
     if (!validateForm()) {
       setToast(<ErrorToast message="Please fix all errors before submitting" onClose={() => setToast(null)} />);
@@ -511,9 +508,8 @@ const ManageResource = () => {
         value={formData[name]}
         onChange={handleInputChange}
         onBlur={handleBlur}
-        className={`w-full p-3 border-2 rounded-lg focus:outline-none transition-colors ${
-          errors[name] ? "border-red-500" : "border-gray-200 focus:border-blue-500"
-        }`}
+        className={`w-full p-3 border-2 rounded-lg focus:outline-none transition-colors ${errors[name] ? "border-red-500" : "border-gray-200 focus:border-blue-500"
+          }`}
         placeholder={placeholder}
         required={required}
       />
@@ -534,9 +530,8 @@ const ManageResource = () => {
         value={formData[name]}
         onChange={handleInputChange}
         onBlur={handleBlur}
-        className={`w-full p-3 border-2 rounded-lg focus:outline-none transition-colors ${
-          errors[name] ? "border-red-500" : "border-gray-200 focus:border-blue-500"
-        } ${formData[name] ? "text-black" : "text-gray-500"}`}
+        className={`w-full p-3 border-2 rounded-lg focus:outline-none transition-colors ${errors[name] ? "border-red-500" : "border-gray-200 focus:border-blue-500"
+          } ${formData[name] ? "text-black" : "text-gray-500"}`}
         required={required}
       >
         <option value="" disabled>
@@ -556,7 +551,7 @@ const ManageResource = () => {
 
   return (
     <div className="p-6 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl shadow-lg mt-15">
-      {loading && <YRMSLoader loadingMessage="Loading Resources"/>}
+      {loading && <YRMSLoader loadingMessage="Loading Resources" />}
       {toast}
       {activeSection !== "add" ? (
         <div className="mb-6">
@@ -643,11 +638,10 @@ const ManageResource = () => {
               <div
                 key={status}
                 onClick={() => setStatusFilter(status === "all" ? "" : status)}
-                className={`cursor-pointer p-4 rounded-xl shadow-md transition-all transform hover:scale-105 ${
-                  selected
+                className={`cursor-pointer p-4 rounded-xl shadow-md transition-all transform hover:scale-105 ${selected
                     ? `bg-gradient-to-r ${gradient} text-white`
                     : `bg-white ${hoverBg}`
-                }`}
+                  }`}
               >
                 <div className="flex items-center justify-between">
                   <div>
@@ -683,11 +677,10 @@ const ManageResource = () => {
                 ) : null}
                 <button
                   onClick={() => setShowFilters(!showFilters)}
-                  className={`px-2 py-1 rounded-md text-xs flex items-center transition-all ${
-                    showFilters
+                  className={`px-2 py-1 rounded-md text-xs flex items-center transition-all ${showFilters
                       ? "bg-gray-200 text-gray-800 hover:bg-gray-300"
                       : "bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700"
-                  }`}
+                    }`}
                 >
                   <FaFilter className="mr-1" />
                   {showFilters ? "Hide" : "Adv. Filters"}
@@ -697,9 +690,8 @@ const ManageResource = () => {
 
             {/* Filter Panel - Collapsible */}
             <div
-              className={`transition-all duration-300 ease-in-out overflow-hidden ${
-                showFilters ? "max-h-96 opacity-100 mb-2" : "max-h-0 opacity-0 mb-0"
-              }`}
+              className={`transition-all duration-300 ease-in-out overflow-hidden ${showFilters ? "max-h-96 opacity-100 mb-2" : "max-h-0 opacity-0 mb-0"
+                }`}
             >
               <div className="bg-white p-3 rounded-lg shadow-sm border border-gray-200">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -779,11 +771,10 @@ const ManageResource = () => {
                               className="hidden"
                             />
                             <span
-                              className={`px-2 py-1 text-xs rounded-full transition-all ${
-                                filterData.categories.includes(category)
+                              className={`px-2 py-1 text-xs rounded-full transition-all ${filterData.categories.includes(category)
                                   ? "bg-blue-100 text-blue-800 border border-blue-500"
                                   : "bg-gray-100 text-gray-700 border border-gray-200 hover:bg-gray-50"
-                              }`}
+                                }`}
                             >
                               {category}
                             </span>
@@ -814,11 +805,10 @@ const ManageResource = () => {
                               className="hidden"
                             />
                             <span
-                              className={`px-2 py-1 text-xs rounded-full transition-all ${
-                                filterData.technologies.includes(tech.name)
+                              className={`px-2 py-1 text-xs rounded-full transition-all ${filterData.technologies.includes(tech.name)
                                   ? "bg-[#ffc9c9] text-[#9F0712] border border-[#9F0712]"
                                   : "bg-gray-100 text-gray-700 border border-gray-200 hover:bg-gray-50"
-                              }`}
+                                }`}
                             >
                               {tech.name}
                             </span>
@@ -911,12 +901,12 @@ const ManageResource = () => {
 
             {renderInput("employeeName", "Employee Name", "text", "Enter employee name")}
             {renderInput("employeeId", "Employee ID", "text", "Enter employee ID")}
-            
+
             {renderSelect("gender", "Gender", [
               { value: "male", label: "Male" },
               { value: "female", label: "Female" }
             ])}
-            
+
             {renderSelect("location", "Location", [
               { value: "Indore_Yash_IT_Park_SC_DC", label: "Indore-YASH IT Park-SC-DC" },
               { value: "Pune_Magarpatta_DC_II", label: "Pune-Magarpatta-DC-II" },
@@ -926,7 +916,7 @@ const ManageResource = () => {
               { value: "Indore_BTC_CO", label: "Indore-BTC-CO" },
               { value: "Pune_Hinjewadi_III_DC", label: "Pune-Hinjewadi III-DC" }
             ])}
-            
+
             {renderInput("email", "Email", "email", "Enter email")}
             {renderInput("phoneNumber", "Phone Number", "tel", "Enter phone number")}
 
@@ -934,9 +924,9 @@ const ManageResource = () => {
             <div className="md:col-span-2">
               <h3 className="text-xl font-semibold text-gray-800 mb-4 mt-6">Employment Details</h3>
             </div>
-            
+
             {renderInput("joiningDate", "Joining Date", "date", "", true)}
-            
+
             <div>
               <label className="block text-gray-700 font-medium mb-2">
                 Designation <span className="text-red-500">*</span>
@@ -954,34 +944,34 @@ const ManageResource = () => {
                 <p className="text-red-500 text-sm mt-1">{errors.designation}</p>
               )}
             </div>
-            
+
             {renderSelect("employeeType", "Employee Type", [
               { value: "probation", label: "Probation" },
               { value: "permanent", label: "Permanent" },
               { value: "contract", label: "Contract" }
             ])}
-            
+
             {renderSelect("grade", "Grade", ["E1", "E2", "E3", "E4", "E5", "E6", "E7"])}
-            
+
             {renderSelect("status", "Status", [
               { value: "pool", label: "Pool" },
               { value: "deployed", label: "Deployed" },
               { value: "pip", label: "PIP" },
               { value: "hold", label: "Hold" }
             ])}
-            
+
             {renderSelect("businessGroup", "Business Group", [
               { value: "BG4", label: "BG4" },
               { value: "BG5", label: "BG5" },
               { value: "SSG1", label: "SSG1" }
             ])}
-            
+
             {renderSelect("businessUnit", "Business Unit", [
               { value: "BU5", label: "BU5" },
               { value: "BU4", label: "BU4" },
               { value: "SSU1", label: "SSU1" }
             ])}
-            
+
             <div>
               <label className="block text-gray-700 font-medium mb-2">
                 Competency <span className="text-red-500">*</span>
@@ -991,9 +981,8 @@ const ManageResource = () => {
                 value={formData.competency}
                 onChange={handleInputChange}
                 onBlur={handleBlur}
-                className={`w-full p-3 border-2 rounded-lg focus:outline-none transition-colors ${
-                  errors.competency ? "border-red-500" : "border-gray-200 focus:border-blue-500"
-                } ${formData.competency ? "text-black" : "text-gray-500"}`}
+                className={`w-full p-3 border-2 rounded-lg focus:outline-none transition-colors ${errors.competency ? "border-red-500" : "border-gray-200 focus:border-blue-500"
+                  } ${formData.competency ? "text-black" : "text-gray-500"}`}
                 required
               >
                 <option value="" disabled>
@@ -1015,11 +1004,10 @@ const ManageResource = () => {
               <button
                 type="submit"
                 disabled={loading}
-                className={`px-16 py-3 rounded-lg font-semibold transition-all transform hover:scale-105 ${
-                  loading
+                className={`px-16 py-3 rounded-lg font-semibold transition-all transform hover:scale-105 ${loading
                     ? "bg-gray-400 cursor-not-allowed"
                     : "bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700"
-                }`}
+                  }`}
               >
                 {loading ? "Submitting..." : "Submit"}
               </button>

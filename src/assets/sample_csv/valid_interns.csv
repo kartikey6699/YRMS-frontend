@@ -1,0 +1,3 @@
+name,email,phoneNumber,startDate,endDate,gender,location,status,mentorId,competencyName
+John Intern,john.intern@example.com,1234567890,01-01-2023,30-06-2023,Male,indore,Running,,python
+Jane Intern,jane.intern@example.com,1987654321,01-02-2023,31-07-2023,Female,indore,Running,,python
