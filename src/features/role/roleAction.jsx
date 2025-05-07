@@ -1,6 +1,7 @@
 import axios from "axios";
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import { ROLE_API, FEATURE_API } from "../../config/Endpoints/Endpoints";
+import { API_BASE_URL } from '../../config/Endpoints/BaseEndpoints';
 
 const rolesApiClient = axios.create({
   headers: {
@@ -123,7 +124,7 @@ export const fetchCompetencyAdmins = createAsyncThunk(
   "role/fetchCompetencyAdmins",
   async (competencyId, { rejectWithValue }) => {
     try {
-      const url =  `http://localhost:8000/competency/competency-users/${competencyId}/Admin`
+      const url =  `${API_BASE_URL}/competency/competency-users/${competencyId}/Admin`
       const response = await rolesApiClient.get(url, {
         headers: {
           accept: "application/json",
@@ -151,7 +152,7 @@ export const updateUserRole = createAsyncThunk(
   async ({ competency_id, user_id, role, action_type }, { rejectWithValue }) => {
     try {
       const response = await rolesApiClient.post(
-        `http://localhost:8000/api/v1/competency/user-role-update`,
+        `${API_BASE_URL}competency/user-role-update`,
         { competency_id, user_id, role, action_type },
         {
           headers: {
@@ -181,7 +182,7 @@ export const fetchAvailableAdmins = createAsyncThunk(
   async ({ public_id, role_types = ["admin", "superadmin"], action_type = 2 }, { rejectWithValue }) => {
     try {
       const response = await rolesApiClient.post(
-        `http://localhost:8000/api/v1/competency/user-list`,
+        `${API_BASE_URL}competency/user-list`,
         { public_id, role_types, action_type },
         {
           headers: {
@@ -216,7 +217,7 @@ export const fetchTrainers = createAsyncThunk(
 
     try {
       const response = await rolesApiClient.post(
-        `http://localhost:8000/api/v1/competency/user-list`,
+        `${API_BASE_URL}competency/user-list`,
         { role_types, action_type },
         {
           headers: {
@@ -252,7 +253,7 @@ export const fetchUsers = createAsyncThunk(
 
     try {
       const response = await rolesApiClient.post(
-        `http://localhost:8000/api/v1/competency/user-list`,
+        `${API_BASE_URL}competency/user-list`,
         { public_id, role_types, action_type },
         {
           headers: {
