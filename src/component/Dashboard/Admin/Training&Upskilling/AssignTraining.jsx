@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import {
   FaTools,
   FaUserTie,
@@ -47,6 +48,7 @@ import UpskillingDetailModal from './UpskillingDetailModal';
 import { useDispatch, useSelector } from 'react-redux';
 import { SuccessToast } from '../../../helper/ResourceToast';
 import { ErrorToast } from '../../../helper/ResourceToast';
+import { API_BASE_URL } from '../../../../config/Endpoints/BaseEndpoints';
 
 const AssignTraining = () => {
   const dispatch = useDispatch();
@@ -72,6 +74,36 @@ const AssignTraining = () => {
   const [successMessage, setSuccessMessage] = useState('');
   const [showErrorToast, setShowErrorToast] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+
+  const handleDownloadReport = async (programId) => {
+    try {
+      const response = await axios.get(`${API_BASE_URL}program/report/${programId}`, {
+        responseType: 'blob'
+      });
+
+      const blob = new Blob([response.data], { type: 'text/csv' });
+      const url = window.URL.createObjectURL(blob);
+      
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `training-report-${programId}.csv`;
+      
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      window.URL.revokeObjectURL(url);
+
+      setSuccessMessage('Report downloaded successfully!');
+      setShowSuccessToast(true);
+      setTimeout(() => setShowSuccessToast(false), 3000);
+    } catch (error) {
+      setErrorMessage(error.response?.data?.message || 'Failed to download report');
+      setShowErrorToast(true);
+      setTimeout(() => setShowErrorToast(false), 3000);
+      console.error('Download error:', error);
+    }
+  };
 
   const statusOptions = [
     { value: 'Hold', label: 'Hold', icon: <FaPause className="inline mr-1" />, color: 'bg-yellow-100 text-yellow-800' },
@@ -382,6 +414,7 @@ const AssignTraining = () => {
                           </span>
                         </button>
                         <button
+                          onClick={() => handleDownloadReport(training.id)}
                           className="p-1.5 rounded-lg bg-green-50 text-green-600 hover:bg-green-100 transition-colors group relative"
                         >
                           <FiDownload className="w-4 h-4" />
