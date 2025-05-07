@@ -321,10 +321,10 @@ const ManageBaseline = () => {
 
   } = useSelector((state) => state.baseline);
 
-  const {  trainingTechnologies = [], trainingTechnologyLoading = false } = useSelector(
+  const { trainingTechnologies = [], trainingTechnologyLoading = false } = useSelector(
     (state) => state.resource
   );
-  
+
 
   const resourceDetails = useSelector((state) =>
     state.resource.resources.find(res => res.publicId === publicId) ||
@@ -974,7 +974,7 @@ const ManageBaseline = () => {
                           onChange={handleInputChange}
                           className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                           placeholder="e.g., Learn React"
-                          rows={3} 
+                          rows={3}
                         />
                       </div>
                     </div>
@@ -1002,7 +1002,21 @@ const ManageBaseline = () => {
                       <button
                         type="button"
                         onClick={nextStep}
-                        className="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-200 font-medium cursor-pointer hover:shadow-md"
+                        className={`px-6 py-3 text-white rounded-lg transition-all duration-200 font-medium cursor-pointer hover:shadow-md ${
+                          // Disable if any required fields are empty
+                          !formData.experience.length ||
+                            !formData.certification.length ||
+                            !formData.totalExperience ||
+                            !formData.communication
+                            ? 'bg-gray-400 cursor-not-allowed'
+                            : 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700'
+                          }`}
+                        disabled={
+                          !formData.experience.length ||
+                          !formData.certification.length ||
+                          !formData.totalExperience ||
+                          !formData.communication
+                        }
                       >
                         Next
                       </button>
@@ -1020,9 +1034,9 @@ const ManageBaseline = () => {
               </div>
 
               <div className="hidden lg:block w-1/3 bg-gray-50 border-l p-6 overflow-y-auto">
-                <BaselineTimeline 
+                <BaselineTimeline
                   histories={baselineHistories}
-                  onSelect={(id) => {}}
+                  onSelect={(id) => { }}
                 />
               </div>
             </div>
