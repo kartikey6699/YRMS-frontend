@@ -1,10 +1,10 @@
 // AttendanceDetailsModal.js
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { FaCalendarAlt, FaUser, FaEnvelope, FaIdCard, FaCheck, FaTimes } from 'react-icons/fa';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { useDispatch } from 'react-redux';
-import { fetchProgramAttendance, createTrainingAttendance } from '../../../../features/program/programAction'; 
+import { fetchProgramAttendance, createTrainingAttendance } from '../../../../features/program/programAction';
 import YRMSLoader from '../../../helper/Loader';
 import { SuccessToast, ErrorToast } from '../../../helper/ResourceToast';
 
@@ -25,10 +25,15 @@ const AttendanceDetailsModal = ({ onClose, training }) => {
 
   useEffect(() => {
     if (training) {
-      fetchAttendanceData();
       generateTrainingDates();
     }
-  }, [training, dispatch, selectedDate]);
+  }, [training]);
+
+  useEffect(() => {
+    if (training) {
+      fetchAttendanceData();
+    }
+  }, [training, selectedDate, dispatch]);
 
   const fetchAttendanceData = async () => {
     try {
@@ -60,17 +65,17 @@ const AttendanceDetailsModal = ({ onClose, training }) => {
     const endDate = new Date(training.endDate);
     const today = new Date();
     const effectiveEndDate = endDate > today ? today : endDate;
-    
+
     const dates = [];
     let currentDate = new Date(startDate);
-    
+
     while (currentDate <= effectiveEndDate) {
       dates.push(new Date(currentDate));
       currentDate.setDate(currentDate.getDate() + 1);
     }
-    
+
     setTrainingDates(dates);
-    
+
     if (selectedDate < startDate || selectedDate > effectiveEndDate) {
       setSelectedDate(dates[0] || new Date());
     }
@@ -96,13 +101,13 @@ const AttendanceDetailsModal = ({ onClose, training }) => {
   };
 
   const handleAttendanceChange = (uniqueId, field, value) => {
-    setAttendanceData(attendanceData.map(item => 
+    setAttendanceData(attendanceData.map(item =>
       item.uniqueId === uniqueId
-        ? { 
-            ...item, 
-            [field]: value,
-            ...(field === 'present' && !value ? { reason: '' } : {})
-          }
+        ? {
+          ...item,
+          [field]: value,
+          ...(field === 'present' && !value ? { reason: '' } : {})
+        }
         : item
     ));
   };
@@ -118,9 +123,9 @@ const AttendanceDetailsModal = ({ onClose, training }) => {
   };
 
   const filterTrainingDate = (date) => {
-    return trainingDates.some(d => 
-      d.getDate() === date.getDate() && 
-      d.getMonth() === date.getMonth() && 
+    return trainingDates.some(d =>
+      d.getDate() === date.getDate() &&
+      d.getMonth() === date.getMonth() &&
       d.getFullYear() === date.getFullYear()
     ) && !isWeekend(date) && !isHoliday(date);
   };
@@ -128,9 +133,9 @@ const AttendanceDetailsModal = ({ onClose, training }) => {
   const DayComponent = ({ date }) => {
     const weekend = isWeekend(date);
     const holiday = isHoliday(date);
-    const isTrainingDate = trainingDates.some(d => 
-      d.getDate() === date.getDate() && 
-      d.getMonth() === date.getMonth() && 
+    const isTrainingDate = trainingDates.some(d =>
+      d.getDate() === date.getDate() &&
+      d.getMonth() === date.getMonth() &&
       d.getFullYear() === date.getFullYear()
     );
 
@@ -176,6 +181,15 @@ const AttendanceDetailsModal = ({ onClose, training }) => {
     }
   };
 
+  // Check if selected date is a training date
+  const isSelectedDateTrainingDate = useMemo(() => {
+    return trainingDates.some(date => 
+      date.getDate() === selectedDate.getDate() &&
+      date.getMonth() === selectedDate.getMonth() &&
+      date.getFullYear() === selectedDate.getFullYear()
+    );
+  }, [selectedDate, trainingDates]);
+
   return (
     <>
       {loading && (
@@ -183,18 +197,18 @@ const AttendanceDetailsModal = ({ onClose, training }) => {
           <YRMSLoader loadingMessage="Processing attendance data..." />
         </div>
       )}
-      
+
       {showToast && (
         <div className="fixed top-4 right-4 z-[1001]">
-          {toastType === 'success' ? 
-            <SuccessToast message={toastMessage} onClose={() => setShowToast(false)} /> : 
+          {toastType === 'success' ?
+            <SuccessToast message={toastMessage} onClose={() => setShowToast(false)} /> :
             <ErrorToast message={toastMessage} onClose={() => setShowToast(false)} />
           }
         </div>
       )}
-      
+
       <div className={`fixed inset-0 backdrop-blur-sm flex items-center justify-center z-50 p-4 transition-opacity duration-200 ${isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
-        <div 
+        <div
           className={`bg-white rounded-lg shadow-xl w-full max-w-5xl max-h-[90vh] overflow-hidden transform transition-all duration-200 ${isOpen ? 'scale-100' : 'scale-95'} border-2 border-purple-200`}
           onClick={(e) => e.stopPropagation()}
         >
@@ -218,7 +232,7 @@ const AttendanceDetailsModal = ({ onClose, training }) => {
                   <DayComponent date={date} />
                 )}
               />
-              <button 
+              <button
                 onClick={handleClose}
                 className="ml-4 text-white hover:text-purple-200 transition-colors"
               >
@@ -226,7 +240,7 @@ const AttendanceDetailsModal = ({ onClose, training }) => {
               </button>
             </div>
           </div>
-          
+
           <div className="p-4 overflow-y-auto max-h-[70vh]">
             <div className="mb-4 bg-yellow-50 p-3 rounded-lg border border-yellow-200">
               <div className="flex items-center text-yellow-800">
@@ -255,8 +269,8 @@ const AttendanceDetailsModal = ({ onClose, training }) => {
               <div className="col-span-1">Status</div>
               <div className="col-span-4">Reason for Absence</div>
             </div>
-            
-            {attendanceData.map((emp, index) => (
+
+            {isSelectedDateTrainingDate && attendanceData.map((emp, index) => (
               <div key={emp.uniqueId} className="grid grid-cols-12 gap-2 items-start py-3 border-b border-gray-100 hover:bg-purple-50">
                 <div className="col-span-1 text-gray-600 mt-1">{index + 1}</div>
                 <div className="col-span-2 flex items-center">
@@ -292,24 +306,32 @@ const AttendanceDetailsModal = ({ onClose, training }) => {
                 </div>
               </div>
             ))}
-          </div>
-          
-          <div className="bg-gray-50 px-4 py-3 flex justify-end space-x-3 border-t">
-            <button
-              onClick={handleClose}
-              className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-colors"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={handleSaveAttendance}
-              className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-colors"
-            >
-              Save Attendance
-            </button>
-          </div>
+
+            {!isSelectedDateTrainingDate && (
+              <div className="mt-4 p-3 bg-red-50 text-red-600 rounded-lg border border-red-200">
+                <FaTimes className="inline mr-2" />
+                This date is not part of the scheduled training dates. No attendance can be recorded.
+              </div>
+            )}
+
+        </div>
+
+        <div className="bg-gray-50 px-4 py-3 flex justify-end space-x-3 border-t">
+          <button
+            onClick={handleClose}
+            className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleSaveAttendance}
+            className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-colors"
+          >
+            Save Attendance
+          </button>
         </div>
       </div>
+    </div >
     </>
   );
 };

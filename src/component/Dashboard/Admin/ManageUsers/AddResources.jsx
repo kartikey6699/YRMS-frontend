@@ -46,7 +46,7 @@ const AddResource = ({ setActiveSection }) => {
         employeeId: "",
         employeeName: "",
         gender: "",
-        location: "indore",
+        location: "",
         email: "",
         phoneNumber: "",
         joiningDate: "",
@@ -67,6 +67,139 @@ const AddResource = ({ setActiveSection }) => {
         communication: "",
     });
 
+    const [errors, setErrors] = useState({
+        employeeId: "",
+        employeeName: "",
+        gender: "",
+        location: "",
+        email: "",
+        phoneNumber: "",
+        joiningDate: "",
+        designation: "",
+        employeeType: "",
+        grade: "",
+        businessGroup: "",
+        businessUnit: "",
+        competency: "",
+        roleIds: "",
+    });
+
+    // Validation function
+    const validateField = (name, value) => {
+        let error = "";
+        
+        switch (name) {
+            case 'employeeId':
+                if (!value) error = "Employee ID is required";
+                else if (!/^[a-zA-Z0-9]+$/.test(value)) error = "Only alphanumeric characters allowed";
+                break;
+            case 'employeeName':
+                if (!value) error = "Employee name is required";
+                else if (value.length < 2) error = "Name must be at least 2 characters";
+                break;
+            case 'email':
+                if (!value) error = "Email is required";
+                else if (!/^[a-zA-Z0-9._%+-]+@yash\.com$/i.test(value)) error = "Only yash.com emails allowed";
+                break;
+            case 'phoneNumber':
+                if (!value) error = "Phone number is required";
+                else if (!/^[0-9]{7,15}$/.test(value)) error = "Phone must be 7-15 digits";
+                break;
+            case 'gender':
+            case 'location':
+            case 'designation':
+            case 'employeeType':
+            case 'grade':
+            case 'businessGroup':
+            case 'businessUnit':
+            case 'competency':
+            case 'joiningDate':
+                if (!value) error = "This field is required";
+                break;
+            case 'roleIds':
+                if (!value || value.length === 0) error = "At least one role must be selected";
+                break;
+            default:
+                break;
+        }
+        
+        return error;
+    };
+
+    // Handle field blur
+    const handleBlur = (e) => {
+        const { name, value } = e.target;
+        const error = validateField(name, value);
+        setErrors(prev => ({ ...prev, [name]: error }));
+    };
+
+    // Handle input change with optimized validation
+    const handleInputChange = (e) => {
+        const { name, value } = e.target;
+        setFormData((prev) => ({ ...prev, [name]: value }));
+        
+        // Only validate if there's already an error
+        if (errors[name]) {
+            const error = validateField(name, value);
+            setErrors(prev => ({ ...prev, [name]: error }));
+        }
+    };
+
+    // Handle role selection blur
+    const handleRoleBlur = () => {
+        const error = validateField('roleIds', formData.roleIds);
+        setErrors(prev => ({ ...prev, roleIds: error }));
+    };
+
+    // Handle role selection change
+    const handleRoleSelection = (roleId, isChecked) => {
+        const newRoleIds = formData.roleIds || [];
+        const updatedRoleIds = isChecked 
+            ? [...newRoleIds, roleId]
+            : newRoleIds.filter(id => id !== roleId);
+            
+        setFormData(prev => ({ ...prev, roleIds: updatedRoleIds }));
+        
+        // Validate roles
+        const error = validateField('roleIds', updatedRoleIds);
+        setErrors(prev => ({ ...prev, roleIds: error }));
+    };
+
+    // Validate entire form
+    const validateForm = () => {
+        let isValid = true;
+        const newErrors = { ...errors };
+        
+        // Validate all fields
+        Object.keys(formData).forEach(key => {
+            const error = validateField(key, formData[key]);
+            newErrors[key] = error;
+            if (error) isValid = false;
+        });
+        
+        // Special validation for roleIds
+        const roleError = validateField('roleIds', formData.roleIds);
+        newErrors.roleIds = roleError;
+        if (roleError) isValid = false;
+        
+        setErrors(newErrors);
+        return isValid;
+    };
+
+    // Helper to get input classes based on validation
+    const getInputClasses = (fieldName) => {
+        return errors[fieldName] 
+            ? "w-full p-3 border border-red-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-300 focus:border-transparent transition-all"
+            : "w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-transparent transition-all";
+    };
+
+    // Helper to get select classes based on validation
+    const getSelectClasses = (fieldName) => {
+        const baseClass = `w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:border-transparent transition-all ${formData[fieldName] ? "text-gray-800" : "text-gray-400"}`;
+        return errors[fieldName] 
+            ? `${baseClass} border-red-500 focus:ring-red-300`
+            : `${baseClass} border-gray-300 focus:ring-indigo-300`;
+    };
 
     // Fetch resources whenever filterData changes
     useEffect(() => {
@@ -85,11 +218,6 @@ const AddResource = ({ setActiveSection }) => {
         dispatch(fetchCompetencies());
         dispatch(fetchTechnologies());
     }, [dispatch]);
-
-    const handleInputChange = (e) => {
-        const { name, value } = e.target;
-        setFormData((prev) => ({ ...prev, [name]: value }));
-    };
 
     const handleProfilePicChange = (e) => {
         const file = e.target.files[0];
@@ -137,6 +265,12 @@ const AddResource = ({ setActiveSection }) => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+
+        if (!validateForm()) {
+            setToast(<ErrorToast message="Please fix all validation errors" onClose={() => setToast(null)} />);
+            return;
+        }
+
         try {
             setToast(<YRMSLoader message="Creating resource..." />);
             const createResult = await dispatch(createResource(formData));
@@ -161,7 +295,7 @@ const AddResource = ({ setActiveSection }) => {
                 employeeId: "",
                 employeeName: "",
                 gender: "",
-                location: "indore",
+                location: "",
                 email: "",
                 phoneNumber: "",
                 joiningDate: "",
@@ -172,6 +306,7 @@ const AddResource = ({ setActiveSection }) => {
                 businessUnit: "",
                 competency: "",
                 status: "pool",
+                roleIds: [],
             });
             setProfilePic(null);
             setProfilePicPreview(null);
@@ -280,10 +415,14 @@ const AddResource = ({ setActiveSection }) => {
                                     name="employeeName"
                                     value={formData.employeeName}
                                     onChange={handleInputChange}
-                                    className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-transparent transition-all"
+                                    onBlur={handleBlur}
+                                    className={getInputClasses('employeeName')}
                                     placeholder="John Doe"
                                     required
                                 />
+                                {errors.employeeName && (
+                                    <p className="text-red-500 text-sm mt-1">{errors.employeeName}</p>
+                                )}
                             </div>
 
                             <div className="space-y-1">
@@ -296,10 +435,14 @@ const AddResource = ({ setActiveSection }) => {
                                     name="employeeId"
                                     value={formData.employeeId}
                                     onChange={handleInputChange}
-                                    className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-transparent transition-all"
+                                    onBlur={handleBlur}
+                                    className={getInputClasses('employeeId')}
                                     placeholder="YASH1234"
                                     required
                                 />
+                                {errors.employeeId && (
+                                    <p className="text-red-500 text-sm mt-1">{errors.employeeId}</p>
+                                )}
                             </div>
 
                             <div className="space-y-1">
@@ -311,13 +454,17 @@ const AddResource = ({ setActiveSection }) => {
                                     name="gender"
                                     value={formData.gender}
                                     onChange={handleInputChange}
-                                    className={`w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-transparent transition-all ${formData.gender ? "text-gray-800" : "text-gray-400"}`}
+                                    onBlur={handleBlur}
+                                    className={getSelectClasses('gender')}
                                     required
                                 >
                                     <option value="" disabled>Select gender</option>
                                     <option value="male">Male</option>
                                     <option value="female">Female</option>
                                 </select>
+                                {errors.gender && (
+                                    <p className="text-red-500 text-sm mt-1">{errors.gender}</p>
+                                )}
                             </div>
 
                             <div className="space-y-1">
@@ -329,7 +476,8 @@ const AddResource = ({ setActiveSection }) => {
                                     name="location"
                                     value={formData.location}
                                     onChange={handleInputChange}
-                                    className={`w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-transparent transition-all ${formData.location ? "text-gray-800" : "text-gray-400"}`}
+                                    onBlur={handleBlur}
+                                    className={getSelectClasses('location')}
                                     required
                                 >
                                     <option value="">Select Location</option>
@@ -341,6 +489,9 @@ const AddResource = ({ setActiveSection }) => {
                                     <option value="Indore_BTC_CO">Indore-BTC-CO</option>
                                     <option value="Pune_Hinjewadi_III_DC">Pune-Hinjewadi III-DC</option>
                                 </select>
+                                {errors.location && (
+                                    <p className="text-red-500 text-sm mt-1">{errors.location}</p>
+                                )}
                             </div>
 
                             <div className="space-y-1">
@@ -350,19 +501,17 @@ const AddResource = ({ setActiveSection }) => {
                                 </label>
 
                                 <div className="relative">
-                                    {/* Dropdown toggle button */}
                                     <button
                                         type="button"
-                                        className={`w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-transparent transition-all text-left ${formData.roleIds?.length ? "text-gray-800" : "text-gray-400"
-                                            }`}
+                                        className={`w-full p-3 border ${errors.roleIds ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:outline-none focus:ring-2 ${errors.roleIds ? 'focus:ring-red-300' : 'focus:ring-indigo-300'} focus:border-transparent transition-all text-left ${formData.roleIds?.length ? "text-gray-800" : "text-gray-400"}`}
                                         onClick={() => setIsRolesOpen(!isRolesOpen)}
+                                        onBlur={handleRoleBlur}
                                     >
                                         {formData.roleIds?.length > 0
                                             ? `${formData.roleIds.length} selected`
                                             : "Select one or more roles"}
                                     </button>
 
-                                    {/* Dropdown menu */}
                                     {isRolesOpen && (
                                         <div className="absolute z-10 mt-1 w-full bg-white shadow-lg rounded-lg py-1 border border-gray-200 max-h-60 overflow-auto">
                                             {roles.map((role) => (
@@ -375,24 +524,7 @@ const AddResource = ({ setActiveSection }) => {
                                                         className="form-checkbox h-4 w-4 text-indigo-600 transition duration-150 ease-in-out rounded"
                                                         value={role.id}
                                                         checked={formData.roleIds?.includes(role.id) || false}
-                                                        onChange={(e) => {
-                                                            const newRoleIds = formData.roleIds || [];
-                                                            if (e.target.checked) {
-                                                                handleInputChange({
-                                                                    target: {
-                                                                        name: "roleIds",
-                                                                        value: [...newRoleIds, role.id]
-                                                                    }
-                                                                });
-                                                            } else {
-                                                                handleInputChange({
-                                                                    target: {
-                                                                        name: "roleIds",
-                                                                        value: newRoleIds.filter(id => id !== role.id)
-                                                                    }
-                                                                });
-                                                            }
-                                                        }}
+                                                        onChange={(e) => handleRoleSelection(role.id, e.target.checked)}
                                                     />
                                                     <span className="ml-3 text-gray-700">{role.role}</span>
                                                 </label>
@@ -400,24 +532,8 @@ const AddResource = ({ setActiveSection }) => {
                                         </div>
                                     )}
                                 </div>
-
-                                {/* Display selected roles */}
-                                {formData.roleIds?.length > 0 && (
-                                    <div className="mt-2">
-                                        <span className="text-sm font-medium text-gray-700">Selected:</span>
-                                        <div className="flex flex-wrap gap-2 mt-1">
-                                            {roles
-                                                .filter(role => formData.roleIds.includes(role.id))
-                                                .map(role => (
-                                                    <span
-                                                        key={role.id}
-                                                        className="bg-indigo-100 text-indigo-800 text-xs px-2 py-1 rounded"
-                                                    >
-                                                        {role.role}
-                                                    </span>
-                                                ))}
-                                        </div>
-                                    </div>
+                                {errors.roleIds && (
+                                    <p className="text-red-500 text-sm mt-1">{errors.roleIds}</p>
                                 )}
                             </div>
 
@@ -431,10 +547,14 @@ const AddResource = ({ setActiveSection }) => {
                                     name="email"
                                     value={formData.email}
                                     onChange={handleInputChange}
-                                    className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-transparent transition-all"
+                                    onBlur={handleBlur}
+                                    className={getInputClasses('email')}
                                     placeholder="john.doe@yash.com"
                                     required
                                 />
+                                {errors.email && (
+                                    <p className="text-red-500 text-sm mt-1">{errors.email}</p>
+                                )}
                             </div>
 
                             <div className="space-y-1">
@@ -447,10 +567,14 @@ const AddResource = ({ setActiveSection }) => {
                                     name="phoneNumber"
                                     value={formData.phoneNumber}
                                     onChange={handleInputChange}
-                                    className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-transparent transition-all"
-                                    placeholder="+91 9876543210"
+                                    onBlur={handleBlur}
+                                    className={getInputClasses('phoneNumber')}
+                                    placeholder="9876543210"
                                     required
                                 />
+                                {errors.phoneNumber && (
+                                    <p className="text-red-500 text-sm mt-1">{errors.phoneNumber}</p>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -475,9 +599,13 @@ const AddResource = ({ setActiveSection }) => {
                                     name="joiningDate"
                                     value={formData.joiningDate}
                                     onChange={handleInputChange}
-                                    className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-transparent transition-all"
+                                    onBlur={handleBlur}
+                                    className={getInputClasses('joiningDate')}
                                     required
                                 />
+                                {errors.joiningDate && (
+                                    <p className="text-red-500 text-sm mt-1">{errors.joiningDate}</p>
+                                )}
                             </div>
 
                             <div className="space-y-1">
@@ -493,7 +621,12 @@ const AddResource = ({ setActiveSection }) => {
                                         handleInputChange(e);
                                     }}
                                     setModalField={setModalField}
+                                    onBlur={handleBlur}
+                                    error={errors.designation}
                                 />
+                                {errors.designation && (
+                                    <p className="text-red-500 text-sm mt-1">{errors.designation}</p>
+                                )}
                             </div>
 
                             <div className="space-y-1">
@@ -505,7 +638,8 @@ const AddResource = ({ setActiveSection }) => {
                                     name="employeeType"
                                     value={formData.employeeType}
                                     onChange={handleInputChange}
-                                    className={`w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-transparent transition-all ${formData.employeeType ? "text-gray-800" : "text-gray-400"}`}
+                                    onBlur={handleBlur}
+                                    className={getSelectClasses('employeeType')}
                                     required
                                 >
                                     <option value="" disabled>Select type</option>
@@ -513,6 +647,9 @@ const AddResource = ({ setActiveSection }) => {
                                     <option value="permanent">Permanent</option>
                                     <option value="contract">Contract</option>
                                 </select>
+                                {errors.employeeType && (
+                                    <p className="text-red-500 text-sm mt-1">{errors.employeeType}</p>
+                                )}
                             </div>
 
                             <div className="space-y-1">
@@ -524,7 +661,8 @@ const AddResource = ({ setActiveSection }) => {
                                     name="grade"
                                     value={formData.grade}
                                     onChange={handleInputChange}
-                                    className={`w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-transparent transition-all ${formData.grade ? "text-gray-800" : "text-gray-400"}`}
+                                    onBlur={handleBlur}
+                                    className={getSelectClasses('grade')}
                                     required
                                 >
                                     <option value="" disabled>Select grade</option>
@@ -534,6 +672,9 @@ const AddResource = ({ setActiveSection }) => {
                                         </option>
                                     ))}
                                 </select>
+                                {errors.grade && (
+                                    <p className="text-red-500 text-sm mt-1">{errors.grade}</p>
+                                )}
                             </div>
 
                             <div className="space-y-1">
@@ -564,7 +705,8 @@ const AddResource = ({ setActiveSection }) => {
                                     name="businessGroup"
                                     value={formData.businessGroup}
                                     onChange={handleInputChange}
-                                    className={`w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-transparent transition-all ${formData.businessGroup ? "text-gray-800" : "text-gray-400"}`}
+                                    onBlur={handleBlur}
+                                    className={getSelectClasses('businessGroup')}
                                     required
                                 >
                                     <option value="" disabled>Select business group</option>
@@ -572,6 +714,9 @@ const AddResource = ({ setActiveSection }) => {
                                     <option value="BG5">BG5</option>
                                     <option value="SSG1">SSG1</option>
                                 </select>
+                                {errors.businessGroup && (
+                                    <p className="text-red-500 text-sm mt-1">{errors.businessGroup}</p>
+                                )}
                             </div>
 
                             <div className="space-y-1">
@@ -583,7 +728,8 @@ const AddResource = ({ setActiveSection }) => {
                                     name="businessUnit"
                                     value={formData.businessUnit}
                                     onChange={handleInputChange}
-                                    className={`w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-transparent transition-all ${formData.businessUnit ? "text-gray-800" : "text-gray-400"}`}
+                                    onBlur={handleBlur}
+                                    className={getSelectClasses('businessUnit')}
                                     required
                                 >
                                     <option value="" disabled>Select business unit</option>
@@ -591,6 +737,9 @@ const AddResource = ({ setActiveSection }) => {
                                     <option value="BU4">BU4</option>
                                     <option value="SSU1">SSU1</option>
                                 </select>
+                                {errors.businessUnit && (
+                                    <p className="text-red-500 text-sm mt-1">{errors.businessUnit}</p>
+                                )}
                             </div>
 
                             <div className="space-y-1">
@@ -604,7 +753,12 @@ const AddResource = ({ setActiveSection }) => {
                                     options={competencies}
                                     onChange={handleInputChange}
                                     setModalField={setModalField}
+                                    onBlur={handleBlur}
+                                    error={errors.competency}
                                 />
+                                {errors.competency && (
+                                    <p className="text-red-500 text-sm mt-1">{errors.competency}</p>
+                                )}
                             </div>
                         </div>
                     </div>

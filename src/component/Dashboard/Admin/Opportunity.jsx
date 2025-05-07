@@ -12,7 +12,7 @@ const Opportunities = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { state } = useLocation();
-  const userId = window.location.pathname.split('/').pop(); 
+  const userId = window.location.pathname.split('/').pop();
 
   const [resource, setResource] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -27,7 +27,7 @@ const Opportunities = () => {
         }
       });
     }
-  }, [dispatch, userId]); 
+  }, [dispatch, userId]);
 
   const { opportunities, loading, error } = useSelector((state) => state.opportunity);
 
@@ -49,20 +49,22 @@ const Opportunities = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
   const [toast, setToast] = useState(null);
+  const [formErrors, setFormErrors] = useState({});
 
   const filteredOpportunities = opportunities.filter(opportunity => {
-    const matchesSearch = opportunity.clientName.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                         opportunity.jobDescription.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = opportunity.clientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      opportunity.jobDescription.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === 'All' || opportunity.finalResult === statusFilter;
     return matchesSearch && matchesStatus;
   });
 
-  const sortedOpportunities = [...filteredOpportunities].sort((a, b) => 
+  const sortedOpportunities = [...filteredOpportunities].sort((a, b) =>
     new Date(b.dateOfInterview) - new Date(a.dateOfInterview)
   );
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
+    setFormErrors(prev => ({ ...prev, [name]: validateFormField(name, value) }));
     if (name === 'clearedRounds') {
       if (!newOpportunity.totalRounds) {
         setErrorMessage('Please enter total rounds first.');
@@ -76,11 +78,59 @@ const Opportunities = () => {
     setNewOpportunity((prev) => ({ ...prev, [name]: value }));
   };
 
+  const validateFormField = (name, value) => {
+    switch (name) {
+      case 'clientName':
+        if (!value.trim()) return 'Client Name is required';
+        if (value.length > 100) return 'Client Name must be 100 characters or less';
+        return '';
+      case 'jobDescription':
+        if (!value) return 'jobDescription is required';
+        return '';
+      case 'grade':
+        if (!value) return 'Grade is required';
+        return '';
+      case 'dateOfInterview':
+        if (!value) return 'date Of Interview is required';
+        if (new Date(value) > new Date()) return 'Joining date cannot be in the future';
+        return '';
+      case 'totalRounds':
+        if (!value) return 'Total Rounds is required';
+        return '';
+      case 'clearedRounds':
+        if (!value) return 'Cleared Rounds is required';
+        return '';
+      default:
+        return '';
+    }
+  };
+
+
+  const handleInputBlur = (e) => {
+    const { name, value } = e.target;
+    setFormErrors(prev => ({ ...prev, [name]: validateFormField(name, value) }));
+  };
+
+  const validateOpportunity = (opportunity) => {
+    if (!opportunity.clientName || !opportunity.dateOfInterview || !opportunity.jobDescription ||
+      !opportunity.totalRounds || !opportunity.clearedRounds) {
+      return "All fields are required.";
+    }
+    if (parseInt(opportunity.clearedRounds) > parseInt(opportunity.totalRounds)) {
+      return "Cleared rounds cannot exceed total rounds.";
+    }
+    return null;
+  };
   const handleAddOpportunity = async (e) => {
     e.preventDefault();
+    const validationError = validateOpportunity(newOpportunity);
+    if (validationError) {
+      setToast(<ErrorToast message={validationError} onClose={() => setToast(null)} />);
+      return;
+    }
     setToast(<YRMSLoader message="Creating opportunity..." />);
     try {
-      const result = await dispatch(createOpportunity(newOpportunity)); 
+      const result = await dispatch(createOpportunity(newOpportunity));
       if (createOpportunity.fulfilled.match(result)) {
         setToast(<SuccessToast message="Opportunity created successfully!" onClose={() => setToast(null)} />);
         dispatch(fetchOpportunities(userId));
@@ -108,13 +158,18 @@ const Opportunities = () => {
 
   const handleEditOpportunity = async (e) => {
     e.preventDefault();
+    const validationError = validateOpportunity(selectedOpportunity);
+    if (validationError) {
+      setToast(<ErrorToast message={validationError} onClose={() => setToast(null)} />);
+      return;
+    }
     setToast(<YRMSLoader message="Updating opportunity..." />);
     selectedOpportunity.userId = userId;
     try {
       const result = await dispatch(updateOpportunity({
         id: selectedOpportunity.publicId, // Changed to use userId as the identifier
         opportunityData: selectedOpportunity
-        })); 
+      }));
       if (updateOpportunity.fulfilled.match(result)) {
         setToast(<SuccessToast message="Opportunity updated successfully!" onClose={() => setToast(null)} />);
         dispatch(fetchOpportunities(userId));
@@ -153,7 +208,7 @@ const Opportunities = () => {
   const closeAddForm = () => setShowForm(false);
 
   const getStatusStyles = (status) => {
-    switch(status) {
+    switch (status) {
       case 'Cleared':
         return { bg: 'bg-green-100', text: 'text-green-800', border: 'border-green-700', icon: <FaCheck className="mr-1" /> };
       case 'Rejected':
@@ -236,9 +291,9 @@ const Opportunities = () => {
         {sortedOpportunities.length > 0 ? (
           sortedOpportunities.map((opportunity, index) => {
             const statusStyles = getStatusStyles(opportunity.finalResult);
-            
+
             return (
-              <div 
+              <div
                 key={opportunity.publicId}
                 onClick={() => openOpportunityDetails(opportunity)}
                 className={`relative rounded-xl shadow-lg overflow-hidden cursor-pointer transition-all duration-300 h-48 flex flex-col ${statusStyles.bg} border-l-4 ${statusStyles.border} hover:shadow-xl hover:translate-y-[-4px]`}
@@ -282,7 +337,7 @@ const Opportunities = () => {
         )}
 
         {/* Add New Opportunity Card */}
-        <div 
+        <div
           onClick={openAddForm}
           className="rounded-xl shadow-lg border-2 border-dashed border-gray-300 bg-gradient-to-br from-blue-50 to-purple-50 hover:from-blue-100 hover:to-purple-100 flex items-center justify-center cursor-pointer transition-all duration-300 h-48 hover:shadow-xl hover:translate-y-[-4px]"
         >
@@ -297,318 +352,351 @@ const Opportunities = () => {
       </div>
 
       {/* Opportunity Detail Popup */}
-{selectedOpportunity && (
-  <div className={`fixed inset-0 bg-gray-900/30 backdrop-blur-sm flex items-center justify-center p-4 z-50 transition-opacity duration-300 ${isPopupOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
-    <div className={`bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto transform transition-all duration-300 ${isPopupOpen ? 'scale-100' : 'scale-95'}`}>
-      {/* Header with gradient background */}
-      <div className={`bg-gradient-to-r ${selectedOpportunity.finalResult === 'Cleared' ? 'from-green-500 to-green-600' : selectedOpportunity.finalResult === 'Rejected' ? 'from-red-500 to-red-600' : 'from-yellow-500 to-yellow-600'} p-6 rounded-t-2xl relative overflow-hidden`}>
-        {/* Decorative elements */}
-        <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full transform translate-x-16 -translate-y-16"></div>
-        <div className="absolute bottom-0 left-0 w-40 h-40 bg-white/10 rounded-full transform -translate-x-20 translate-y-20"></div>
-        
-        <div className="relative z-10">
-          <div className="flex justify-between items-center">
-            <div className="flex items-center space-x-4">
-              <div className="w-14 h-14 rounded-full bg-white/20 flex items-center justify-center overflow-hidden backdrop-blur-sm border-2 border-white/30">
-                {resource?.profileImage ? (
-                  <img
-                    src={`data:image/png;base64,${resource.profileImage}`}
-                    alt="Profile"
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <span className="text-white text-2xl font-semibold">
-                    {resource?.employeeName?.[0] || "N/A"}
-                  </span>
-                )}
-              </div>
-              <div>
-                <h3 className="text-2xl font-bold text-white">
-                  {resource?.employeeName || "Unknown Employee"}
-                </h3>
-                <p className="text-white/90 text-sm">
-                  {resource?.designation || "Position N/A"}
-                </p>
+      {selectedOpportunity && (
+        <div className={`fixed inset-0 bg-gray-900/30 backdrop-blur-sm flex items-center justify-center p-4 z-50 transition-opacity duration-300 ${isPopupOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+          {toast}
+
+          <div className={`bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto transform transition-all duration-300 ${isPopupOpen ? 'scale-100' : 'scale-95'}`}>
+            {/* Header with gradient background */}
+            <div className={`bg-gradient-to-r ${selectedOpportunity.finalResult === 'Cleared' ? 'from-green-500 to-green-600' : selectedOpportunity.finalResult === 'Rejected' ? 'from-red-500 to-red-600' : 'from-yellow-500 to-yellow-600'} p-6 rounded-t-2xl relative overflow-hidden`}>
+              {/* Decorative elements */}
+              <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full transform translate-x-16 -translate-y-16"></div>
+              <div className="absolute bottom-0 left-0 w-40 h-40 bg-white/10 rounded-full transform -translate-x-20 translate-y-20"></div>
+
+              <div className="relative z-10">
+                <div className="flex justify-between items-center">
+                  <div className="flex items-center space-x-4">
+                    <div className="w-14 h-14 rounded-full bg-white/20 flex items-center justify-center overflow-hidden backdrop-blur-sm border-2 border-white/30">
+                      {resource?.profileImage ? (
+                        <img
+                          src={`data:image/png;base64,${resource.profileImage}`}
+                          alt="Profile"
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <span className="text-white text-2xl font-semibold">
+                          {resource?.employeeName?.[0] || "N/A"}
+                        </span>
+                      )}
+                    </div>
+                    <div>
+                      <h3 className="text-2xl font-bold text-white">
+                        {resource?.employeeName || "Unknown Employee"}
+                      </h3>
+                      <p className="text-white/90 text-sm">
+                        {resource?.designation || "Position N/A"}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-3">
+                    <button
+                      onClick={() => setIsEditing(!isEditing)}
+                      className={`px-5 py-2.5 rounded-xl transition-all duration-200 flex items-center space-x-2 shadow-lg ${isEditing
+                        ? 'bg-white/20 text-white hover:bg-white/30'
+                        : 'bg-white text-blue-600 hover:bg-white/90'
+                        }`}
+                    >
+                      {isEditing ? (
+                        <>
+                          <FaTimes className="text-sm" />
+                          <span>Cancel</span>
+                        </>
+                      ) : (
+                        <>
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                          </svg>
+                          <span>Edit</span>
+                        </>
+                      )}
+                    </button>
+                    <button
+                      onClick={closeOpportunityDetails}
+                      className="w-10 h-10 flex items-center justify-center bg-white/20 rounded-full text-white hover:bg-white/30 transition-colors duration-200"
+                    >
+                      <FaTimes className="text-lg" />
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
-            <div className="flex items-center space-x-3">
-              <button
-                onClick={() => setIsEditing(!isEditing)}
-                className={`px-5 py-2.5 rounded-xl transition-all duration-200 flex items-center space-x-2 shadow-lg ${
-                  isEditing 
-                    ? 'bg-white/20 text-white hover:bg-white/30'
-                    : 'bg-white text-blue-600 hover:bg-white/90'
-                }`}
-              >
+
+            {/* Content area */}
+            <div className="p-6 space-y-6">
+              {/* Client and Date */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="bg-gradient-to-br from-blue-50 to-purple-50 p-5 rounded-xl border border-blue-100">
+                  <h4 className="text-xs font-semibold text-blue-600 uppercase tracking-wider mb-2">Client Name</h4>
+                  {isEditing ? (
+                    <div>
+                      <input
+                        type="text"
+                        name="clientName"
+                        value={selectedOpportunity.clientName}
+                        onChange={handleEditInputChange}
+                        onBlur={handleInputBlur}
+                        required
+                        className="w-full p-3 bg-white rounded-lg border border-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-transparent transition-all"
+                      />
+
+                      {formErrors.clientName && (
+                        <p className="text-xs text-red-500 mt-1">{formErrors.clientName}</p>
+                      )}
+                    </div>
+                  ) : (
+                    <p className="text-lg font-medium text-gray-800">
+                      {selectedOpportunity.clientName}
+                    </p>
+                  )}
+                </div>
+
+                <div className="bg-gradient-to-br from-blue-50 to-purple-50 p-5 rounded-xl border border-blue-100">
+                  <h4 className="text-xs font-semibold text-blue-600 uppercase tracking-wider mb-2">Interview Date</h4>
+                  {isEditing ? (
+                    <div className="relative">
+                      <input
+                        type="date"
+                        name="dateOfInterview"
+                        value={selectedOpportunity.dateOfInterview}
+                        onChange={handleEditInputChange}
+                        onBlur={handleInputBlur}
+                        required
+                        className="w-full p-3 bg-white rounded-lg border border-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-transparent transition-all appearance-none"
+                        onClick={(e) => e.target.showPicker()}
+                      />
+                      {formErrors.dateOfInterview && (
+                        <p className="text-xs text-red-500 mt-1">{formErrors.dateOfInterview}</p>
+                      )}
+
+                      <div
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-blue-500 cursor-pointer"
+                        onClick={(e) => e.target.previousElementSibling.showPicker()}
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
+                        </svg>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-lg font-medium text-gray-800">
+                      {new Date(selectedOpportunity.dateOfInterview).toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                      })}
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              {/* Job Description */}
+              <div className="bg-gradient-to-br from-blue-50 to-purple-50 p-5 rounded-xl border border-blue-100">
+                <h4 className="text-xs font-semibold text-blue-600 uppercase tracking-wider mb-2">Job Description</h4>
                 {isEditing ? (
-                  <>
-                    <FaTimes className="text-sm" />
-                    <span>Cancel</span>
-                  </>
+                  <div>
+                    <textarea
+                      name="jobDescription"
+                      value={selectedOpportunity.jobDescription}
+                      onChange={handleEditInputChange}
+                      onBlur={handleInputBlur}
+                      required
+                      className="w-full p-4 bg-white rounded-lg border border-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-transparent transition-all min-h-[120px]"
+                      rows="3"
+                    />
+                    {formErrors.jobDescription && (
+                      <p className="text-xs text-red-500 mt-1">{formErrors.jobDescription}</p>
+                    )}
+                  </div>
                 ) : (
-                  <>
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  <p className="text-gray-700 whitespace-pre-line">
+                    {selectedOpportunity.jobDescription}
+                  </p>
+                )}
+              </div>
+
+              {/* Status and Rounds */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="bg-gradient-to-br from-blue-50 to-purple-50 p-5 rounded-xl border border-blue-100">
+                  <h4 className="text-xs font-semibold text-blue-600 uppercase tracking-wider mb-2">Final Result</h4>
+                  {isEditing ? (
+                    <div>
+
+                      <select
+                        name="finalResult"
+                        value={selectedOpportunity.finalResult}
+                        onChange={handleEditInputChange}
+                        onBlur={handleInputBlur}
+                        required
+                        className={`w-full p-3 rounded-lg border focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-transparent transition-all ${selectedOpportunity.finalResult === 'Cleared' ? 'bg-green-100 border-green-200 text-green-800' :
+                            selectedOpportunity.finalResult === 'Rejected' ? 'bg-red-100 border-red-200 text-red-800' :
+                              'bg-yellow-100 border-yellow-200 text-yellow-800'
+                          } ${formErrors.finalResult ? 'border-red-300' : ''}`}
+                      >
+                        <option value="Pending" className="bg-yellow-100 text-yellow-800">Pending</option>
+                        <option value="Cleared" className="bg-green-100 text-green-800">Cleared</option>
+                        <option value="Rejected" className="bg-red-100 text-red-800">Rejected</option>
+                      </select>
+                      {formErrors.finalResult && (
+                        <p className="text-xs text-red-500 mt-1">{formErrors.finalResult}</p>
+                      )}
+                    </div>
+
+
+                  ) : (
+                    <div className={`inline-flex items-center px-4 py-2 rounded-full text-sm font-semibold ${selectedOpportunity.finalResult === 'Cleared' ? 'bg-green-100 text-green-800 border border-green-200' :
+                      selectedOpportunity.finalResult === 'Rejected' ? 'bg-red-100 text-red-800 border border-red-200' :
+                        'bg-yellow-100 text-yellow-800 border border-yellow-200'
+                      }`}>
+                      {selectedOpportunity.finalResult === 'Cleared' ? (
+                        <FaCheck className="mr-2" />
+                      ) : selectedOpportunity.finalResult === 'Rejected' ? (
+                        <FaTimes className="mr-2" />
+                      ) : (
+                        <FaClock className="mr-2" />
+                      )}
+                      {selectedOpportunity.finalResult}
+                    </div>
+                  )}
+                </div>
+
+                <div className="bg-gradient-to-br from-blue-50 to-purple-50 p-5 rounded-xl border border-blue-100">
+                  <h4 className="text-xs font-semibold text-blue-600 uppercase tracking-wider mb-2">Interview Rounds</h4>
+                  {isEditing ? (
+                    <div className="space-y-3">
+                      <div>
+                        <label className="block text-sm text-gray-600 mb-1">Total Rounds</label>
+                        <input
+                          type="number"
+                          name="totalRounds"
+                          required
+                          onBlur={handleInputBlur}
+                          value={selectedOpportunity.totalRounds}
+                          onChange={(e) => {
+                            const newTotal = parseInt(e.target.value);
+                            if (newTotal < selectedOpportunity.clearedRounds) {
+                              return;
+                            }
+                            handleEditInputChange(e);
+                          }}
+                          className="w-full p-3 bg-white rounded-lg border border-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-transparent"
+                          min={selectedOpportunity.clearedRounds || 1}
+                        />
+                        
+                        {selectedOpportunity.totalRounds < selectedOpportunity.clearedRounds && (
+                          <p className="text-xs text-red-500 mt-1">Total rounds cannot be less than cleared rounds</p>
+                        )}
+                      </div>
+                      <div>
+                        <label className="block text-sm text-gray-600 mb-1">Cleared Rounds</label>
+                        <input
+                          type="number"
+                          name="clearedRounds"
+                          value={selectedOpportunity.clearedRounds}
+                          onChange={(e) => {
+                            const cleared = parseInt(e.target.value);
+                            if (cleared > selectedOpportunity.totalRounds) {
+                              return;
+                            }
+                            handleEditInputChange(e);
+                          }}
+                          onBlur={handleInputBlur}
+                          className="w-full p-3 bg-white rounded-lg border border-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-transparent"
+                          min="0"
+                          max={selectedOpportunity.totalRounds}
+                        />
+                        {selectedOpportunity.clearedRounds > selectedOpportunity.totalRounds && (
+                          <p className="text-xs text-red-500 mt-1">Cleared rounds cannot be greater than total rounds</p>
+                        )}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium text-gray-600">Progress</span>
+                        <span className="text-sm font-bold text-blue-600">
+                          {selectedOpportunity.clearedRounds}/{selectedOpportunity.totalRounds} rounds
+                        </span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-2.5">
+                        <div
+                          className={`h-2.5 rounded-full ${selectedOpportunity.finalResult === 'Cleared' ? 'bg-green-400' :
+                            selectedOpportunity.finalResult === 'Rejected' ? 'bg-red-400' :
+                              'bg-yellow-400'
+                            }`}
+                          style={{ width: `${Math.min(100, (selectedOpportunity.clearedRounds / selectedOpportunity.totalRounds) * 100)}%` }}
+                        ></div>
+                      </div>
+                      <div className="text-xs text-gray-500 text-right">
+                        {Math.round((selectedOpportunity.clearedRounds / selectedOpportunity.totalRounds) * 100)}% completed
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Client Feedback */}
+              <div className="bg-gradient-to-br from-blue-50 to-purple-50 p-5 rounded-xl border border-blue-100">
+                <div className="flex items-center space-x-2 mb-2">
+                  <div className="text-blue-400">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
                     </svg>
-                    <span>Edit</span>
-                  </>
-                )}
-              </button>
-              <button 
-                onClick={closeOpportunityDetails}
-                className="w-10 h-10 flex items-center justify-center bg-white/20 rounded-full text-white hover:bg-white/30 transition-colors duration-200"
-              >
-                <FaTimes className="text-lg" />
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      {/* Content area */}
-      <div className="p-6 space-y-6">
-        {/* Client and Date */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="bg-gradient-to-br from-blue-50 to-purple-50 p-5 rounded-xl border border-blue-100">
-            <h4 className="text-xs font-semibold text-blue-600 uppercase tracking-wider mb-2">Client Name</h4>
-            {isEditing ? (
-              <input
-                type="text"
-                name="clientName"
-                value={selectedOpportunity.clientName}
-                onChange={handleEditInputChange}
-                className="w-full p-3 bg-white rounded-lg border border-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-transparent transition-all"
-              />
-            ) : (
-              <p className="text-lg font-medium text-gray-800">
-                {selectedOpportunity.clientName}
-              </p>
-            )}
-          </div>
-          
-          <div className="bg-gradient-to-br from-blue-50 to-purple-50 p-5 rounded-xl border border-blue-100">
-            <h4 className="text-xs font-semibold text-blue-600 uppercase tracking-wider mb-2">Interview Date</h4>
-            {isEditing ? (
-              <div className="relative">
-                <input
-                  type="date"
-                  name="dateOfInterview"
-                  value={selectedOpportunity.dateOfInterview}
-                  onChange={handleEditInputChange}
-                  className="w-full p-3 bg-white rounded-lg border border-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-transparent transition-all appearance-none"
-                  onClick={(e) => e.target.showPicker()}
-                />
-                <div 
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-blue-500 cursor-pointer"
-                  onClick={(e) => e.target.previousElementSibling.showPicker()}
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
-                  </svg>
+                  </div>
+                  <h4 className="text-xs font-semibold text-blue-600 uppercase tracking-wider">Client Feedback</h4>
                 </div>
-              </div>
-            ) : (
-              <p className="text-lg font-medium text-gray-800">
-                {new Date(selectedOpportunity.dateOfInterview).toLocaleDateString('en-US', {
-                  year: 'numeric',
-                  month: 'long',
-                  day: 'numeric'
-                })}
-              </p>
-            )}
-          </div>
-        </div>
-        
-        {/* Job Description */}
-        <div className="bg-gradient-to-br from-blue-50 to-purple-50 p-5 rounded-xl border border-blue-100">
-          <h4 className="text-xs font-semibold text-blue-600 uppercase tracking-wider mb-2">Job Description</h4>
-          {isEditing ? (
-            <textarea
-              name="jobDescription"
-              value={selectedOpportunity.jobDescription}
-              onChange={handleEditInputChange}
-              className="w-full p-4 bg-white rounded-lg border border-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-transparent transition-all min-h-[120px]"
-              rows="3"
-            />
-          ) : (
-            <p className="text-gray-700 whitespace-pre-line">
-              {selectedOpportunity.jobDescription}
-            </p>
-          )}
-        </div>
-        
-        {/* Status and Rounds */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="bg-gradient-to-br from-blue-50 to-purple-50 p-5 rounded-xl border border-blue-100">
-            <h4 className="text-xs font-semibold text-blue-600 uppercase tracking-wider mb-2">Final Result</h4>
-            {isEditing ? (
-              <select
-                name="finalResult"
-                value={selectedOpportunity.finalResult}
-                onChange={handleEditInputChange}
-                className={`w-full p-3 rounded-lg border focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-transparent transition-all ${
-                  selectedOpportunity.finalResult === 'Cleared' ? 'bg-green-100 border-green-200 text-green-800' :
-                  selectedOpportunity.finalResult === 'Rejected' ? 'bg-red-100 border-red-200 text-red-800' :
-                  'bg-yellow-100 border-yellow-200 text-yellow-800'
-                }`}
-              >
-                <option value="Pending" className="bg-yellow-100 text-yellow-800">Pending</option>
-                <option value="Cleared" className="bg-green-100 text-green-800">Cleared</option>
-                <option value="Rejected" className="bg-red-100 text-red-800">Rejected</option>
-              </select>
-            ) : (
-              <div className={`inline-flex items-center px-4 py-2 rounded-full text-sm font-semibold ${
-                selectedOpportunity.finalResult === 'Cleared' ? 'bg-green-100 text-green-800 border border-green-200' :
-                selectedOpportunity.finalResult === 'Rejected' ? 'bg-red-100 text-red-800 border border-red-200' :
-                'bg-yellow-100 text-yellow-800 border border-yellow-200'
-              }`}>
-                {selectedOpportunity.finalResult === 'Cleared' ? (
-                  <FaCheck className="mr-2" />
-                ) : selectedOpportunity.finalResult === 'Rejected' ? (
-                  <FaTimes className="mr-2" />
+                {isEditing ? (
+                  <textarea
+                    name="clientFeedback"
+                    value={selectedOpportunity.clientFeedback}
+                    onChange={handleEditInputChange}
+                    className="w-full p-4 bg-white rounded-lg border border-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-transparent transition-all min-h-[100px]"
+                    placeholder="Enter client feedback..."
+                  />
                 ) : (
-                  <FaClock className="mr-2" />
+                  <p className="text-gray-700">
+                    {selectedOpportunity.clientFeedback || "No feedback provided"}
+                  </p>
                 )}
-                {selectedOpportunity.finalResult}
               </div>
-            )}
-          </div>
-          
-          <div className="bg-gradient-to-br from-blue-50 to-purple-50 p-5 rounded-xl border border-blue-100">
-            <h4 className="text-xs font-semibold text-blue-600 uppercase tracking-wider mb-2">Interview Rounds</h4>
-            {isEditing ? (
-              <div className="space-y-3">
-                <div>
-                  <label className="block text-sm text-gray-600 mb-1">Total Rounds</label>
-                  <input
-                    type="number"
-                    name="totalRounds"
-                    value={selectedOpportunity.totalRounds}
-                    onChange={(e) => {
-                      const newTotal = parseInt(e.target.value);
-                      if (newTotal < selectedOpportunity.clearedRounds) {
-                        return;
-                      }
-                      handleEditInputChange(e);
-                    }}
-                    className="w-full p-3 bg-white rounded-lg border border-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-transparent"
-                    min={selectedOpportunity.clearedRounds || 1}
-                  />
-                  {selectedOpportunity.totalRounds < selectedOpportunity.clearedRounds && (
-                    <p className="text-xs text-red-500 mt-1">Total rounds cannot be less than cleared rounds</p>
-                  )}
+
+              {/* Edit Mode Actions */}
+              {isEditing && (
+                <div className="flex justify-end space-x-4 pt-4 border-t border-gray-200">
+                  <button
+                    type="button"
+                    onClick={() => setIsEditing(false)}
+                    className="px-6 py-3 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-colors duration-200 font-medium flex items-center space-x-2"
+                  >
+                    <FaTimes />
+                    <span>Discard Changes</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleEditOpportunity}
+                    className="px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-xl hover:from-blue-600 hover:to-purple-600 transition-all duration-200 font-medium flex items-center space-x-2 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+                    disabled={loading || (selectedOpportunity.clearedRounds > selectedOpportunity.totalRounds)}
+                  >
+                    {loading ? (
+                      <>
+                        <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        <span>Saving...</span>
+                      </>
+                    ) : (
+                      <>
+                        <FaCheck />
+                        <span>Save Changes</span>
+                      </>
+                    )}
+                  </button>
                 </div>
-                <div>
-                  <label className="block text-sm text-gray-600 mb-1">Cleared Rounds</label>
-                  <input
-                    type="number"
-                    name="clearedRounds"
-                    value={selectedOpportunity.clearedRounds}
-                    onChange={(e) => {
-                      const cleared = parseInt(e.target.value);
-                      if (cleared > selectedOpportunity.totalRounds) {
-                        return;
-                      }
-                      handleEditInputChange(e);
-                    }}
-                    className="w-full p-3 bg-white rounded-lg border border-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-transparent"
-                    min="0"
-                    max={selectedOpportunity.totalRounds}
-                  />
-                  {selectedOpportunity.clearedRounds > selectedOpportunity.totalRounds && (
-                    <p className="text-xs text-red-500 mt-1">Cleared rounds cannot be greater than total rounds</p>
-                  )}
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-gray-600">Progress</span>
-                  <span className="text-sm font-bold text-blue-600">
-                    {selectedOpportunity.clearedRounds}/{selectedOpportunity.totalRounds} rounds
-                  </span>
-                </div>
-                <div className="w-full bg-gray-200 rounded-full h-2.5">
-                  <div 
-                    className={`h-2.5 rounded-full ${
-                      selectedOpportunity.finalResult === 'Cleared' ? 'bg-green-400' :
-                      selectedOpportunity.finalResult === 'Rejected' ? 'bg-red-400' :
-                      'bg-yellow-400'
-                    }`}
-                    style={{ width: `${Math.min(100, (selectedOpportunity.clearedRounds / selectedOpportunity.totalRounds) * 100)}%` }}
-                  ></div>
-                </div>
-                <div className="text-xs text-gray-500 text-right">
-                  {Math.round((selectedOpportunity.clearedRounds / selectedOpportunity.totalRounds) * 100)}% completed
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-        
-        {/* Client Feedback */}
-        <div className="bg-gradient-to-br from-blue-50 to-purple-50 p-5 rounded-xl border border-blue-100">
-          <div className="flex items-center space-x-2 mb-2">
-            <div className="text-blue-400">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
-              </svg>
-            </div>
-            <h4 className="text-xs font-semibold text-blue-600 uppercase tracking-wider">Client Feedback</h4>
-          </div>
-          {isEditing ? (
-            <textarea
-              name="clientFeedback"
-              value={selectedOpportunity.clientFeedback}
-              onChange={handleEditInputChange}
-              className="w-full p-4 bg-white rounded-lg border border-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-transparent transition-all min-h-[100px]"
-              placeholder="Enter client feedback..."
-            />
-          ) : (
-            <p className="text-gray-700">
-              {selectedOpportunity.clientFeedback || "No feedback provided"}
-            </p>
-          )}
-        </div>
-        
-        {/* Edit Mode Actions */}
-        {isEditing && (
-          <div className="flex justify-end space-x-4 pt-4 border-t border-gray-200">
-            <button
-              type="button"
-              onClick={() => setIsEditing(false)}
-              className="px-6 py-3 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-colors duration-200 font-medium flex items-center space-x-2"
-            >
-              <FaTimes />
-              <span>Discard Changes</span>
-            </button>
-            <button
-              type="button"
-              onClick={handleEditOpportunity}
-              className="px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-xl hover:from-blue-600 hover:to-purple-600 transition-all duration-200 font-medium flex items-center space-x-2 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
-              disabled={loading || (selectedOpportunity.clearedRounds > selectedOpportunity.totalRounds)}
-            >
-              {loading ? (
-                <>
-                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  <span>Saving...</span>
-                </>
-              ) : (
-                <>
-                  <FaCheck />
-                  <span>Save Changes</span>
-                </>
               )}
-            </button>
+            </div>
           </div>
-        )}
-      </div>
-    </div>
-  </div>
-)}
+        </div>
+      )}
 
       {/* Add Opportunity Form Popup */}
       {showForm && (
@@ -625,7 +713,7 @@ const Opportunities = () => {
                     <h3 className="text-2xl font-bold text-white">Add New Opportunity for {resource ? resource.employeeName : "Loading..."}</h3>
                     <p className="text-indigo-100 mt-1">Add details about the interview process</p>
                   </div>
-                  <button 
+                  <button
                     onClick={closeAddForm}
                     className="text-white hover:text-red-200 text-xl cursor-pointer transition-colors duration-200 p-1 rounded-full hover:bg-red-500"
                   >
@@ -634,7 +722,7 @@ const Opportunities = () => {
                 </div>
               </div>
             </div>
-            
+
             <form onSubmit={handleAddOpportunity} className="p-6 space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="relative group">
@@ -656,7 +744,7 @@ const Opportunities = () => {
                     </div>
                   </div>
                 </div>
-                
+
                 <div className="relative group">
                   <label htmlFor="dateOfInterview" className="block text-sm font-medium text-gray-700 mb-1 ml-1">
                     Interview Date
@@ -675,12 +763,12 @@ const Opportunities = () => {
                     <div className="absolute left-4 top-1/2 transform -translate-y-1/2 pointer-events-none text-indigo-500">
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                              d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                          d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                       </svg>
                     </div>
                   </div>
                 </div>
-                
+
                 <div className="md:col-span-2 relative group">
                   <label className="block text-sm font-medium text-gray-700 mb-1 ml-1">Job Description</label>
                   <div className="relative">
@@ -699,7 +787,7 @@ const Opportunities = () => {
                     </div>
                   </div>
                 </div>
-                
+
                 <div className="md:col-span-2">
                   <h4 className="text-sm font-medium text-gray-700 mb-3 ml-1">Interview Process</h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -719,7 +807,7 @@ const Opportunities = () => {
                         <span className="ml-3 text-indigo-600">interview rounds</span>
                       </div>
                     </div>
-                    
+
                     <div className="bg-indigo-50 p-4 rounded-xl border border-indigo-100">
                       <label className="block text-sm font-medium text-indigo-800 mb-2">Cleared Rounds</label>
                       <div className="flex items-center">
@@ -739,7 +827,7 @@ const Opportunities = () => {
                       {errorMessage && <p className="text-red-500 text-sm mt-2">{errorMessage}</p>}
                     </div>
                   </div>
-                  
+
                   {newOpportunity.totalRounds > 0 && (
                     <div className="mt-4">
                       <div className="flex justify-between mb-1">
@@ -749,15 +837,15 @@ const Opportunities = () => {
                         </span>
                       </div>
                       <div className="w-full bg-indigo-100 rounded-full h-2.5">
-                        <div 
-                          className="bg-gradient-to-r from-indigo-400 to-purple-500 h-2.5 rounded-full" 
+                        <div
+                          className="bg-gradient-to-r from-indigo-400 to-purple-500 h-2.5 rounded-full"
                           style={{ width: `${Math.min(100, (newOpportunity.clearedRounds / newOpportunity.totalRounds) * 100)}%`, transition: 'width 0.3s ease' }}
                         ></div>
                       </div>
                     </div>
                   )}
                 </div>
-                
+
                 <div className="relative group">
                   <label className="block text-sm font-medium text-gray-700 mb-1 ml-1">Final Result</label>
                   <div className="relative">
@@ -782,7 +870,7 @@ const Opportunities = () => {
                     </div>
                   </div>
                 </div>
-                
+
                 <div className="flex items-end">
                   <div className="w-full">
                     <label className="block text-sm font-medium text-gray-700 mb-1 ml-1">Status Preview</label>
@@ -792,7 +880,7 @@ const Opportunities = () => {
                     </div>
                   </div>
                 </div>
-                
+
                 <div className="md:col-span-2 relative group">
                   <label className="block text-sm font-medium text-gray-700 mb-1 ml-1">Client Feedback</label>
                   <div className="relative">
@@ -811,7 +899,7 @@ const Opportunities = () => {
                   </div>
                 </div>
               </div>
-              
+
               <div className="flex justify-end space-x-4 pt-6 border-t border-gray-100">
                 <button
                   type="button"

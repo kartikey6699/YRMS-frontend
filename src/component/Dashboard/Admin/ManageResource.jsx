@@ -48,7 +48,7 @@ const ManageResource = () => {
     employeeId: "",
     employeeName: "",
     gender: "",
-    location: "indore",
+    location: "",
     email: "",
     phoneNumber: "",
     joiningDate: "",
@@ -110,7 +110,7 @@ const ManageResource = () => {
     },
     email: (value) => {
       if (!value) return "Email is required";
-      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return "Invalid email format";
+      else if (!/^[a-zA-Z0-9._%+-]+@yash\.com$/i.test(value)) return "Only yash.com emails allowed";
       return null;
     },
     phoneNumber: (value) => {
@@ -463,7 +463,7 @@ const ManageResource = () => {
         employeeId: "",
         employeeName: "",
         gender: "",
-        location: "indore",
+        location: "",
         email: "",
         phoneNumber: "",
         joiningDate: "",

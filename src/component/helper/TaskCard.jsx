@@ -41,7 +41,7 @@ const TaskCard = ({ task, onEdit, setDeleteModal }) => {
                         ) : (
                             <div className="text-xs text-green-500">
                                 <FaCalendarAlt className="inline mr-1" />
-                                <span>Due: {new Date(task.updatedAt).toLocaleDateString()}</span>
+                                <span>Submitted: {new Date(task.updatedAt).toLocaleDateString()}</span>
                             </div>)}
                     </div>
                 </div>

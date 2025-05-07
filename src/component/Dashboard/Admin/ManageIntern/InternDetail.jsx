@@ -16,14 +16,13 @@ const InternDetail = ({ publicId, onClose }) => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { internDetails, loading } = useSelector((state) => state.intern);
-  const { resources, competencies } = useSelector(
-    (state) => state.resource
-  );
+  const { resources, competencies } = useSelector((state) => state.resource);
   const [isEditing, setIsEditing] = useState(false);
   const [toast, setToast] = useState(null);
   const initialLoadDone = useRef(false);
   const [modalField, setModalField] = useState(null);
   const [formData, setFormData] = useState(null);
+  const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [profilePic, setProfilePic] = useState(null);
@@ -49,21 +48,21 @@ const InternDetail = ({ publicId, onClose }) => {
     if (publicId?.publicId === internDetails?.publicId) {
       setFormData({
         profileImage: null,
-        employeeName: internDetails.name || null,
-        endDate: internDetails.endDate || null,
-        startDate: internDetails.startDate || null,
-        lastWorkingDay: internDetails.lastWorkingDay || null,
-        mentor: internDetails.mentor || null,
-        mentorId: internDetails.mentorId || null,
-        location: internDetails.location || null,
-        status: internDetails.status || null,
+        employeeName: internDetails.name || '',
+        endDate: internDetails.endDate || '',
+        startDate: internDetails.startDate || '',
+        lastWorkingDay: internDetails.lastWorkingDay || '',
+        mentor: internDetails.mentor || '',
+        mentorId: internDetails.mentorId || '',
+        location: internDetails.location || '',
+        status: internDetails.status || '',
         rating: internDetails.rating || '0',
-        feedback: internDetails.feedback || null,
-        remark: internDetails.remark || null,
+        feedback: internDetails.feedback || '',
+        remark: internDetails.remark || '',
         hired: internDetails.isOffered || false,
-        competency: internDetails.competency || null,
-        hiredCompetency: internDetails.hiredCompetency || null,
-        competencyId: internDetails.competencyId || null
+        competency: internDetails.competency || '',
+        hiredCompetency: internDetails.hiredCompetency || '',
+        competencyId: internDetails.competencyId || ''
       });
       if (internDetails.profileImage) {
         setProfilePicPreview(`data:image/png;base64,${internDetails.profileImage}`);
@@ -80,9 +79,52 @@ const InternDetail = ({ publicId, onClose }) => {
     };
   }, [dispatch, publicId]);
 
+  const validateForm = () => {
+    const newErrors = {};
+    
+    // Required fields
+    if (!formData.employeeName.trim()) {
+      newErrors.employeeName = 'Name is required';
+    }
+    if (!formData.startDate) {
+      newErrors.startDate = 'Start date is required';
+    }
+    if (!formData.mentorId) {
+      newErrors.mentorId = 'Mentor is required';
+    }
+    if (!formData.location) {
+      newErrors.location = 'Location is required';
+    }
+    if (!formData.competencyId) {
+      newErrors.competencyId = 'Competency is required';
+    }
+
+    // Date range validation
+    if (formData.startDate && formData.endDate) {
+      const start = new Date(formData.startDate);
+      const end = new Date(formData.endDate);
+      if (end <= start) {
+        newErrors.endDate = 'End date must be after start date';
+      }
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+    
+    // Clear error for the field when user starts typing
+    if (errors[name]) {
+      setErrors(prev => ({ ...prev, [name]: '' }));
+    }
+    
+    // Re-validate date fields if either changes
+    if (name === 'startDate' || name === 'endDate') {
+      validateForm();
+    }
   };
 
   const parseDate = (date) => {
@@ -178,12 +220,20 @@ const InternDetail = ({ publicId, onClose }) => {
         });
         setProfilePic(null);
       } else {
-        throw new Error('Failed to upload profile picture');
+        throw new Error(`Failed to upload profile picture: Server responded with status ${response.status}`);
       }
     } catch (error) {
+      let errorMessage = 'Failed to update profile picture';
+      if (error.response) {
+        // Server responded with an error status
+        errorMessage = `Failed to upload profile picture: ${error.response.data?.message || error.response.statusText}`;
+      } else if (error.request) {
+        // No response received (network error)
+        errorMessage = 'Network error: Unable to connect to the server. Please check your connection.';
+      }
       setToast({
         type: 'error',
-        message: error.message || 'Failed to update profile picture'
+        message: errorMessage
       });
       console.error('Profile upload failed:', error);
     } finally {
@@ -193,6 +243,14 @@ const InternDetail = ({ publicId, onClose }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!validateForm()) {
+      setToast({
+        type: 'error',
+        message: 'Please fix the validation errors before submitting.'
+      });
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       const internData = {
@@ -234,9 +292,17 @@ const InternDetail = ({ publicId, onClose }) => {
         throw new Error("Failed to update intern");
       }
     } catch (err) {
+      let errorMessage = 'Failed to update intern';
+      if (err.response) {
+        errorMessage = `Failed to update intern: ${err.response.data?.message || err.response.statusText}`;
+      } else if (err.request) {
+        errorMessage = 'Network error: Unable to connect to the server. Please check your connection.';
+      } else if (err.message) {
+        errorMessage = `Failed to update intern: ${err.message}`;
+      }
       setToast({
         type: 'error',
-        message: err.message || "Failed to update intern"
+        message: errorMessage
       });
     } finally {
       setIsSubmitting(false);
@@ -246,23 +312,24 @@ const InternDetail = ({ publicId, onClose }) => {
   const handleCancel = () => {
     setFormData({
       profileImage: null,
-      employeeName: internDetails.name || null,
-      endDate: internDetails.endDate || null,
-      startDate: internDetails.startDate || null,
-      lastWorkingDay: internDetails.lastWorkingDay || null,
-      mentor: internDetails.mentor || null,
-      mentorId: internDetails.mentorId || null,
-      location: internDetails.location || null,
-      status: internDetails.status || null,
+      employeeName: internDetails.name || '',
+      endDate: internDetails.endDate || '',
+      startDate: internDetails.startDate || '',
+      lastWorkingDay: internDetails.lastWorkingDay || '',
+      mentor: internDetails.mentor || '',
+      mentorId: internDetails.mentorId || '',
+      location: internDetails.location || '',
+      status: internDetails.status || '',
       rating: internDetails.rating || '0',
-      feedback: internDetails.feedback || null,
-      remark: internDetails.remark || null,
+      feedback: internDetails.feedback || '',
+      remark: internDetails.remark || '',
       hired: internDetails.isOffered || false,
-      competency: internDetails.competency || null,
-      hiredCompetency: internDetails.hiredCompetency || null,
-      competencyId: internDetails.competencyId || null
+      competency: internDetails.competency || '',
+      hiredCompetency: internDetails.hiredCompetency || '',
+      competencyId: internDetails.competencyId || ''
     });
-    setModalField(null)
+    setErrors({});
+    setModalField(null);
     setIsEditing(false);
   };
 
@@ -315,7 +382,7 @@ const InternDetail = ({ publicId, onClose }) => {
                       className="w-14 h-14 rounded-full object-cover border-2 border-white shadow-lg"
                     />
                   ) : (
-                    <div className="w-14 h-14 rounded-full bg-gradient-to-br from-indigo-100 to-purple-100 flex items-center justify-center border-2 border-white shadow-lg">
+                    <div className="w-14 h-14 rounded-full féminine bg-gradient-to-br from-indigo-100 to-purple-100 flex items-center justify-center border-2 border-white shadow-lg">
                       <FaUser className="text-indigo-500 text-2xl" />
                     </div>
                   )
@@ -333,9 +400,13 @@ const InternDetail = ({ publicId, onClose }) => {
                           name="employeeName"
                           value={formData.employeeName}
                           onChange={handleInputChange}
-                          className="text-xl font-semibold text-gray-800 border rounded-md px-2 py-1 focus:ring-1 focus:ring-blue-300 bg-white bg-opacity-90"
+                          className={`text-xl font-semibold text-gray-800 border rounded-md px-2 py-1 focus:ring-1 focus:ring-blue-300 bg-white bg-opacity-90 ${errors.employeeName ? 'border-red-500' : ''}`}
                           disabled={loading}
+                          aria-describedby="employeeNameError"
                         />
+                        {errors.employeeName && (
+                          <p id="employeeNameError" className="text-red-500 text-xs mt-1">{errors.employeeName}</p>
+                        )}
                         <div className="mt-2">
                           <input
                             type="file"
@@ -379,15 +450,21 @@ const InternDetail = ({ publicId, onClose }) => {
                     <div className="bg-gradient-to-r from-indigo-100 to-blue-100 px-3 py-1.5 rounded-lg flex items-center gap-2 border border-indigo-200">
                       <span className="text-sm text-indigo-700 font-medium">Start:</span>
                       {isEditing ? (
-                        <input
-                          type="date"
-                          name="startDate"
-                          onClick={(e) => e.target.showPicker()}
-                          value={formData.startDate}
-                          onChange={handleInputChange}
-                          className="bg-white border border-blue-200 rounded-md px-1 py-1 text-sm focus:ring-1 focus:ring-blue-300"
-                          disabled={loading}
-                        />
+                        <div>
+                          <input
+                            type="date"
+                            name="startDate"
+                            onClick={(e) => e.target.showPicker()}
+                            value={formData.startDate}
+                            onChange={handleInputChange}
+                            className={`bg-white border rounded-md px-1 py-1 text-sm focus:ring-1 focus:ring-blue-300 ${errors.startDate ? 'border-red-500' : 'border-blue-200'}`}
+                            disabled={loading}
+                            aria-describedby="startDateError"
+                          />
+                          {errors.startDate && (
+                            <p id="startDateError" className="text-red-500 text-xs mt-1">{errors.startDate}</p>
+                          )}
+                        </div>
                       ) : (
                         <span className="text-base font-medium text-indigo-900">
                           {formData.startDate ? new Date(formData.startDate).toLocaleDateString() : 'Not set'}
@@ -399,15 +476,21 @@ const InternDetail = ({ publicId, onClose }) => {
                     <div className="bg-gradient-to-r from-purple-100 to-pink-100 px-3 py-1.5 rounded-lg flex items-center gap-2 border border-purple-200">
                       <span className="text-sm text-purple-700 font-medium">End:</span>
                       {isEditing ? (
-                        <input
-                          type="date"
-                          name="endDate"
-                          onClick={(e) => e.target.showPicker()}
-                          value={formData.endDate}
-                          onChange={handleInputChange}
-                          className="bg-white border border-purple-200 rounded-md px-1 py-1 text-sm focus:ring-1 focus:ring-purple-300"
-                          disabled={loading}
-                        />
+                        <div>
+                          <input
+                            type="date"
+                            name="endDate"
+                            onClick={(e) => e.target.showPicker()}
+                            value={formData.endDate}
+                            onChange={handleInputChange}
+                            className={`bg-white border rounded-md px-1 py-1 text-sm focus:ring-1 focus:ring-purple-300 ${errors.endDate ? 'border-red-500' : 'border-purple-200'}`}
+                            disabled={loading}
+                            aria-describedby="endDateError"
+                          />
+                          {errors.endDate && (
+                            <p id="endDateError" className="text-red-500 text-xs mt-1">{errors.endDate}</p>
+                          )}
+                        </div>
                       ) : (
                         <span className="text-base font-medium text-purple-900">
                           {formData.endDate ? new Date(formData.endDate).toLocaleDateString() : 'Not set'}
@@ -459,27 +542,36 @@ const InternDetail = ({ publicId, onClose }) => {
                 <div className="bg-indigo-50/50 p-3 rounded-lg border border-indigo-100">
                   <label className="block text-xs text-indigo-600 mb-1 font-semibold">Mentor</label>
                   {isEditing ? (
-                    <select
-                      name='mentorId'
-                      value={formData.mentorId || ''}
-                      onChange={(e) => {
-                        const selectedMentor = resources.find(m => m.publicId === e.target.value);
-                        setFormData(prev => ({
-                          ...prev,
-                          mentorId: e.target.value,
-                          mentor: selectedMentor?.employeeName || ''
-                        }));
-                      }}
-                      className="w-full h-12 p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 transition-colors"
-                      required
-                    >
-                      <option value="" disabled>Select Mentor</option>
-                      {resources.map((mentor) => (
-                        <option value={mentor.publicId} key={mentor.publicId}>
-                          {mentor.employeeName}
-                        </option>
-                      ))}
-                    </select>
+                    <div>
+                      <select
+                        name='mentorId'
+                        value={formData.mentorId || ''}
+                        onChange={(e) => {
+                          const selectedMentor = resources.find(m => m.publicId === e.target.value);
+                          setFormData(prev => ({
+                            ...prev,
+                            mentorId: e.target.value,
+                            mentor: selectedMentor?.employeeName || ''
+                          }));
+                          if (errors.mentorId) {
+                            setErrors(prev => ({ ...prev, mentorId: '' }));
+                          }
+                        }}
+                        className={`w-full h-12 p-3 border-2 rounded-lg focus:outline-none focus:border-blue-500 transition-colors ${errors.mentorId ? 'border-red-500' : 'border-gray-200'}`}
+                        required
+                        aria-describedby="mentorIdError"
+                      >
+                        <option value="" disabled>Select Mentor</option>
+                        {resources.map((mentor) => (
+                          <option value={mentor.publicId} key={mentor.publicId}>
+                            {mentor.employeeName}
+                          </option>
+                        ))}
+                      </select>
+                      {errors.mentorId && (
+                        <p id="mentorIdError" className="text-red-500 text-xs mt-1">{errors.mentorId}</p>
+                      )}
+                    </div>
                   ) : (
                     <p className="text-sm font-medium text-indigo-800 truncate">
                       {formData.mentor || 'Not specified'}
@@ -487,25 +579,32 @@ const InternDetail = ({ publicId, onClose }) => {
                   )}
                 </div>
 
-                {/* Location Field - Updated with dropdown */}
+                {/* Location Field */}
                 <div className="bg-indigo-50/50 p-3 rounded-lg border border-indigo-100">
                   <label className="block text-xs text-indigo-600 mb-1 font-semibold">Location</label>
                   {isEditing ? (
-                    <select
-                      name="location"
-                      value={formData.location}
-                      onChange={handleInputChange}
-                      className="w-full h-12 p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 transition-colors"
-                      required
-                    >
-                      <option value="Indore_Yash_IT_Park_SC_DC">Indore-YASH IT Park-SC-DC</option>
-                      <option value="Pune_Magarpatta_DC_II">Pune-Magarpatta-DC-II</option>
-                      <option value="Hyderabad_Mindspace_I_DC">Hyderabad-Mindspace I-DC</option>
-                      <option value="Bangalore_Whitefield_DC">Bangalore-Whitefield-DC</option>
-                      <option value="Indore_Crystal_IT_Park_DC_II">Indore-Crystal IT Park-DC-II</option>
-                      <option value="Indore_BTC_CO">Indore-BTC-CO</option>
-                      <option value="Pune_Hinjewadi_III_DC">Pune-Hinjewadi III-DC</option>
-                    </select>
+                    <div>
+                      <select
+                        name="location"
+                        value={formData.location}
+                        onChange={handleInputChange}
+                        className={`w-full h-12 p-3 border-2 rounded-lg focus:outline-none focus:border-blue-500 transition-colors ${errors.location ? 'border-red-500' : 'border-gray-200'}`}
+                        required
+                        aria-describedby="locationError"
+                      >
+                        <option value="" disabled>Select Location</option>
+                        <option value="Indore_Yash_IT_Park_SC_DC">Indore-YASH IT Park-SC-DC</option>
+                        <option value="Pune_Magarpatta_DC_II">Pune-Magarpatta-DC-II</option>
+                        <option value="Hyderabad_Mindspace_I_DC">Hyderabad-Mindspace I-DC</option>
+                        <option value="Bangalore_Whitefield_DC">Bangalore-Whitefield-DC</option>
+                        <option value="Indore_Crystal_IT_Park_DC_II">Indore-Crystal IT Park-DC-II</option>
+                        <option value="Indore_BTC_CO">Indore-BTC-CO</option>
+                        <option value="Pune_Hinjewadi_III_DC">Pune-Hinjewadi III-DC</option>
+                      </select>
+                      {errors.location && (
+                        <p id="locationError" className="text-red-500 text-xs mt-1">{errors.location}</p>
+                      )}
+                    </div>
                   ) : (
                     <p className="text-sm font-medium text-indigo-800 truncate">
                       {formData.location || 'Not specified'}
@@ -517,27 +616,36 @@ const InternDetail = ({ publicId, onClose }) => {
                 <div className="bg-indigo-50/50 p-3 rounded-lg border border-indigo-100">
                   <label className="block text-xs text-indigo-600 mb-1 font-semibold">Competency</label>
                   {isEditing ? (
-                    <select
-                      name='competencyId'
-                      value={formData.competencyId || ''}
-                      onChange={(e) => {
-                        const selectedCompetency = competencies.find(c => c.publicId === e.target.value);
-                        setFormData(prev => ({
-                          ...prev,
-                          competencyId: e.target.value,
-                          competency: selectedCompetency?.name || ''
-                        }));
-                      }}
-                      className="w-full h-12 p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 transition-colors"
-                      required
-                    >
-                      <option value="" disabled>Select Competency</option>
-                      {competencies.map((competency) => (
-                        <option value={competency.publicId} key={competency.publicId}>
-                          {competency.name}
-                        </option>
-                      ))}
-                    </select>
+                    <div>
+                      <select
+                        name='competencyId'
+                        value={formData.competencyId || ''}
+                        onChange={(e) => {
+                          const selectedCompetency = competencies.find(c => c.publicId === e.target.value);
+                          setFormData(prev => ({
+                            ...prev,
+                            competencyId: e.target.value,
+                            competency: selectedCompetency?.name || ''
+                          }));
+                          if (errors.competencyId) {
+                            setErrors(prev => ({ ...prev, competencyId: '' }));
+                          }
+                        }}
+                        className={`w-full h-12 p-3 border-2 rounded-lg focus:outline-none focus:border-blue-500 transition-colors ${errors.competencyId ? 'border-red-500' : 'border-gray-200'}`}
+                        required
+                        aria-describedby="competencyIdError"
+                      >
+                        <option value="" disabled>Select Competency</option>
+                        {competencies.map((competency) => (
+                          <option value={competency.publicId} key={competency.publicId}>
+                            {competency.name}
+                          </option>
+                        ))}
+                      </select>
+                      {errors.competencyId && (
+                        <p id="competencyIdError" className="text-red-500 text-xs mt-1">{errors.competencyId}</p>
+                      )}
+                    </div>
                   ) : (
                     <p className="text-sm font-medium text-indigo-800 truncate">
                       {formData.competency || 'Not specified'}
@@ -608,7 +716,8 @@ const InternDetail = ({ publicId, onClose }) => {
                         <span className="ml-2 text-base font-medium text-amber-800">
                           ({formData.rating || '0'}/5)
                         </span>
-                      </div>)}
+                      </div>
+                    )}
                   </div>
 
                   {/* LWD Field */}
@@ -687,7 +796,7 @@ const InternDetail = ({ publicId, onClose }) => {
                       </select>
                     ) : (
                       <p className="text-sm font-medium text-purple-800">
-                        {formData.hiredCompetency || null}
+                        {formData.hiredCompetency || 'Not specified'}
                       </p>
                     )}
                   </div>
@@ -745,9 +854,9 @@ const InternDetail = ({ publicId, onClose }) => {
               <button
                 onClick={handleSubmit}
                 className="flex items-center px-4 py-2 bg-gradient-to-r from-indigo-600 to-blue-600 text-white rounded-lg hover:from-indigo-700 hover:to-blue-700 text-base font-medium transition-colors duration-200 shadow-xs border border-indigo-700"
-                disabled={loading}
+                disabled={loading || isSubmitting || Object.keys(errors).length > 0}
               >
-                <FaSave className="mr-2" /> {loading ? 'Saving...' : 'Save'}
+                <FaSave className="mr-2" /> {isSubmitting ? 'Saving...' : 'Save'}
               </button>
             </div>
           )}

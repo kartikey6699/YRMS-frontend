@@ -321,10 +321,10 @@ const ManageBaseline = () => {
 
   } = useSelector((state) => state.baseline);
 
-  const {  trainingTechnologies = [], trainingTechnologyLoading = false } = useSelector(
+  const { trainingTechnologies = [], trainingTechnologyLoading = false } = useSelector(
     (state) => state.resource
   );
-  
+
 
   const resourceDetails = useSelector((state) =>
     state.resource.resources.find(res => res.publicId === publicId) ||
@@ -365,6 +365,81 @@ const ManageBaseline = () => {
       setHasFetchedInitialData(true);
     }
   }, [dispatch, hasFetchedInitialData, publicId]);
+
+  const validateField = (name, value, index, field, techIndex) => {
+    const newErrors = { ...errors };
+
+    if (name === "experience") {
+      if (field === "technology" && !value) {
+        newErrors[`experience[${index}].technology`] = "Technology is required";
+      } else {
+        delete newErrors[`experience[${index}].technology`];
+      }
+      if (field === "years" && (!value || parseInt(value) <= 0)) {
+        newErrors[`experience[${index}].years`] = "Valid years (>0) required";
+      } else {
+        delete newErrors[`experience[${index}].years`];
+      }
+    }
+
+    if (name === "totalExperience" && (!value || parseInt(value) < 0)) {
+      newErrors.totalExperience = "Valid total experience (≥0) is required";
+    } else {
+      delete newErrors.totalExperience;
+    }
+
+    if (name === "communication" && !value) {
+      newErrors.communication = "Communication level is required";
+    } else {
+      delete newErrors.communication;
+    }
+
+    if (name === "techSkills") {
+      if (field === "category" && !value) {
+        newErrors[`techSkills[${index}].category`] = "Category is required";
+      } else {
+        delete newErrors[`techSkills[${index}].category`];
+      }
+      if (field === "technologies" && value.length === 0) {
+        newErrors[`techSkills[${index}].technologies`] = "At least one technology required";
+      } else {
+        delete newErrors[`techSkills[${index}].technologies`];
+      }
+      if (field === "rating" && (!value || parseInt(value) <= 0 || parseInt(value) > 5)) {
+        newErrors[`techSkills[${index}].technologies[${techIndex}].rating`] = "Rating (1-5) required";
+      } else {
+        delete newErrors[`techSkills[${index}].technologies[${techIndex}].rating`];
+      }
+    }
+
+    if (name === "certification") {
+      if (field === "name" && !value) {
+        newErrors[`certification[${index}].name`] = "Certification name required";
+      } else {
+        delete newErrors[`certification[${index}].name`];
+      }
+      if (field === "issuingAuthority" && !value) {
+        newErrors[`certification[${index}].issuingAuthority`] = "Issuing authority required";
+      } else {
+        delete newErrors[`certification[${index}].issuingAuthority`];
+      }
+    }
+
+    if (name === "rating" && (!value || parseInt(value) < 0 || parseInt(value) > 5)) {
+      newErrors.rating = "Overall rating (0-5) required";
+    } else {
+      delete newErrors.rating;
+    }
+
+    if (name === "feedback" && !value) {
+      newErrors.feedback = "Feedback is required";
+    } else {
+      delete newErrors.feedback;
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const validateForm = () => {
     const newErrors = {};
@@ -431,14 +506,25 @@ const ManageBaseline = () => {
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
-    setErrors((prev) => ({ ...prev, [name]: null }));
+    validateField(name, value);
   };
 
   const handleExpChange = (index, field, value) => {
     const updatedExp = [...formData.experience];
     updatedExp[index][field] = value;
     setFormData((prev) => ({ ...prev, experience: updatedExp }));
-    setErrors((prev) => ({ ...prev, [`experience[${index}].${field}`]: null }));
+    validateField("experience", value, index, field);
+  };
+
+  const handleTechSkillsChange = (newTechSkills) => {
+    setFormData((prev) => ({ ...prev, techSkills: newTechSkills }));
+    newTechSkills.forEach((skill, index) => {
+      validateField("techSkills", skill.category, index, "category");
+      validateField("techSkills", skill.technologies, index, "technologies");
+      skill.technologies.forEach((tech, techIndex) => {
+        validateField("techSkills", tech.rating, index, "rating", techIndex);
+      });
+    });
   };
 
   const addExperience = () => {
@@ -466,7 +552,7 @@ const ManageBaseline = () => {
     const updatedCert = [...formData.certification];
     updatedCert[index][field] = value;
     setFormData((prev) => ({ ...prev, certification: updatedCert }));
-    setErrors((prev) => ({ ...prev, [`certification[${index}].${field}`]: null }));
+    validateField("certification", value, index, field);
   };
 
   const addCertification = () => {
@@ -669,7 +755,7 @@ const ManageBaseline = () => {
                   {formStep === 1 ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Tech Experiencee <span className="text-red-500">*</span></label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Tech Experience <span className="text-red-500">*</span></label>
                         {formData.experience.map((exp, index) => (
                           <div key={index} className="flex items-center space-x-2 mb-2">
                             <div className="w-full">
@@ -823,7 +909,7 @@ const ManageBaseline = () => {
                         <label className="block text-sm font-medium text-gray-700 mb-1">Tech Skills* <span className="text-red-500">*</span></label>
                         <TechSkillSelector
                           techSkills={formData.techSkills}
-                          setTechSkills={(newTechSkills) => setFormData(prev => ({ ...prev, techSkills: newTechSkills }))}
+                          setTechSkills={handleTechSkillsChange}
                           technologyCategoriesWithTech={technologyCategoriesWithTech}
                           loading={technologyCategoriesStackLoading}
                           setModalField={setModalField}
@@ -888,7 +974,7 @@ const ManageBaseline = () => {
                           onChange={handleInputChange}
                           className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                           placeholder="e.g., Learn React"
-                          rows={3} 
+                          rows={3}
                         />
                       </div>
                     </div>
@@ -916,7 +1002,21 @@ const ManageBaseline = () => {
                       <button
                         type="button"
                         onClick={nextStep}
-                        className="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-200 font-medium cursor-pointer hover:shadow-md"
+                        className={`px-6 py-3 text-white rounded-lg transition-all duration-200 font-medium cursor-pointer hover:shadow-md ${
+                          // Disable if any required fields are empty
+                          !formData.experience.length ||
+                            !formData.certification.length ||
+                            !formData.totalExperience ||
+                            !formData.communication
+                            ? 'bg-gray-400 cursor-not-allowed'
+                            : 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700'
+                          }`}
+                        disabled={
+                          !formData.experience.length ||
+                          !formData.certification.length ||
+                          !formData.totalExperience ||
+                          !formData.communication
+                        }
                       >
                         Next
                       </button>
@@ -934,9 +1034,9 @@ const ManageBaseline = () => {
               </div>
 
               <div className="hidden lg:block w-1/3 bg-gray-50 border-l p-6 overflow-y-auto">
-                <BaselineTimeline 
+                <BaselineTimeline
                   histories={baselineHistories}
-                  onSelect={(id) => {}}
+                  onSelect={(id) => { }}
                 />
               </div>
             </div>
