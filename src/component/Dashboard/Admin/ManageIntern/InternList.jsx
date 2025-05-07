@@ -263,24 +263,21 @@ const InternList = () => {
 
     const downloadSampleCSV = async () => {
         try {
-            setToast(<YRMSLoader message="Preparing sample CSV..." />);
+            setToast(<YRMSLoader loadingMessage="Preparing sample CSV..." />);
 
-            const token = sessionStorage.getItem("token");
-            const response = await axios.get(
-                `${ADMIN_API_BASE_URL}/interns/sample-csv/`,
-                {
-                    responseType: 'blob',
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                    },
-                }
-            );
+            const filePath = "/assets/sample_csv/valid_interns.csv";
+            const response = await fetch(filePath);
 
-            // Create download link
-            const url = window.URL.createObjectURL(new Blob([response.data]));
+            if (!response.ok) {
+                throw new Error("Failed to fetch the CSV file");
+            }
+
+            const blob = await response.blob();
+
+            const url = window.URL.createObjectURL(blob);
             const link = document.createElement('a');
             link.href = url;
-            link.setAttribute('download', 'intern_sample.csv');
+            link.setAttribute('download', 'interns_sample.csv');
             document.body.appendChild(link);
             link.click();
             link.remove();
@@ -447,8 +444,8 @@ const InternList = () => {
                             key={status}
                             onClick={() => setStatusFilter(status === "all" ? "" : status)}
                             className={`cursor-pointer p-3 rounded-xl shadow-md transition-all transform hover:scale-105 ${selected
-                                    ? `bg-gradient-to-r ${gradient} text-white`
-                                    : `bg-white ${hoverBg}`
+                                ? `bg-gradient-to-r ${gradient} text-white`
+                                : `bg-white ${hoverBg}`
                                 }`}
                         >
                             <div className="flex items-center justify-between">

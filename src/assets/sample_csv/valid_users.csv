@@ -1,0 +1,3 @@
+employeeName,email,employeeId,gender,location,phoneNumber,joiningDate,designation,employeeType,grade,businessGroup,businessUnit,competency,status
+John Doe,john.doe@example.com,EMP001,Male,indore,1234567890,01-01-2023,python aws,contract,E1,Technology,Development,python,pool
+Jane Smith,jane.smith@example.com,EMP002,Female,indore,,01-02-2023,python aws,contract,E2,Finance,Operations,python,pip
