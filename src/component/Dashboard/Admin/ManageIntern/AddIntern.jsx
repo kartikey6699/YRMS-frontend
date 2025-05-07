@@ -206,7 +206,7 @@ const AddIntern = () => {
                 setFormData({
                     name: "",
                     gender: "",
-                    location: "indore",
+                    location: "",
                     email: "",
                     phoneNumber: "",
                     startDate: "",

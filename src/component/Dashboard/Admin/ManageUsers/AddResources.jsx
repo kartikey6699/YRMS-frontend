@@ -46,7 +46,7 @@ const AddResource = ({ setActiveSection }) => {
         employeeId: "",
         employeeName: "",
         gender: "",
-        location: "indore",
+        location: "",
         email: "",
         phoneNumber: "",
         joiningDate: "",
