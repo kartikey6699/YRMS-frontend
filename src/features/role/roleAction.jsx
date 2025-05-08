@@ -151,7 +151,7 @@ export const updateUserRole = createAsyncThunk(
   async ({ competency_id, user_id, role, action_type }, { rejectWithValue }) => {
     try {
       const response = await rolesApiClient.post(
-        `http://localhost:8000/api/v1/competency/user-role-update`,
+        `http://localhost:8000/competency/user-role-update`,
         { competency_id, user_id, role, action_type },
         {
           headers: {
@@ -181,7 +181,7 @@ export const fetchAvailableAdmins = createAsyncThunk(
   async ({ public_id, role_types = ["admin", "superadmin"], action_type = 2 }, { rejectWithValue }) => {
     try {
       const response = await rolesApiClient.post(
-        `http://localhost:8000/api/v1/competency/user-list`,
+        `http://localhost:8000/competency/user-list`,
         { public_id, role_types, action_type },
         {
           headers: {
@@ -216,7 +216,7 @@ export const fetchTrainers = createAsyncThunk(
 
     try {
       const response = await rolesApiClient.post(
-        `http://localhost:8000/api/v1/competency/user-list`,
+        `http://localhost:8000/competency/user-list`,
         { role_types, action_type },
         {
           headers: {
@@ -252,7 +252,7 @@ export const fetchUsers = createAsyncThunk(
 
     try {
       const response = await rolesApiClient.post(
-        `http://localhost:8000/api/v1/competency/user-list`,
+        `http://localhost:8000/competency/user-list`,
         { public_id, role_types, action_type },
         {
           headers: {
