@@ -347,31 +347,24 @@ const ManageResource = () => {
     }
   };
 
-  const downloadSampleCSV = async () => {
+  const downloadSampleCSV = () => {
     try {
       setToast(<YRMSLoader loadingMessage="Preparing sample CSV..." />);
 
-      const filePath = "/assets/sample_csv/valid_users.csv";
-      const response = await fetch(filePath);
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch the CSV file");
-      }
-
-      const blob = await response.blob();
-
-      const url = window.URL.createObjectURL(blob);
+      // Direct download link (no fetch needed)
+      const csvUrl = "/assets/sample_csv/valid_users.csv";
       const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', 'resource_sample.csv');
+
+      link.href = csvUrl;
+      link.download = 'valid_users.csv'; 
       document.body.appendChild(link);
       link.click();
-      link.remove();
+      document.body.removeChild(link);
 
-      setToast(<SuccessToast message="Sample CSV downloaded successfully!" onClose={() => setToast(null)} />);
+      setToast(<SuccessToast message="Downloaded successfully!" onClose={() => setToast(null)} />);
     } catch (error) {
-      setToast(<ErrorToast message="Failed to download sample CSV" onClose={() => setToast(null)} />);
-      console.error("CSV download error:", error);
+      setToast(<ErrorToast message="Failed to start download" onClose={() => setToast(null)} />);
+      console.error("Download error:", error);
     }
   };
 
@@ -639,8 +632,8 @@ const ManageResource = () => {
                 key={status}
                 onClick={() => setStatusFilter(status === "all" ? "" : status)}
                 className={`cursor-pointer p-4 rounded-xl shadow-md transition-all transform hover:scale-105 ${selected
-                    ? `bg-gradient-to-r ${gradient} text-white`
-                    : `bg-white ${hoverBg}`
+                  ? `bg-gradient-to-r ${gradient} text-white`
+                  : `bg-white ${hoverBg}`
                   }`}
               >
                 <div className="flex items-center justify-between">
@@ -678,8 +671,8 @@ const ManageResource = () => {
                 <button
                   onClick={() => setShowFilters(!showFilters)}
                   className={`px-2 py-1 rounded-md text-xs flex items-center transition-all ${showFilters
-                      ? "bg-gray-200 text-gray-800 hover:bg-gray-300"
-                      : "bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700"
+                    ? "bg-gray-200 text-gray-800 hover:bg-gray-300"
+                    : "bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700"
                     }`}
                 >
                   <FaFilter className="mr-1" />
@@ -772,8 +765,8 @@ const ManageResource = () => {
                             />
                             <span
                               className={`px-2 py-1 text-xs rounded-full transition-all ${filterData.categories.includes(category)
-                                  ? "bg-blue-100 text-blue-800 border border-blue-500"
-                                  : "bg-gray-100 text-gray-700 border border-gray-200 hover:bg-gray-50"
+                                ? "bg-blue-100 text-blue-800 border border-blue-500"
+                                : "bg-gray-100 text-gray-700 border border-gray-200 hover:bg-gray-50"
                                 }`}
                             >
                               {category}
@@ -806,8 +799,8 @@ const ManageResource = () => {
                             />
                             <span
                               className={`px-2 py-1 text-xs rounded-full transition-all ${filterData.technologies.includes(tech.name)
-                                  ? "bg-[#ffc9c9] text-[#9F0712] border border-[#9F0712]"
-                                  : "bg-gray-100 text-gray-700 border border-gray-200 hover:bg-gray-50"
+                                ? "bg-[#ffc9c9] text-[#9F0712] border border-[#9F0712]"
+                                : "bg-gray-100 text-gray-700 border border-gray-200 hover:bg-gray-50"
                                 }`}
                             >
                               {tech.name}
@@ -1005,8 +998,8 @@ const ManageResource = () => {
                 type="submit"
                 disabled={loading}
                 className={`px-16 py-3 rounded-lg font-semibold transition-all transform hover:scale-105 ${loading
-                    ? "bg-gray-400 cursor-not-allowed"
-                    : "bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700"
+                  ? "bg-gray-400 cursor-not-allowed"
+                  : "bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700"
                   }`}
               >
                 {loading ? "Submitting..." : "Submit"}

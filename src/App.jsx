@@ -8,7 +8,6 @@ import ForgotPasswordOtp from './component/auth/ForgotPasswordOtp';
 import ForgotPassword from './component/auth/ForgotPassword';
 import VerifyOtp from './component/auth/VerifyOtp';
 import ManageResource from './component/Dashboard/Admin/ManageResource';
-import Analytics from './component/Dashboard/Admin/Analytics';
 import ManageBaseline from './component/Dashboard/Admin/ManageBaseline';
 import ManageTrainer from './component/Dashboard/Admin/ManageTrainer';
 import AssignTraining from './component/Dashboard/Admin/Training&Upskilling/AssignTraining';
@@ -22,6 +21,7 @@ import AddResource from './component/Dashboard/Admin/ManageUsers/AddResources';
 import AdminDashboard from './component/Dashboard/Admin/AdminDashboard';
 import SuperAdminDashboard from './component/Dashboard/Admin/SuperAdminDashboard'; // Import SuperAdminDashboard
 import UserDashboard from './component/Dashboard/Admin/User/UserDashboard';
+import Analytics from './component/Dashboard/Admin/Analytics/Analytics';
 
 function App() {
   return (
