@@ -138,3 +138,9 @@ export const INTERN_TASK_API = {
     CREATE: `${API_BASE_URL}intern-tasks/upsert`,
     DELETE: `${API_BASE_URL}intern-tasks/`,
 };
+
+export const ANALYTICS = {
+    RESOURCE_ANALYTICS: `${API_BASE_URL}analytics/resources`,
+    TRAINING_ANALYTICS: `${API_BASE_URL}analytics/training`,
+    INTERN_ANALYTICS: `${API_BASE_URL}analytics/interns`,
+};

@@ -6,7 +6,9 @@ import baselineReducer from "./features/baseline/baselineSlice";
 import internReducer from "./features/intern/internSlice";
 import programReducer from "./features/program/programSlice";
 import roleReducer from "./features/role/roleSlice"
-import InternTaskReducer from "./features/InternTask/internTaskSlice"
+import InternTaskReducer from "./features/InternTask/internTaskSlice";
+import analyticsReducer from "./features/analytics/analyticsSlice"
+
 export const store = configureStore({
     reducer: {
         auth: authReducer,
@@ -17,5 +19,6 @@ export const store = configureStore({
         program: programReducer,
         role: roleReducer,
         internTask: InternTaskReducer,
+        analytics: analyticsReducer
     }
 })
