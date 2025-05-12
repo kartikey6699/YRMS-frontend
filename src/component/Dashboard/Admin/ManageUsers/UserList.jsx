@@ -178,27 +178,26 @@ const UserList = ({ setActiveSection }) => {
 
   const downloadSampleCSV = async () => {
     try {
-      setToast(<YRMSLoader message="Preparing sample CSV..." />);
-      
-      const token = sessionStorage.getItem("token");
-      const response = await axios.get(
-        `${ADMIN_API_BASE_URL}/users/sample-csv/`,
-        {
-          responseType: 'blob',
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      setToast(<YRMSLoader loadingMessage="Preparing sample CSV..." />);
 
+      // Use fetch to get the CSV content as text
+      const response = await fetch('/src/assets/sample_csv/valid_users.csv');
+      const csvContent = await response.text();
+      
+      // Create a blob from the CSV content
+      const blob = new Blob([csvContent], { type: 'text/csv' });
+      
       // Create download link
-      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', 'user_sample.csv');
+      link.setAttribute('download', 'resource_sample.csv');
       document.body.appendChild(link);
       link.click();
       link.remove();
+
+      // Clean up the URL object
+      window.URL.revokeObjectURL(url);
 
       setToast(<SuccessToast message="Sample CSV downloaded successfully!" onClose={() => setToast(null)} />);
     } catch (error) {

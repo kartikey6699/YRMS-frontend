@@ -265,15 +265,14 @@ const InternList = () => {
         try {
             setToast(<YRMSLoader loadingMessage="Preparing sample CSV..." />);
 
-            const filePath = "/assets/sample_csv/valid_interns.csv";
-            const response = await fetch(filePath);
-
-            if (!response.ok) {
-                throw new Error("Failed to fetch the CSV file");
-            }
-
-            const blob = await response.blob();
-
+            // Use fetch to get the CSV content as text
+            const response = await fetch('/src/assets/sample_csv/valid_interns.csv');
+            const csvContent = await response.text();
+            
+            // Create a blob from the CSV content
+            const blob = new Blob([csvContent], { type: 'text/csv' });
+            
+            // Create download link
             const url = window.URL.createObjectURL(blob);
             const link = document.createElement('a');
             link.href = url;
@@ -281,6 +280,9 @@ const InternList = () => {
             document.body.appendChild(link);
             link.click();
             link.remove();
+
+            // Clean up the URL object
+            window.URL.revokeObjectURL(url);
 
             setToast(<SuccessToast message="Sample CSV downloaded successfully!" onClose={() => setToast(null)} />);
         } catch (error) {
