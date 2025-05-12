@@ -48,15 +48,21 @@ const Login = () => {
   const handleLoginSubmit = async (e) => {
     e.preventDefault();
 
-    if (emailError || !email || !password) return;
+    // Validate form data before making API call
+    if (emailError || !email || !password) {
+      setToast(<ErrorToast message="Please fill in all required fields correctly" onClose={() => setToast(null)} />);
+      return;
+    }
 
     const loginData = { email, password };
 
     try {
-      const result = await dispatch(adminLogin(loginData)).unwrap();
-      console.log("Login result:", result);
+      // Dispatch login action and handle response
+      await dispatch(adminLogin(loginData)).unwrap();
+      // Success toast and navigation handled by useEffect
     } catch (err) {
-      setToast(<ErrorToast message={err || "Login failed. Please try again."} onClose={() => setToast(null)} />);
+      const errorMessage = err?.response?.data?.message || err || "Login failed. Please try again.";
+      setToast(<ErrorToast message={errorMessage} onClose={() => setToast(null)} />);
       console.error("Login failed:", err);
     }
   };
