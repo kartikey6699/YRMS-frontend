@@ -20,13 +20,32 @@ const Login = () => {
   useEffect(() => {
     // Check if user is already logged in by checking for token in session storage
     const token = sessionStorage.getItem("token");
+    const roleName = sessionStorage.getItem("roleName");
+    let redirectPath = "/dashboard";
+
+    if (roleName) {
+      const userRoles = roleName.split(",");
+      
+      if (userRoles.includes("SuperAdmin")) {
+        redirectPath = "/superuser-dashboard";
+      } else if (userRoles.includes("Admin")) {
+        redirectPath = "/dashboard"; 
+      } else if (userRoles.includes(" trainer")) {
+        console.log("LLLLLLLLLLLLLL",userRoles)
+        redirectPath = "/manage-training";
+      } else if (userRoles.length === 1 && userRoles.includes("User")) {
+        redirectPath = "/user-dashboard";
+      }
+    }
+
     if (token) {
-      navigate("/dashboard");
+      navigate(redirectPath);
     } else if (isAuthenticated) {
       setToast(<SuccessToast message="Login successful!" onClose={() => setToast(null)} />);
-      navigate("/dashboard");
+      navigate(redirectPath);
     }
   }, [isAuthenticated, navigate]);
+
 
   // Email validation
   const validateEmail = (inputEmail) => {

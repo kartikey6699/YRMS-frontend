@@ -38,7 +38,7 @@ function App() {
               <Route path="/manage-baseline/:publicId" element={<ManageBaseline />} />
               <Route path="/opportunities/:publicId" element={<Opportunities />} />
               <Route path="/manage-training" element={<AssignTraining />} />
-              <Route path="/analytics" element={<Analytics />} />
+              <Route path="/analytics/:competencyId?" element={<Analytics />} />
               <Route path="/interns" element={<InternList />} />
               <Route path="/admin/resources" element={<UserList />} />
               <Route path='/interns/add' element={<AddIntern />} />
