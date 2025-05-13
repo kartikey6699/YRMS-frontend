@@ -264,7 +264,7 @@ const AddRoleForm = ({ setActiveSection, setSelectedRole, selectedRole, onSucces
                                     className="absolute z-10 mt-2 w-full bg-white shadow-xl rounded-lg border border-gray-200 overflow-hidden"
                                     role="listbox"
                                 >
-                                    {/* Search Input */}
+                                    {/* Search Input and Select All */}
                                     <div className="p-3 border-b border-gray-200">
                                         <input
                                             type="text"
@@ -274,6 +274,24 @@ const AddRoleForm = ({ setActiveSection, setSelectedRole, selectedRole, onSucces
                                             onChange={(e) => setFeatureSearchTerm(e.target.value)}
                                             onClick={(e) => e.stopPropagation()}
                                         />
+                                        <div className="mt-2 flex items-center">
+                                            <label className="flex items-center cursor-pointer">
+                                                <input
+                                                    type="checkbox"
+                                                    className="form-checkbox h-5 w-5 text-indigo-600 transition duration-150 ease-in-out rounded"
+                                                    checked={formData.features.length === featuresOptions.length}
+                                                    onChange={() => {
+                                                        if (formData.features.length === featuresOptions.length) {
+                                                            setFormData({...formData, features: []});
+                                                        } else {
+                                                            setFormData({...formData, features: [...featuresOptions]});
+                                                        }
+                                                    }}
+                                                    onClick={(e) => e.stopPropagation()}
+                                                />
+                                                <span className="ml-2 text-gray-700 text-lg">Select All</span>
+                                            </label>
+                                        </div>
                                     </div>
 
                                     {/* Filtered Features List */}
