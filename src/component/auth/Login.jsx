@@ -24,15 +24,14 @@ const Login = () => {
     let redirectPath = "/dashboard";
 
     if (roleName) {
-      const userRoles = roleName.split(",");
-      
+      const userRoles = roleName.split(",").map(role => role.trim());
+            
       if (userRoles.includes("SuperAdmin")) {
         redirectPath = "/superuser-dashboard";
       } else if (userRoles.includes("Admin")) {
         redirectPath = "/dashboard"; 
-      } else if (userRoles.includes(" trainer")) {
-        console.log("LLLLLLLLLLLLLL",userRoles)
-        redirectPath = "/manage-training";
+      } else if (userRoles.includes("Trainer")) {
+        redirectPath = "/trainer-dashboard";
       } else if (userRoles.length === 1 && userRoles.includes("User")) {
         redirectPath = "/user-dashboard";
       }

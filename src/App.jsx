@@ -22,6 +22,7 @@ import AdminDashboard from './component/Dashboard/Admin/AdminDashboard';
 import SuperAdminDashboard from './component/Dashboard/Admin/SuperAdminDashboard'; // Import SuperAdminDashboard
 import UserDashboard from './component/Dashboard/Admin/User/UserDashboard';
 import Analytics from './component/Dashboard/Admin/Analytics/Analytics';
+import TrainerDashboard from './component/Dashboard/Admin/Training&Upskilling/TrainerDashboard';
 
 function App() {
   return (
@@ -44,6 +45,8 @@ function App() {
               <Route path='/interns/add' element={<AddIntern />} />
               <Route path='/training-detail/:id' element={<TrainingDetail />} />
               <Route path='/user-dashboard' element={<UserDashboard />} />
+              <Route path='/trainer-dashboard' element={<TrainerDashboard />} />
+
 
             </Route>
           </Route>

@@ -67,10 +67,10 @@ const lineOptions = {
   },
 };
 
-const TrainingAnalytics = () => {
+const TrainingAnalytics = ({ competencyId }) => {
   const dispatch = useDispatch();
   const { trainingData, loading, error } = useSelector((state) => state.analytics);
-  
+
   // State for toggles and date filters
   const [statusFilter, setStatusFilter] = useState('All'); // All, Training, Upskilling
   const [requesterFilter, setRequesterFilter] = useState('All'); // All, Training, Upskilling
@@ -79,8 +79,8 @@ const TrainingAnalytics = () => {
 
   // Fetch data on mount
   useEffect(() => {
-    dispatch(fetchTrainingAnalytics());
-  }, [dispatch]);
+    dispatch(fetchTrainingAnalytics(competencyId));
+  }, [dispatch, competencyId]);
 
   // Reset date filters
   const resetDates = () => {
@@ -96,7 +96,7 @@ const TrainingAnalytics = () => {
     const statuses = ['Running', 'Hold', 'Pending'];
     const training = trainingData.programStatus?.Training || {};
     const upskilling = trainingData.programStatus?.Upskilling || {};
-    
+
     const data = statuses.map(status => {
       if (statusFilter === 'Training') {
         return training[status] || 0;

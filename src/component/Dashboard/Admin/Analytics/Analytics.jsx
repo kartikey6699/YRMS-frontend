@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
+import { useParams } from 'react-router-dom';
 import ResourceAnalytics from './ResourceAnalytics';
 import InternAnalytics from './InternAnalytics';
 import TrainingAnalytics from './TrainingAnalytics';
 
 const Analytics = () => {
   const [activeSection, setActiveSection] = useState('resource');
+  const { competencyId } = useParams();
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-purple-50 p-8">
@@ -28,9 +30,9 @@ const Analytics = () => {
           </button>
         ))}
       </div>
-      {activeSection === 'resource' && <ResourceAnalytics />}
-      {activeSection === 'intern' && <InternAnalytics />}
-      {activeSection === 'training' && <TrainingAnalytics />}
+      {activeSection === 'resource' && <ResourceAnalytics competencyId={competencyId} />}
+      {activeSection === 'intern' && <InternAnalytics competencyId={competencyId} />}
+      {activeSection === 'training' && <TrainingAnalytics competencyId={competencyId} />}
     </div>
   );
 };

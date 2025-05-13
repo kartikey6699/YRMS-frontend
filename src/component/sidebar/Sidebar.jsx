@@ -25,7 +25,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
   try {
     const roleName = sessionStorage.getItem('roleName');
     if (roleName) {
-      userRoles = roleName.split(",");
+      userRoles = roleName.split(",").map(role => role.trim());
     }
   } catch (error) {
     console.error('Error parsing roleName from sessionStorage:', error);
@@ -58,7 +58,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
       return allMenuItems.filter(item => item.name !== 'Super Admin' && item.name !== 'User Dashboard');
     }
     // If Trainer, show only Training menu
-    if (userRoles.includes(' trainer')) {
+    if (userRoles.includes('Trainer')) {
       return allMenuItems.filter(item => item.name === 'Training');
     }
 

@@ -67,18 +67,18 @@ const barOptions = {
   },
 };
 
-const ResourceAnalytics = () => {
+const ResourceAnalytics = ({ competencyId }) => {
   const dispatch = useDispatch();
   const { resourceData, loading, error } = useSelector((state) => state.analytics);
-  
+
   // Date states for Designation chart
   const [designationStartDate, setDesignationStartDate] = useState('');
   const [designationEndDate, setDesignationEndDate] = useState('');
 
   // Fetch data on mount
   useEffect(() => {
-    dispatch(fetchResourceAnalytics());
-  }, [dispatch]);
+    dispatch(fetchResourceAnalytics(competencyId));
+  }, [dispatch , competencyId]);
 
   // Reset date filters
   const resetDesignationDates = () => {

@@ -69,10 +69,10 @@ const lineOptions = {
   },
 };
 
-const InternAnalytics = () => {
+const InternAnalytics = ({ competencyId }) => {
   const dispatch = useDispatch();
   const { internData, loading, error } = useSelector((state) => state.analytics);
-  
+
   // State for date filters
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
@@ -85,8 +85,8 @@ const InternAnalytics = () => {
 
   // Fetch data on mount
   useEffect(() => {
-    dispatch(fetchInternAnalytics());
-  }, [dispatch]);
+    dispatch(fetchInternAnalytics(competencyId));
+  }, [dispatch, competencyId]);
 
   // Cleanup chart instances on unmount
   useEffect(() => {
