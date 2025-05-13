@@ -48,7 +48,8 @@ const authSlice = createSlice({
         sessionStorage.setItem("token", payload.token);
         sessionStorage.setItem("userName", payload.data.userName);
         sessionStorage.setItem("roleName", payload.data.rolesName);
-        sessionStorage.setItem("competencyName", payload.data.competencyName); // Set competency name in sessionStorage
+        sessionStorage.setItem("competencyName", payload.data.competencyName);
+        sessionStorage.setItem("userId", payload.data.publicId);
       })
       .addCase(adminLogin.rejected, (state, { payload }) => {
         state.loading = false;

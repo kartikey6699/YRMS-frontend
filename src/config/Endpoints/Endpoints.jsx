@@ -124,7 +124,7 @@ export const TECHNOLOGY_BASELINE_API = {
 };
 
 export const ROLE_API = {
-    LIST: `${API_BASE_URL}roles-list`,
+    LIST: `${API_BASE_URL}roles/roles-list`,
     CREATE: `${API_BASE_URL}roles`,
     DELETE: `${API_BASE_URL}roles`,
 };

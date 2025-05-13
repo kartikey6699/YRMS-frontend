@@ -37,7 +37,8 @@ export const adminLogin = createAsyncThunk(
         data: {
           userName: data.userName,
           rolesName: data.rolesName,
-          competencyName: data.competencyName 
+          competencyName: data.competencyName ,
+          publicId:data.publicId
         } 
       };
       
