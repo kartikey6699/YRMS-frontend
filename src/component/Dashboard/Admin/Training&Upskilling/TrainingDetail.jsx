@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import {
   FaCalendarAlt,
@@ -56,6 +56,8 @@ const MultiSelectTechnology = ({ value, onChange, options, isDisabled }) => {
 };
 
 const TrainingDetail = () => {
+  const location = useLocation();
+  const resourceId = location.state?.resourceId;
   const { id } = useParams();
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -1022,6 +1024,7 @@ const TrainingDetail = () => {
             participants: program.participants || [],
             participantCount: program.participants?.length || 0,
           }}
+          publicId={resourceId}
         />
       )}
 

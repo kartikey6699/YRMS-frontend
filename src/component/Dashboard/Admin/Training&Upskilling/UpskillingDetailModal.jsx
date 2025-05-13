@@ -15,7 +15,7 @@ import {
 import { useDispatch, useSelector } from 'react-redux';
 import { postParticipantTask, fetchParticipantTasks, updateParticipantTask, deleteParticipantTask } from '../../../../features/program/programAction';
 
-const UpskillingDetailModal = ({ onClose, training }) => {
+const UpskillingDetailModal = ({ onClose, training, publicId }) => {
   const dispatch = useDispatch();
   const { participantTasks, loading, error } = useSelector((state) => state.program);
 
@@ -40,13 +40,22 @@ const UpskillingDetailModal = ({ onClose, training }) => {
     }
   }, [training?.id, dispatch]);
 
-  // Update local participants state when Redux data changes
+  // Update local participants state when Redux data changes and handle default selection
   useEffect(() => {
     if (participantTasks?.participants) {
       setParticipants(participantTasks.participants);
       
+      // If publicId is provided, find and set the matching participant as active
+      if (publicId) {
+        const defaultParticipant = participantTasks.participants.find(
+          p => p.publicId === publicId
+        );
+        if (defaultParticipant) {
+          setActiveParticipant(defaultParticipant);
+        }
+      }
       // Update active participant if it exists in the new data
-      if (activeParticipant) {
+      else if (activeParticipant) {
         const updatedParticipant = participantTasks.participants.find(
           p => p.id === activeParticipant.id
         );
@@ -57,7 +66,7 @@ const UpskillingDetailModal = ({ onClose, training }) => {
         }
       }
     }
-  }, [participantTasks]);
+  }, [participantTasks, publicId]);
 
   const filteredParticipants = participants.filter(participant =>
     participant.employeeName.toLowerCase().includes(searchTerm.toLowerCase())
