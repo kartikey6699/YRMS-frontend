@@ -1028,7 +1028,7 @@ const TrainingDetail = () => {
         />
       )}
 
-      <div
+      {/* <div
         className="p-4 bg-blue-50 rounded-lg border border-blue-100 cursor-pointer hover:bg-blue-100 transition-colors"
         onClick={() => {
           setSelectedTraining({
@@ -1038,8 +1038,8 @@ const TrainingDetail = () => {
           });
           setShowUpskillingDetails(true);
         }}
-      >
-        <div className="flex items-center justify-between">
+      > */}
+        {/* <div className="flex items-center justify-between">
           <div>
             <h3 className="text-lg font-medium text-blue-800">Participants</h3>
             <div className="flex items-center space-x-2">
@@ -1055,8 +1055,8 @@ const TrainingDetail = () => {
         </div>
         <div className="mt-2 text-sm text-blue-700">
           Click to view details
-        </div>
-      </div>
+        </div> */}
+      {/* </div> */}
     </div>
   );
 };

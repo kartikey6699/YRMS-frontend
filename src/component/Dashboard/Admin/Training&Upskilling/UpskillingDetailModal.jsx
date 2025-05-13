@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   FaUser,
   FaEnvelope,
@@ -18,6 +18,7 @@ import { postParticipantTask, fetchParticipantTasks, updateParticipantTask, dele
 const UpskillingDetailModal = ({ onClose, training, publicId }) => {
   const dispatch = useDispatch();
   const { participantTasks, loading, error } = useSelector((state) => state.program);
+  const participantListRef = useRef(null);
 
   const [participants, setParticipants] = useState([]);
   const [activeParticipant, setActiveParticipant] = useState(null);
@@ -52,6 +53,14 @@ const UpskillingDetailModal = ({ onClose, training, publicId }) => {
         );
         if (defaultParticipant) {
           setActiveParticipant(defaultParticipant);
+          
+          // Scroll to the selected participant
+          setTimeout(() => {
+            const participantElement = document.getElementById(`participant-${defaultParticipant.publicId}`);
+            if (participantElement && participantListRef.current) {
+              participantListRef.current.scrollTop = participantElement.offsetTop - participantListRef.current.offsetTop;
+            }
+          }, 100);
         }
       }
       // Update active participant if it exists in the new data
@@ -245,9 +254,10 @@ const UpskillingDetailModal = ({ onClose, training, publicId }) => {
                     <FaUser className="mr-2 text-purple-600" />
                     Participants ({participants.length})
                   </h4>
-                  <div className="space-y-2 h-80 overflow-y-auto pr-2">
+                  <div ref={participantListRef} className="space-y-2 h-80 overflow-y-auto pr-2">
                     {filteredParticipants.map(participant => (
                       <div
+                        id={`participant-${participant.publicId}`}
                         key={participant.publicId}
                         onClick={() => setActiveParticipant(participant)}
                         className={`p-3 border rounded-lg cursor-pointer transition-all ${
