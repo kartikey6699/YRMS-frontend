@@ -35,31 +35,27 @@ const Dashboard = () => {
   const getVisibleMenuItems = () => {
     if (!userRoles || userRoles.length === 0) return [];
 
+    // If SuperAdmin, show only Super Admin menu
     if (userRoles.includes('SuperAdmin')) {
-      return allMenuItems.filter((item) => item.name !== 'User Dashboard');
+      return allMenuItems.filter(item => item.name === 'Super Admin');
     }
 
+    // If Admin, show all menus except Super Admin
     if (userRoles.includes('Admin')) {
-      return allMenuItems.filter((item) => item.name !== 'Super Admin' && item.name !== 'User Dashboard' );
+      return allMenuItems.filter(item => item.name !== 'Super Admin' && item.name !== 'User Dashboard');
     }
 
-    const visibleItems = [];
-    if (userRoles.includes('Trainer')) {
-      const trainingItem = allMenuItems.find((item) => item.name === 'Training');
-      if (trainingItem && !visibleItems.some((item) => item.name === 'Training')) {
-        visibleItems.push(trainingItem);
-      }
-    }
-    if (userRoles.includes('User')) {
-      const userItems = allMenuItems.filter((item) => ['User Dashboard'].includes(item.name));
-      userItems.forEach((item) => {
-        if (!visibleItems.some((i) => i.name === item.name)) {
-          visibleItems.push(item);
-        }
-      });
+    // If Trainer, show only Training menu 
+    if (userRoles.includes(' trainer')) {
+      return allMenuItems.filter(item => item.name === 'Training');
     }
 
-    return visibleItems;
+    // If only User role (no other roles), show only User Dashboard
+    if (userRoles.length === 1 && userRoles.includes('User')) {
+      return allMenuItems.filter(item => item.name === 'User Dashboard');
+    }
+
+    return [];
   };
 
   const menuItems = getVisibleMenuItems();

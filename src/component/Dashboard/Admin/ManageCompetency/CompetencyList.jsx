@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FaPlus, FaSort, FaSortUp, FaSortDown, FaEdit, FaTrash, FaAngleDoubleLeft, FaAngleLeft, FaAngleRight, FaAngleDoubleRight, FaUserCircle, FaUserPlus, FaTimes, FaUserFriends, FaUserMinus } from 'react-icons/fa';
+import { FaPlus, FaSort, FaSortUp, FaSortDown, FaEdit, FaTrash, FaAngleDoubleLeft, FaAngleLeft, FaAngleRight, FaAngleDoubleRight, FaUserCircle, FaUserPlus, FaTimes, FaUserFriends, FaUserMinus, FaChartLine } from 'react-icons/fa';
 import { useDispatch, useSelector } from 'react-redux';
 import { deleteCompetency, fetchCompetencies } from '../../../../features/resource/resourceAction';
 import { fetchCompetencyAdmins, updateUserRole, fetchAvailableAdmins } from '../../../../features/role/roleAction';
@@ -239,6 +239,13 @@ const ListCompetency = ({ setActiveSection, setSelectedCompetency, onSort, sortC
                                             title="Delete"
                                         >
                                             <FaTrash size={14} />
+                                        </button>
+                                        <button
+                                            onClick={() => window.location.href = `/analytics/${competency.publicId}`}
+                                            className="flex items-center justify-center w-8 h-8 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
+                                            title="View Analytics"
+                                        >
+                                            <FaChartLine size={14} />
                                         </button>
                                     </div>
                                 </td>
