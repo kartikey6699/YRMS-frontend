@@ -76,8 +76,8 @@ export const INTERN_API = {
 };
 
 export const FEEDBACK_API = {
-    LIST: `${API_BASE_URL}feedback-list`,
-    ADD: `${API_BASE_URL}add-feedback`,
+    LIST: `${API_BASE_URL}feedback/feedback-list`,
+    ADD: `${API_BASE_URL}feedback/add-feedback`,
     UPDATE: (publicId) => `${ADMIN_API_BASE_URL}/update-training-feedback/${publicId}`,
     DELETE: (publicId) => `${ADMIN_API_BASE_URL}/delete-feedback/${publicId}`
 };
