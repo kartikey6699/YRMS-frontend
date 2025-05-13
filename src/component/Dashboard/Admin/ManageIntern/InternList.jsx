@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { FaPlus, FaSort, FaSearch, FaCalendarAlt, FaSortUp, FaSortDown, FaTrash, FaAngleDoubleLeft, FaAngleLeft, FaAngleRight, FaAngleDoubleRight, FaFileDownload, FaFileUpload, FaUsers, FaCheckCircle, FaPlayCircle, FaClock, FaPauseCircle, FaTimes } from 'react-icons/fa';
+import { FaPlus, FaSort, FaSearch, FaCalendarAlt, FaSortUp, FaSortDown, FaTrash, FaAngleDoubleLeft, FaAngleLeft, FaAngleRight, FaAngleDoubleRight, FaFileDownload, FaFileUpload, FaUsers, FaCheckCircle, FaPlayCircle, FaPauseCircle, FaTimes } from 'react-icons/fa';
 import { Link, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from "react-redux";
 import { fetchInterns, updateIntern, deleteIntern } from '../../../../features/intern/internAction';
@@ -38,7 +38,7 @@ const InternList = () => {
         }
     }, [toast]);
 
-    const statusOptions = ["Complete", "Running", "Pending", "Hold"];
+    const statusOptions = ["Complete", "Running", "Hold"];
     const hiredOptions = ["All", "Hired", "Not Hired"];
 
     useEffect(() => {
@@ -71,15 +71,15 @@ const InternList = () => {
             all: interns?.length || 0,
             complete: 0,
             running: 0,
-            pending: 0,
-            hold: 0
+            hold: 0,
+            hired: 0
         };
         (interns || []).forEach((intern) => {
             const status = (intern.status || "running").toLowerCase();
             if (status === "complete") counts.complete += 1;
             else if (status === "running") counts.running += 1;
-            else if (status === "pending") counts.pending += 1;
             else if (status === "hold") counts.hold += 1;
+            if (intern.isOffered) counts.hired += 1;
         });
         return counts;
     }, [interns]);
@@ -88,6 +88,8 @@ const InternList = () => {
         setSearchTerms(prev => ({ ...prev, [key]: value }));
         if (key === "status") {
             setStatusFilter(value); // Update statusFilter when status dropdown changes
+        } else if (key === "isOffered") {
+            setStatusFilter(""); // Reset statusFilter when filtering by hired
         }
         setCurrentPage(1);
     };
@@ -395,11 +397,11 @@ const InternList = () => {
                             status: "all",
                             label: "All Interns",
                             count: statusCounts.all,
-                            icon: <FaUsers className={`text-2xl ${statusFilter === "" ? "text-white" : "text-purple-600"}`} />,
+                            icon: <FaUsers className={`text-2xl ${statusFilter === "" && searchTerms.isOffered === "All" ? "text-white" : "text-purple-600"}`} />,
                             color: "purple-600",
                             gradient: "from-purple-600 to-purple-800",
                             hoverBg: "hover:bg-purple-50",
-                            selected: statusFilter === ""
+                            selected: statusFilter === "" && searchTerms.isOffered === "All"
                         },
                         {
                             status: "complete",
@@ -422,16 +424,6 @@ const InternList = () => {
                             selected: statusFilter === "running"
                         },
                         {
-                            status: "pending",
-                            label: "Pending",
-                            count: statusCounts.pending,
-                            icon: <FaClock className={`text-2xl ${statusFilter === "pending" ? "text-white" : "text-orange-600"}`} />,
-                            color: "orange-600",
-                            gradient: "from-orange-600 to-orange-800",
-                            hoverBg: "hover:bg-orange-50",
-                            selected: statusFilter === "pending"
-                        },
-                        {
                             status: "hold",
                             label: "Hold",
                             count: statusCounts.hold,
@@ -440,11 +432,29 @@ const InternList = () => {
                             gradient: "from-gray-600 to-gray-800",
                             hoverBg: "hover:bg-gray-50",
                             selected: statusFilter === "hold"
+                        },
+                        {
+                            status: "hired",
+                            label: "Hired",
+                            count: statusCounts.hired,
+                            icon: <FaCheckCircle className={`text-2xl ${searchTerms.isOffered === "Hired" ? "text-white" : "text-teal-600"}`} />,
+                            color: "teal-600",
+                            gradient: "from-teal-600 to-teal-800",
+                            hoverBg: "hover:bg-teal-50",
+                            selected: searchTerms.isOffered === "Hired"
                         }
                     ].map(({ status, label, count, icon, color, gradient, hoverBg, selected }) => (
                         <div
                             key={status}
-                            onClick={() => setStatusFilter(status === "all" ? "" : status)}
+                            onClick={() => {
+                                if (status === "hired") {
+                                    setSearchTerms(prev => ({ ...prev, isOffered: "Hired", status: "" }));
+                                    setStatusFilter("");
+                                } else {
+                                    setSearchTerms(prev => ({ ...prev, isOffered: "All" }));
+                                    setStatusFilter(status === "all" ? "" : status);
+                                }
+                            }}
                             className={`cursor-pointer p-3 rounded-xl shadow-md transition-all transform hover:scale-105 ${selected
                                 ? `bg-gradient-to-r ${gradient} text-white`
                                 : `bg-white ${hoverBg}`
