@@ -108,8 +108,8 @@ const ResourceList = ({ handleBaselineClick, handleOpportunitiesClick, setStatus
     }
   };
 
-  const handleProgramClick = (programId) => {
-    navigate(`/training-detail/${programId}`);
+  const handleProgramClick = (programId, resourceId) => {
+    navigate(`/training-detail/${programId}`, { state: { resourceId } });
   };
 
   const filteredResources = useMemo(() => {
@@ -316,7 +316,7 @@ const ResourceList = ({ handleBaselineClick, handleOpportunitiesClick, setStatus
                         className="px-2 py-0.5 bg-blue-100 text-blue-800 text-xs rounded-full cursor-pointer hover:bg-blue-200"
                         onClick={(e) => {
                           e.stopPropagation();
-                          handleProgramClick(program.id);
+                          handleProgramClick(program.id, resource.publicId);
                         }}
                       >
                         {program.name}
