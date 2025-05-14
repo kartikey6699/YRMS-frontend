@@ -58,6 +58,8 @@ const AddResource = ({ setActiveSection }) => {
         competency: "",
         status: "pool",
         roleIds: [],
+        irm: { name: "" }, // New field for IRM
+        srm: { name: "" }, // New field for SRM
     });
 
     const [filterData, setFilterData] = useState({
@@ -82,6 +84,8 @@ const AddResource = ({ setActiveSection }) => {
         businessUnit: "",
         competency: "",
         roleIds: "",
+        irm: { name: "" }, // Error state for IRM
+        srm: { name: "" }, // Error state for SRM
     });
 
     // Validation function
@@ -112,12 +116,18 @@ const AddResource = ({ setActiveSection }) => {
             case 'grade':
             case 'businessGroup':
             case 'businessUnit':
-            case 'competency':
+            // case 'competency':
             case 'joiningDate':
                 if (!value) error = "This field is required";
                 break;
             case 'roleIds':
                 if (!value || value.length === 0) error = "At least one role must be selected";
+                break;
+            case 'irm':
+                if (!value.name) error = "IRM name is required";
+                break;
+            case 'srm':
+                if (!value.name) error = "SRM name is required";
                 break;
             default:
                 break;
@@ -181,7 +191,14 @@ const AddResource = ({ setActiveSection }) => {
         const roleError = validateField('roleIds', formData.roleIds);
         newErrors.roleIds = roleError;
         if (roleError) isValid = false;
-        
+
+        // Validate IRM and SRM
+        const irmError = validateField('irm', formData.irm);
+        const srmError = validateField('srm', formData.srm);
+        newErrors.irm = irmError;
+        newErrors.srm = srmError;
+        if (irmError || srmError) isValid = false;
+
         setErrors(newErrors);
         return isValid;
     };
@@ -273,7 +290,14 @@ const AddResource = ({ setActiveSection }) => {
 
         try {
             setToast(<YRMSLoader message="Creating resource..." />);
-            const createResult = await dispatch(createResource(formData));
+            const payload = {
+                ...formData,
+                meta_data: {
+                    irm: { name: formData.irm.name },
+                    srm: { name: formData.srm.name }
+                }
+            };
+            const createResult = await dispatch(createResource(payload));
 
             if (!createResult.payload?.publicId) {
                 throw new Error("Failed to get publicId from response");
@@ -307,6 +331,8 @@ const AddResource = ({ setActiveSection }) => {
                 competency: "",
                 status: "pool",
                 roleIds: [],
+                irm: { name: "" }, // Reset IRM field
+                srm: { name: "" }, // Reset SRM field
             });
             setProfilePic(null);
             setProfilePicPreview(null);
@@ -574,6 +600,47 @@ const AddResource = ({ setActiveSection }) => {
                                 />
                                 {errors.phoneNumber && (
                                     <p className="text-red-500 text-sm mt-1">{errors.phoneNumber}</p>
+                                )}
+                            </div>
+
+                            {/* New Fields for IRM and SRM */}
+                            <div className="space-y-1">
+                                <label className="block text-gray-700 font-medium mb-1 flex items-center">
+                                    <FaUser className="text-indigo-500 mr-2 text-sm" />
+                                    IRM Name
+                                </label>
+                                <input
+                                    type="text"
+                                    name="irm.name"
+                                    value={formData.irm.name}
+                                    onChange={handleInputChange}
+                                    onBlur={handleBlur}
+                                    className={getInputClasses('irm.name')}
+                                    placeholder="IRM Name"
+                                    required
+                                />
+                                {errors.irm.name && (
+                                    <p className="text-red-500 text-sm mt-1">{errors.irm.name}</p>
+                                )}
+                            </div>
+
+                            <div className="space-y-1">
+                                <label className="block text-gray-700 font-medium mb-1 flex items-center">
+                                    <FaUser className="text-indigo-500 mr-2 text-sm" />
+                                    SRM Name
+                                </label>
+                                <input
+                                    type="text"
+                                    name="srm.name"
+                                    value={formData.srm.name}
+                                    onChange={handleInputChange}
+                                    onBlur={handleBlur}
+                                    className={getInputClasses('srm.name')}
+                                    placeholder="SRM Name"
+                                    required
+                                />
+                                {errors.srm.name && (
+                                    <p className="text-red-500 text-sm mt-1">{errors.srm.name}</p>
                                 )}
                             </div>
                         </div>

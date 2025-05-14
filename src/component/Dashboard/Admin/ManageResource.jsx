@@ -974,6 +974,10 @@ const ManageResource = () => {
               { value: "SSU1", label: "SSU1" }
             ])}
 
+            {/* New Input Fields for IRM and SRM */}
+            {renderInput("irm", "IRM", "text", "Enter IRM name")}
+            {renderInput("srm", "SRM", "text", "Enter SRM name")}
+
             <div>
               <label className="block text-gray-700 font-medium mb-2">
                 Competency <span className="text-red-500">*</span>
