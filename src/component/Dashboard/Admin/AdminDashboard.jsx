@@ -1,9 +1,10 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchRoles } from "../../../features/role/roleAction";
-import { FaLock, FaChalkboardTeacher, FaUserShield } from "react-icons/fa";
+import { FaLock, FaChalkboardTeacher, FaUserShield, FaUsers } from "react-icons/fa";
 import AccessManagement from "./AccessManagement";
 import TrainingManagement from "./TrainingManagement";
+import ManagerManagement from "./ManagerManagement";
 
 const AdminDashboard = () => {
     const dispatch = useDispatch()
@@ -31,7 +32,7 @@ const AdminDashboard = () => {
                     <h2 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600 mb-6 text-center">
                         Admin Dashboard
                     </h2>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <button
                             onClick={() => handleSectionClick("access")}
                             className={`flex flex-col items-center px-4 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 ${selectedSection === "access"
@@ -58,6 +59,19 @@ const AdminDashboard = () => {
                             <span className="text-lg font-semibold text-gray-700">Training Management</span>
                             <span className="text-sm text-purple-600 mt-1">Manage trainers and sessions</span>
                         </button>
+                        <button
+                            onClick={() => handleSectionClick("managers")}
+                            className={`flex flex-col items-center px-4 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 ${selectedSection === "managers"
+                                ? "py-4 scale-[0.98] bg-gradient-to-br from-green-100 to-teal-100 border-2 border-green-200"
+                                : "py-6 bg-gradient-to-br from-white to-gray-50 border border-gray-200 hover:border-green-200"
+                                }`}
+                        >
+                            <div className="p-4 mb-3 rounded-full bg-gradient-to-br from-green-500 to-teal-500 text-white shadow-md">
+                                <FaUsers size={24} />
+                            </div>
+                            <span className="text-lg font-semibold text-gray-700">Manager Management</span>
+                            <span className="text-sm text-green-600 mt-1">Manage IRMs and SRMs</span>
+                        </button>
                     </div>
                 </div>
                 <div
@@ -78,6 +92,13 @@ const AdminDashboard = () => {
                         />
                     )}
 
+                    {selectedSection === "managers" && (
+                        <ManagerManagement 
+                            activeSection={activeSection} 
+                            setActiveSection={setActiveSection} 
+                        />
+                    )}
+
                     {!selectedSection && (
                         <div className="text-center py-12">
                             <div className="inline-flex items-center justify-center p-4 mb-4 rounded-full bg-gradient-to-br from-indigo-100 to-purple-100">
@@ -87,7 +108,7 @@ const AdminDashboard = () => {
                                 Welcome to Admin Dashboard
                             </h3>
                             <p className="text-gray-500 max-w-md mx-auto">
-                                Select a section above to manage access controls or training programs.
+                                Select a section above to manage access controls, training programs, or managers.
                             </p>
                         </div>
                     )}
