@@ -130,7 +130,7 @@ export const ROLE_API = {
 };
 
 export const FEATURE_API = {
-    LIST: `${API_BASE_URL}feature-list`
+    LIST: `${API_BASE_URL}feautures/feature-list`
 };
 
 export const INTERN_TASK_API = {
