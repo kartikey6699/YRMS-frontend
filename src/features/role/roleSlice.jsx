@@ -125,7 +125,8 @@ const roleSlice = createSlice({
           id: item?.id,
           name: item?.name,
           path: item?.path,
-          method: item?.method
+          method: item?.method,
+          category: item?.category
         }));
       })
       .addCase(fetchFeatures.rejected, (state, { payload }) => {
