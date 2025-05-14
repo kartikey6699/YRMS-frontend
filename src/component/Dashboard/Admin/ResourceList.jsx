@@ -1,4 +1,4 @@
-import React, { useState, useMemo , useEffect } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import {
   FaChartLine,
   FaLightbulb,
@@ -52,6 +52,9 @@ const ResourceList = ({ handleBaselineClick, handleOpportunitiesClick, setStatus
 
   const statusOptions = ["Pool", "PIP", "Deployed"];
 
+  // State for client info tooltip
+  const [hoveredResource, setHoveredResource] = useState(null);
+
   // Sync searchValues.status with statusFilter from parent
   useEffect(() => {
     setSearchValues((prev) => ({ ...prev, status: statusFilter }));
@@ -96,7 +99,7 @@ const ResourceList = ({ handleBaselineClick, handleOpportunitiesClick, setStatus
   const handleDeleteConfirm = async () => {
     try {
       await dispatch(deleteResource(deleteModal.resourceId));
-       setToast(
+      setToast(
         <SuccessToast
           message="Resource deleted successfully!"
           onClose={() => setToast(null)}
@@ -337,10 +340,25 @@ const ResourceList = ({ handleBaselineClick, handleOpportunitiesClick, setStatus
                             ? "bg-yellow-100 text-yellow-800"
                             : "bg-red-100 text-red-800"
                       }`}
+                    onMouseEnter={() => resource.status === "deployed" && setHoveredResource(resource)}
+                    onMouseLeave={() => setHoveredResource(null)}
                   >
                     {(resource.status || "pool").charAt(0).toUpperCase() +
                       (resource.status || "pool").slice(1)}
                   </span>
+                  {hoveredResource === resource && resource.status === "deployed" && (
+                    <div className="absolute z-50 bg-gradient-to-br from-white to-blue-50 border-2 border-blue-200 rounded-xl shadow-xl p-3 transition-all duration-200 ease-in-out transform scale-95 hover:scale-100 hover:shadow-2xl">
+                      <div className="text-xs font-semibold text-blue-800 mb-1 flex items-center">
+                        <FaUser className="mr-1" />
+                        Client: <span className="ml-1 font-bold">{resource.clientName || "N/A"}</span>
+                      </div>
+                      <div className="text-xs text-gray-600 leading-tight bg-blue-50 p-2 rounded-md">
+                        <span className="font-medium">Description:</span> {resource.clientDescription || "No description available"}
+                      </div>
+                      <div className="absolute -top-2 left-4 w-4 h-4 bg-white border-t-2 border-l-2 border-blue-200 transform rotate-45"></div>
+                      <div className="absolute inset-0 rounded-xl border-2 border-blue-100 pointer-events-none"></div>
+                    </div>
+                  )}
                 </td>
                 <td className="p-1 text-gray-700 text-sm">
                   <div className="flex space-x-1 relative">
