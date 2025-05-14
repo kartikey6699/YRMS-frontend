@@ -122,3 +122,177 @@ html {
     transform: translateY(-9px);
   }
 }
+
+/* ############################################ */
+/* Add these to your index.css file */
+/* YASH Technologies Logo Animations - Add to index.css */
+
+/* Basic Animation Keyframes */
+@keyframes pulse-slow {
+  0%, 100% { 
+    opacity: 0.2; 
+  }
+  50% { 
+    opacity: 0.5; 
+  }
+}
+
+@keyframes ping-slow {
+  75%, 100% {
+    transform: scale(1.5);
+    opacity: 0;
+  }
+}
+
+@keyframes breath {
+  0%, 100% { 
+    transform: scale(1); 
+  }
+  50% { 
+    transform: scale(1.05); 
+  }
+}
+
+@keyframes gradientMove {
+  0% { 
+    background-position: 0% 50%; 
+  }
+  50% { 
+    background-position: 100% 50%; 
+  }
+  100% { 
+    background-position: 0% 50%; 
+  }
+}
+
+@keyframes spin-slow {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes swoosh {
+  0% {
+    transform: translateX(100%) translateY(-50%);
+    opacity: 0;
+  }
+  50% {
+    transform: translateX(-10%) translateY(0);
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(-100%) translateY(50%);
+    opacity: 0;
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes glow {
+  0%, 100% {
+    filter: drop-shadow(0 0 5px rgba(59, 130, 246, 0.5));
+  }
+  50% {
+    filter: drop-shadow(0 0 15px rgba(59, 130, 246, 0.8));
+  }
+}
+
+/* Animation Classes */
+.animate-pulse-slow {
+  animation: pulse-slow 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.animate-ping-slow {
+  animation: ping-slow 3s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+.animate-breath {
+  animation: breath 4s ease-in-out infinite;
+}
+
+.animate-gradient {
+  background-size: 200% 100%;
+  animation: gradientMove 3s linear infinite;
+}
+
+.animate-spin-slow {
+  animation: spin-slow 12s linear infinite;
+}
+
+.animate-swoosh {
+  animation: swoosh 8s ease-in-out infinite;
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+.animate-glow {
+  animation: glow 2s ease-in-out infinite;
+}
+
+/* Logo-specific styles */
+.logo-shadow {
+  filter: drop-shadow(0 0 8px rgba(59, 130, 246, 0.6));
+}
+
+.logo-gradient-bg {
+  background-image: linear-gradient(135deg, #f87171 0%, #1d4ed8 100%);
+  background-size: 200% 200%;
+}
+
+/* Interactive hover effects */
+.logo-hover-effect {
+  transition: all 0.3s ease;
+}
+
+.logo-hover-effect:hover {
+  transform: scale(1.1);
+  filter: brightness(1.2);
+}
+
+/* Background effect for logo area */
+.logo-bg-pattern {
+  background-image: radial-gradient(circle at 50% 50%, rgba(59, 130, 246, 0.1) 0%, transparent 60%),
+                    radial-gradient(circle at 100% 0%, rgba(239, 68, 68, 0.1) 0%, transparent 50%);
+  background-size: 100% 100%, 50% 50%;
+  background-position: 0 0, 100% 0;
+}
+
+/* Tailwind-style utility for blue flare effect */
+.blue-flare::after {
+  content: '';
+  position: absolute;
+  top: -10%;
+  right: -10%;
+  width: 80%;
+  height: 60%;
+  background: radial-gradient(ellipse at center, rgba(59, 130, 246, 0.4) 0%, transparent 70%);
+  border-radius: 50%;
+  z-index: -1;
+  animation: pulse-slow 4s infinite;
+}
+
+/* Red accent for YASH logo brand color */
+.red-accent::before {
+  content: '';
+  position: absolute;
+  bottom: -5px;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(90deg, #ef4444 0%, #b91c1c 100%);
+  border-radius: 2px;
+  animation: gradientMove 3s linear infinite;
+  background-size: 200% 100%;
+}

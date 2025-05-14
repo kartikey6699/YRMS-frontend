@@ -144,3 +144,9 @@ export const ANALYTICS = {
     TRAINING_ANALYTICS: `${API_BASE_URL}analytics/training`,
     INTERN_ANALYTICS: `${API_BASE_URL}analytics/interns`,
 };
+
+export const MANAGER_API = {
+    UPSERT: `${API_BASE_URL}api/v1/manager/upsert`,
+    GET: (competencyId) => `${API_BASE_URL}api/v1/manager/get?competency_id=${competencyId}`,
+    DELETE: (managerId) => `${API_BASE_URL}api/v1/manager/${managerId}`
+};
