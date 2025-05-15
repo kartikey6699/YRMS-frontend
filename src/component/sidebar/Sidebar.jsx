@@ -121,7 +121,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
                 src={logo}
                 alt="Yash Technologies Logo"
                 className={`relative z-10 transition-all duration-500 group-hover:scale-110 object-contain animate-glow
-                          ${isOpen ? 'h-16 w-48' : 'h-14 w-14'}`}
+                          ${isOpen ? 'h-12 w-30' : 'h-14 w-14'}`}
               />
               
               {/* Hover effects */}
