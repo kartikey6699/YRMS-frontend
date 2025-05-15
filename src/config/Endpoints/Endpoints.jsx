@@ -146,7 +146,7 @@ export const ANALYTICS = {
 };
 
 export const MANAGER_API = {
-    UPSERT: `${API_BASE_URL}api/v1/manager/upsert`,
-    GET: (competencyId) => `${API_BASE_URL}api/v1/manager/get?competency_id=${competencyId}`,
-    DELETE: (managerId) => `${API_BASE_URL}api/v1/manager/${managerId}`
+    UPSERT: `${API_BASE_URL}manager/upsert`,
+    GET: `${API_BASE_URL}manager/get`,
+    DELETE: (managerId) => `${API_BASE_URL}manager/${managerId}`
 };

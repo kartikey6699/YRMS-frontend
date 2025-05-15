@@ -54,7 +54,7 @@ export const fetchManagers = createAsyncThunk(
   "manager/fetchManagers",
   async (competencyId, { rejectWithValue }) => {
     try {
-      const response = await managerApiClient.get(MANAGER_API.GET(competencyId));
+      const response = await managerApiClient.get(MANAGER_API.GET);
       const { success, data, message, error } = response.data;
 
       if (!success) {
