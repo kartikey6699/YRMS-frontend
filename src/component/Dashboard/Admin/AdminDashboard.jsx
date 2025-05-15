@@ -1,21 +1,26 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchRoles } from "../../../features/role/roleAction";
-import { FaLock, FaChalkboardTeacher, FaUserShield, FaUsers } from "react-icons/fa";
+import { FaLock, FaChalkboardTeacher, FaUserShield, FaUsers, FaExchangeAlt } from "react-icons/fa";
 import AccessManagement from "./AccessManagement";
 import TrainingManagement from "./TrainingManagement";
 import ManagerManagement from "./ManagerManagement";
+import AdminCompetency from "./ManageCompetency/AdminCompetency";
 
 const AdminDashboard = () => {
-    const dispatch = useDispatch()
-    const { roles } = useSelector((state)=> state.role)
+    const dispatch = useDispatch();
+    const { roles } = useSelector((state) => state.role);
+    const { competencies } = useSelector((state) => state.resource);
+    const { loading: competenciesLoading } = useSelector((state) => state.resource);
+    
     const [selectedSection, setSelectedSection] = useState("");
     const [activeSection, setActiveSection] = useState("view");
+    const [showCompetencyModal, setShowCompetencyModal] = useState(false);
     const contentRef = useRef(null);
 
     useEffect(() => {
         dispatch(fetchRoles());
-    }, [dispatch])
+    }, [dispatch]);
 
     const handleSectionClick = (section) => {
         setSelectedSection(section);
@@ -25,20 +30,43 @@ const AdminDashboard = () => {
         }
     };
 
+    const handleSwitchCompetency = () => {
+        setShowCompetencyModal(true);
+    };
+
     return (
         <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-purple-50 p-8 mt-15">
-            <div className="max-w-6xl w-full mx-auto">
-                <div>
+            {/* Competency Selection Modal */}
+            {showCompetencyModal && (
+                <AdminCompetency
+                    competencies={competencies || []}
+                    loading={competenciesLoading}
+                    onClose={() => setShowCompetencyModal(false)}
+                />
+            )}
+
+            <div className="max-w-6xl w-full mx-auto relative">
+                {/* Switch Competency Button */}
+                <button
+                    onClick={handleSwitchCompetency}
+                    className="absolute top-0 right-0 flex items-center px-4 py-2 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-lg shadow-md hover:shadow-lg transition-all duration-300 hover:from-blue-600 hover:to-indigo-700"
+                >
+                    <FaExchangeAlt className="mr-2" />
+                    Switch Competency
+                </button>
+
+                <div className="pt-12"> {/* Added padding to accommodate the button */}
                     <h2 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600 mb-6 text-center">
                         Admin Dashboard
                     </h2>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <button
                             onClick={() => handleSectionClick("access")}
-                            className={`flex flex-col items-center px-4 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 ${selectedSection === "access"
-                                ? "py-4 scale-[0.98] bg-gradient-to-br from-blue-100 to-indigo-100 border-2 border-blue-200"
-                                : "py-6 bg-gradient-to-br from-white to-gray-50 border border-gray-200 hover:border-blue-200"
-                                }`}
+                            className={`flex flex-col items-center px-4 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 ${
+                                selectedSection === "access"
+                                    ? "py-4 scale-[0.98] bg-gradient-to-br from-blue-100 to-indigo-100 border-2 border-blue-200"
+                                    : "py-6 bg-gradient-to-br from-white to-gray-50 border border-gray-200 hover:border-blue-200"
+                            }`}
                         >
                             <div className="p-4 mb-3 rounded-full bg-gradient-to-br from-blue-500 to-indigo-500 text-white shadow-md">
                                 <FaLock size={24} />
@@ -48,10 +76,11 @@ const AdminDashboard = () => {
                         </button>
                         <button
                             onClick={() => handleSectionClick("training")}
-                            className={`flex flex-col items-center px-4 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 ${selectedSection === "training"
-                                ? "py-4 scale-[0.98] bg-gradient-to-br from-purple-100 to-pink-100 border-2 border-purple-200"
-                                : "py-6 bg-gradient-to-br from-white to-gray-50 border border-gray-200 hover:border-purple-200"
-                                }`}
+                            className={`flex flex-col items-center px-4 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 ${
+                                selectedSection === "training"
+                                    ? "py-4 scale-[0.98] bg-gradient-to-br from-purple-100 to-pink-100 border-2 border-purple-200"
+                                    : "py-6 bg-gradient-to-br from-white to-gray-50 border border-gray-200 hover:border-purple-200"
+                            }`}
                         >
                             <div className="p-4 mb-3 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 text-white shadow-md">
                                 <FaChalkboardTeacher size={24} />
@@ -61,10 +90,11 @@ const AdminDashboard = () => {
                         </button>
                         <button
                             onClick={() => handleSectionClick("managers")}
-                            className={`flex flex-col items-center px-4 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 ${selectedSection === "managers"
-                                ? "py-4 scale-[0.98] bg-gradient-to-br from-green-100 to-teal-100 border-2 border-green-200"
-                                : "py-6 bg-gradient-to-br from-white to-gray-50 border border-gray-200 hover:border-green-200"
-                                }`}
+                            className={`flex flex-col items-center px-4 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 ${
+                                selectedSection === "managers"
+                                    ? "py-4 scale-[0.98] bg-gradient-to-br from-green-100 to-teal-100 border-2 border-green-200"
+                                    : "py-6 bg-gradient-to-br from-white to-gray-50 border border-gray-200 hover:border-green-200"
+                            }`}
                         >
                             <div className="p-4 mb-3 rounded-full bg-gradient-to-br from-green-500 to-teal-500 text-white shadow-md">
                                 <FaUsers size={24} />

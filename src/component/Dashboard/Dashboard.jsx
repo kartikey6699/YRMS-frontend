@@ -1,23 +1,46 @@
-import React from 'react';
-import { FaCogs, FaChalkboardTeacher,FaTachometerAlt, FaGraduationCap, FaChartBar, FaUserGraduate, FaUserShield, FaUserTie, FaUser } from 'react-icons/fa';
+import React, { useState, useEffect } from 'react';
+import { FaCogs, FaChalkboardTeacher, FaTachometerAlt, FaGraduationCap, 
+         FaChartBar, FaUserGraduate, FaUserShield, FaUserTie, FaUser } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchCompetencies } from '../../features/resource/resourceAction';
+import AdminCompetency from './Admin/ManageCompetency/AdminCompetency';
 
 const Dashboard = () => {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const currentHour = new Date().getHours();
   const competencyName = sessionStorage.getItem('competencyName') || 'Your Team';
+  
+  // State initialization
+  const [userRoles, setUserRoles] = useState([]);
+  const [showAdminModal, setShowAdminModal] = useState(false);
 
-  // Safely retrieve and normalize roles from sessionStorage
-  let userRoles = [];
-  try {
-    const roleName = sessionStorage.getItem('roleName');
-    if (roleName) {
-      userRoles = roleName.split(",");
+  // Get competencies from Redux store
+  const { competencies } = useSelector((state) => state.resource);
+  const { loading, error } = useSelector((state) => state.resource);
+
+  useEffect(() => {
+    // Initialize user roles
+    try {
+      const roleName = sessionStorage.getItem('roleName');
+      if (roleName) {
+        const roles = roleName.split(",").map(role => role.trim());
+        setUserRoles(roles);
+        
+        // Only show modal for admins who haven't selected a competency
+        if (roles.includes('Admin') && !sessionStorage.getItem('adminCompetencyId')) {
+          setShowAdminModal(true);
+        }
+      }
+    } catch (error) {
+      console.error('Error parsing roleName from sessionStorage:', error);
+      setUserRoles([]);
     }
-  } catch (error) {
-    console.error('Error parsing roleName from sessionStorage:', error);
-    userRoles = []; // Fallback to empty array
-  }
+
+    // Fetch competencies
+    dispatch(fetchCompetencies());
+  }, [dispatch]);
 
   // Define all possible menu items (aligned with Sidebar)
   const allMenuItems = [
@@ -31,26 +54,22 @@ const Dashboard = () => {
     { name: 'User Dashboard', icon: <FaUser className="text-4xl text-green-600 mr-4" />, path: '/user-dashboard', gradient: 'from-green-100 to-green-200 hover:from-green-200 hover:to-green-300' },
   ];
 
-  // Determine which menu items to show based on roles (same logic as Sidebar)
+  // Determine which menu items to show based on roles
   const getVisibleMenuItems = () => {
     if (!userRoles || userRoles.length === 0) return [];
 
-    // If SuperAdmin, show only Super Admin menu
     if (userRoles.includes('SuperAdmin')) {
       return allMenuItems.filter(item => item.name === 'Super Admin');
     }
 
-    // If Admin, show all menus except Super Admin
     if (userRoles.includes('Admin')) {
       return allMenuItems.filter(item => item.name !== 'Super Admin' && item.name !== 'User Dashboard');
     }
 
-    // If Trainer, show only Training menu 
-    if (userRoles.includes(' trainer')) {
+    if (userRoles.includes('Trainer')) {
       return allMenuItems.filter(item => item.name === 'Training');
     }
 
-    // If only User role (no other roles), show only User Dashboard
     if (userRoles.length === 1 && userRoles.includes('User')) {
       return allMenuItems.filter(item => item.name === 'User Dashboard');
     }
@@ -59,8 +78,6 @@ const Dashboard = () => {
   };
 
   const menuItems = getVisibleMenuItems();
-
-  // Filter out 'Dashboard' as it's not a card
   const cardItems = menuItems.filter((item) => item.name !== 'Dashboard');
 
   // Time-based greetings with fallback for missing images
@@ -81,6 +98,19 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 p-4 md:p-8 mt-15">
+      {/* Admin Competency Selection Modal */}
+      {showAdminModal && (
+        <AdminCompetency 
+          competencies={competencies || []} 
+          loading={loading}
+          onClose={() => {
+            setShowAdminModal(false);
+            // Optional: Refresh the page to update the dashboard with new competency
+            // window.location.reload();
+          }} 
+        />
+      )}
+
       {/* Hero Section */}
       <div className="relative text-center mb-8 md:mb-12">
         <div className="w-full h-48 md:h-56 bg-gray-300 rounded-xl shadow-lg overflow-hidden">
