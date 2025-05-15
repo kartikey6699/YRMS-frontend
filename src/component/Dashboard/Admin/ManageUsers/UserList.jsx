@@ -15,7 +15,8 @@ import { ADMIN_API_BASE_URL } from "../../../../config/Endpoints/BaseEndpoints";
 const UserList = ({ setActiveSection }) => {
   const dispatch = useDispatch();
   const { resources, competencies, designations } = useSelector((state) => state.resource);
-  const roleOptions = JSON.parse(sessionStorage.getItem('role')).map((role) => role.role)
+  const storedRoles = sessionStorage.getItem('role');
+  const roleOptions = storedRoles ? JSON.parse(storedRoles).map((role) => role.role) : [];
   const statusOptions = ["Pool", "Deployed", "PIP"];
   const [selectedUser, setSelectedUser] = useState(null);
   const [filteredData, setFilteredData] = useState([]);

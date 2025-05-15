@@ -18,6 +18,7 @@ import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import ResourceList from "./ResourceList";
 import { createResource, fetchResources, fetchDesignations, fetchCompetencies, fetchTechnologies } from "../../../features/resource/resourceAction";
+import { fetchManagers} from '../../../features/manager/managerAction';
 import YRMSLoader from "../../helper/loader";
 import AddOptionModal from "../../helper/OptionalModal";
 import { SuccessToast, ErrorToast } from "../../helper/ResourceToast";
@@ -29,9 +30,10 @@ const ManageResource = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
-  const { resources, loading, error, designations, competencies, technologies, technologyLoading } = useSelector(
+  const { resources, loading, error, designations, competencies, technologies, technologyLoading} = useSelector(
     (state) => state.resource
   );
+  const { managers } = useSelector(state => state.manager);
 
   const [activeSection, setActiveSection] = useState("view");
   const [modalField, setModalField] = useState(null);
@@ -58,6 +60,8 @@ const ManageResource = () => {
     businessGroup: "",
     businessUnit: "",
     competency: "",
+    irm: "", // IRM field as select
+    srm: "", // SRM field as select
     status: "pool",
   });
 
@@ -149,6 +153,14 @@ const ManageResource = () => {
       if (!value) return "Competency is required";
       return null;
     },
+    irm: (value) => {
+      if (!value) return "IRM is required";
+      return null;
+    },
+    srm: (value) => {
+      if (!value) return "SRM is required";
+      return null;
+    },
     status: (value) => {
       if (!value) return "Status is required";
       return null;
@@ -189,11 +201,12 @@ const ManageResource = () => {
     }));
   }, [dispatch, filterData, statusFilter]);
 
-  // Initial fetch for designations, competencies, and technologies
+  // Initial fetch for designations, competencies, technologies, and managers
   useEffect(() => {
     dispatch(fetchDesignations());
     dispatch(fetchCompetencies());
     dispatch(fetchTechnologies());
+    dispatch(fetchManagers());
   }, [dispatch]);
 
   const handleInputChange = (e) => {
@@ -443,7 +456,13 @@ const ManageResource = () => {
     try {
       setToast(<YRMSLoader loadingMessage="Creating resource..." />);
 
-      const createResult = await dispatch(createResource(formData));
+      const createResult = await dispatch(createResource({
+        ...formData,
+        meta_data: {
+          irm: { name: formData.irm },
+          srm: { name: formData.srm }
+        }
+      }));
 
       if (!createResult.payload?.publicId) {
         throw new Error("Failed to get publicId from response");
@@ -475,6 +494,8 @@ const ManageResource = () => {
         businessGroup: "",
         businessUnit: "",
         competency: "",
+        irm: "", // Reset IRM field
+        srm: "", // Reset SRM field
         status: "pool",
       });
       setProfilePic(null);
@@ -974,9 +995,9 @@ const ManageResource = () => {
               { value: "SSU1", label: "SSU1" }
             ])}
 
-            {/* New Input Fields for IRM and SRM */}
-            {renderInput("irm", "IRM", "text", "Enter IRM name")}
-            {renderInput("srm", "SRM", "text", "Enter SRM name")}
+            {/* Dropdown Fields for IRM and SRM */}
+            {renderSelect("irm", "IRM", managers.map(manager => ({ value: manager.name, label: manager.name })))}
+            {renderSelect("srm", "SRM", managers.map(manager => ({ value: manager.name, label: manager.name })))}
 
             <div>
               <label className="block text-gray-700 font-medium mb-2">
