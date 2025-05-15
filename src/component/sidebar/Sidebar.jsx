@@ -84,53 +84,53 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
         transition-all duration-300 ease-in-out ${isOpen ? 'w-56' : 'w-16'} z-40 
         shadow-[0_0_15px_rgba(0,0,0,0.1)] flex flex-col`}
       >
-{/* Logo Section with Enhanced Animation - Fixed Toggle Button */}
-<div className="relative h-20 bg-gradient-to-r from-gray-100 to-gray-200 flex items-center justify-center border-b-2 border-gray-300 shadow-lg overflow-visible">
-  {/* Toggle button with right half visible */}
-  <div className="absolute right-0 top-0 h-full w-full overflow-visible">
-    <button
-      onClick={toggleSidebar}
-      className="absolute right-0 top-1/2 transform -translate-y-1/2 translate-x-1/2 z-50 w-8 h-8 bg-blue-600 rounded-full shadow-lg
-      border-2 border-white flex items-center justify-center hover:bg-blue-700 transition-all
-      duration-300 focus:outline-none hover:scale-110"
-    >
-      {isOpen ? (
-        <FiChevronLeft className="text-white" />
-      ) : (
-        <FiChevronRight className="text-white" />
-      )}
-    </button>
-  </div>
+        {/* Logo Section with Enhanced Animation - Integrated with Menu */}
+        <div className="relative bg-gradient-to-b from-gray-100 to-gray-100 overflow-visible pt-4 pb-2">
+          {/* Toggle button with right half visible */}
+          <div className="absolute right-0 top-0 h-full w-full overflow-visible">
+            <button
+              onClick={toggleSidebar}
+              className="absolute right-0 top-10 transform -translate-y-1/2 translate-x-1/2 z-50 w-8 h-8 bg-blue-600 rounded-full shadow-lg
+              border-2 border-white flex items-center justify-center hover:bg-blue-700 transition-all
+              duration-300 focus:outline-none hover:scale-110"
+            >
+              {isOpen ? (
+                <FiChevronLeft className="text-white" />
+              ) : (
+                <FiChevronRight className="text-white" />
+              )}
+            </button>
+          </div>
 
-  {/* Background effects - lighter */}
-  <div className="absolute inset-0 bg-gradient-to-tr from-blue-100/50 to-transparent animate-pulse-slow"></div>
-  <div className="absolute h-full w-full bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-blue-200/20 via-transparent to-transparent animate-ping-slow"></div>
-  
-  {/* Animated blue swoosh effect */}
-  <div className="absolute right-0 top-0 h-20 w-40 bg-blue-400/30 blur-xl rounded-full transform -translate-x-10 animate-swoosh"></div>
+          {/* Background effects - lighter */}
+          <div className="absolute inset-0 bg-gradient-to-tr from-blue-100/50 to-transparent animate-pulse-slow"></div>
+          <div className="absolute h-full w-full bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-blue-200/20 via-transparent to-transparent animate-ping-slow"></div>
+          
+          {/* Animated blue swoosh effect */}
+          <div className="absolute right-0 top-0 h-20 w-40 bg-blue-400/30 blur-xl rounded-full transform -translate-x-10 animate-swoosh"></div>
 
-  {/* Logo container with animations */}
-  <div className={`flex items-center justify-center w-full transition-all duration-300 ${isOpen ? 'px-4' : 'px-2'}`}>
-    <div className="relative group animate-breath">
-      {/* Inner glow effects */}
-      <div className="absolute -inset-2 bg-gradient-to-r from-red-500/30 via-transparent to-blue-500/30 rounded-full blur-md animate-spin-slow opacity-70"></div>
-      <div className="absolute -inset-3 bg-blue-500/20 rounded-full opacity-70 blur-lg animate-pulse-slow"></div>
-      
-      {/* Logo image */}
-      <img
-        src={logo}
-        alt="Yash Technologies Logo"
-        className={`relative z-10 transition-all duration-500 group-hover:scale-110 object-contain animate-glow
-                  ${isOpen ? 'h-16 w-48' : 'h-14 w-14'}`}
-      />
-      
-      {/* Hover effects */}
-      <div className="absolute inset-0 bg-blue-400/30 blur-md opacity-0 group-hover:opacity-70 rounded-full animate-ping-slow"></div>
-    </div>
-  </div>
-</div>
+          {/* Logo container with animations */}
+          <div className={`flex items-center justify-center w-full transition-all duration-300 ${isOpen ? 'px-4' : 'px-2'} mb-2`}>
+            <div className="relative group animate-breath">
+              {/* Inner glow effects */}
+              <div className="absolute -inset-2 bg-gradient-to-r from-red-500/30 via-transparent to-blue-500/30 rounded-full blur-md animate-spin-slow opacity-70"></div>
+              <div className="absolute -inset-3 bg-blue-500/20 rounded-full opacity-70 blur-lg animate-pulse-slow"></div>
+              
+              {/* Logo image */}
+              <img
+                src={logo}
+                alt="Yash Technologies Logo"
+                className={`relative z-10 transition-all duration-500 group-hover:scale-110 object-contain animate-glow
+                          ${isOpen ? 'h-16 w-48' : 'h-14 w-14'}`}
+              />
+              
+              {/* Hover effects */}
+              <div className="absolute inset-0 bg-blue-400/30 blur-md opacity-0 group-hover:opacity-70 rounded-full animate-ping-slow"></div>
+            </div>
+          </div>
+        </div>
 
-        {/* Menu Items */}
+        {/* Menu Items - No separation from logo section */}
         <div className="flex-1 overflow-y-auto pt-2 pb-4">
           <nav className="px-2 space-y-1">
             {menuItems.map((item) => {
@@ -164,17 +164,6 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
                       <span className="ml-3 text-sm whitespace-nowrap overflow-hidden">{item.name}</span>
                     )}
                   </button>
-
-                  {/* Tooltip for collapsed state */}
-                  {/* {!isOpen && hoveredItem === item.name && (
-                    <div
-                      className="absolute right-0 translate-x-full top-1/2 -translate-y-1/2 px-2 py-1
-                        bg-gray-800 text-white text-xs rounded opacity-100
-                        pointer-events-none transition-opacity duration-200 whitespace-nowrap"
-                    >
-                      {item.name}
-                    </div>
-                  )} */}
                 </div>
               );
             })}
