@@ -17,6 +17,7 @@ import {
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { createResource, fetchCompetencies, fetchDesignations, fetchResources, fetchTechnologies } from '../../../../features/resource/resourceAction';
+import { fetchManagers} from '../../../../features/manager/managerAction';
 import { fetchRoles } from '../../../../features/role/roleAction'
 import { ErrorToast, SuccessToast } from '../../../helper/ResourceToast';
 import YRMSLoader from '../../../helper/loader';
@@ -31,6 +32,9 @@ const AddResource = ({ setActiveSection }) => {
     const { resources, loading, designations, competencies, technologies, technologyLoading } = useSelector(
         (state) => state.resource
     );
+
+    const { managers } = useSelector(state => state.manager);
+
 
     const { roles } = useSelector(
         (state) => state.role
@@ -58,8 +62,8 @@ const AddResource = ({ setActiveSection }) => {
         competency: "",
         status: "pool",
         roleIds: [],
-        irm: { name: "" }, // New field for IRM
-        srm: { name: "" }, // New field for SRM
+        irm: "", // Changed to string for select
+        srm: "", // Changed to string for select
     });
 
     const [filterData, setFilterData] = useState({
@@ -84,8 +88,8 @@ const AddResource = ({ setActiveSection }) => {
         businessUnit: "",
         competency: "",
         roleIds: "",
-        irm: { name: "" }, // Error state for IRM
-        srm: { name: "" }, // Error state for SRM
+        irm: "", // Error state for IRM
+        srm: "", // Error state for SRM
     });
 
     // Validation function
@@ -116,7 +120,6 @@ const AddResource = ({ setActiveSection }) => {
             case 'grade':
             case 'businessGroup':
             case 'businessUnit':
-            // case 'competency':
             case 'joiningDate':
                 if (!value) error = "This field is required";
                 break;
@@ -124,10 +127,10 @@ const AddResource = ({ setActiveSection }) => {
                 if (!value || value.length === 0) error = "At least one role must be selected";
                 break;
             case 'irm':
-                if (!value.name) error = "IRM name is required";
+                if (!value) error = "IRM name is required";
                 break;
             case 'srm':
-                if (!value.name) error = "SRM name is required";
+                if (!value) error = "SRM name is required";
                 break;
             default:
                 break;
@@ -218,7 +221,7 @@ const AddResource = ({ setActiveSection }) => {
             : `${baseClass} border-gray-300 focus:ring-indigo-300`;
     };
 
-    // Fetch resources whenever filterData changes
+    // Fetch resources and managers whenever filterData changes
     useEffect(() => {
         dispatch(fetchResources({
             experience: filterData.experience || undefined,
@@ -226,6 +229,7 @@ const AddResource = ({ setActiveSection }) => {
             certification: filterData.certifications || undefined,
             technology: filterData.technologies.length > 0 ? filterData.technologies : undefined,
         }));
+        dispatch(fetchManagers());
     }, [dispatch, filterData]);
 
     // Initial fetch for designations, competencies, and technologies
@@ -293,8 +297,8 @@ const AddResource = ({ setActiveSection }) => {
             const payload = {
                 ...formData,
                 meta_data: {
-                    irm: { name: formData.irm.name },
-                    srm: { name: formData.srm.name }
+                    irm: { name: formData.irm },
+                    srm: { name: formData.srm }
                 }
             };
             const createResult = await dispatch(createResource(payload));
@@ -331,8 +335,8 @@ const AddResource = ({ setActiveSection }) => {
                 competency: "",
                 status: "pool",
                 roleIds: [],
-                irm: { name: "" }, // Reset IRM field
-                srm: { name: "" }, // Reset SRM field
+                irm: "", // Reset IRM field
+                srm: "", // Reset SRM field
             });
             setProfilePic(null);
             setProfilePicPreview(null);
@@ -603,24 +607,27 @@ const AddResource = ({ setActiveSection }) => {
                                 )}
                             </div>
 
-                            {/* New Fields for IRM and SRM */}
+                            {/* New Fields for IRM and SRM as Select */}
                             <div className="space-y-1">
                                 <label className="block text-gray-700 font-medium mb-1 flex items-center">
                                     <FaUser className="text-indigo-500 mr-2 text-sm" />
                                     IRM Name
                                 </label>
-                                <input
-                                    type="text"
-                                    name="irm.name"
-                                    value={formData.irm.name}
+                                <select
+                                    name="irm"
+                                    value={formData.irm}
                                     onChange={handleInputChange}
                                     onBlur={handleBlur}
-                                    className={getInputClasses('irm.name')}
-                                    placeholder="IRM Name"
+                                    className={getSelectClasses('irm')}
                                     required
-                                />
-                                {errors.irm.name && (
-                                    <p className="text-red-500 text-sm mt-1">{errors.irm.name}</p>
+                                >
+                                    <option value="" disabled>Select IRM</option>
+                                    {managers.map(manager => (
+                                        <option key={manager.id} value={manager.name}>{manager.name}</option>
+                                    ))}
+                                </select>
+                                {errors.irm && (
+                                    <p className="text-red-500 text-sm mt-1">{errors.irm}</p>
                                 )}
                             </div>
 
@@ -629,18 +636,21 @@ const AddResource = ({ setActiveSection }) => {
                                     <FaUser className="text-indigo-500 mr-2 text-sm" />
                                     SRM Name
                                 </label>
-                                <input
-                                    type="text"
-                                    name="srm.name"
-                                    value={formData.srm.name}
+                                <select
+                                    name="srm"
+                                    value={formData.srm}
                                     onChange={handleInputChange}
                                     onBlur={handleBlur}
-                                    className={getInputClasses('srm.name')}
-                                    placeholder="SRM Name"
+                                    className={getSelectClasses('srm')}
                                     required
-                                />
-                                {errors.srm.name && (
-                                    <p className="text-red-500 text-sm mt-1">{errors.srm.name}</p>
+                                >
+                                    <option value="" disabled>Select SRM</option>
+                                    {managers.map(manager => (
+                                        <option key={manager.id} value={manager.name}>{manager.name}</option>
+                                    ))}
+                                </select>
+                                {errors.srm && (
+                                    <p className="text-red-500 text-sm mt-1">{errors.srm}</p>
                                 )}
                             </div>
                         </div>
